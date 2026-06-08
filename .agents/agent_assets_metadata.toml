@@ -1,0 +1,50 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "a4le8CueXODlSTKOAHFhz"
+uri = "file://artifacts/mobile/assets/images/icon.png"
+type = "image"
+title = "tokvid app icon"
+
+[[generated]]
+id = "VwvTGjeOprplrlBEX2iRF"
+uri = "file://artifacts/mobile/assets/images/splash.png"
+type = "image"
+title = "tokvid splash screen"
+
+[[generated]]
+id = "MW7yNVhFX_OjrGvURo9fj"
+uri = "file://artifacts/mobile/assets/images/thumb1.png"
+type = "image"
+title = "video thumbnail dancer"
+
+[[generated]]
+id = "g-MAQBECsT7HJZfV9lzDg"
+uri = "file://artifacts/mobile/assets/images/thumb2.png"
+type = "image"
+title = "video thumbnail skater"
+
+[[generated]]
+id = "OdohCOCcKtTfsIQC7HWqI"
+uri = "file://artifacts/mobile/assets/images/thumb3.png"
+type = "image"
+title = "video thumbnail chef"
+
+[[generated]]
+id = "yKDqLTtU0BF-UW5FKICcu"
+uri = "file://artifacts/mobile/assets/images/thumb4.png"
+type = "image"
+title = "video thumbnail musician"
+
+[[generated]]
+id = "RUDdErX5BS7s6w3d1p8Fj"
+uri = "file://artifacts/mobile/assets/images/thumb5.png"
+type = "image"
+title = "video thumbnail street artist"
+
+[[generated]]
+id = "6rCw2QczEGcFk-7W7b6RL"
+uri = "file://artifacts/mobile/assets/images/thumb6.png"
+type = "image"
+title = "video thumbnail parkour"

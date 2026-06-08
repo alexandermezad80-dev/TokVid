@@ -1,0 +1,130 @@
+import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+import React, { useEffect, useRef } from "react";
+import {
+  Animated,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
+interface Props {
+  likes: string;
+  comments: string;
+  shares: string;
+  isLiked: boolean;
+  onLike: () => void;
+  onComment: () => void;
+  creatorAvatar: string;
+}
+
+function SpinningRecord({ avatar }: { avatar: string }) {
+  const spin = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.timing(spin, {
+        toValue: 1,
+        duration: 4000,
+        useNativeDriver: true,
+      })
+    );
+    anim.start();
+    return () => anim.stop();
+  }, []);
+
+  const rotate = spin.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] });
+
+  return (
+    <Animated.View style={[styles.recordOuter, { transform: [{ rotate }] }]}>
+      <Image source={{ uri: avatar }} style={styles.recordInner} />
+    </Animated.View>
+  );
+}
+
+export default function VideoActions({
+  likes,
+  comments,
+  shares,
+  isLiked,
+  onLike,
+  onComment,
+  creatorAvatar,
+}: Props) {
+  const heartScale = useRef(new Animated.Value(1)).current;
+
+  const handleLike = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Animated.sequence([
+      Animated.timing(heartScale, { toValue: 1.4, duration: 100, useNativeDriver: true }),
+      Animated.timing(heartScale, { toValue: 1, duration: 100, useNativeDriver: true }),
+    ]).start();
+    onLike();
+  };
+
+  return (
+    <View style={styles.container}>
+      <SpinningRecord avatar={creatorAvatar} />
+
+      <TouchableOpacity onPress={handleLike} style={styles.action}>
+        <Animated.View style={{ transform: [{ scale: heartScale }] }}>
+          <Feather
+            name="heart"
+            size={34}
+            color={isLiked ? "#FE2C55" : "#fff"}
+          />
+        </Animated.View>
+        <Text style={styles.count}>{likes}</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={onComment} style={styles.action}>
+        <Feather name="message-circle" size={34} color="#fff" />
+        <Text style={styles.count}>{comments}</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.action}>
+        <Feather name="share-2" size={34} color="#fff" />
+        <Text style={styles.count}>{shares}</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.action}>
+        <Feather name="more-horizontal" size={34} color="#fff" />
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    paddingBottom: 100,
+    paddingRight: 12,
+    alignItems: "center",
+    gap: 16,
+  },
+  action: {
+    alignItems: "center",
+    gap: 4,
+  },
+  count: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "600",
+    textShadow: "0px 1px 4px rgba(0,0,0,0.6)",
+  },
+  recordOuter: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 3,
+    borderColor: "#333",
+    backgroundColor: "#000",
+    overflow: "hidden",
+    marginBottom: 8,
+  },
+  recordInner: {
+    width: "100%",
+    height: "100%",
+  },
+});
