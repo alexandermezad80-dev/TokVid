@@ -23,11 +23,17 @@ const MY_VIDEOS = [
   { id: "6", image: require("../../assets/images/thumb6.png"), views: "12M", likes: "1.2M" },
 ];
 
+function avatarUrl(user: any, profile: any): string {
+  if (profile?.avatar_url) return profile.avatar_url;
+  const seed = encodeURIComponent(user?.email ?? user?.id ?? "user");
+  return `https://api.dicebear.com/9.x/initials/png?seed=${seed}&backgroundColor=FE2C55&textColor=ffffff&fontSize=38&size=128`;
+}
+
 export default function ProfileScreen() {
   const [tab, setTab] = useState<"videos" | "liked">("videos");
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
 
   const handleSignOut = () => {
     Alert.alert("Cerrar sesión", "¿Seguro que querés salir?", [
@@ -43,8 +49,21 @@ export default function ProfileScreen() {
     ]);
   };
 
-  const displayName = user?.user_metadata?.display_name ?? user?.email?.split("@")[0] ?? "Vos";
-  const handle = user?.user_metadata?.username ? `@${user.user_metadata.username}` : "@you";
+  const displayName =
+    profile?.username ??
+    user?.user_metadata?.display_name ??
+    user?.email?.split("@")[0] ??
+    "Vos";
+
+  const handle = `@${profile?.username ?? user?.user_metadata?.username ?? displayName}`;
+  const bio = profile?.bio ?? "Living life one frame at a time 🎬✨";
+  const followers = profile?.followers_count ?? 0;
+  const following = profile?.following_count ?? 0;
+  const likes = profile?.likes_count ?? 0;
+
+  const fmtCount = (n: number) =>
+    n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` :
+    n >= 1_000 ? `${(n / 1_000).toFixed(1)}K` : String(n);
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -61,7 +80,7 @@ export default function ProfileScreen() {
       <View style={styles.profileSection}>
         <View style={styles.avatarWrap}>
           <Image
-            source={{ uri: `https://i.pravatar.cc/150?u=${user?.id ?? "default"}` }}
+            source={{ uri: avatarUrl(user, profile) }}
             style={styles.avatar}
           />
           <View style={styles.editBadge}>
@@ -70,13 +89,14 @@ export default function ProfileScreen() {
         </View>
 
         <Text style={styles.displayName}>{displayName}</Text>
-        <Text style={styles.bio}>Living life one frame at a time 🎬✨</Text>
+        <Text style={styles.email}>{user?.email}</Text>
+        <Text style={styles.bio}>{bio}</Text>
 
         <View style={styles.stats}>
           {[
-            { value: "28", label: "Following" },
-            { value: "4.2K", label: "Followers" },
-            { value: "32.8K", label: "Likes" },
+            { value: fmtCount(following), label: "Following" },
+            { value: fmtCount(followers), label: "Followers" },
+            { value: fmtCount(likes), label: "Likes" },
           ].map((s) => (
             <View key={s.label} style={styles.stat}>
               <Text style={styles.statValue}>{s.value}</Text>
@@ -87,7 +107,7 @@ export default function ProfileScreen() {
 
         <View style={styles.actions}>
           <TouchableOpacity style={styles.editBtn}>
-            <Text style={styles.editBtnText}>Edit profile</Text>
+            <Text style={styles.editBtnText}>Editar perfil</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.shareBtn}>
             <Feather name="share" size={16} color="#fff" />
@@ -151,7 +171,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 16,
     paddingHorizontal: 16,
-    gap: 10,
+    gap: 8,
   },
   avatarWrap: { position: "relative" },
   avatar: {
@@ -160,6 +180,7 @@ const styles = StyleSheet.create({
     borderRadius: 48,
     borderWidth: 3,
     borderColor: "#FE2C55",
+    backgroundColor: "#1C1C1E",
   },
   editBadge: {
     position: "absolute",
@@ -174,31 +195,14 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#000",
   },
-  displayName: {
-    color: "#fff",
-    fontSize: 20,
-    fontWeight: "700",
-  },
-  bio: {
-    color: "#aaa",
-    fontSize: 14,
-    textAlign: "center",
-    paddingHorizontal: 20,
-  },
-  stats: {
-    flexDirection: "row",
-    gap: 32,
-    marginTop: 4,
-  },
+  displayName: { color: "#fff", fontSize: 20, fontWeight: "700" },
+  email: { color: "#555", fontSize: 13 },
+  bio: { color: "#aaa", fontSize: 14, textAlign: "center", paddingHorizontal: 20 },
+  stats: { flexDirection: "row", gap: 32, marginTop: 4 },
   stat: { alignItems: "center", gap: 2 },
   statValue: { color: "#fff", fontSize: 18, fontWeight: "800" },
   statLabel: { color: "#888", fontSize: 13 },
-  actions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginTop: 8,
-  },
+  actions: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 8 },
   editBtn: {
     backgroundColor: "#1C1C1E",
     borderRadius: 10,
@@ -217,15 +221,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: "#1C1C1E",
   },
-  tabItem: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  tabItemActive: {
-    borderBottomWidth: 2,
-    borderBottomColor: "#fff",
-  },
+  tabItem: { flex: 1, alignItems: "center", paddingVertical: 12 },
+  tabItemActive: { borderBottomWidth: 2, borderBottomColor: "#fff" },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 1 },
   gridItem: {
     width: "33.3%",
@@ -245,8 +242,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 11,
     fontWeight: "700",
-    textShadowColor: "rgba(0,0,0,0.9)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    textShadow: "0px 1px 4px rgba(0,0,0,0.9)",
   },
 });
