@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
-import { router } from "expo-router";
-import React, { useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
   Alert,
   Image,
@@ -33,7 +33,13 @@ export default function ProfileScreen() {
   const [tab, setTab] = useState<"videos" | "liked">("videos");
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, refreshProfile } = useAuth();
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshProfile();
+    }, [])
+  );
 
   const handleSignOut = () => {
     Alert.alert("Cerrar sesión", "¿Seguro que querés salir?", [
@@ -106,7 +112,7 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.editBtn}>
+          <TouchableOpacity style={styles.editBtn} onPress={() => router.push("/edit-profile")}>
             <Text style={styles.editBtnText}>Editar perfil</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.shareBtn}>
