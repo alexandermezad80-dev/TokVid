@@ -1,6 +1,8 @@
 import { Feather } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import {
+  Alert,
   Image,
   Platform,
   ScrollView,
@@ -10,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAuth } from "../../context/AuthContext";
 
 const MY_VIDEOS = [
   { id: "1", image: require("../../assets/images/thumb1.png"), views: "2.8M", likes: "284K" },
@@ -24,6 +27,24 @@ export default function ProfileScreen() {
   const [tab, setTab] = useState<"videos" | "liked">("videos");
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = () => {
+    Alert.alert("Cerrar sesión", "¿Seguro que querés salir?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Salir",
+        style: "destructive",
+        onPress: async () => {
+          await signOut();
+          router.replace("/auth/login");
+        },
+      },
+    ]);
+  };
+
+  const displayName = user?.user_metadata?.display_name ?? user?.email?.split("@")[0] ?? "Vos";
+  const handle = user?.user_metadata?.username ? `@${user.user_metadata.username}` : "@you";
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -31,16 +52,16 @@ export default function ProfileScreen() {
         <TouchableOpacity style={styles.menuBtn}>
           <Feather name="menu" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.handle}>@you</Text>
-        <TouchableOpacity style={styles.menuBtn}>
-          <Feather name="share-2" size={22} color="#fff" />
+        <Text style={styles.handle}>{handle}</Text>
+        <TouchableOpacity style={styles.menuBtn} onPress={handleSignOut}>
+          <Feather name="log-out" size={22} color="#fff" />
         </TouchableOpacity>
       </View>
 
       <View style={styles.profileSection}>
         <View style={styles.avatarWrap}>
           <Image
-            source={{ uri: "https://i.pravatar.cc/150?img=70" }}
+            source={{ uri: `https://i.pravatar.cc/150?u=${user?.id ?? "default"}` }}
             style={styles.avatar}
           />
           <View style={styles.editBadge}>
@@ -48,7 +69,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <Text style={styles.displayName}>Your Name</Text>
+        <Text style={styles.displayName}>{displayName}</Text>
         <Text style={styles.bio}>Living life one frame at a time 🎬✨</Text>
 
         <View style={styles.stats}>
