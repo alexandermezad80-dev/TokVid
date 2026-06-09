@@ -6,7 +6,7 @@ import {
   useFonts,
 } from "@expo-google-fonts/inter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Redirect, Slot, Stack } from "expo-router";
+import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
@@ -17,10 +17,18 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider, useAuth } from "../context/AuthContext";
+import { NotificationsProvider } from "../context/NotificationsContext";
+import { usePushNotifications } from "../hooks/usePushNotifications";
 
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
+
+function PushNotificationSetup() {
+  const { user } = useAuth();
+  usePushNotifications(user?.id);
+  return null;
+}
 
 function RootLayoutNav() {
   const { session, loading } = useAuth();
@@ -76,8 +84,11 @@ export default function RootLayout() {
           <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#000" }}>
             <KeyboardProvider>
               <AuthProvider>
-                <StatusBar style="light" />
-                <RootLayoutNav />
+                <NotificationsProvider>
+                  <PushNotificationSetup />
+                  <StatusBar style="light" />
+                  <RootLayoutNav />
+                </NotificationsProvider>
               </AuthProvider>
             </KeyboardProvider>
           </GestureHandlerRootView>

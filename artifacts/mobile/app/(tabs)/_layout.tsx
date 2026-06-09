@@ -5,8 +5,18 @@ import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
 import { SymbolView } from "expo-symbols";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Platform, StyleSheet, View, useColorScheme } from "react-native";
+import { Platform, StyleSheet, Text, View, useColorScheme } from "react-native";
 import { useColors } from "@/hooks/useColors";
+import { useNotifications } from "../../context/NotificationsContext";
+
+function UnreadBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <View style={styles.badgeWrap}>
+      <Text style={styles.badgeText}>{count > 99 ? "99+" : count}</Text>
+    </View>
+  );
+}
 
 function NativeTabLayout() {
   return (
@@ -41,6 +51,7 @@ function ClassicTabLayout() {
   const isDark = colorScheme === "dark";
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
+  const { unreadCount } = useNotifications();
 
   return (
     <Tabs
@@ -113,12 +124,16 @@ function ClassicTabLayout() {
         name="inbox"
         options={{
           title: "Inbox",
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="bell" tintColor={color} size={24} />
-            ) : (
-              <Feather name="bell" size={22} color={color} />
-            ),
+          tabBarIcon: ({ color }) => (
+            <View>
+              {isIOS ? (
+                <SymbolView name="bell" tintColor={color} size={24} />
+              ) : (
+                <Feather name="bell" size={22} color={color} />
+              )}
+              <UnreadBadge count={unreadCount} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
@@ -159,4 +174,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 10,
   },
+  badgeWrap: {
+    position: "absolute",
+    top: -4,
+    right: -8,
+    backgroundColor: "#FE2C55",
+    borderRadius: 8,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    minWidth: 16,
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: "#000",
+  },
+  badgeText: { color: "#fff", fontSize: 9, fontWeight: "800" },
 });

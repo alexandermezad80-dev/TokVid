@@ -28,7 +28,17 @@
         }
       ],
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#FE2C55",
+          "sounds": [],
+          "androidMode": "default",
+          "androidCollapsedTitle": "Tokvid"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
