@@ -14,7 +14,9 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import GoogleButton from "../../components/GoogleButton";
 import { useAuth } from "../../context/AuthContext";
+import { signInWithGoogle } from "../../hooks/useGoogleAuth";
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
@@ -24,6 +26,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async () => {
@@ -42,13 +45,26 @@ export default function LoginScreen() {
     }
   };
 
+  const handleGoogle = async () => {
+    setError(null);
+    setGoogleLoading(true);
+    const { error } = await signInWithGoogle();
+    setGoogleLoading(false);
+    if (error && error !== "cancel") {
+      setError(error);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.root}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
-        contentContainerStyle={[styles.container, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}
+        contentContainerStyle={[
+          styles.container,
+          { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 },
+        ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -62,6 +78,15 @@ export default function LoginScreen() {
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
+
+        {/* Google OAuth */}
+        <GoogleButton onPress={handleGoogle} loading={googleLoading} />
+
+        <View style={styles.divider}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>o con email</Text>
+          <View style={styles.dividerLine} />
+        </View>
 
         <View style={styles.field}>
           <Text style={styles.label}>Email</Text>
@@ -107,12 +132,6 @@ export default function LoginScreen() {
           )}
         </TouchableOpacity>
 
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>o</Text>
-          <View style={styles.dividerLine} />
-        </View>
-
         <View style={styles.footer}>
           <Text style={styles.footerText}>¿No tenés cuenta?</Text>
           <Link href="/auth/register" asChild>
@@ -151,6 +170,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   errorText: { color: "#FE2C55", fontSize: 13, flex: 1 },
+  divider: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginVertical: 24,
+  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: "#2C2C2E" },
+  dividerText: { color: "#555", fontSize: 13 },
   field: { marginBottom: 18 },
   label: { color: "#aaa", fontSize: 13, fontWeight: "600", marginBottom: 8 },
   input: {
@@ -183,15 +210,12 @@ const styles = StyleSheet.create({
   },
   btnDisabled: { opacity: 0.6 },
   btnText: { color: "#fff", fontSize: 16, fontWeight: "800" },
-  divider: {
+  footer: {
     flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
-    gap: 12,
-    marginVertical: 28,
+    marginTop: 28,
   },
-  dividerLine: { flex: 1, height: 1, backgroundColor: "#2C2C2E" },
-  dividerText: { color: "#555", fontSize: 13 },
-  footer: { flexDirection: "row", justifyContent: "center", alignItems: "center" },
   footerText: { color: "#888", fontSize: 14 },
   footerLink: { color: "#FE2C55", fontSize: 14, fontWeight: "700" },
 });

@@ -14,7 +14,9 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import GoogleButton from "../../components/GoogleButton";
 import { useAuth } from "../../context/AuthContext";
+import { signInWithGoogle } from "../../hooks/useGoogleAuth";
 
 export default function RegisterScreen() {
   const { signUp } = useAuth();
@@ -26,6 +28,7 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
@@ -53,6 +56,16 @@ export default function RegisterScreen() {
     }
   };
 
+  const handleGoogle = async () => {
+    setError(null);
+    setGoogleLoading(true);
+    const { error } = await signInWithGoogle();
+    setGoogleLoading(false);
+    if (error && error !== "cancel") {
+      setError(error);
+    }
+  };
+
   if (success) {
     return (
       <View style={[styles.root, styles.successContainer]}>
@@ -76,7 +89,10 @@ export default function RegisterScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
-        contentContainerStyle={[styles.container, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}
+        contentContainerStyle={[
+          styles.container,
+          { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 },
+        ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -91,11 +107,24 @@ export default function RegisterScreen() {
           </View>
         )}
 
+        {/* Google OAuth */}
+        <GoogleButton
+          onPress={handleGoogle}
+          loading={googleLoading}
+          label="Registrarse con Google"
+        />
+
+        <View style={styles.divider}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>o con email</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
         <View style={styles.field}>
           <Text style={styles.label}>Nombre de usuario</Text>
           <TextInput
             value={username}
-            onChangeText={setUsername}
+            onChangeText={(t) => setUsername(t.replace(/\s/g, ""))}
             placeholder="@tunombre"
             placeholderTextColor="#555"
             autoCapitalize="none"
@@ -210,6 +239,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   errorText: { color: "#FE2C55", fontSize: 13, flex: 1 },
+  divider: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginVertical: 24,
+  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: "#2C2C2E" },
+  dividerText: { color: "#555", fontSize: 13 },
   field: { marginBottom: 18 },
   label: { color: "#aaa", fontSize: 13, fontWeight: "600", marginBottom: 8 },
   input: {
@@ -242,7 +279,12 @@ const styles = StyleSheet.create({
   },
   btnDisabled: { opacity: 0.6 },
   btnText: { color: "#fff", fontSize: 16, fontWeight: "800" },
-  footer: { flexDirection: "row", justifyContent: "center", alignItems: "center", marginTop: 28 },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 28,
+  },
   footerText: { color: "#888", fontSize: 14 },
   footerLink: { color: "#FE2C55", fontSize: 14, fontWeight: "700" },
 });
