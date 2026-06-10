@@ -8,6 +8,7 @@ export interface VideoItem {
   creator: string;
   creatorHandle: string;
   creatorAvatar: string;
+  creatorId: string; // stable UUID for Supabase follows
   caption: string;
   song: string;
   likes: number;
@@ -16,7 +17,17 @@ export interface VideoItem {
   isFollowing: boolean;
 }
 
-const SAMPLE_VIDEOS: VideoItem[] = [
+// Stable fake UUIDs for mock creators so follows persist in Supabase
+export const MOCK_CREATOR_IDS: Record<string, string> = {
+  "@lunareyes":   "11111111-1111-1111-1111-111111111111",
+  "@jakerides":   "22222222-2222-2222-2222-222222222222",
+  "@chefmarco":   "33333333-3333-3333-3333-333333333333",
+  "@miastrings":  "44444444-4444-4444-4444-444444444444",
+  "@artbykai":    "55555555-5555-5555-5555-555555555555",
+  "@flexnation":  "66666666-6666-6666-6666-666666666666",
+};
+
+const SAMPLE_VIDEOS: Omit<VideoItem, "isFollowing">[] = [
   {
     id: "1",
     uri: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
@@ -24,12 +35,12 @@ const SAMPLE_VIDEOS: VideoItem[] = [
     creator: "Luna Reyes",
     creatorHandle: "@lunareyes",
     creatorAvatar: "https://i.pravatar.cc/150?img=47",
+    creatorId: MOCK_CREATOR_IDS["@lunareyes"],
     caption: "Morning dance routine hits different when the sun is just right ✨ #dance #morning #viral",
     song: "♫ Flowers - Miley Cyrus",
     likes: 284700,
     comments: 3421,
     shares: 8902,
-    isFollowing: false,
   },
   {
     id: "2",
@@ -38,12 +49,12 @@ const SAMPLE_VIDEOS: VideoItem[] = [
     creator: "Jake Rivera",
     creatorHandle: "@jakerides",
     creatorAvatar: "https://i.pravatar.cc/150?img=13",
+    creatorId: MOCK_CREATOR_IDS["@jakerides"],
     caption: "New skate park just opened downtown and it is INSANE 🛹🔥 #skateboarding #tricks #fyp",
     song: "♫ Bad Habit - Steve Lacy",
     likes: 192300,
     comments: 2109,
     shares: 5670,
-    isFollowing: false,
   },
   {
     id: "3",
@@ -52,12 +63,12 @@ const SAMPLE_VIDEOS: VideoItem[] = [
     creator: "Chef Marco",
     creatorHandle: "@chefmarco",
     creatorAvatar: "https://i.pravatar.cc/150?img=59",
+    creatorId: MOCK_CREATOR_IDS["@chefmarco"],
     caption: "Secret ramen recipe my grandmother taught me. Takes 6 hours but worth every second 🍜 #cooking #ramen #foodie",
     song: "♫ Lofi Chill Beats",
     likes: 521000,
     comments: 12430,
     shares: 34100,
-    isFollowing: true,
   },
   {
     id: "4",
@@ -66,12 +77,12 @@ const SAMPLE_VIDEOS: VideoItem[] = [
     creator: "Mia Strings",
     creatorHandle: "@miastrings",
     creatorAvatar: "https://i.pravatar.cc/150?img=32",
+    creatorId: MOCK_CREATOR_IDS["@miastrings"],
     caption: "Wrote this song last night, couldn't sleep. Hope it hits you the same way it hit me 🎸💫 #originalmusic #singer",
     song: "♫ Original - Mia Strings",
     likes: 389200,
     comments: 7854,
     shares: 19200,
-    isFollowing: false,
   },
   {
     id: "5",
@@ -80,12 +91,12 @@ const SAMPLE_VIDEOS: VideoItem[] = [
     creator: "ArtByKai",
     creatorHandle: "@artbykai",
     creatorAvatar: "https://i.pravatar.cc/150?img=24",
+    creatorId: MOCK_CREATOR_IDS["@artbykai"],
     caption: "4 hours of work in 45 seconds. Started with a blank wall, ended with a story 🎨 #streetart #mural #art",
     song: "♫ Midnight Rain - Taylor Swift",
     likes: 743100,
     comments: 9203,
     shares: 51400,
-    isFollowing: true,
   },
   {
     id: "6",
@@ -94,17 +105,16 @@ const SAMPLE_VIDEOS: VideoItem[] = [
     creator: "Flex Nation",
     creatorHandle: "@flexnation",
     creatorAvatar: "https://i.pravatar.cc/150?img=68",
+    creatorId: MOCK_CREATOR_IDS["@flexnation"],
     caption: "First time hitting this rooftop gap. My heart was pounding the entire time 🤸 #parkour #extreme #freerunning",
     song: "♫ Power - Kanye West",
     likes: 1200000,
     comments: 23100,
     shares: 87600,
-    isFollowing: false,
   },
 ];
 
 const LIKED_KEY = "tokvid_liked";
-const FOLLOWING_KEY = "tokvid_following";
 
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -114,76 +124,40 @@ function formatCount(n: number): string {
 
 export { formatCount };
 
-export function useVideoFeed() {
-  const [videos, setVideos] = useState<VideoItem[]>(SAMPLE_VIDEOS);
+// Base feed with isFollowing=false; the home screen merges real follow state
+export const BASE_VIDEOS: VideoItem[] = SAMPLE_VIDEOS.map((v) => ({
+  ...v,
+  isFollowing: false,
+}));
+
+export function useVideoFeed(followedIds: Set<string>) {
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
-  const [followingHandles, setFollowingHandles] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [likedRaw, followRaw] = await Promise.all([
-          AsyncStorage.getItem(LIKED_KEY),
-          AsyncStorage.getItem(FOLLOWING_KEY),
-        ]);
-        if (likedRaw) setLikedIds(new Set(JSON.parse(likedRaw)));
-        if (followRaw) {
-          const follows = new Set<string>(JSON.parse(followRaw));
-          setFollowingHandles(follows);
-          setVideos((prev) =>
-            prev.map((v) => ({ ...v, isFollowing: follows.has(v.creatorHandle) }))
-          );
-        }
-      } catch {}
-    };
-    load();
+    AsyncStorage.getItem(LIKED_KEY)
+      .then((raw) => { if (raw) setLikedIds(new Set(JSON.parse(raw))); })
+      .catch(() => {});
   }, []);
 
   const toggleLike = useCallback(
     async (id: string) => {
       setLikedIds((prev) => {
         const next = new Set(prev);
-        if (next.has(id)) {
-          next.delete(id);
-        } else {
-          next.add(id);
-        }
+        next.has(id) ? next.delete(id) : next.add(id);
         AsyncStorage.setItem(LIKED_KEY, JSON.stringify([...next])).catch(() => {});
         return next;
       });
-      setVideos((prev) =>
-        prev.map((v) =>
-          v.id === id
-            ? { ...v, likes: likedIds.has(id) ? v.likes - 1 : v.likes + 1 }
-            : v
-        )
-      );
-    },
-    [likedIds]
-  );
-
-  const toggleFollow = useCallback(
-    async (handle: string) => {
-      setFollowingHandles((prev) => {
-        const next = new Set(prev);
-        if (next.has(handle)) {
-          next.delete(handle);
-        } else {
-          next.add(handle);
-        }
-        AsyncStorage.setItem(FOLLOWING_KEY, JSON.stringify([...next])).catch(() => {});
-        return next;
-      });
-      setVideos((prev) =>
-        prev.map((v) =>
-          v.creatorHandle === handle
-            ? { ...v, isFollowing: !v.isFollowing }
-            : v
-        )
-      );
     },
     []
   );
 
-  return { videos, likedIds, toggleLike, toggleFollow };
+  // Merge real follow state from Supabase into video list
+  const videos: VideoItem[] = BASE_VIDEOS.map((v) => ({
+    ...v,
+    isFollowing: followedIds.has(v.creatorId),
+  }));
+
+  const followingVideos = videos.filter((v) => followedIds.has(v.creatorId));
+
+  return { videos, followingVideos, likedIds, toggleLike };
 }
