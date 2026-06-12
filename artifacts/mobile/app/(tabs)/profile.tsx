@@ -13,6 +13,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
+import { useFollow } from "../../context/FollowContext";
+import { useVideoFeed } from "../../hooks/useVideoFeed";
 import { useSavedVideos } from "../../hooks/useSavedVideos";
 
 const MY_VIDEOS = [
@@ -36,6 +38,8 @@ export default function ProfileScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const { user, profile, signOut, refreshProfile } = useAuth();
   const { savedVideos } = useSavedVideos();
+  const { followedIds } = useFollow();
+  const { likedVideos } = useVideoFeed(followedIds);
 
   useFocusEffect(
     useCallback(() => {
@@ -166,6 +170,35 @@ export default function ProfileScreen() {
                 <Image source={v.thumbnail} style={StyleSheet.absoluteFill} resizeMode="cover" />
                 <View style={styles.savedBadge}>
                   <Feather name="bookmark" size={10} color="#FFD60A" />
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )
+      ) : tab === "liked" ? (
+        likedVideos.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Feather name="heart" size={40} color="#333" />
+            <Text style={styles.emptyTitle}>Sin likes</Text>
+            <Text style={styles.emptyText}>
+              Los videos que te gusten aparecerán acá
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.grid}>
+            {likedVideos.map((v, idx) => (
+              <TouchableOpacity
+                key={v.id}
+                style={styles.gridItem}
+                onPress={() => router.push(`/liked-feed?startIndex=${idx}`)}
+              >
+                <Image
+                  source={v.isReal ? { uri: v.uri } : v.thumbnail}
+                  style={StyleSheet.absoluteFill}
+                  resizeMode="cover"
+                />
+                <View style={styles.viewsBadge}>
+                  <Feather name="heart" size={10} color="#FE2C55" />
                 </View>
               </TouchableOpacity>
             ))}

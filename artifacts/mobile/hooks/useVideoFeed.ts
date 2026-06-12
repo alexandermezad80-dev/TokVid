@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCallback, useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
 
 export interface VideoItem {
   id: string;
@@ -8,13 +9,14 @@ export interface VideoItem {
   creator: string;
   creatorHandle: string;
   creatorAvatar: string;
-  creatorId: string; // stable UUID for Supabase follows
+  creatorId: string;
   caption: string;
   song: string;
   likes: number;
   comments: number;
   shares: number;
   isFollowing: boolean;
+  isReal?: boolean; // true = comes from Supabase DB
 }
 
 // Stable fake UUIDs for mock creators so follows persist in Supabase
@@ -27,7 +29,7 @@ export const MOCK_CREATOR_IDS: Record<string, string> = {
   "@flexnation":  "66666666-6666-6666-6666-666666666666",
 };
 
-const SAMPLE_VIDEOS: Omit<VideoItem, "isFollowing">[] = [
+const MOCK_VIDEOS_RAW: Omit<VideoItem, "isFollowing" | "isReal">[] = [
   {
     id: "1",
     uri: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
@@ -114,7 +116,11 @@ const SAMPLE_VIDEOS: Omit<VideoItem, "isFollowing">[] = [
   },
 ];
 
-const LIKED_KEY = "tokvid_liked";
+export const BASE_VIDEOS: VideoItem[] = MOCK_VIDEOS_RAW.map((v) => ({
+  ...v,
+  isFollowing: false,
+  isReal: false,
+}));
 
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -124,40 +130,103 @@ function formatCount(n: number): string {
 
 export { formatCount };
 
-// Base feed with isFollowing=false; the home screen merges real follow state
-export const BASE_VIDEOS: VideoItem[] = SAMPLE_VIDEOS.map((v) => ({
-  ...v,
-  isFollowing: false,
-}));
+function rankScore(v: VideoItem): number {
+  return v.likes + v.shares * 2 + v.comments * 0.5;
+}
+
+async function fetchRealVideos(): Promise<VideoItem[]> {
+  try {
+    const { data: vids, error } = await supabase
+      .from("videos")
+      .select("id, url, caption, likes_count, comments_count, shares_count, created_at, user_id")
+      .order("likes_count", { ascending: false })
+      .limit(30);
+
+    if (error || !vids || vids.length === 0) return [];
+
+    const userIds = [...new Set(vids.map((v: any) => v.user_id))];
+    const { data: profs } = await supabase
+      .from("profiles")
+      .select("id, username, avatar_url")
+      .in("id", userIds);
+
+    const profileMap = new Map((profs ?? []).map((p: any) => [p.id, p]));
+
+    return vids.map((v: any): VideoItem => {
+      const prof: any = profileMap.get(v.user_id);
+      const username = prof?.username ?? "usuario";
+      const avatarUrl =
+        prof?.avatar_url ??
+        `https://api.dicebear.com/9.x/initials/png?seed=${encodeURIComponent(username)}&backgroundColor=FE2C55&textColor=ffffff`;
+      return {
+        id: v.id,
+        uri: v.url ?? "",
+        thumbnail: { uri: v.url ?? "" },
+        creator: username,
+        creatorHandle: `@${username}`,
+        creatorAvatar: avatarUrl,
+        creatorId: v.user_id,
+        caption: v.caption ?? "",
+        song: "♫ Sonido original",
+        likes: v.likes_count ?? 0,
+        comments: v.comments_count ?? 0,
+        shares: v.shares_count ?? 0,
+        isFollowing: false,
+        isReal: true,
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
+const LIKED_KEY = "tokvid_liked";
 
 export function useVideoFeed(followedIds: Set<string>) {
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+  const [realVideos, setRealVideos] = useState<VideoItem[]>([]);
 
+  // Load liked IDs from AsyncStorage
   useEffect(() => {
     AsyncStorage.getItem(LIKED_KEY)
       .then((raw) => { if (raw) setLikedIds(new Set(JSON.parse(raw))); })
       .catch(() => {});
   }, []);
 
-  const toggleLike = useCallback(
-    async (id: string) => {
-      setLikedIds((prev) => {
-        const next = new Set(prev);
-        next.has(id) ? next.delete(id) : next.add(id);
-        AsyncStorage.setItem(LIKED_KEY, JSON.stringify([...next])).catch(() => {});
-        return next;
-      });
-    },
-    []
-  );
+  // Fetch real videos from Supabase on mount
+  useEffect(() => {
+    fetchRealVideos().then(setRealVideos);
+  }, []);
 
-  // Merge real follow state from Supabase into video list
-  const videos: VideoItem[] = BASE_VIDEOS.map((v) => ({
+  const toggleLike = useCallback(async (id: string) => {
+    setLikedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      AsyncStorage.setItem(LIKED_KEY, JSON.stringify([...next])).catch(() => {});
+      return next;
+    });
+  }, []);
+
+  // Ranked real videos (newest real content first in the feed)
+  const rankedReal = [...realVideos].sort((a, b) => rankScore(b) - rankScore(a));
+
+  // Mock IDs that don't overlap with real video IDs
+  const realIds = new Set(realVideos.map((v) => v.id));
+  const mockFallback = BASE_VIDEOS.filter((v) => !realIds.has(v.id));
+
+  // Combined feed: real videos first, then mock padding
+  const combined: VideoItem[] = [...rankedReal, ...mockFallback];
+
+  // Merge follow state
+  const videos: VideoItem[] = combined.map((v) => ({
     ...v,
     isFollowing: followedIds.has(v.creatorId),
   }));
 
   const followingVideos = videos.filter((v) => followedIds.has(v.creatorId));
 
-  return { videos, followingVideos, likedIds, toggleLike };
+  // Liked videos (for the liked tab)
+  const likedVideos = videos.filter((v) => likedIds.has(v.id));
+
+  return { videos, followingVideos, likedIds, likedVideos, toggleLike };
 }
