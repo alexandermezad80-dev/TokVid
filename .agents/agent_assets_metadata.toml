@@ -1,5 +1,4 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "a4le8CueXODlSTKOAHFhz"
@@ -48,3 +47,9 @@ id = "6rCw2QczEGcFk-7W7b6RL"
 uri = "file://artifacts/mobile/assets/images/thumb6.png"
 type = "image"
 title = "video thumbnail parkour"
+
+[[outputs]]
+id = "qohjlutoxlNdb-GKtkuFW"
+uri = "file://tokvid-features.pdf"
+type = "pdf"
+title = "Tokvid — Lista de funcionalidades"
