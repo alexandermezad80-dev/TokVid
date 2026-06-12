@@ -73,11 +73,13 @@ export default function SavedFeedScreen() {
           isActive={index === activeIndex}
           isLiked={likedIds.has(item.id)}
           isSaved={savedIds.has(item.id)}
+          isOwner={false}
           onLike={() => toggleLike(item.id)}
           onFollow={() => toggleFollow(item.creatorId)}
           onComment={() => setCommentVideo(item)}
           onShare={() => handleShare(item)}
           onSave={() => toggleSave(item.id)}
+          onDelete={() => {}}
           onAvatarPress={() => router.push(`/user-profile?userId=${item.creatorId}`)}
         />
       );

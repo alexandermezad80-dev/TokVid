@@ -16,10 +16,12 @@ interface Props {
   shares: string;
   isLiked: boolean;
   isSaved: boolean;
+  isOwner: boolean;
   onLike: () => void;
   onComment: () => void;
   onShare: () => void;
   onSave: () => void;
+  onDelete: () => void;
   creatorAvatar: string;
 }
 
@@ -53,10 +55,12 @@ export default function VideoActions({
   shares,
   isLiked,
   isSaved,
+  isOwner,
   onLike,
   onComment,
   onShare,
   onSave,
+  onDelete,
   creatorAvatar,
 }: Props) {
   const heartScale = useRef(new Animated.Value(1)).current;
@@ -129,9 +133,11 @@ export default function VideoActions({
         </Animated.View>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.action}>
-        <Feather name="more-horizontal" size={34} color="#fff" />
-      </TouchableOpacity>
+      {isOwner && (
+        <TouchableOpacity onPress={onDelete} style={styles.action}>
+          <Feather name="more-horizontal" size={34} color="#fff" />
+        </TouchableOpacity>
+      )}
     </View>
   );
 }

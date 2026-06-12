@@ -2,6 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
 import {
+  Alert,
   Dimensions,
   FlatList,
   Platform,
@@ -15,7 +16,9 @@ import {
 import { supabase } from "../../lib/supabase";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import CommentsSheet from "../../components/CommentsSheet";
+import Toast from "../../components/Toast";
 import VideoCard from "../../components/VideoCard";
+import { useAuth } from "../../context/AuthContext";
 import { useFollow } from "../../context/FollowContext";
 import { VideoItem, formatCount, useVideoFeed } from "../../hooks/useVideoFeed";
 import { useSavedVideos } from "../../hooks/useSavedVideos";
@@ -44,15 +47,57 @@ export default function FeedScreen() {
   const [commentVideo, setCommentVideo] = useState<VideoItem | null>(null);
   const [activeTab, setActiveTab] = useState<"following" | "foryou">("foryou");
   const [shareOverrides, setShareOverrides] = useState<Record<string, number>>({});
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastKey, setToastKey] = useState(0);
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList>(null);
   const followingListRef = useRef<FlatList>(null);
 
+  const { user } = useAuth();
   const { followedIds, toggleFollow } = useFollow();
-  const { videos, followingVideos, likedIds, toggleLike } = useVideoFeed(followedIds);
+  const { videos, followingVideos, likedIds, toggleLike, removeVideo } = useVideoFeed(followedIds);
   const { savedIds, toggleSave } = useSavedVideos();
 
   const currentFeed = activeTab === "foryou" ? videos : followingVideos;
+
+  const handleDelete = useCallback(
+    (item: VideoItem) => {
+      Alert.alert(
+        "Eliminar video",
+        "¿Querés eliminar este video? Esta acción no se puede deshacer.",
+        [
+          { text: "Cancelar", style: "cancel" },
+          {
+            text: "Eliminar",
+            style: "destructive",
+            onPress: async () => {
+              // 1. Optimistic removal from feed
+              removeVideo(item.id);
+
+              // 2. Delete from Storage (best-effort)
+              try {
+                const parts = item.uri.split("/storage/v1/object/public/videos/");
+                if (parts.length === 2 && parts[1]) {
+                  await supabase.storage.from("videos").remove([parts[1]]);
+                }
+              } catch {
+                // ignore storage errors
+              }
+
+              // 3. Delete from DB
+              await supabase.from("videos").delete().eq("id", item.id);
+
+              // 4. Show toast
+              setToastKey((k) => k + 1);
+              setToastVisible(true);
+              setTimeout(() => setToastVisible(false), 2500);
+            },
+          },
+        ]
+      );
+    },
+    [removeVideo]
+  );
 
   const handleShare = useCallback(async (item: VideoItem) => {
     // Optimistic UI update
@@ -112,22 +157,25 @@ export default function FeedScreen() {
       const videoWithShares = extraShares > 0
         ? { ...item, shares: item.shares + extraShares }
         : item;
+      const isOwner = !!user && user.id === item.creatorId;
       return (
         <VideoCard
           video={videoWithShares}
           isActive={index === activeIndex}
           isLiked={likedIds.has(item.id)}
           isSaved={savedIds.has(item.id)}
+          isOwner={isOwner}
           onLike={() => toggleLike(item.id)}
           onFollow={() => toggleFollow(item.creatorId)}
           onComment={() => setCommentVideo(item)}
           onShare={() => handleShare(item)}
           onSave={() => toggleSave(item.id)}
+          onDelete={() => handleDelete(item)}
           onAvatarPress={() => router.push(`/user-profile?userId=${item.creatorId}`)}
         />
       );
     },
-    [activeIndex, likedIds, savedIds, shareOverrides, toggleLike, toggleFollow, toggleSave, handleShare]
+    [activeIndex, likedIds, savedIds, shareOverrides, user, toggleLike, toggleFollow, toggleSave, handleShare, handleDelete]
   );
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
@@ -190,6 +238,8 @@ export default function FeedScreen() {
         commentCount={commentVideo ? formatCount(commentVideo.comments) : "0"}
         videoId={commentVideo?.id ?? ""}
       />
+
+      <Toast key={toastKey} visible={toastVisible} message="Video eliminado" />
     </View>
   );
 }

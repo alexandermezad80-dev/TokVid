@@ -190,6 +190,11 @@ const LIKED_KEY = "tokvid_liked";
 export function useVideoFeed(followedIds: Set<string>) {
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [realVideos, setRealVideos] = useState<VideoItem[]>([]);
+  const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
+
+  const removeVideo = useCallback((id: string) => {
+    setRemovedIds((prev) => new Set([...prev, id]));
+  }, []);
 
   // Load liked IDs from AsyncStorage
   useEffect(() => {
@@ -219,8 +224,10 @@ export function useVideoFeed(followedIds: Set<string>) {
   const realIds = new Set(realVideos.map((v) => v.id));
   const mockFallback = BASE_VIDEOS.filter((v) => !realIds.has(v.id));
 
-  // Combined feed: real videos first, then mock padding
-  const combined: VideoItem[] = [...rankedReal, ...mockFallback];
+  // Combined feed: real videos first, then mock — minus any deleted ones
+  const combined: VideoItem[] = [...rankedReal, ...mockFallback].filter(
+    (v) => !removedIds.has(v.id)
+  );
 
   // Merge follow state
   const videos: VideoItem[] = combined.map((v) => ({
@@ -233,5 +240,5 @@ export function useVideoFeed(followedIds: Set<string>) {
   // Liked videos (for the liked tab)
   const likedVideos = videos.filter((v) => likedIds.has(v.id));
 
-  return { videos, followingVideos, likedIds, likedVideos, toggleLike };
+  return { videos, followingVideos, likedIds, likedVideos, toggleLike, removeVideo };
 }

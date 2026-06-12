@@ -19,11 +19,13 @@ interface Props {
   isActive: boolean;
   isLiked: boolean;
   isSaved: boolean;
+  isOwner: boolean;
   onLike: () => void;
   onFollow: () => void;
   onComment: () => void;
   onShare: () => void;
   onSave: () => void;
+  onDelete: () => void;
   onAvatarPress?: () => void;
 }
 
@@ -32,11 +34,13 @@ export default function VideoCard({
   isActive,
   isLiked,
   isSaved,
+  isOwner,
   onLike,
   onFollow,
   onComment,
   onShare,
   onSave,
+  onDelete,
   onAvatarPress,
 }: Props) {
   const [paused, setPaused] = useState(false);
@@ -98,10 +102,12 @@ export default function VideoCard({
           shares={formatCount(video.shares)}
           isLiked={isLiked}
           isSaved={isSaved}
+          isOwner={isOwner}
           onLike={onLike}
           onComment={onComment}
           onShare={onShare}
           onSave={onSave}
+          onDelete={onDelete}
           creatorAvatar={video.creatorAvatar}
         />
       </View>
