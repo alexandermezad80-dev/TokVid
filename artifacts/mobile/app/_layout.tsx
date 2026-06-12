@@ -54,6 +54,12 @@ function RootLayoutNav() {
               animation: "slide_from_bottom",
             }}
           />
+          <Stack.Screen
+            name="user-profile"
+            options={{
+              animation: "slide_from_right",
+            }}
+          />
         </>
       ) : (
         <Stack.Screen name="auth" />

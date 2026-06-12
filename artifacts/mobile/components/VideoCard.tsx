@@ -21,6 +21,7 @@ interface Props {
   onLike: () => void;
   onFollow: () => void;
   onComment: () => void;
+  onAvatarPress?: () => void;
 }
 
 export default function VideoCard({
@@ -30,6 +31,7 @@ export default function VideoCard({
   onLike,
   onFollow,
   onComment,
+  onAvatarPress,
 }: Props) {
   const [paused, setPaused] = useState(false);
   const [showThumbnail, setShowThumbnail] = useState(true);
@@ -82,6 +84,7 @@ export default function VideoCard({
           song={video.song}
           isFollowing={video.isFollowing}
           onFollow={onFollow}
+          onAvatarPress={onAvatarPress}
         />
         <VideoActions
           likes={formatCount(video.likes)}

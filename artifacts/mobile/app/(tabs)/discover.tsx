@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -92,7 +93,11 @@ function UserResultCard({ user }: { user: UserResult }) {
     ?? `https://api.dicebear.com/9.x/initials/png?seed=${encodeURIComponent(user.username)}&backgroundColor=FE2C55&textColor=ffffff&fontSize=38&size=80`;
 
   return (
-    <View style={styles.resultCard}>
+    <TouchableOpacity
+      style={styles.resultCard}
+      activeOpacity={0.7}
+      onPress={() => router.push(`/user-profile?userId=${user.id}`)}
+    >
       <Image source={{ uri: avatarUri }} style={styles.resultAvatar} />
       <View style={styles.resultInfo}>
         <Text style={styles.resultUsername}>@{user.username}</Text>
@@ -102,7 +107,7 @@ function UserResultCard({ user }: { user: UserResult }) {
         <Text style={styles.resultFollowers}>{fmtCount(user.followers_count)} seguidores</Text>
       </View>
       <FollowButton creatorId={user.id} size="sm" />
-    </View>
+    </TouchableOpacity>
   );
 }
 

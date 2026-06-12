@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
 import {
   Dimensions,
@@ -68,6 +69,7 @@ export default function FeedScreen() {
         onLike={() => toggleLike(item.id)}
         onFollow={() => toggleFollow(item.creatorId)}
         onComment={() => setCommentVideo(item)}
+        onAvatarPress={() => router.push(`/user-profile?userId=${item.creatorId}`)}
       />
     ),
     [activeIndex, likedIds, toggleLike, toggleFollow]

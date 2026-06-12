@@ -17,6 +17,7 @@ interface Props {
   song: string;
   isFollowing: boolean;
   onFollow: () => void;
+  onAvatarPress?: () => void;
 }
 
 export default function VideoInfo({
@@ -27,6 +28,7 @@ export default function VideoInfo({
   song,
   isFollowing,
   onFollow,
+  onAvatarPress,
 }: Props) {
   const slideX = useRef(new Animated.Value(-20)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -56,8 +58,12 @@ export default function VideoInfo({
       style={[styles.container, { transform: [{ translateX: slideX }], opacity }]}
     >
       <View style={styles.creator}>
-        <Image source={{ uri: creatorAvatar }} style={styles.avatar} />
-        <Text style={styles.creatorName}>{creatorHandle}</Text>
+        <TouchableOpacity onPress={onAvatarPress} activeOpacity={0.85}>
+          <Image source={{ uri: creatorAvatar }} style={styles.avatar} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={onAvatarPress} activeOpacity={0.85}>
+          <Text style={styles.creatorName}>{creatorHandle}</Text>
+        </TouchableOpacity>
         {!isFollowing && (
           <TouchableOpacity onPress={onFollow} style={styles.followBtn}>
             <Text style={styles.followText}>Follow</Text>
