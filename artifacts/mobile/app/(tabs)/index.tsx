@@ -5,12 +5,14 @@ import {
   Dimensions,
   FlatList,
   Platform,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
   ViewToken,
 } from "react-native";
+import { supabase } from "../../lib/supabase";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import CommentsSheet from "../../components/CommentsSheet";
 import VideoCard from "../../components/VideoCard";
@@ -40,6 +42,7 @@ export default function FeedScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [commentVideo, setCommentVideo] = useState<VideoItem | null>(null);
   const [activeTab, setActiveTab] = useState<"following" | "foryou">("foryou");
+  const [shareOverrides, setShareOverrides] = useState<Record<string, number>>({});
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList>(null);
   const followingListRef = useRef<FlatList>(null);
@@ -48,6 +51,47 @@ export default function FeedScreen() {
   const { videos, followingVideos, likedIds, toggleLike } = useVideoFeed(followedIds);
 
   const currentFeed = activeTab === "foryou" ? videos : followingVideos;
+
+  const handleShare = useCallback(async (item: VideoItem) => {
+    // Optimistic UI update
+    setShareOverrides((prev) => ({
+      ...prev,
+      [item.id]: (prev[item.id] ?? 0) + 1,
+    }));
+
+    // Open system share sheet
+    try {
+      await Share.share({
+        title: item.caption,
+        message: `${item.caption}\n\n${item.uri}`,
+        url: item.uri,
+      });
+    } catch {
+      // Share cancelled or failed — revert optimistic update
+      setShareOverrides((prev) => ({
+        ...prev,
+        [item.id]: Math.max(0, (prev[item.id] ?? 1) - 1),
+      }));
+      return;
+    }
+
+    // Increment in Supabase (best-effort — no-op for mock videos not in DB)
+    try {
+      const { data } = await supabase
+        .from("videos")
+        .select("shares_count")
+        .eq("id", item.id)
+        .maybeSingle();
+      if (data) {
+        await supabase
+          .from("videos")
+          .update({ shares_count: (data.shares_count ?? 0) + 1 })
+          .eq("id", item.id);
+      }
+    } catch {
+      // Silently ignore — local count already updated
+    }
+  }, []);
 
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -61,18 +105,25 @@ export default function FeedScreen() {
   const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 80 }).current;
 
   const renderItem = useCallback(
-    ({ item, index }: { item: VideoItem; index: number }) => (
-      <VideoCard
-        video={item}
-        isActive={index === activeIndex}
-        isLiked={likedIds.has(item.id)}
-        onLike={() => toggleLike(item.id)}
-        onFollow={() => toggleFollow(item.creatorId)}
-        onComment={() => setCommentVideo(item)}
-        onAvatarPress={() => router.push(`/user-profile?userId=${item.creatorId}`)}
-      />
-    ),
-    [activeIndex, likedIds, toggleLike, toggleFollow]
+    ({ item, index }: { item: VideoItem; index: number }) => {
+      const extraShares = shareOverrides[item.id] ?? 0;
+      const videoWithShares = extraShares > 0
+        ? { ...item, shares: item.shares + extraShares }
+        : item;
+      return (
+        <VideoCard
+          video={videoWithShares}
+          isActive={index === activeIndex}
+          isLiked={likedIds.has(item.id)}
+          onLike={() => toggleLike(item.id)}
+          onFollow={() => toggleFollow(item.creatorId)}
+          onComment={() => setCommentVideo(item)}
+          onShare={() => handleShare(item)}
+          onAvatarPress={() => router.push(`/user-profile?userId=${item.creatorId}`)}
+        />
+      );
+    },
+    [activeIndex, likedIds, shareOverrides, toggleLike, toggleFollow, handleShare]
   );
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;

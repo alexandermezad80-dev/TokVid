@@ -21,6 +21,7 @@ interface Props {
   onLike: () => void;
   onFollow: () => void;
   onComment: () => void;
+  onShare: () => void;
   onAvatarPress?: () => void;
 }
 
@@ -31,6 +32,7 @@ export default function VideoCard({
   onLike,
   onFollow,
   onComment,
+  onShare,
   onAvatarPress,
 }: Props) {
   const [paused, setPaused] = useState(false);
@@ -93,6 +95,7 @@ export default function VideoCard({
           isLiked={isLiked}
           onLike={onLike}
           onComment={onComment}
+          onShare={onShare}
           creatorAvatar={video.creatorAvatar}
         />
       </View>
