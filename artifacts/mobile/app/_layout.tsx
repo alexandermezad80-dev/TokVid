@@ -60,6 +60,12 @@ function RootLayoutNav() {
               animation: "slide_from_right",
             }}
           />
+          <Stack.Screen
+            name="chat"
+            options={{
+              animation: "slide_from_right",
+            }}
+          />
         </>
       ) : (
         <Stack.Screen name="auth" />

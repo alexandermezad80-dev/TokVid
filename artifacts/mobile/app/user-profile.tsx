@@ -16,6 +16,29 @@ import { useAuth } from "../context/AuthContext";
 import { useFollow } from "../context/FollowContext";
 import { supabase } from "../lib/supabase";
 
+async function findOrCreateConversation(myId: string, otherId: string): Promise<string | null> {
+  // Look for existing conversation in both orderings
+  const { data: existing } = await supabase
+    .from("conversations")
+    .select("id")
+    .or(
+      `and(user1_id.eq.${myId},user2_id.eq.${otherId}),and(user1_id.eq.${otherId},user2_id.eq.${myId})`
+    )
+    .limit(1)
+    .maybeSingle();
+
+  if (existing) return existing.id as string;
+
+  // Create new conversation
+  const { data: created } = await supabase
+    .from("conversations")
+    .insert({ user1_id: myId, user2_id: otherId })
+    .select("id")
+    .single();
+
+  return (created?.id as string) ?? null;
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface PublicProfile {
@@ -90,6 +113,18 @@ export default function UserProfileScreen() {
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"videos" | "liked">("videos");
+  const [msgLoading, setMsgLoading] = useState(false);
+
+  const openChat = async () => {
+    if (!user || !userId || !profile) return;
+    setMsgLoading(true);
+    const convId = await findOrCreateConversation(user.id, userId);
+    setMsgLoading(false);
+    if (!convId) return;
+    router.push(
+      `/chat?conversationId=${convId}&otherUserId=${userId}&otherUsername=${encodeURIComponent(profile.username)}&otherAvatar=${encodeURIComponent(profile.avatar_url ?? "")}`
+    );
+  };
 
   const fetchProfile = useCallback(async () => {
     if (!userId) return;
@@ -169,9 +204,15 @@ export default function UserProfileScreen() {
             ) : (
               <View style={styles.actions}>
                 <FollowButton userId={profile.id} />
-                <TouchableOpacity style={styles.msgBtn}>
-                  <Feather name="message-circle" size={18} color="#fff" />
-                  <Text style={styles.msgBtnText}>Mensaje</Text>
+                <TouchableOpacity style={styles.msgBtn} onPress={openChat} disabled={msgLoading}>
+                  {msgLoading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <>
+                      <Feather name="message-circle" size={18} color="#fff" />
+                      <Text style={styles.msgBtnText}>Mensaje</Text>
+                    </>
+                  )}
                 </TouchableOpacity>
               </View>
             )}

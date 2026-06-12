@@ -133,6 +133,7 @@ export default function FeedScreen() {
         visible={!!commentVideo}
         onClose={() => setCommentVideo(null)}
         commentCount={commentVideo ? formatCount(commentVideo.comments) : "0"}
+        videoId={commentVideo?.id ?? ""}
       />
     </View>
   );
