@@ -136,21 +136,25 @@ function rankScore(v: VideoItem): number {
 
 async function fetchRealVideos(): Promise<VideoItem[]> {
   try {
+    // select("*") avoids 400s caused by explicitly naming missing columns
     const { data: vids, error } = await supabase
       .from("videos")
-      .select("id, url, caption, likes_count, comments_count, shares_count, created_at, user_id")
-      .order("likes_count", { ascending: false })
+      .select("*")
       .limit(30);
 
     if (error || !vids || vids.length === 0) return [];
 
-    const userIds = [...new Set(vids.map((v: any) => v.user_id))];
-    const { data: profs } = await supabase
-      .from("profiles")
-      .select("id, username, avatar_url")
-      .in("id", userIds);
+    const userIds = [...new Set(vids.map((v: any) => v.user_id as string))];
 
-    const profileMap = new Map((profs ?? []).map((p: any) => [p.id, p]));
+    // Guard: .in() with empty array returns 400 in PostgREST
+    let profileMap = new Map<string, any>();
+    if (userIds.length > 0) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, username, avatar_url")
+        .in("id", userIds);
+      profileMap = new Map((profs ?? []).map((p: any) => [p.id as string, p]));
+    }
 
     return vids.map((v: any): VideoItem => {
       const prof: any = profileMap.get(v.user_id);
@@ -158,10 +162,11 @@ async function fetchRealVideos(): Promise<VideoItem[]> {
       const avatarUrl =
         prof?.avatar_url ??
         `https://api.dicebear.com/9.x/initials/png?seed=${encodeURIComponent(username)}&backgroundColor=FE2C55&textColor=ffffff`;
+      const videoUrl = v.url ?? v.video_url ?? "";
       return {
         id: v.id,
-        uri: v.url ?? "",
-        thumbnail: { uri: v.url ?? "" },
+        uri: videoUrl,
+        thumbnail: { uri: videoUrl },
         creator: username,
         creatorHandle: `@${username}`,
         creatorAvatar: avatarUrl,
