@@ -15,9 +15,11 @@ interface Props {
   comments: string;
   shares: string;
   isLiked: boolean;
+  isSaved: boolean;
   onLike: () => void;
   onComment: () => void;
   onShare: () => void;
+  onSave: () => void;
   creatorAvatar: string;
 }
 
@@ -50,13 +52,16 @@ export default function VideoActions({
   comments,
   shares,
   isLiked,
+  isSaved,
   onLike,
   onComment,
   onShare,
+  onSave,
   creatorAvatar,
 }: Props) {
   const heartScale = useRef(new Animated.Value(1)).current;
   const shareScale = useRef(new Animated.Value(1)).current;
+  const saveScale = useRef(new Animated.Value(1)).current;
 
   const handleLike = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -74,6 +79,17 @@ export default function VideoActions({
       Animated.timing(shareScale, { toValue: 1, duration: 100, useNativeDriver: true }),
     ]).start();
     onShare();
+  };
+
+  const handleSave = () => {
+    Haptics.impactAsync(
+      isSaved ? Haptics.ImpactFeedbackStyle.Light : Haptics.ImpactFeedbackStyle.Medium
+    );
+    Animated.sequence([
+      Animated.timing(saveScale, { toValue: 1.4, duration: 120, useNativeDriver: true }),
+      Animated.timing(saveScale, { toValue: 1, duration: 120, useNativeDriver: true }),
+    ]).start();
+    onSave();
   };
 
   return (
@@ -101,6 +117,16 @@ export default function VideoActions({
           <Feather name="share-2" size={34} color="#fff" />
         </Animated.View>
         <Text style={styles.count}>{shares}</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={handleSave} style={styles.action}>
+        <Animated.View style={{ transform: [{ scale: saveScale }] }}>
+          <Feather
+            name="bookmark"
+            size={34}
+            color={isSaved ? "#FFD60A" : "#fff"}
+          />
+        </Animated.View>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.action}>

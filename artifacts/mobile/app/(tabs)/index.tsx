@@ -18,6 +18,7 @@ import CommentsSheet from "../../components/CommentsSheet";
 import VideoCard from "../../components/VideoCard";
 import { useFollow } from "../../context/FollowContext";
 import { VideoItem, formatCount, useVideoFeed } from "../../hooks/useVideoFeed";
+import { useSavedVideos } from "../../hooks/useSavedVideos";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -49,6 +50,7 @@ export default function FeedScreen() {
 
   const { followedIds, toggleFollow } = useFollow();
   const { videos, followingVideos, likedIds, toggleLike } = useVideoFeed(followedIds);
+  const { savedIds, toggleSave } = useSavedVideos();
 
   const currentFeed = activeTab === "foryou" ? videos : followingVideos;
 
@@ -115,15 +117,17 @@ export default function FeedScreen() {
           video={videoWithShares}
           isActive={index === activeIndex}
           isLiked={likedIds.has(item.id)}
+          isSaved={savedIds.has(item.id)}
           onLike={() => toggleLike(item.id)}
           onFollow={() => toggleFollow(item.creatorId)}
           onComment={() => setCommentVideo(item)}
           onShare={() => handleShare(item)}
+          onSave={() => toggleSave(item.id)}
           onAvatarPress={() => router.push(`/user-profile?userId=${item.creatorId}`)}
         />
       );
     },
-    [activeIndex, likedIds, shareOverrides, toggleLike, toggleFollow, handleShare]
+    [activeIndex, likedIds, savedIds, shareOverrides, toggleLike, toggleFollow, toggleSave, handleShare]
   );
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;

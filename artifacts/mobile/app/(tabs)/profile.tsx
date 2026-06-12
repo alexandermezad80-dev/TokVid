@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
+import { useSavedVideos } from "../../hooks/useSavedVideos";
 
 const MY_VIDEOS = [
   { id: "1", image: require("../../assets/images/thumb1.png"), views: "2.8M", likes: "284K" },
@@ -30,10 +31,11 @@ function avatarUrl(user: any, profile: any): string {
 }
 
 export default function ProfileScreen() {
-  const [tab, setTab] = useState<"videos" | "liked">("videos");
+  const [tab, setTab] = useState<"videos" | "liked" | "saved">("videos");
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const { user, profile, signOut, refreshProfile } = useAuth();
+  const { savedVideos } = useSavedVideos();
 
   useFocusEffect(
     useCallback(() => {
@@ -125,32 +127,63 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.tabBar}>
-        {(["videos", "liked"] as const).map((t) => (
+        {([
+          { key: "videos", icon: "grid" },
+          { key: "liked",  icon: "heart" },
+          { key: "saved",  icon: "bookmark" },
+        ] as const).map(({ key, icon }) => (
           <TouchableOpacity
-            key={t}
-            onPress={() => setTab(t)}
-            style={[styles.tabItem, tab === t && styles.tabItemActive]}
+            key={key}
+            onPress={() => setTab(key)}
+            style={[styles.tabItem, tab === key && styles.tabItemActive]}
           >
             <Feather
-              name={t === "videos" ? "grid" : "heart"}
+              name={icon}
               size={20}
-              color={tab === t ? "#fff" : "#555"}
+              color={tab === key ? "#fff" : "#555"}
             />
           </TouchableOpacity>
         ))}
       </View>
 
-      <View style={styles.grid}>
-        {MY_VIDEOS.map((v) => (
-          <TouchableOpacity key={v.id} style={styles.gridItem}>
-            <Image source={v.image} style={StyleSheet.absoluteFill} resizeMode="cover" />
-            <View style={styles.viewsBadge}>
-              <Feather name="play" size={10} color="#fff" />
-              <Text style={styles.viewsText}>{v.views}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
+      {tab === "saved" ? (
+        savedVideos.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Feather name="bookmark" size={40} color="#333" />
+            <Text style={styles.emptyTitle}>Sin guardados</Text>
+            <Text style={styles.emptyText}>
+              Tocá el marcador en cualquier video para guardarlo acá
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.grid}>
+            {savedVideos.map((v, idx) => (
+              <TouchableOpacity
+                key={v.id}
+                style={styles.gridItem}
+                onPress={() => router.push(`/saved-feed?startIndex=${idx}`)}
+              >
+                <Image source={v.thumbnail} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                <View style={styles.savedBadge}>
+                  <Feather name="bookmark" size={10} color="#FFD60A" />
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )
+      ) : (
+        <View style={styles.grid}>
+          {MY_VIDEOS.map((v) => (
+            <TouchableOpacity key={v.id} style={styles.gridItem}>
+              <Image source={v.image} style={StyleSheet.absoluteFill} resizeMode="cover" />
+              <View style={styles.viewsBadge}>
+                <Feather name="play" size={10} color="#fff" />
+                <Text style={styles.viewsText}>{v.views}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       <View style={{ height: Platform.OS === "web" ? 34 : insets.bottom + 80 }} />
     </ScrollView>
@@ -249,5 +282,27 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
     textShadow: "0px 1px 4px rgba(0,0,0,0.9)",
+  },
+  savedBadge: {
+    position: "absolute",
+    bottom: 6,
+    left: 6,
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: 60,
+    gap: 12,
+    paddingHorizontal: 40,
+  },
+  emptyTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  emptyText: {
+    color: "#555",
+    fontSize: 14,
+    textAlign: "center",
+    lineHeight: 20,
   },
 });
