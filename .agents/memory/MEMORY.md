@@ -1,0 +1,1 @@
+- [Supabase RLS silent failures](supabase-rls-silent-failures.md) — supabase-js delete/update return empty data (no throw, no error) when RLS blocks; chain .select() and check data.length to verify.

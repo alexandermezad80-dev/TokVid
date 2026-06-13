@@ -47,6 +47,7 @@ export default function FeedScreen() {
   const [commentVideo, setCommentVideo] = useState<VideoItem | null>(null);
   const [activeTab, setActiveTab] = useState<"following" | "foryou">("foryou");
   const [shareOverrides, setShareOverrides] = useState<Record<string, number>>({});
+  const [toastMsg, setToastMsg] = useState("");
   const [toastVisible, setToastVisible] = useState(false);
   const [toastKey, setToastKey] = useState(0);
   const insets = useSafeAreaInsets();
@@ -60,6 +61,13 @@ export default function FeedScreen() {
 
   const currentFeed = activeTab === "foryou" ? videos : followingVideos;
 
+  const showToast = useCallback((msg: string) => {
+    setToastMsg(msg);
+    setToastKey((k) => k + 1);
+    setToastVisible(true);
+    setTimeout(() => setToastVisible(false), 2500);
+  }, []);
+
   const handleDelete = useCallback(
     (item: VideoItem) => {
       Alert.alert(
@@ -71,10 +79,25 @@ export default function FeedScreen() {
             text: "Eliminar",
             style: "destructive",
             onPress: async () => {
-              // 1. Optimistic removal from feed
+              // 1. Delete from DB FIRST and verify it actually happened.
+              //    Supabase does not throw when RLS blocks the delete — it
+              //    returns an empty result, so we must inspect the response.
+              const { data, error } = await supabase
+                .from("videos")
+                .delete()
+                .eq("id", item.id)
+                .select("id");
+
+              if (error || !data || data.length === 0) {
+                showToast("No se pudo eliminar el video");
+                return;
+              }
+
+              // 2. Confirmed deleted — remove from feed now.
               removeVideo(item.id);
 
-              // 2. Delete from Storage (best-effort)
+              // 3. Best-effort storage cleanup (row is already gone; an
+              //    orphaned file is harmless if this fails).
               try {
                 const parts = item.uri.split("/storage/v1/object/public/videos/");
                 if (parts.length === 2 && parts[1]) {
@@ -84,19 +107,13 @@ export default function FeedScreen() {
                 // ignore storage errors
               }
 
-              // 3. Delete from DB
-              await supabase.from("videos").delete().eq("id", item.id);
-
-              // 4. Show toast
-              setToastKey((k) => k + 1);
-              setToastVisible(true);
-              setTimeout(() => setToastVisible(false), 2500);
+              showToast("Video eliminado");
             },
           },
         ]
       );
     },
-    [removeVideo]
+    [removeVideo, showToast]
   );
 
   const handleShare = useCallback(async (item: VideoItem) => {
@@ -239,7 +256,7 @@ export default function FeedScreen() {
         videoId={commentVideo?.id ?? ""}
       />
 
-      <Toast key={toastKey} visible={toastVisible} message="Video eliminado" />
+      <Toast key={toastKey} visible={toastVisible} message={toastMsg} />
     </View>
   );
 }
