@@ -30,10 +30,14 @@ CREATE POLICY "Users can update own notifications"
   ON notifications FOR UPDATE
   USING (auth.uid() = user_id);
 
--- Service role can insert notifications (from API server)
-CREATE POLICY "Service can insert notifications"
-  ON notifications FOR INSERT
-  WITH CHECK (true);
+-- A logged-in user may only create notifications where THEY are the actor
+-- (e.g. mentioning someone). Prevents spoofing notifications as another user.
+-- Re-runnable: drop the old permissive policy if it exists.
+DROP POLICY IF EXISTS "Service can insert notifications" ON notifications;
+DROP POLICY IF EXISTS "Actor can insert notifications" ON notifications;
+CREATE POLICY "Actor can insert notifications"
+  ON notifications FOR INSERT TO authenticated
+  WITH CHECK (auth.uid() = actor_id);
 
 -- Index for fast lookup
 CREATE INDEX IF NOT EXISTS notifications_user_id_created_at_idx

@@ -134,6 +134,51 @@ function rankScore(v: VideoItem): number {
   return v.likes + v.shares * 2 + v.comments * 0.5;
 }
 
+/**
+ * Maps raw `videos` rows into VideoItem objects, joining their author profiles.
+ * Shared by the main feed and the hashtag (TagScreen) feed.
+ */
+export async function mapRowsToVideoItems(vids: any[]): Promise<VideoItem[]> {
+  if (!vids || vids.length === 0) return [];
+
+  const userIds = [...new Set(vids.map((v: any) => v.user_id as string))];
+
+  // Guard: .in() with empty array returns 400 in PostgREST
+  let profileMap = new Map<string, any>();
+  if (userIds.length > 0) {
+    const { data: profs } = await supabase
+      .from("profiles")
+      .select("id, username, avatar_url")
+      .in("id", userIds);
+    profileMap = new Map((profs ?? []).map((p: any) => [p.id as string, p]));
+  }
+
+  return vids.map((v: any): VideoItem => {
+    const prof: any = profileMap.get(v.user_id);
+    const username = prof?.username ?? "usuario";
+    const avatarUrl =
+      prof?.avatar_url ??
+      `https://api.dicebear.com/9.x/initials/png?seed=${encodeURIComponent(username)}&backgroundColor=FE2C55&textColor=ffffff`;
+    const videoUrl = v.url ?? v.video_url ?? "";
+    return {
+      id: v.id,
+      uri: videoUrl,
+      thumbnail: { uri: videoUrl },
+      creator: username,
+      creatorHandle: `@${username}`,
+      creatorAvatar: avatarUrl,
+      creatorId: v.user_id,
+      caption: v.caption ?? "",
+      song: "♫ Sonido original",
+      likes: v.likes_count ?? 0,
+      comments: v.comments_count ?? 0,
+      shares: v.shares_count ?? 0,
+      isFollowing: false,
+      isReal: true,
+    };
+  });
+}
+
 async function fetchRealVideos(): Promise<VideoItem[]> {
   try {
     // select("*") avoids 400s caused by explicitly naming missing columns
@@ -144,42 +189,7 @@ async function fetchRealVideos(): Promise<VideoItem[]> {
 
     if (error || !vids || vids.length === 0) return [];
 
-    const userIds = [...new Set(vids.map((v: any) => v.user_id as string))];
-
-    // Guard: .in() with empty array returns 400 in PostgREST
-    let profileMap = new Map<string, any>();
-    if (userIds.length > 0) {
-      const { data: profs } = await supabase
-        .from("profiles")
-        .select("id, username, avatar_url")
-        .in("id", userIds);
-      profileMap = new Map((profs ?? []).map((p: any) => [p.id as string, p]));
-    }
-
-    return vids.map((v: any): VideoItem => {
-      const prof: any = profileMap.get(v.user_id);
-      const username = prof?.username ?? "usuario";
-      const avatarUrl =
-        prof?.avatar_url ??
-        `https://api.dicebear.com/9.x/initials/png?seed=${encodeURIComponent(username)}&backgroundColor=FE2C55&textColor=ffffff`;
-      const videoUrl = v.url ?? v.video_url ?? "";
-      return {
-        id: v.id,
-        uri: videoUrl,
-        thumbnail: { uri: videoUrl },
-        creator: username,
-        creatorHandle: `@${username}`,
-        creatorAvatar: avatarUrl,
-        creatorId: v.user_id,
-        caption: v.caption ?? "",
-        song: "♫ Sonido original",
-        likes: v.likes_count ?? 0,
-        comments: v.comments_count ?? 0,
-        shares: v.shares_count ?? 0,
-        isFollowing: false,
-        isReal: true,
-      };
-    });
+    return mapRowsToVideoItems(vids);
   } catch {
     return [];
   }

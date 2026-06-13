@@ -1,0 +1,275 @@
+import { Feather } from "@expo/vector-icons";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  Platform,
+  Share,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewToken,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { supabase } from "../lib/supabase";
+import CommentsSheet from "../components/CommentsSheet";
+import VideoCard from "../components/VideoCard";
+import { useFollow } from "../context/FollowContext";
+import {
+  VideoItem,
+  formatCount,
+  mapRowsToVideoItems,
+  useVideoFeed,
+} from "../hooks/useVideoFeed";
+import { useSavedVideos } from "../hooks/useSavedVideos";
+
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+
+export default function TagScreen() {
+  const params = useLocalSearchParams<{ tag?: string }>();
+  const tag = (params.tag ?? "").toLowerCase();
+
+  const [videos, setVideos] = useState<VideoItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [commentVideo, setCommentVideo] = useState<VideoItem | null>(null);
+  const [shareOverrides, setShareOverrides] = useState<Record<string, number>>({});
+  const insets = useSafeAreaInsets();
+  const flatListRef = useRef<FlatList>(null);
+
+  const { followedIds, toggleFollow } = useFollow();
+  const { likedIds, toggleLike } = useVideoFeed(followedIds);
+  const { savedIds, toggleSave } = useSavedVideos();
+
+  const fetchTagVideos = useCallback(async () => {
+    if (!tag) {
+      setVideos([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data: h } = await supabase
+        .from("hashtags")
+        .select("id")
+        .eq("tag", tag)
+        .maybeSingle();
+      if (!h?.id) {
+        setVideos([]);
+        return;
+      }
+
+      const { data: rels } = await supabase
+        .from("video_hashtags")
+        .select("video_id")
+        .eq("hashtag_id", h.id);
+      const videoIds = (rels ?? []).map((r: any) => r.video_id as string);
+      if (videoIds.length === 0) {
+        setVideos([]);
+        return;
+      }
+
+      const { data: vids } = await supabase
+        .from("videos")
+        .select("*")
+        .in("id", videoIds)
+        .order("created_at", { ascending: false });
+
+      setVideos(await mapRowsToVideoItems(vids ?? []));
+    } catch {
+      setVideos([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [tag]);
+
+  useEffect(() => {
+    fetchTagVideos();
+  }, [fetchTagVideos]);
+
+  const onViewableItemsChanged = useCallback(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      if (viewableItems.length > 0) {
+        setActiveIndex(viewableItems[0].index ?? 0);
+      }
+    },
+    []
+  );
+
+  const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 80 }).current;
+
+  const handleShare = useCallback(async (item: VideoItem) => {
+    setShareOverrides((prev) => ({ ...prev, [item.id]: (prev[item.id] ?? 0) + 1 }));
+    try {
+      await Share.share({
+        title: item.caption,
+        message: `${item.caption}\n\n${item.uri}`,
+        url: item.uri,
+      });
+    } catch {
+      setShareOverrides((prev) => ({
+        ...prev,
+        [item.id]: Math.max(0, (prev[item.id] ?? 1) - 1),
+      }));
+      return;
+    }
+    try {
+      const { data } = await supabase
+        .from("videos")
+        .select("shares_count")
+        .eq("id", item.id)
+        .maybeSingle();
+      if (data) {
+        await supabase
+          .from("videos")
+          .update({ shares_count: (data.shares_count ?? 0) + 1 })
+          .eq("id", item.id);
+      }
+    } catch {
+      /* no-op */
+    }
+  }, []);
+
+  const renderItem = useCallback(
+    ({ item, index }: { item: VideoItem; index: number }) => {
+      const extraShares = shareOverrides[item.id] ?? 0;
+      const videoWithShares =
+        extraShares > 0 ? { ...item, shares: item.shares + extraShares } : item;
+      return (
+        <VideoCard
+          video={videoWithShares}
+          isActive={index === activeIndex}
+          isLiked={likedIds.has(item.id)}
+          isSaved={savedIds.has(item.id)}
+          isOwner={false}
+          onLike={() => toggleLike(item.id)}
+          onFollow={() => toggleFollow(item.creatorId)}
+          onComment={() => setCommentVideo(item)}
+          onShare={() => handleShare(item)}
+          onSave={() => toggleSave(item.id)}
+          onDelete={() => {}}
+          onAvatarPress={() => router.push(`/user-profile?userId=${item.creatorId}`)}
+        />
+      );
+    },
+    [
+      activeIndex,
+      likedIds,
+      savedIds,
+      shareOverrides,
+      toggleLike,
+      toggleFollow,
+      toggleSave,
+      handleShare,
+    ]
+  );
+
+  const topPad = Platform.OS === "web" ? 67 : insets.top;
+
+  const header = (
+    <View style={[styles.backBtn, { top: topPad + 8 }]}>
+      <TouchableOpacity onPress={() => router.back()} style={styles.backTouchable}>
+        <Feather name="arrow-left" size={24} color="#fff" />
+      </TouchableOpacity>
+      <Text style={styles.backTitle}>#{tag}</Text>
+    </View>
+  );
+
+  if (loading) {
+    return (
+      <View style={styles.empty}>
+        {header}
+        <ActivityIndicator color="#FE2C55" size="large" />
+      </View>
+    );
+  }
+
+  if (videos.length === 0) {
+    return (
+      <View style={styles.empty}>
+        {header}
+        <Feather name="hash" size={52} color="#555" />
+        <Text style={styles.emptyTitle}>Sin videos</Text>
+        <Text style={styles.emptyText}>Todavía no hay videos con #{tag}</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      {header}
+      <FlatList
+        ref={flatListRef}
+        data={videos}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        pagingEnabled
+        showsVerticalScrollIndicator={false}
+        snapToInterval={SCREEN_HEIGHT}
+        snapToAlignment="start"
+        decelerationRate="fast"
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
+        getItemLayout={(_, index) => ({
+          length: SCREEN_HEIGHT,
+          offset: SCREEN_HEIGHT * index,
+          index,
+        })}
+        removeClippedSubviews
+        maxToRenderPerBatch={3}
+        windowSize={3}
+      />
+      <CommentsSheet
+        visible={!!commentVideo}
+        commentCount={commentVideo ? formatCount(commentVideo.comments) : "0"}
+        videoId={commentVideo?.id ?? ""}
+        onClose={() => setCommentVideo(null)}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#000" },
+  backBtn: {
+    position: "absolute",
+    left: 16,
+    zIndex: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  backTouchable: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.4)",
+    borderRadius: 20,
+  },
+  backTitle: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+    textShadowColor: "rgba(0,0,0,0.8)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  empty: {
+    flex: 1,
+    backgroundColor: "#000",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+  emptyTitle: { color: "#fff", fontSize: 20, fontWeight: "700" },
+  emptyText: {
+    color: "#555",
+    fontSize: 14,
+    textAlign: "center",
+    paddingHorizontal: 40,
+  },
+});

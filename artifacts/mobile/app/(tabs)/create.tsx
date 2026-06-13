@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
+import { saveVideoTags } from "../../lib/videoTags";
 
 type Phase = "pick" | "edit" | "uploading" | "success";
 
@@ -75,11 +76,34 @@ export default function CreateScreen() {
 
       const { data: urlData } = supabase.storage.from("videos").getPublicUrl(fileName);
 
-      await supabase.from("videos").insert({
-        user_id: user.id,
-        url: urlData.publicUrl,
-        caption: caption.trim(),
-      });
+      const trimmedCaption = caption.trim();
+      const { data: inserted, error: insertError } = await supabase
+        .from("videos")
+        .insert({
+          user_id: user.id,
+          url: urlData.publicUrl,
+          caption: trimmedCaption,
+        })
+        .select("id")
+        .single();
+
+      if (insertError) throw insertError;
+
+      // Persist hashtags + mention notifications. Best-effort: the video is
+      // already uploaded, so tag failures must not surface as an upload error.
+      if (inserted?.id) {
+        try {
+          await saveVideoTags({
+            videoId: inserted.id,
+            caption: trimmedCaption,
+            authorId: user.id,
+            authorName: profile?.username ?? "Alguien",
+            authorAvatar: profile?.avatar_url ?? null,
+          });
+        } catch {
+          /* non-critical */
+        }
+      }
 
       setProgress(100);
       setPhase("success");

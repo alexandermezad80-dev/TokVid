@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React, { useEffect, useRef } from "react";
 import {
   Animated,
@@ -8,6 +9,49 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { supabase } from "../lib/supabase";
+
+async function goToMention(username: string) {
+  const { data } = await supabase
+    .from("profiles")
+    .select("id")
+    .ilike("username", username)
+    .maybeSingle();
+  if (data?.id) router.push(`/user-profile?userId=${data.id}`);
+}
+
+/** Renders a caption with clickable blue #hashtags and @mentions. */
+function CaptionText({ caption }: { caption: string }) {
+  if (!caption) return null;
+  const parts = caption.split(/([#@]\w+)/g);
+  return (
+    <Text style={styles.caption} numberOfLines={2}>
+      {parts.map((part, i) => {
+        if (/^#\w+$/.test(part)) {
+          const tag = part.slice(1).toLowerCase();
+          return (
+            <Text
+              key={i}
+              style={styles.tag}
+              onPress={() => router.push(`/tag?tag=${encodeURIComponent(tag)}`)}
+            >
+              {part}
+            </Text>
+          );
+        }
+        if (/^@\w+$/.test(part)) {
+          const username = part.slice(1);
+          return (
+            <Text key={i} style={styles.tag} onPress={() => goToMention(username)}>
+              {part}
+            </Text>
+          );
+        }
+        return <Text key={i}>{part}</Text>;
+      })}
+    </Text>
+  );
+}
 
 interface Props {
   creator: string;
@@ -71,9 +115,7 @@ export default function VideoInfo({
         )}
       </View>
 
-      <Text style={styles.caption} numberOfLines={2}>
-        {caption}
-      </Text>
+      <CaptionText caption={caption} />
 
       <View style={styles.songRow}>
         <Feather name="music" size={14} color="#fff" />
@@ -138,6 +180,10 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(0,0,0,0.5)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
+  },
+  tag: {
+    color: "#62D6FF",
+    fontWeight: "600",
   },
   songRow: {
     flexDirection: "row",
