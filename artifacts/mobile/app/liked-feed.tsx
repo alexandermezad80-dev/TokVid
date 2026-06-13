@@ -17,7 +17,7 @@ import { supabase } from "../lib/supabase";
 import CommentsSheet from "../components/CommentsSheet";
 import VideoCard from "../components/VideoCard";
 import { useFollow } from "../context/FollowContext";
-import { VideoItem, useVideoFeed } from "../hooks/useVideoFeed";
+import { VideoItem, formatCount, useVideoFeed } from "../hooks/useVideoFeed";
 import { useSavedVideos } from "../hooks/useSavedVideos";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -132,12 +132,12 @@ export default function LikedFeedScreen() {
         initialScrollIndex={Math.min(startIndex, likedVideos.length - 1)}
       />
 
-      {commentVideo && (
-        <CommentsSheet
-          videoId={commentVideo.id}
-          onClose={() => setCommentVideo(null)}
-        />
-      )}
+      <CommentsSheet
+        visible={!!commentVideo}
+        commentCount={commentVideo ? formatCount(commentVideo.comments) : "0"}
+        videoId={commentVideo?.id ?? ""}
+        onClose={() => setCommentVideo(null)}
+      />
     </View>
   );
 }
@@ -164,7 +164,9 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "700",
-    textShadow: "0px 1px 4px rgba(0,0,0,0.8)",
+    textShadowColor: "rgba(0,0,0,0.8)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   empty: {
     flex: 1,

@@ -314,7 +314,9 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 11,
     fontWeight: "700",
-    textShadow: "0px 1px 4px rgba(0,0,0,0.9)",
+    textShadowColor: "rgba(0,0,0,0.9)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   savedBadge: {
     position: "absolute",

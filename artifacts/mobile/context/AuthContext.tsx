@@ -83,12 +83,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (data.user) {
       // Try to upsert profile — gracefully fails if table doesn't exist yet
-      await supabase.from("profiles").upsert({
-        id: data.user.id,
-        username,
-        email,
-        created_at: new Date().toISOString(),
-      }).then(() => {}).catch(() => {});
+      try {
+        await supabase.from("profiles").upsert({
+          id: data.user.id,
+          username,
+          email,
+          created_at: new Date().toISOString(),
+        });
+      } catch { /* ignore — table may not exist yet */ }
     }
 
     return { error: null };
