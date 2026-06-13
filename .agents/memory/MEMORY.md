@@ -1,3 +1,4 @@
 - [Supabase RLS silent failures](supabase-rls-silent-failures.md) — supabase-js delete/update return empty data (no throw, no error) when RLS blocks; chain .select() and check data.length to verify.
 - [Mobile Supabase SQL convention](mobile-supabase-sql.md) — schema lives in artifacts/mobile/supabase/*.sql, run manually by user in Supabase SQL editor (not auto-migrated).
 - [Notifications insert policy](notifications-insert-policy.md) — client notification inserts must use RLS `auth.uid() = actor_id`, never `WITH CHECK (true)` (spoofing).
+- [Mobile video_id convention](mobile-video-id-convention.md) — tables referencing videos use `text` video_id (not uuid FK); feed mixes demo string ids "1".."6" and real uuids.

@@ -112,6 +112,27 @@ AS $$
 $$;
 GRANT EXECUTE ON FUNCTION upsert_hashtag(text) TO authenticated;
 
+-- 6. SAVED_VIDEOS ("Guardar video" / favorites feature)
+-- video_id is text (not a uuid FK) so it can reference BOTH real uploaded
+-- videos (uuid ids) and the demo/seed videos (ids "1".."6"), the same way
+-- the `comments` table stores video_id.
+CREATE TABLE IF NOT EXISTS saved_videos (
+  id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id     uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  video_id    text NOT NULL,
+  created_at  timestamptz DEFAULT now(),
+  UNIQUE (user_id, video_id)
+);
+ALTER TABLE saved_videos ENABLE ROW LEVEL SECURITY;
+-- A user can only see, save, and remove their OWN saved videos.
+DROP POLICY IF EXISTS "own read saved_videos"   ON saved_videos;
+DROP POLICY IF EXISTS "own insert saved_videos" ON saved_videos;
+DROP POLICY IF EXISTS "own delete saved_videos" ON saved_videos;
+CREATE POLICY "own read saved_videos"   ON saved_videos FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "own insert saved_videos" ON saved_videos FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "own delete saved_videos" ON saved_videos FOR DELETE TO authenticated USING (auth.uid() = user_id);
+CREATE INDEX IF NOT EXISTS saved_videos_user_id_idx ON saved_videos(user_id);
+
 -- ────────────────────────────────────────────────────────────
 -- AFTER running this SQL, also do in Supabase Dashboard:
 -- Storage → New bucket → Name: "videos" → Public: ON
