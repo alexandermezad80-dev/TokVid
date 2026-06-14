@@ -9,13 +9,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { SplashScreenComponent } from "@/components/SplashScreen";
 import { AuthProvider, useAuth } from "../context/AuthContext";
 import { FollowProvider } from "../context/FollowContext";
 import { NotificationsProvider } from "../context/NotificationsContext";
@@ -87,6 +88,7 @@ export default function RootLayout() {
     Inter_600SemiBold,
     Inter_700Bold,
   });
+  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     if (fontsLoaded || fontError) {
@@ -94,7 +96,15 @@ export default function RootLayout() {
     }
   }, [fontsLoaded, fontError]);
 
+  const handleSplashFinish = () => {
+    setShowSplash(false);
+  };
+
   if (!fontsLoaded && !fontError) return null;
+
+  if (showSplash) {
+    return <SplashScreenComponent onFinish={handleSplashFinish} />;
+  }
 
   return (
     <SafeAreaProvider>
