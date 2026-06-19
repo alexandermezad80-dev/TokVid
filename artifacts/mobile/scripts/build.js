@@ -66,11 +66,12 @@ function getDeploymentDomain() {
   if (process.env.EXPO_PUBLIC_DOMAIN) {
     return stripProtocol(process.env.EXPO_PUBLIC_DOMAIN);
   }
-
-  console.error(
-    "ERROR: No deployment domain found. Set REPLIT_INTERNAL_APP_DOMAIN, REPLIT_DEV_DOMAIN, or EXPO_PUBLIC_DOMAIN",
+  // Fallback for local/dev environments: do not fail the build, use localhost
+  // and log a warning so callers can set a proper deployment domain in CI.
+  console.warn(
+    "WARNING: No deployment domain found. Using fallback 'localhost'. Set REPLIT_INTERNAL_APP_DOMAIN, REPLIT_DEV_DOMAIN, or EXPO_PUBLIC_DOMAIN in CI for production builds.",
   );
-  process.exit(1);
+  return 'localhost';
 }
 
 function prepareDirectories(timestamp) {

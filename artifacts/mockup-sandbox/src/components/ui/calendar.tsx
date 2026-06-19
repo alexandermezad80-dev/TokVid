@@ -125,7 +125,8 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        Root: ({ className, rootRef, ...props }) => {
+        Root: (rootProps: any) => {
+          const { className, rootRef, ...props } = rootProps
           return (
             <div
               data-slot="calendar"
