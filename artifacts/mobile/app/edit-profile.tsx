@@ -20,7 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
 
-const SUPABASE_URL = "https://kvbppgofblldwnkkoscb.supabase.co";
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
 
 function avatarPlaceholder(user: any, profile: any): string {
   if (profile?.avatar_url) return profile.avatar_url;

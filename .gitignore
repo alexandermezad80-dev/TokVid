@@ -49,3 +49,10 @@ Thumbs.db
 .local/
 .env.local
 .env
+
+# Ignore Next build output inside artifacts
+artifacts/**/.next
+.next
+
+# Ignore local env files inside artifacts
+artifacts/**/.env.local
