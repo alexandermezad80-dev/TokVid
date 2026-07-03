@@ -4,6 +4,9 @@
   "license": "MIT",
   "scripts": {
     "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
+    "dev:web": "pnpm --filter @workspace/web run dev",
+    "dev:mobile": "pnpm --filter @workspace/mobile run dev",
+    "dev:api": "pnpm --filter @workspace/api-server run dev",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "build:fast": "PORT=5173 BASE_PATH=/ pnpm run typecheck && PORT=5173 BASE_PATH=/ pnpm -r --if-present --filter './artifacts/**' --filter './scripts' --filter '!./artifacts/mobile' run build",
     "typecheck:libs": "tsc --build",
