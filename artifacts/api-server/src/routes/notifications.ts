@@ -5,9 +5,9 @@ import { z } from "zod";
 const router = Router();
 
 function getSupabaseAdmin() {
-  // Env vars are inverted in this Replit project:
-  // EXPO_PUBLIC_SUPABASE_ANON_KEY actually holds the URL (starts with "https://")
-  // EXPO_PUBLIC_SUPABASE_URL actually holds the anon key
+  // Env var names are inverted in this project:
+  // EXPO_PUBLIC_SUPABASE_ANON_KEY may actually hold the URL (starts with "https://")
+  // EXPO_PUBLIC_SUPABASE_URL may actually hold the anon key
   const c1 = process.env["EXPO_PUBLIC_SUPABASE_URL"] ?? "";
   const c2 = process.env["EXPO_PUBLIC_SUPABASE_ANON_KEY"] ?? "";
   const realUrl = c1.startsWith("http") ? c1 : c2;
