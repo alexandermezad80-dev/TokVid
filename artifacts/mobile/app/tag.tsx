@@ -146,6 +146,7 @@ export default function TagScreen() {
           isSaved={savedIds.has(item.id)}
           isOwner={false}
           onLike={() => toggleLike(item.id)}
+          onDoubleLike={() => toggleLike(item.id)}
           onFollow={() => toggleFollow(item.creatorId)}
           onComment={() => setCommentVideo(item)}
           onShare={() => handleShare(item)}

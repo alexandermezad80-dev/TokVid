@@ -6,12 +6,14 @@ import {
   Dimensions,
   FlatList,
   Platform,
+  RefreshControl,
   Share,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
   ViewToken,
+  ActivityIndicator,
 } from "react-native";
 import { supabase } from "../../lib/supabase";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -56,7 +58,19 @@ export default function FeedScreen() {
 
   const { user } = useAuth();
   const { followedIds, toggleFollow } = useFollow();
-  const { videos, followingVideos, likedIds, toggleLike, removeVideo } = useVideoFeed(followedIds);
+  const {
+    videos,
+    followingVideos,
+    likedIds,
+    toggleLike,
+    removeVideo,
+    loadMore,
+    refreshFeed,
+    hasMore,
+    isLoading,
+    isRefreshing,
+    error,
+  } = useVideoFeed(followedIds);
   const { savedIds, toggleSave } = useSavedVideos();
 
   const currentFeed = activeTab === "foryou" ? videos : followingVideos;
@@ -183,6 +197,7 @@ export default function FeedScreen() {
           isSaved={savedIds.has(item.id)}
           isOwner={isOwner}
           onLike={() => toggleLike(item.id)}
+          onDoubleLike={() => toggleLike(item.id)}
           onFollow={() => toggleFollow(item.creatorId)}
           onComment={() => setCommentVideo(item)}
           onShare={() => handleShare(item)}
@@ -204,6 +219,11 @@ export default function FeedScreen() {
 
   return (
     <View style={styles.container}>
+      {isLoading && videos.length === 0 ? (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#FE2C55" />
+        </View>
+      ) : null}
       {activeTab === "following" && followingVideos.length === 0 ? (
         <EmptyFollowing onDiscover={() => handleTabSwitch("foryou")} />
       ) : (
@@ -226,6 +246,26 @@ export default function FeedScreen() {
             offset: SCREEN_HEIGHT * index,
             index,
           })}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={refreshFeed}
+              tintColor="#FE2C55"
+              title="Actualizando"
+              titleColor="#FE2C55"
+            />
+          }
+          onEndReached={() => {
+            if (hasMore) loadMore();
+          }}
+          onEndReachedThreshold={0.75}
+          ListFooterComponent={
+            hasMore ? (
+              <View style={styles.footer}>
+                <ActivityIndicator size="small" color="#FE2C55" />
+              </View>
+            ) : null
+          }
           removeClippedSubviews
           maxToRenderPerBatch={3}
           windowSize={3}
@@ -255,6 +295,11 @@ export default function FeedScreen() {
         commentCount={commentVideo ? formatCount(commentVideo.comments) : "0"}
         videoId={commentVideo?.id ?? ""}
       />
+      {error ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      ) : null}
 
       <Toast key={toastKey} visible={toastVisible} message={toastMsg} />
     </View>

@@ -32,11 +32,12 @@ CREATE POLICY "Users can update own notifications"
 
 -- A logged-in user may only create notifications where THEY are the actor
 -- (e.g. mentioning someone). Prevents spoofing notifications as another user.
--- Re-runnable: drop the old permissive policy if it exists.
-DROP POLICY IF EXISTS "Service can insert notifications" ON notifications;
-DROP POLICY IF EXISTS "Actor can insert notifications" ON notifications;
+-- Re-runnable: drop the existing insert policy if it exists before recreating it.
+DROP POLICY IF EXISTS "Service can insert notifications" ON public.notifications;
+DROP POLICY IF EXISTS "Actor can insert notifications" ON public.notifications;
+
 CREATE POLICY "Actor can insert notifications"
-  ON notifications FOR INSERT TO authenticated
+  ON public.notifications FOR INSERT TO authenticated
   WITH CHECK (auth.uid() = actor_id);
 
 -- Index for fast lookup

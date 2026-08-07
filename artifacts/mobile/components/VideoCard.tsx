@@ -1,9 +1,9 @@
+import { Feather } from "@expo/vector-icons";
 import { useVideoPlayer, VideoView } from "expo-video";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Dimensions,
   Image,
-  Platform,
   Pressable,
   StyleSheet,
   View,
@@ -21,6 +21,7 @@ interface Props {
   isSaved: boolean;
   isOwner: boolean;
   onLike: () => void;
+  onDoubleLike?: () => void;
   onFollow: () => void;
   onComment: () => void;
   onShare: () => void;
@@ -36,6 +37,7 @@ export default function VideoCard({
   isSaved,
   isOwner,
   onLike,
+  onDoubleLike,
   onFollow,
   onComment,
   onShare,
@@ -45,6 +47,8 @@ export default function VideoCard({
 }: Props) {
   const [paused, setPaused] = useState(false);
   const [showThumbnail, setShowThumbnail] = useState(true);
+  const [showDoubleLike, setShowDoubleLike] = useState(false);
+  const lastTap = useRef<number>(0);
 
   const player = useVideoPlayer(video.uri, (p) => {
     p.loop = true;
@@ -64,6 +68,16 @@ export default function VideoCard({
 
   const handleTap = () => {
     if (!isActive) return;
+    const now = Date.now();
+    if (now - lastTap.current < 300) {
+      setShowDoubleLike(true);
+      onDoubleLike?.();
+      setTimeout(() => setShowDoubleLike(false), 450);
+      lastTap.current = 0;
+      return;
+    }
+
+    lastTap.current = now;
     if (paused) {
       setPaused(false);
       player.play();
@@ -112,6 +126,11 @@ export default function VideoCard({
         />
       </View>
 
+      {showDoubleLike && (
+        <View style={styles.doubleLikeOverlay} pointerEvents="none">
+          <Feather name="heart" size={86} color="#FE2C55" />
+        </View>
+      )}
       {paused && (
         <View style={styles.pauseOverlay} pointerEvents="none">
           <View style={styles.pauseIcon}>
@@ -152,6 +171,13 @@ const styles = StyleSheet.create({
   pauseIcon: {
     flexDirection: "row",
     opacity: 0.8,
+  },
+  doubleLikeOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 4,
+    opacity: 0.95,
   },
   pauseBar: {
     width: 8,

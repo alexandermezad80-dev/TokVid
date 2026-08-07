@@ -133,6 +133,52 @@ CREATE POLICY "own insert saved_videos" ON saved_videos FOR INSERT TO authentica
 CREATE POLICY "own delete saved_videos" ON saved_videos FOR DELETE TO authenticated USING (auth.uid() = user_id);
 CREATE INDEX IF NOT EXISTS saved_videos_user_id_idx ON saved_videos(user_id);
 
+-- 7. VIDEO LIKES (like / unlike videos from Supabase)
+CREATE TABLE IF NOT EXISTS video_likes (
+  user_id     uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  video_id    text NOT NULL,
+  created_at  timestamptz DEFAULT now(),
+  PRIMARY KEY (user_id, video_id)
+);
+ALTER TABLE video_likes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "own select video_likes" ON video_likes FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "own insert video_likes" ON video_likes FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "own delete video_likes" ON video_likes FOR DELETE TO authenticated USING (auth.uid() = user_id);
+CREATE INDEX IF NOT EXISTS video_likes_user_id_idx ON video_likes(user_id);
+CREATE INDEX IF NOT EXISTS video_likes_video_id_idx ON video_likes(video_id);
+
+CREATE OR REPLACE FUNCTION update_video_like_counts()
+RETURNS TRIGGER AS $$
+DECLARE
+  video_owner uuid;
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    UPDATE videos
+    SET likes_count = likes_count + 1
+    WHERE id::text = NEW.video_id;
+
+    SELECT user_id INTO video_owner FROM videos WHERE id::text = NEW.video_id;
+    IF video_owner IS NOT NULL THEN
+      UPDATE profiles SET likes_count = likes_count + 1 WHERE id = video_owner;
+    END IF;
+  ELSIF TG_OP = 'DELETE' THEN
+    UPDATE videos
+    SET likes_count = GREATEST(0, likes_count - 1)
+    WHERE id::text = OLD.video_id;
+
+    SELECT user_id INTO video_owner FROM videos WHERE id::text = OLD.video_id;
+    IF video_owner IS NOT NULL THEN
+      UPDATE profiles SET likes_count = GREATEST(0, likes_count - 1) WHERE id = video_owner;
+    END IF;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_video_like_change
+  AFTER INSERT OR DELETE ON video_likes
+  FOR EACH ROW EXECUTE FUNCTION update_video_like_counts();
+
 -- ────────────────────────────────────────────────────────────
 -- AFTER running this SQL, also do in Supabase Dashboard:
 -- Storage → New bucket → Name: "videos" → Public: ON

@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 export interface VideoItem {
@@ -179,13 +179,18 @@ export async function mapRowsToVideoItems(vids: any[]): Promise<VideoItem[]> {
   });
 }
 
-async function fetchRealVideos(): Promise<VideoItem[]> {
+const PAGE_SIZE = 12;
+
+async function fetchRealVideos(page = 0): Promise<VideoItem[]> {
   try {
     // select("*") avoids 400s caused by explicitly naming missing columns
+    const from = page * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
     const { data: vids, error } = await supabase
       .from("videos")
       .select("*")
-      .limit(30);
+      .order("created_at", { ascending: false })
+      .range(from, to);
 
     if (error || !vids || vids.length === 0) return [];
 
@@ -201,31 +206,136 @@ export function useVideoFeed(followedIds: Set<string>) {
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [realVideos, setRealVideos] = useState<VideoItem[]>([]);
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [likedLoading, setLikedLoading] = useState(true);
+  const pageRef = useRef(0);
 
   const removeVideo = useCallback((id: string) => {
     setRemovedIds((prev) => new Set([...prev, id]));
   }, []);
 
-  // Load liked IDs from AsyncStorage
-  useEffect(() => {
-    AsyncStorage.getItem(LIKED_KEY)
-      .then((raw) => { if (raw) setLikedIds(new Set(JSON.parse(raw))); })
-      .catch(() => {});
+  const loadLikedIds = useCallback(async () => {
+    setLikedLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        const raw = await AsyncStorage.getItem(LIKED_KEY);
+        if (raw) setLikedIds(new Set(JSON.parse(raw)));
+      } else {
+        const { data, error } = await supabase
+          .from("video_likes")
+          .select("video_id")
+          .eq("user_id", user.id);
+        if (!error && data) {
+          setLikedIds(new Set((data as { video_id: string }[]).map((row) => row.video_id)));
+        }
+      }
+    } catch {
+      // fallback to cached likes
+      const raw = await AsyncStorage.getItem(LIKED_KEY);
+      if (raw) setLikedIds(new Set(JSON.parse(raw)));
+    } finally {
+      setLikedLoading(false);
+    }
   }, []);
 
-  // Fetch real videos from Supabase on mount
   useEffect(() => {
-    fetchRealVideos().then(setRealVideos);
+    loadLikedIds();
+    const { data: sub } = supabase.auth.onAuthStateChange(() => {
+      loadLikedIds();
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [loadLikedIds]);
+
+  const loadPage = useCallback(async (nextPage = 0) => {
+    setError(null);
+    if (nextPage === 0) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoading(true);
+    }
+
+    try {
+      const items = await fetchRealVideos(nextPage);
+      if (nextPage === 0) {
+        setRealVideos(items);
+      } else {
+        setRealVideos((prev) => [...prev, ...items]);
+      }
+      setPage(nextPage);
+      pageRef.current = nextPage;
+      setHasMore(items.length === PAGE_SIZE);
+    } catch (err) {
+      setError("No se pudo cargar el feed");
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadPage(0);
+  }, [loadPage]);
+
+  const loadMore = useCallback(() => {
+    if (isLoading || !hasMore) return;
+    loadPage(pageRef.current + 1);
+  }, [hasMore, isLoading, loadPage]);
+
+  const refreshFeed = useCallback(() => {
+    if (isRefreshing) return;
+    loadPage(0);
+  }, [isRefreshing, loadPage]);
 
   const toggleLike = useCallback(async (id: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    let alreadyLiked = false;
+
     setLikedIds((prev) => {
+      alreadyLiked = prev.has(id);
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      AsyncStorage.setItem(LIKED_KEY, JSON.stringify([...next])).catch(() => {});
+      alreadyLiked ? next.delete(id) : next.add(id);
       return next;
     });
-  }, []);
+
+    if (!user) {
+      const next = new Set(likedIds);
+      alreadyLiked ? next.delete(id) : next.add(id);
+      AsyncStorage.setItem(LIKED_KEY, JSON.stringify([...next])).catch(() => {});
+      return;
+    }
+
+    if (alreadyLiked) {
+      const { error } = await supabase
+        .from("video_likes")
+        .delete()
+        .match({ user_id: user.id, video_id: id });
+      if (error) {
+        setLikedIds((prev) => {
+          const next = new Set(prev);
+          next.add(id);
+          return next;
+        });
+      }
+      return;
+    }
+
+    const { error } = await supabase.from("video_likes").insert({
+      user_id: user.id,
+      video_id: id,
+    });
+    if (error) {
+      setLikedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  }, [likedIds]);
 
   // Ranked real videos (newest real content first in the feed)
   const rankedReal = [...realVideos].sort((a, b) => rankScore(b) - rankScore(a));
@@ -250,5 +360,19 @@ export function useVideoFeed(followedIds: Set<string>) {
   // Liked videos (for the liked tab)
   const likedVideos = videos.filter((v) => likedIds.has(v.id));
 
-  return { videos, followingVideos, likedIds, likedVideos, toggleLike, removeVideo };
+  return {
+    videos,
+    followingVideos,
+    likedIds,
+    likedVideos,
+    toggleLike,
+    removeVideo,
+    loadMore,
+    refreshFeed,
+    hasMore,
+    isLoading,
+    isRefreshing,
+    error,
+    likedLoading,
+  };
 }

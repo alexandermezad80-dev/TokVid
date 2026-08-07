@@ -49,3 +49,49 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- 5. VIDEO LIKES
+CREATE TABLE IF NOT EXISTS video_likes (
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  video_id text NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  PRIMARY KEY (user_id, video_id)
+);
+alter table video_likes enable row level security;
+create policy "own select video_likes" on video_likes for select to authenticated using (auth.uid() = user_id);
+create policy "own insert video_likes" on video_likes for insert to authenticated with check (auth.uid() = user_id);
+create policy "own delete video_likes" on video_likes for delete to authenticated using (auth.uid() = user_id);
+create index if not exists video_likes_user_id_idx on video_likes(user_id);
+create index if not exists video_likes_video_id_idx on video_likes(video_id);
+
+create or replace function update_video_like_counts()
+returns trigger as $$
+declare
+  video_owner uuid;
+begin
+  if tg_op = 'INSERT' then
+    update videos
+    set likes_count = likes_count + 1
+    where id::text = new.video_id;
+
+    select user_id into video_owner from videos where id::text = new.video_id;
+    if video_owner is not null then
+      update profiles set likes_count = likes_count + 1 where id = video_owner;
+    end if;
+  elsif tg_op = 'DELETE' then
+    update videos
+    set likes_count = greatest(0, likes_count - 1)
+    where id::text = old.video_id;
+
+    select user_id into video_owner from videos where id::text = old.video_id;
+    if video_owner is not null then
+      update profiles set likes_count = greatest(0, likes_count - 1) where id = video_owner;
+    end if;
+  end if;
+  return null;
+end;
+$$ language plpgsql security definer;
+
+create trigger on_video_like_change
+  after insert or delete on video_likes
+  for each row execute function update_video_like_counts();
