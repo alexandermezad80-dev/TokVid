@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { submitVideoFromScreen } from "../artifacts/mobile/components/VideoPublishScreen";
+import { submitVideoFromScreen } from "../artifacts/mobile/lib/video/videoPublishFlow";
 import type { VideoStorageClient } from "../artifacts/mobile/lib/video/createVideo";
 
 function createClient(): VideoStorageClient {
@@ -21,7 +21,7 @@ function createClient(): VideoStorageClient {
 }
 
 describe("VideoPublishScreen integration", () => {
-  it("simulates entering a caption and pressing Publish", async () => {
+  it("simulates typing a caption and pressing Publish", async () => {
     const client = createClient();
     const captionTypedByUser = "Mi video desde la pantalla de publicación";
     const fetchFile = vi.fn().mockResolvedValue({
