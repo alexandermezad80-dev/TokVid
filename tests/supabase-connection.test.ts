@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockQuery = vi.fn();
-const mockCreateClient = vi.fn(() => ({
-  from: vi.fn(() => ({
-    select: vi.fn(() => ({
-      limit: mockQuery,
+const { mockQuery, mockCreateClient } = vi.hoisted(() => ({
+  mockQuery: vi.fn(),
+  mockCreateClient: vi.fn(() => ({
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        limit: mockQuery,
+      })),
     })),
   })),
 }));
