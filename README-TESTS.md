@@ -42,19 +42,9 @@ Este comando ejecuta Vitest en modo de ejecución automática y termina cuando f
 
 Si Vitest termina indicando que las pruebas pasaron, significa que las comprobaciones realizadas fueron exitosas.
 
-Ejemplo:
-
-```text
-Tests passed
-```
-
-Esto permite continuar con la siguiente etapa del desarrollo.
-
 ### 🔴 Rojo / FAILURE
 
-Si una prueba falla, **no debemos ignorarla**.
-
-El resultado mostrará qué prueba falló y normalmente indicará el archivo y la línea relacionada. Primero se debe investigar la causa antes de modificar código.
+Si una prueba falla, **no debemos ignorarla**. Primero se debe investigar la causa antes de modificar código.
 
 Regla del proyecto:
 
@@ -69,6 +59,12 @@ pnpm test tests/smoke.test.ts
 ```
 
 La prueba inicial comprueba que la infraestructura funciona verificando que `1 + 1` sea igual a `2`.
+
+Para las pruebas del modelo de datos:
+
+```bash
+pnpm test tests/data-model.test.ts
+```
 
 ## 6. Cuando agreguemos nuevas pruebas
 
@@ -100,18 +96,17 @@ pnpm test
 pnpm test
 ```
 
-4. Si todas pasan, revisa también los demás chequeos del proyecto cuando correspondan.
-5. Si alguna falla, identifica la causa antes de continuar.
-6. Vuelve a ejecutar las pruebas después de corregir el problema.
-7. Solo después de verificar todo se debe considerar la integración del cambio.
+4. Revisa los demás chequeos del proyecto cuando correspondan.
+5. Si alguna prueba falla, identifica la causa antes de continuar.
+6. Corrige únicamente lo necesario.
+7. Vuelve a ejecutar las pruebas.
+8. Solo después de verificar todo se debe considerar la integración del cambio.
 
 ## 8. Pruebas en GitHub Actions
 
 La rama de configuración de pruebas también ejecuta automáticamente Vitest mediante GitHub Actions.
 
 Esto permite comprobar las pruebas en GitHub incluso cuando no se dispone de una computadora local.
-
-Una ejecución exitosa de GitHub Actions significa que el entorno automatizado pudo instalar las dependencias y ejecutar `pnpm test` correctamente.
 
 ## 9. Importante sobre credenciales
 
