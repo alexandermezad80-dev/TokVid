@@ -5,12 +5,15 @@ import {
   insertFollowSchema,
   insertNotificationSchema,
   insertProfileSchema,
+  insertSavedVideoSchema,
+  insertVideoLikeSchema,
   insertVideoSchema,
 } from "../lib/db/src/schema/core";
 
 const userId = "11111111-1111-4111-8111-111111111111";
 const otherUserId = "22222222-2222-4222-8222-222222222222";
 const videoId = "33333333-3333-4333-8333-333333333333";
+const demoVideoId = "1";
 
 function validProfile() {
   return { id: userId, username: "usuario123", email: "usuario@example.com" };
@@ -31,6 +34,10 @@ describe("Core data model validations", () => {
 
   it("rejects an empty comment", () => {
     expect(() => insertCommentSchema.parse({ videoId, userId, username: "usuario123", text: "   " })).toThrow();
+  });
+
+  it("accepts a comment for a string video id", () => {
+    expect(insertCommentSchema.parse({ videoId: demoVideoId, userId, username: "usuario123", text: "Buen video" })).toMatchObject({ videoId: demoVideoId });
   });
 
   it("rejects comments longer than 500 characters", () => {
@@ -55,5 +62,13 @@ describe("Core data model validations", () => {
 
   it("rejects an unknown notification type", () => {
     expect(() => insertNotificationSchema.parse({ userId, type: "unknown", message: "Aviso" })).toThrow();
+  });
+
+  it("accepts a string video id for a like", () => {
+    expect(insertVideoLikeSchema.parse({ userId, videoId: demoVideoId })).toMatchObject({ userId, videoId: demoVideoId });
+  });
+
+  it("accepts a string video id for a saved video", () => {
+    expect(insertSavedVideoSchema.parse({ userId, videoId: demoVideoId })).toMatchObject({ userId, videoId: demoVideoId });
   });
 });
