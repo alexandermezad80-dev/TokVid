@@ -12,7 +12,6 @@ import {
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
-const nonEmptyText = z.string().trim().min(1);
 const notificationTypes = ["like", "comment", "follow", "mention", "system"] as const;
 
 export const profiles = pgTable("profiles", {
@@ -42,7 +41,7 @@ export const videos = pgTable("videos", {
 
 export const comments = pgTable("comments", {
   id: uuid("id").primaryKey().defaultRandom(),
-  videoId: uuid("video_id").notNull(),
+  videoId: text("video_id").notNull(),
   userId: uuid("user_id").notNull(),
   username: text("username").notNull(),
   avatarUrl: text("avatar_url"),
@@ -58,26 +57,28 @@ export const follows = pgTable("follows", {
 
 export const videoLikes = pgTable("video_likes", {
   userId: uuid("user_id").notNull(),
-  videoId: uuid("video_id").notNull(),
+  videoId: text("video_id").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [primaryKey({ columns: [table.userId, table.videoId] })]);
 
 export const savedVideos = pgTable("saved_videos", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").notNull(),
-  videoId: uuid("video_id").notNull(),
+  videoId: text("video_id").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [unique("saved_videos_user_video_unique").on(table.userId, table.videoId)]);
 
 export const hashtags = pgTable("hashtags", {
   id: uuid("id").primaryKey().defaultRandom(),
   tag: text("tag").notNull(),
-  usageCount: integer("usage_count").notNull().default(0),
+  usageCount: integer("usage_count").notNull().default(1),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
 export const videoHashtags = pgTable("video_hashtags", {
   videoId: uuid("video_id").notNull(),
   hashtagId: uuid("hashtag_id").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 }, (table) => [primaryKey({ columns: [table.videoId, table.hashtagId] })]);
 
 export const conversations = pgTable("conversations", {
@@ -85,7 +86,7 @@ export const conversations = pgTable("conversations", {
   user1Id: uuid("user1_id").notNull(),
   user2Id: uuid("user2_id").notNull(),
   lastMessage: text("last_message"),
-  lastMessageAt: timestamp("last_message_at", { withTimezone: true }),
+  lastMessageAt: timestamp("last_message_at", { withTimezone: true }).defaultNow(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -106,7 +107,7 @@ export const notifications = pgTable("notifications", {
   actorAvatar: text("actor_avatar"),
   type: text("type").notNull(),
   message: text("message").notNull(),
-  data: jsonb("data"),
+  data: jsonb("data").default({}),
   read: boolean("read").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -161,7 +162,7 @@ export const insertVideoLikeSchema = createInsertSchema(videoLikes);
 export const insertSavedVideoSchema = createInsertSchema(savedVideos).omit({ id: true, createdAt: true });
 
 export const insertHashtagSchema = createInsertSchema(hashtags)
-  .omit({ id: true, usageCount: true })
+  .omit({ id: true, usageCount: true, createdAt: true })
   .superRefine((value, ctx) => {
     const tag = value.tag.trim();
     if (tag.length === 0 || tag.length > 100) {
@@ -169,7 +170,7 @@ export const insertHashtagSchema = createInsertSchema(hashtags)
     }
   });
 
-export const insertVideoHashtagSchema = createInsertSchema(videoHashtags);
+export const insertVideoHashtagSchema = createInsertSchema(videoHashtags).omit({ createdAt: true });
 
 export const insertConversationSchema = createInsertSchema(conversations)
   .omit({ id: true, createdAt: true })
