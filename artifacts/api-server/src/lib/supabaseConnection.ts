@@ -1,5 +1,16 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
+type SupabaseClientFactory = (
+  url: string,
+  key: string,
+  options: {
+    auth: {
+      autoRefreshToken: boolean;
+      persistSession: boolean;
+    };
+  },
+) => SupabaseClient;
+
 function getRequiredEnv(name: string): string {
   const value = process.env[name]?.trim();
   if (!value) {
@@ -8,7 +19,9 @@ function getRequiredEnv(name: string): string {
   return value;
 }
 
-export function getSupabaseAdmin(): SupabaseClient {
+export function getSupabaseAdmin(
+  clientFactory: SupabaseClientFactory = createClient,
+): SupabaseClient {
   const supabaseUrl =
     process.env.SUPABASE_URL?.trim() ||
     process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -20,7 +33,7 @@ export function getSupabaseAdmin(): SupabaseClient {
     );
   }
 
-  return createClient(supabaseUrl, serviceRoleKey, {
+  return clientFactory(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
@@ -37,9 +50,11 @@ export type SupabaseConnectionResult =
  * Supabase with its configured credentials. Errors are returned instead of
  * being thrown so callers can handle connection failures gracefully.
  */
-export async function checkSupabaseConnection(): Promise<SupabaseConnectionResult> {
+export async function checkSupabaseConnection(
+  clientFactory: SupabaseClientFactory = createClient,
+): Promise<SupabaseConnectionResult> {
   try {
-    const supabase = getSupabaseAdmin();
+    const supabase = getSupabaseAdmin(clientFactory);
     const { error } = await supabase.from("profiles").select("id").limit(1);
 
     if (error) {
@@ -50,7 +65,10 @@ export async function checkSupabaseConnection(): Promise<SupabaseConnectionResul
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Unknown Supabase connection error",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unknown Supabase connection error",
     };
   }
 }
