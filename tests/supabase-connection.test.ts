@@ -1,0 +1,80 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const mockQuery = vi.fn();
+const mockCreateClient = vi.fn(() => ({
+  from: vi.fn(() => ({
+    select: vi.fn(() => ({
+      limit: mockQuery,
+    })),
+  })),
+}));
+
+vi.mock("@supabase/supabase-js", () => ({
+  createClient: mockCreateClient,
+}));
+
+import {
+  checkSupabaseConnection,
+  getSupabaseAdmin,
+} from "../artifacts/api-server/src/lib/supabaseConnection";
+
+describe("Supabase connection module", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    delete process.env.SUPABASE_URL;
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  });
+
+  it("creates the client using environment variables", () => {
+    process.env.SUPABASE_URL = "https://example.supabase.co";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-role-key";
+
+    getSupabaseAdmin();
+
+    expect(mockCreateClient).toHaveBeenCalledWith(
+      "https://example.supabase.co",
+      "test-service-role-key",
+      expect.objectContaining({
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }),
+    );
+  });
+
+  it("fails gracefully when credentials are missing", async () => {
+    const result = await checkSupabaseConnection();
+
+    expect(result.ok).toBe(false);
+    expect(result).toEqual(
+      expect.objectContaining({
+        error: expect.stringContaining("SUPABASE_SERVICE_ROLE_KEY"),
+      }),
+    );
+  });
+
+  it("reports a successful database connection", async () => {
+    process.env.SUPABASE_URL = "https://example.supabase.co";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-role-key";
+    mockQuery.mockResolvedValue({ data: [], error: null });
+
+    const result = await checkSupabaseConnection();
+
+    expect(result).toEqual({ ok: true });
+  });
+
+  it("reports a database failure without throwing", async () => {
+    process.env.SUPABASE_URL = "https://example.supabase.co";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-role-key";
+    mockQuery.mockResolvedValue({
+      data: null,
+      error: { message: "Invalid API key" },
+    });
+
+    const result = await checkSupabaseConnection();
+
+    expect(result).toEqual({ ok: false, error: "Invalid API key" });
+  });
+});
