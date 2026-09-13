@@ -1,6 +1,7 @@
 import { Session, User } from "@supabase/supabase-js";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { registerUser } from "../lib/auth/register";
 
 export interface Profile {
   id: string;
@@ -71,29 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, username: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { username, display_name: username },
-      },
-    });
-
-    if (error) return { error: error.message };
-
-    if (data.user) {
-      // Try to upsert profile — gracefully fails if table doesn't exist yet
-      try {
-        await supabase.from("profiles").upsert({
-          id: data.user.id,
-          username,
-          email,
-          created_at: new Date().toISOString(),
-        });
-      } catch { /* ignore — table may not exist yet */ }
-    }
-
-    return { error: null };
+    return registerUser({ email, password, username }, supabase);
   };
 
   const signIn = async (email: string, password: string) => {
