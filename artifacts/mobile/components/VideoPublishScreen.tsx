@@ -8,27 +8,15 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { createVideo, type VideoStorageClient } from "../lib/video/createVideo";
+import { submitVideoFromScreen, type VideoPublishFlowInput } from "../lib/video/videoPublishFlow";
+import type { VideoStorageClient } from "../lib/video/createVideo";
 
-interface VideoPublishScreenProps {
-  userId: string;
-  videoUri: string;
-  client: VideoStorageClient;
-  fetchFile?: typeof fetch;
+interface VideoPublishScreenProps extends VideoPublishFlowInput {
   onPublished?: (videoId: string) => void;
   onClose?: () => void;
 }
 
-export async function submitVideoFromScreen(
-  props: Pick<VideoPublishScreenProps, "userId" | "videoUri" | "client" | "fetchFile">,
-  caption: string,
-) {
-  return createVideo(
-    { userId: props.userId, videoUri: props.videoUri, caption },
-    props.client,
-    props.fetchFile,
-  );
-}
+export { submitVideoFromScreen } from "../lib/video/videoPublishFlow";
 
 export default function VideoPublishScreen({
   userId,
