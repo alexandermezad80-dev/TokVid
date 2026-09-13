@@ -8,14 +8,67 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { createVideo, type VideoStorageClient } from "../lib/video/createVideo";
 
-export default function VideoPublishScreen() {
+interface VideoPublishScreenProps {
+  userId: string;
+  videoUri: string;
+  client: VideoStorageClient;
+  fetchFile?: typeof fetch;
+  onPublished?: (videoId: string) => void;
+  onClose?: () => void;
+}
+
+export async function submitVideoFromScreen(
+  props: Pick<VideoPublishScreenProps, "userId" | "videoUri" | "client" | "fetchFile">,
+  caption: string,
+) {
+  return createVideo(
+    { userId: props.userId, videoUri: props.videoUri, caption },
+    props.client,
+    props.fetchFile,
+  );
+}
+
+export default function VideoPublishScreen({
+  userId,
+  videoUri,
+  client,
+  fetchFile,
+  onPublished,
+  onClose,
+}: VideoPublishScreenProps) {
   const [caption, setCaption] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const handlePublish = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    setError(null);
+    setSuccess(false);
+
+    const result = await submitVideoFromScreen(
+      { userId, videoUri, client, fetchFile },
+      caption,
+    );
+
+    setSubmitting(false);
+
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+
+    setSuccess(true);
+    if (result.videoId) onPublished?.(result.videoId);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.iconButton}>
+        <TouchableOpacity style={styles.iconButton} onPress={onClose}>
           <Feather name="x" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Publicar video</Text>
@@ -31,6 +84,7 @@ export default function VideoPublishScreen() {
         <View style={styles.field}>
           <Text style={styles.label}>Descripción</Text>
           <TextInput
+            testID="video-caption"
             value={caption}
             onChangeText={setCaption}
             placeholder="Cuéntale a tu comunidad de qué trata..."
@@ -66,9 +120,17 @@ export default function VideoPublishScreen() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.publishButton}>
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {success ? <Text style={styles.success}>Video publicado correctamente.</Text> : null}
+
+        <TouchableOpacity
+          testID="publish-video-button"
+          style={[styles.publishButton, submitting && styles.publishButtonDisabled]}
+          onPress={handlePublish}
+          disabled={submitting}
+        >
           <Feather name="upload-cloud" size={20} color="#fff" />
-          <Text style={styles.publishText}>Publicar video</Text>
+          <Text style={styles.publishText}>{submitting ? "Publicando..." : "Publicar video"}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -116,6 +178,8 @@ const styles = StyleSheet.create({
   optionText: { flex: 1, marginLeft: 12 },
   optionTitle: { color: "#fff", fontSize: 14, fontWeight: "600" },
   optionSubtitle: { color: "#777", fontSize: 12, marginTop: 3 },
+  error: { color: "#ff6b81", marginTop: 12, textAlign: "center" },
+  success: { color: "#7ee787", marginTop: 12, textAlign: "center" },
   publishButton: {
     marginTop: 18,
     height: 54,
@@ -126,5 +190,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 10,
   },
+  publishButtonDisabled: { opacity: 0.65 },
   publishText: { color: "#fff", fontSize: 16, fontWeight: "700" },
 });
