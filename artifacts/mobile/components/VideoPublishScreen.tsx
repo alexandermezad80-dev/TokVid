@@ -9,7 +9,6 @@ import {
   View,
 } from "react-native";
 import { submitVideoFromScreen, type VideoPublishFlowInput } from "../lib/video/videoPublishFlow";
-import type { VideoStorageClient } from "../lib/video/createVideo";
 
 interface VideoPublishScreenProps extends VideoPublishFlowInput {
   onPublished?: (videoId: string) => void;
