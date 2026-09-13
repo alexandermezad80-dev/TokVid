@@ -13,12 +13,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 
 const nonEmptyText = z.string().trim().min(1);
-const emailSchema = z
-  .string()
-  .trim()
-  .email("El correo electrónico no es válido")
-  .optional()
-  .or(z.literal(""));
+const notificationTypes = ["like", "comment", "follow", "mention", "system"] as const;
 
 export const profiles = pgTable("profiles", {
   id: uuid("id").primaryKey(),
@@ -116,19 +111,44 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const insertProfileSchema = createInsertSchema(profiles, {
-  username: nonEmptyText.min(3, "El usuario debe tener al menos 3 caracteres").max(30),
-  email: emailSchema,
-}).omit({ createdAt: true, updatedAt: true });
+export const insertProfileSchema = createInsertSchema(profiles)
+  .omit({ createdAt: true, updatedAt: true })
+  .superRefine((value, ctx) => {
+    const username = value.username.trim();
+    if (username.length < 3 || username.length > 30) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["username"], message: "El usuario debe tener entre 3 y 30 caracteres" });
+    }
+    if (value.email && value.email.trim() !== "") {
+      const emailResult = z.string().email().safeParse(value.email.trim());
+      if (!emailResult.success) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["email"], message: "El correo electrónico no es válido" });
+      }
+    }
+  });
 
-export const insertVideoSchema = createInsertSchema(videos, {
-  url: z.string().trim().url("La URL del video no es válida"),
-  caption: z.string().trim().max(220).optional().nullable(),
-}).omit({ id: true, createdAt: true, likesCount: true, commentsCount: true, sharesCount: true });
+export const insertVideoSchema = createInsertSchema(videos)
+  .omit({ id: true, createdAt: true, likesCount: true, commentsCount: true, sharesCount: true })
+  .superRefine((value, ctx) => {
+    try {
+      new URL(value.url.trim());
+    } catch {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["url"], message: "La URL del video no es válida" });
+    }
+    if (value.caption != null && value.caption.trim().length > 220) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["caption"], message: "El texto no puede superar 220 caracteres" });
+    }
+  });
 
-export const insertCommentSchema = createInsertSchema(comments, {
-  text: nonEmptyText.max(500, "El comentario no puede superar 500 caracteres"),
-}).omit({ id: true, createdAt: true });
+export const insertCommentSchema = createInsertSchema(comments)
+  .omit({ id: true, createdAt: true })
+  .superRefine((value, ctx) => {
+    const text = value.text.trim();
+    if (text.length === 0) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["text"], message: "El comentario no puede estar vacío" });
+    } else if (text.length > 500) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["text"], message: "El comentario no puede superar 500 caracteres" });
+    }
+  });
 
 export const insertFollowSchema = createInsertSchema(follows).superRefine((value, ctx) => {
   if (value.followerId === value.followingId) {
@@ -140,26 +160,44 @@ export const insertVideoLikeSchema = createInsertSchema(videoLikes);
 
 export const insertSavedVideoSchema = createInsertSchema(savedVideos).omit({ id: true, createdAt: true });
 
-export const insertHashtagSchema = createInsertSchema(hashtags, {
-  tag: nonEmptyText.min(1).max(100),
-}).omit({ id: true, usageCount: true });
+export const insertHashtagSchema = createInsertSchema(hashtags)
+  .omit({ id: true, usageCount: true })
+  .superRefine((value, ctx) => {
+    const tag = value.tag.trim();
+    if (tag.length === 0 || tag.length > 100) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["tag"], message: "El hashtag debe tener entre 1 y 100 caracteres" });
+    }
+  });
 
 export const insertVideoHashtagSchema = createInsertSchema(videoHashtags);
 
-export const insertConversationSchema = createInsertSchema(conversations).omit({ id: true, createdAt: true }).superRefine((value, ctx) => {
-  if (value.user1Id === value.user2Id) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["user2Id"], message: "Una conversación necesita dos usuarios distintos" });
-  }
-});
+export const insertConversationSchema = createInsertSchema(conversations)
+  .omit({ id: true, createdAt: true })
+  .superRefine((value, ctx) => {
+    if (value.user1Id === value.user2Id) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["user2Id"], message: "Una conversación necesita dos usuarios distintos" });
+    }
+  });
 
-export const insertMessageSchema = createInsertSchema(messages, {
-  text: nonEmptyText.max(1000, "El mensaje no puede superar 1000 caracteres"),
-}).omit({ id: true, createdAt: true, readByOther: true });
+export const insertMessageSchema = createInsertSchema(messages)
+  .omit({ id: true, createdAt: true, readByOther: true })
+  .superRefine((value, ctx) => {
+    const text = value.text.trim();
+    if (text.length === 0 || text.length > 1000) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["text"], message: "El mensaje debe tener entre 1 y 1000 caracteres" });
+    }
+  });
 
-export const insertNotificationSchema = createInsertSchema(notifications, {
-  type: z.enum(["like", "comment", "follow", "mention", "system"]),
-  message: nonEmptyText,
-}).omit({ id: true, createdAt: true, read: true });
+export const insertNotificationSchema = createInsertSchema(notifications)
+  .omit({ id: true, createdAt: true, read: true })
+  .superRefine((value, ctx) => {
+    if (!(notificationTypes as readonly string[]).includes(value.type)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["type"], message: "El tipo de notificación no es válido" });
+    }
+    if (value.message.trim().length === 0) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["message"], message: "El mensaje de notificación no puede estar vacío" });
+    }
+  });
 
 export type Profile = typeof profiles.$inferSelect;
 export type Video = typeof videos.$inferSelect;
