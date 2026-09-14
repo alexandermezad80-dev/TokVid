@@ -28,7 +28,31 @@ create policy "Users can insert their own profile"
 
 create policy "Users can update their own profile"
   on public.profiles for update
-  using (auth.uid() = id);
+  using (auth.uid() = id)
+  with check (auth.uid() = id);
+
+-- Profile counters and identity fields are server-owned. Users may edit
+-- presentation fields (username, avatar_url, bio) but cannot spoof email,
+-- ownership, timestamps, or follower/like counters.
+create or replace function public.protect_profile_authoritative_fields()
+returns trigger as $$
+begin
+  if new.id is distinct from old.id
+     or new.email is distinct from old.email
+     or new.followers_count is distinct from old.followers_count
+     or new.following_count is distinct from old.following_count
+     or new.likes_count is distinct from old.likes_count
+     or new.created_at is distinct from old.created_at then
+    raise exception 'profile authoritative fields are immutable';
+  end if;
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists protect_profile_authoritative_fields on public.profiles;
+create trigger protect_profile_authoritative_fields
+  before update on public.profiles
+  for each row execute function public.protect_profile_authoritative_fields();
 
 -- 4. Auto-create profile on signup
 create or replace function public.handle_new_user()
@@ -70,23 +94,13 @@ declare
   video_owner uuid;
 begin
   if tg_op = 'INSERT' then
-    update videos
-    set likes_count = likes_count + 1
-    where id::text = new.video_id;
-
+    update videos set likes_count = likes_count + 1 where id::text = new.video_id;
     select user_id into video_owner from videos where id::text = new.video_id;
-    if video_owner is not null then
-      update profiles set likes_count = likes_count + 1 where id = video_owner;
-    end if;
+    if video_owner is not null then update profiles set likes_count = likes_count + 1 where id = video_owner; end if;
   elsif tg_op = 'DELETE' then
-    update videos
-    set likes_count = greatest(0, likes_count - 1)
-    where id::text = old.video_id;
-
+    update videos set likes_count = greatest(0, likes_count - 1) where id::text = old.video_id;
     select user_id into video_owner from videos where id::text = old.video_id;
-    if video_owner is not null then
-      update profiles set likes_count = greatest(0, likes_count - 1) where id = video_owner;
-    end if;
+    if video_owner is not null then update profiles set likes_count = greatest(0, likes_count - 1) where id = video_owner; end if;
   end if;
   return null;
 end;
