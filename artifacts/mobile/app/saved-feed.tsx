@@ -19,6 +19,7 @@ import VideoCard from "../components/VideoCard";
 import { useFollow } from "../context/FollowContext";
 import { VideoItem, formatCount, useVideoFeed } from "../hooks/useVideoFeed";
 import { useSavedVideos } from "../hooks/useSavedVideos";
+import { shareVideoFromFeed } from "../lib/video/shareVideoFromFeed";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -49,18 +50,18 @@ export default function SavedFeedScreen() {
 
   const handleShare = useCallback(async (item: VideoItem) => {
     setShareOverrides((prev) => ({ ...prev, [item.id]: (prev[item.id] ?? 0) + 1 }));
-    try {
-      await Share.share({ title: item.caption, message: `${item.caption}\n\n${item.uri}`, url: item.uri });
-    } catch {
+
+    const result = await shareVideoFromFeed(
+      { videoId: item.id, caption: item.caption, uri: item.uri },
+      supabase,
+      async ({ title, message, url }) => {
+        await Share.share({ title, message, url });
+      },
+    );
+
+    if (!result.shared) {
       setShareOverrides((prev) => ({ ...prev, [item.id]: Math.max(0, (prev[item.id] ?? 1) - 1) }));
-      return;
     }
-    try {
-      const { data } = await supabase.from("videos").select("shares_count").eq("id", item.id).maybeSingle();
-      if (data) {
-        await supabase.from("videos").update({ shares_count: (data.shares_count ?? 0) + 1 }).eq("id", item.id);
-      }
-    } catch { /* no-op */ }
   }, []);
 
   const renderItem = useCallback(
