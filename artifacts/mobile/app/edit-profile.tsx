@@ -18,9 +18,9 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
+import { editProfile } from "../lib/profile/editProfile";
+import { uploadAvatar } from "../lib/profile/uploadAvatar";
 import { supabase } from "../lib/supabase";
-
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
 
 function avatarPlaceholder(user: any, profile: any): string {
   if (profile?.avatar_url) return profile.avatar_url;
@@ -65,65 +65,9 @@ export default function EditProfileScreen() {
     }
   };
 
-  const uploadAvatar = async (): Promise<string | null> => {
-    if (!avatarUri || !user) return null;
-
-    setUploadingPhoto(true);
-    try {
-      const ext = avatarUri.split(".").pop()?.toLowerCase() ?? "jpg";
-      const fileName = `${user.id}.${ext}`;
-      const contentType = ext === "png" ? "image/png" : "image/jpeg";
-
-      // Fetch the image as blob
-      const response = await fetch(avatarUri);
-      const blob = await response.blob();
-
-      // Upload to Supabase Storage
-      const uploadRes = await fetch(
-        `${SUPABASE_URL}/storage/v1/object/avatars/${fileName}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": contentType,
-            Authorization: `Bearer ${user.id}`, // will use RLS
-            apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.startsWith("http")
-              ? process.env.EXPO_PUBLIC_SUPABASE_URL ?? ""
-              : process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "",
-          },
-          body: blob,
-        }
-      );
-
-      // Use supabase-js for the upload (handles auth automatically)
-      const { data, error } = await supabase.storage
-        .from("avatars")
-        .upload(fileName, blob, {
-          contentType,
-          upsert: true,
-        });
-
-      if (error) throw error;
-
-      const { data: urlData } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(fileName);
-
-      return urlData.publicUrl;
-    } catch (e: any) {
-      console.warn("Avatar upload failed:", e.message);
-      return null;
-    } finally {
-      setUploadingPhoto(false);
-    }
-  };
-
   const handleSave = async () => {
-    if (!username.trim()) {
-      setError("El nombre de usuario no puede estar vacío.");
-      return;
-    }
-    if (username.trim().length < 3) {
-      setError("El nombre de usuario debe tener al menos 3 caracteres.");
+    if (!user) {
+      setError("No se encontró el usuario actual.");
       return;
     }
 
@@ -133,36 +77,43 @@ export default function EditProfileScreen() {
     try {
       let avatarUrl = profile?.avatar_url ?? null;
 
-      // Upload new avatar if selected
       if (avatarUri) {
-        const uploaded = await uploadAvatar();
-        if (uploaded) avatarUrl = uploaded;
+        setUploadingPhoto(true);
+        const uploadResult = await uploadAvatar(
+          { userId: user.id, avatarUri },
+          supabase,
+        );
+        setUploadingPhoto(false);
+
+        if (uploadResult.error || !uploadResult.avatarUrl) {
+          setError(uploadResult.error ?? "No se pudo subir la foto de perfil");
+          return;
+        }
+
+        avatarUrl = uploadResult.avatarUrl;
       }
 
-      const updates: Record<string, any> = {
-        id: user!.id,
-        username: username.trim(),
-        bio: bio.trim(),
-        updated_at: new Date().toISOString(),
-      };
-      if (avatarUrl) updates.avatar_url = avatarUrl;
+      const result = await editProfile(
+        {
+          userId: user.id,
+          username,
+          bio,
+          avatarUrl,
+        },
+        supabase,
+      );
 
-      const { error: dbError } = await supabase
-        .from("profiles")
-        .upsert(updates);
-
-      if (dbError) throw dbError;
-
-      // Also update auth metadata
-      await supabase.auth.updateUser({
-        data: { username: username.trim(), display_name: username.trim() },
-      });
+      if (!result.saved) {
+        setError(result.error ?? "No se pudo guardar el perfil");
+        return;
+      }
 
       await refreshProfile();
       router.back();
     } catch (e: any) {
-      setError(e.message ?? "No se pudo guardar. Intentá de nuevo.");
+      setError(e?.message ?? "No se pudo guardar. Intentá de nuevo.");
     } finally {
+      setUploadingPhoto(false);
       setSaving(false);
     }
   };
@@ -200,7 +151,7 @@ export default function EditProfileScreen() {
       >
         {/* Avatar picker */}
         <View style={styles.avatarSection}>
-          <Pressable onPress={pickImage} style={styles.avatarWrap}>
+          <Pressable onPress={pickImage} style={styles.avatarWrap} disabled={saving}>
             <Image source={{ uri: currentAvatar }} style={styles.avatar} />
             <View style={styles.avatarOverlay}>
               {uploadingPhoto ? (
@@ -237,6 +188,7 @@ export default function EditProfileScreen() {
                 autoCapitalize="none"
                 autoCorrect={false}
                 maxLength={30}
+                editable={!saving}
                 style={styles.inputInner}
               />
             </View>
@@ -252,6 +204,7 @@ export default function EditProfileScreen() {
               placeholderTextColor="#555"
               multiline
               maxLength={150}
+              editable={!saving}
               style={[styles.input, styles.bioInput]}
             />
             <Text style={styles.hint}>{150 - bio.length} caracteres restantes</Text>
