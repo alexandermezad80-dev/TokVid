@@ -14,11 +14,6 @@ export interface MessageClient {
         }>;
       };
     };
-    update: (values: Record<string, unknown>) => {
-      eq: (column: string, value: string) => Promise<{
-        error: { message: string } | null;
-      }>;
-    };
   };
 }
 
@@ -57,13 +52,6 @@ export async function sendMessage(
 
     if (error) return { error: error.message };
     if (!data?.id) return { error: "No se pudo enviar el mensaje" };
-
-    const { error: conversationError } = await client
-      .from("conversations")
-      .update({ last_message: text, last_message_at: new Date().toISOString() })
-      .eq("id", input.conversationId);
-
-    if (conversationError) return { error: conversationError.message, messageId: data.id };
 
     return { error: null, messageId: data.id };
   } catch {
