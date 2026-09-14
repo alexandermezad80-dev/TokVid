@@ -4,18 +4,42 @@ import { z } from "zod";
 
 const router = Router();
 
-function getSupabaseAdmin() {
+function getSupabaseConfig() {
   // Env var names are inverted in this project:
   // EXPO_PUBLIC_SUPABASE_ANON_KEY may actually hold the URL (starts with "https://")
   // EXPO_PUBLIC_SUPABASE_URL may actually hold the anon key
   const c1 = process.env["EXPO_PUBLIC_SUPABASE_URL"] ?? "";
   const c2 = process.env["EXPO_PUBLIC_SUPABASE_ANON_KEY"] ?? "";
-  const realUrl = c1.startsWith("http") ? c1 : c2;
-  const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"] ?? "";
+  return {
+    url: c1.startsWith("http") ? c1 : c2,
+    anonKey: c1.startsWith("http") ? c2 : c1,
+    serviceKey: process.env["SUPABASE_SERVICE_ROLE_KEY"] ?? "",
+  };
+}
 
-  return createClient(realUrl, serviceKey, {
+function getSupabaseAdmin() {
+  const { url, serviceKey } = getSupabaseConfig();
+  return createClient(url, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
+}
+
+async function authenticateRequest(req: { headers: { authorization?: string } }) {
+  const authorization = req.headers.authorization ?? "";
+  const match = /^Bearer\s+(.+)$/i.exec(authorization);
+  if (!match) return null;
+
+  const { url, anonKey } = getSupabaseConfig();
+  if (!url || !anonKey) return null;
+
+  const client = createClient(url, anonKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+    global: { headers: { Authorization: `Bearer ${match[1]}` } },
+  });
+
+  const { data, error } = await client.auth.getUser(match[1]);
+  if (error || !data.user) return null;
+  return data.user;
 }
 
 const SendSchema = z.object({
@@ -30,23 +54,40 @@ const SendSchema = z.object({
 
 // POST /api/notifications/send
 router.post("/send", async (req, res) => {
+  const actor = await authenticateRequest(req);
+  if (!actor) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+
   const parsed = SendSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid payload", details: parsed.error.issues });
     return;
   }
 
-  const { userId, type, message, actorId, actorName, actorAvatar, data } = parsed.data;
+  const { userId, type, message, data } = parsed.data;
   const supabase = getSupabaseAdmin();
+
+  // The authenticated user is always the actor. Client-supplied actor identity
+  // is intentionally ignored so it cannot be spoofed.
+  const { data: actorProfile } = await supabase
+    .from("profiles")
+    .select("username, avatar_url")
+    .eq("id", actor.id)
+    .single();
+
+  const actorName = actorProfile?.username ?? null;
+  const actorAvatar = actorProfile?.avatar_url ?? null;
 
   // 1. Insert notification record
   const { data: notif, error: insertError } = await supabase
     .from("notifications")
     .insert({
       user_id: userId,
-      actor_id: actorId ?? null,
-      actor_name: actorName ?? null,
-      actor_avatar: actorAvatar ?? null,
+      actor_id: actor.id,
+      actor_name: actorName,
+      actor_avatar: actorAvatar,
       type,
       message,
       data: data ?? {},
