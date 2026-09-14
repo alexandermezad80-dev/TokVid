@@ -11,8 +11,8 @@ describe("API notification security invariants", () => {
   });
 
   it("does not trust actor identity supplied by the request body", () => {
-    expect(source).toMatch(/auth.*user.*id/is);
-    expect(source).toMatch(/actorId.*user\.id|user\.id.*actorId/is);
+    expect(source).toMatch(/actor_id:\s*actor\.id/i);
+    expect(source).not.toMatch(/actor_id:\s*actorId/i);
   });
 
   it("does not expose the service-role insert path without authentication", () => {
