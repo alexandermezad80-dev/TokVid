@@ -24,6 +24,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useFollow } from "../../context/FollowContext";
 import { VideoItem, formatCount, useVideoFeed } from "../../hooks/useVideoFeed";
 import { useSavedVideos } from "../../hooks/useSavedVideos";
+import { shareVideoFromFeed } from "../../lib/video/shareVideoFromFeed";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -93,9 +94,6 @@ export default function FeedScreen() {
             text: "Eliminar",
             style: "destructive",
             onPress: async () => {
-              // 1. Delete from DB FIRST and verify it actually happened.
-              //    Supabase does not throw when RLS blocks the delete — it
-              //    returns an empty result, so we must inspect the response.
               const { data, error } = await supabase
                 .from("videos")
                 .delete()
@@ -107,11 +105,8 @@ export default function FeedScreen() {
                 return;
               }
 
-              // 2. Confirmed deleted — remove from feed now.
               removeVideo(item.id);
 
-              // 3. Best-effort storage cleanup (row is already gone; an
-              //    orphaned file is harmless if this fails).
               try {
                 const parts = item.uri.split("/storage/v1/object/public/videos/");
                 if (parts.length === 2 && parts[1]) {
@@ -131,45 +126,28 @@ export default function FeedScreen() {
   );
 
   const handleShare = useCallback(async (item: VideoItem) => {
-    // Optimistic UI update
     setShareOverrides((prev) => ({
       ...prev,
       [item.id]: (prev[item.id] ?? 0) + 1,
     }));
 
-    // Open system share sheet
-    try {
-      await Share.share({
-        title: item.caption,
-        message: `${item.caption}\n\n${item.uri}`,
-        url: item.uri,
-      });
-    } catch {
-      // Share cancelled or failed — revert optimistic update
+    const result = await shareVideoFromFeed(
+      { videoId: item.id, caption: item.caption, uri: item.uri },
+      supabase,
+      (shareInput) => Share.share(shareInput),
+    );
+
+    if (!result.shared) {
       setShareOverrides((prev) => ({
         ...prev,
         [item.id]: Math.max(0, (prev[item.id] ?? 1) - 1),
       }));
-      return;
-    }
 
-    // Increment in Supabase (best-effort — no-op for mock videos not in DB)
-    try {
-      const { data } = await supabase
-        .from("videos")
-        .select("shares_count")
-        .eq("id", item.id)
-        .maybeSingle();
-      if (data) {
-        await supabase
-          .from("videos")
-          .update({ shares_count: (data.shares_count ?? 0) + 1 })
-          .eq("id", item.id);
+      if (result.error !== "El compartir fue cancelado o falló") {
+        showToast("No se pudo registrar el compartir");
       }
-    } catch {
-      // Silently ignore — local count already updated
     }
-  }, []);
+  }, [showToast]);
 
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -272,7 +250,6 @@ export default function FeedScreen() {
         />
       )}
 
-      {/* Header overlay */}
       <View style={[styles.header, { paddingTop: topPad + 10 }]}>
         <TouchableOpacity onPress={() => handleTabSwitch("following")}>
           <Text style={[styles.tab, activeTab === "following" && styles.tabActive]}>
