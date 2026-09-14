@@ -2,6 +2,7 @@ import { Session, User } from "@supabase/supabase-js";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { registerUser } from "../lib/auth/register";
+import { signInUser } from "../lib/auth/signIn";
 
 export interface Profile {
   id: string;
@@ -76,9 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { error: error.message };
-    return { error: null };
+    return signInUser({ email, password }, supabase);
   };
 
   const signOut = async () => {
