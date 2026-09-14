@@ -6,6 +6,7 @@ import React, {
   useState,
 } from "react";
 import { supabase } from "../lib/supabase";
+import { toggleFollow as updateFollow, type ToggleFollowResult } from "../lib/video/toggleFollow";
 import { useAuth } from "./AuthContext";
 
 interface FollowContextValue {
@@ -57,15 +58,31 @@ export function FollowProvider({ children }: { children: React.ReactNode }) {
       });
       setLoadingIds((prev) => new Set(prev).add(creatorId));
 
-      if (alreadyFollowing) {
-        await supabase
-          .from("follows")
-          .delete()
-          .match({ follower_id: user.id, following_id: creatorId });
-      } else {
-        await supabase
-          .from("follows")
-          .insert({ follower_id: user.id, following_id: creatorId });
+      let result: ToggleFollowResult;
+
+      try {
+        result = await updateFollow(
+          {
+            userId: user.id,
+            creatorId,
+            following: alreadyFollowing,
+          },
+          supabase,
+        );
+      } catch {
+        result = {
+          following: alreadyFollowing,
+          error: "No se pudo actualizar el seguimiento",
+        };
+      }
+
+      if (result.error) {
+        // Roll back the optimistic update when the database operation fails.
+        setFollowedIds((prev) => {
+          const next = new Set(prev);
+          alreadyFollowing ? next.add(creatorId) : next.delete(creatorId);
+          return next;
+        });
       }
 
       setLoadingIds((prev) => {
