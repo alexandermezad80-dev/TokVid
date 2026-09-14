@@ -25,6 +25,7 @@ import { useFollow } from "../../context/FollowContext";
 import { VideoItem, formatCount, useVideoFeed } from "../../hooks/useVideoFeed";
 import { useSavedVideos } from "../../hooks/useSavedVideos";
 import { shareVideoFromFeed } from "../../lib/video/shareVideoFromFeed";
+import { deleteVideo } from "../../lib/video/deleteVideo";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -94,28 +95,17 @@ export default function FeedScreen() {
             text: "Eliminar",
             style: "destructive",
             onPress: async () => {
-              const { data, error } = await supabase
-                .from("videos")
-                .delete()
-                .eq("id", item.id)
-                .select("id");
+              const result = await deleteVideo(
+                { videoId: item.id, videoUri: item.uri },
+                supabase,
+              );
 
-              if (error || !data || data.length === 0) {
+              if (!result.deleted) {
                 showToast("No se pudo eliminar el video");
                 return;
               }
 
               removeVideo(item.id);
-
-              try {
-                const parts = item.uri.split("/storage/v1/object/public/videos/");
-                if (parts.length === 2 && parts[1]) {
-                  await supabase.storage.from("videos").remove([parts[1]]);
-                }
-              } catch {
-                // ignore storage errors
-              }
-
               showToast("Video eliminado");
             },
           },
