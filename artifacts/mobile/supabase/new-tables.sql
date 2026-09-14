@@ -28,9 +28,31 @@ CREATE TABLE IF NOT EXISTS conversations (
   CONSTRAINT different_users CHECK (user1_id <> user2_id)
 );
 ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "participant read convos"   ON conversations FOR SELECT USING (auth.uid() = user1_id OR auth.uid() = user2_id);
-CREATE POLICY "participant insert convos" ON conversations FOR INSERT WITH CHECK (auth.uid() = user1_id OR auth.uid() = user2_id);
-CREATE POLICY "participant update convos" ON conversations FOR UPDATE USING (auth.uid() = user1_id OR auth.uid() = user2_id);
+CREATE POLICY "participant read convos" ON conversations FOR SELECT USING (auth.uid() = user1_id OR auth.uid() = user2_id);
+CREATE POLICY "participant insert convos" ON conversations FOR INSERT WITH CHECK (
+  auth.uid() = user1_id AND user1_id <> user2_id
+);
+CREATE POLICY "participant update convos" ON conversations FOR UPDATE
+  USING (auth.uid() = user1_id OR auth.uid() = user2_id)
+  WITH CHECK (auth.uid() = user1_id OR auth.uid() = user2_id);
+
+-- Membership must never be rewritten by a participant. Participants may only
+-- update conversation metadata such as last_message and last_message_at.
+CREATE OR REPLACE FUNCTION protect_conversation_membership()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.user1_id IS DISTINCT FROM OLD.user1_id
+     OR NEW.user2_id IS DISTINCT FROM OLD.user2_id
+     OR NEW.created_at IS DISTINCT FROM OLD.created_at THEN
+    RAISE EXCEPTION 'conversation membership is immutable';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS protect_conversation_membership ON conversations;
+CREATE TRIGGER protect_conversation_membership
+  BEFORE UPDATE ON conversations
+  FOR EACH ROW EXECUTE FUNCTION protect_conversation_membership();
 
 -- 3. MESSAGES
 CREATE TABLE IF NOT EXISTS messages (
@@ -49,9 +71,33 @@ CREATE POLICY "participant insert messages" ON messages FOR INSERT WITH CHECK (
   auth.uid() = sender_id AND
   EXISTS (SELECT 1 FROM conversations WHERE id = conversation_id AND (user1_id = auth.uid() OR user2_id = auth.uid()))
 );
-CREATE POLICY "participant update messages" ON messages FOR UPDATE USING (
-  EXISTS (SELECT 1 FROM conversations WHERE id = conversation_id AND (user1_id = auth.uid() OR user2_id = auth.uid()))
-);
+CREATE POLICY "participant update messages" ON messages FOR UPDATE
+  USING (
+    EXISTS (SELECT 1 FROM conversations WHERE id = conversation_id AND (user1_id = auth.uid() OR user2_id = auth.uid()))
+  )
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM conversations WHERE id = conversation_id AND (user1_id = auth.uid() OR user2_id = auth.uid()))
+    AND auth.uid() = sender_id
+  );
+
+-- A participant may mark a message as read, but may not transfer ownership,
+-- move it to another conversation, rewrite its text, or change its timestamp.
+CREATE OR REPLACE FUNCTION protect_message_authoritative_fields()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.conversation_id IS DISTINCT FROM OLD.conversation_id
+     OR NEW.sender_id IS DISTINCT FROM OLD.sender_id
+     OR NEW.text IS DISTINCT FROM OLD.text
+     OR NEW.created_at IS DISTINCT FROM OLD.created_at THEN
+    RAISE EXCEPTION 'message authoritative fields are immutable';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS protect_message_authoritative_fields ON messages;
+CREATE TRIGGER protect_message_authoritative_fields
+  BEFORE UPDATE ON messages
+  FOR EACH ROW EXECUTE FUNCTION protect_message_authoritative_fields();
 
 -- 4. VIDEOS (for uploads from Create screen)
 CREATE TABLE IF NOT EXISTS videos (
@@ -78,8 +124,10 @@ CREATE TABLE IF NOT EXISTS hashtags (
 );
 ALTER TABLE hashtags ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "anyone read hashtags" ON hashtags FOR SELECT USING (true);
-CREATE POLICY "auth insert hashtags" ON hashtags FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "auth update hashtags" ON hashtags FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+-- Direct client writes are intentionally blocked. The SECURITY DEFINER RPC
+-- below is the only write path and validates that the caller is authenticated.
+CREATE POLICY "authenticated hashtag insert" ON hashtags FOR INSERT TO authenticated WITH CHECK (false);
+CREATE POLICY "authenticated hashtag update" ON hashtags FOR UPDATE TO authenticated USING (false) WITH CHECK (false);
 
 CREATE TABLE IF NOT EXISTS video_hashtags (
   video_id    uuid NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
@@ -89,7 +137,6 @@ CREATE TABLE IF NOT EXISTS video_hashtags (
 );
 ALTER TABLE video_hashtags ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "anyone read video_hashtags" ON video_hashtags FOR SELECT USING (true);
--- Only the video's owner may attach hashtags to it.
 CREATE POLICY "owner insert video_hashtags" ON video_hashtags FOR INSERT TO authenticated
   WITH CHECK (
     EXISTS (SELECT 1 FROM videos v WHERE v.id = video_id AND v.user_id = auth.uid())
@@ -113,9 +160,6 @@ $$;
 GRANT EXECUTE ON FUNCTION upsert_hashtag(text) TO authenticated;
 
 -- 6. SAVED_VIDEOS ("Guardar video" / favorites feature)
--- video_id is text (not a uuid FK) so it can reference BOTH real uploaded
--- videos (uuid ids) and the demo/seed videos (ids "1".."6"), the same way
--- the `comments` table stores video_id.
 CREATE TABLE IF NOT EXISTS saved_videos (
   id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id     uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -124,7 +168,6 @@ CREATE TABLE IF NOT EXISTS saved_videos (
   UNIQUE (user_id, video_id)
 );
 ALTER TABLE saved_videos ENABLE ROW LEVEL SECURITY;
--- A user can only see, save, and remove their OWN saved videos.
 DROP POLICY IF EXISTS "own read saved_videos"   ON saved_videos;
 DROP POLICY IF EXISTS "own insert saved_videos" ON saved_videos;
 DROP POLICY IF EXISTS "own delete saved_videos" ON saved_videos;
@@ -153,19 +196,13 @@ DECLARE
   video_owner uuid;
 BEGIN
   IF TG_OP = 'INSERT' THEN
-    UPDATE videos
-    SET likes_count = likes_count + 1
-    WHERE id::text = NEW.video_id;
-
+    UPDATE videos SET likes_count = likes_count + 1 WHERE id::text = NEW.video_id;
     SELECT user_id INTO video_owner FROM videos WHERE id::text = NEW.video_id;
     IF video_owner IS NOT NULL THEN
       UPDATE profiles SET likes_count = likes_count + 1 WHERE id = video_owner;
     END IF;
   ELSIF TG_OP = 'DELETE' THEN
-    UPDATE videos
-    SET likes_count = GREATEST(0, likes_count - 1)
-    WHERE id::text = OLD.video_id;
-
+    UPDATE videos SET likes_count = GREATEST(0, likes_count - 1) WHERE id::text = OLD.video_id;
     SELECT user_id INTO video_owner FROM videos WHERE id::text = OLD.video_id;
     IF video_owner IS NOT NULL THEN
       UPDATE profiles SET likes_count = GREATEST(0, likes_count - 1) WHERE id = video_owner;
@@ -175,11 +212,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE TRIGGER on_video_like_change
+CREATE OR REPLACE TRIGGER on_video_like_change
   AFTER INSERT OR DELETE ON video_likes
   FOR EACH ROW EXECUTE FUNCTION update_video_like_counts();
 
--- ────────────────────────────────────────────────────────────
 -- AFTER running this SQL, also do in Supabase Dashboard:
 -- Storage → New bucket → Name: "videos" → Public: ON
--- ────────────────────────────────────────────────────────────
