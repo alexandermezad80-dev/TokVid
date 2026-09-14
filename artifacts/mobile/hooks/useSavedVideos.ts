@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { toggleSavedVideo } from "../lib/video/toggleSavedVideo";
 import { BASE_VIDEOS, VideoItem, mapRowsToVideoItems } from "./useVideoFeed";
 
 /**
@@ -69,18 +70,13 @@ export function useSavedVideos() {
     setSavedIds(optimistic);
     setSavedVideos(await resolveSavedVideos(optimistic));
 
-    const { error } = alreadySaved
-      ? await supabase
-          .from("saved_videos")
-          .delete()
-          .eq("user_id", user.id)
-          .eq("video_id", videoId)
-      : await supabase
-          .from("saved_videos")
-          .insert({ user_id: user.id, video_id: videoId });
+    const result = await toggleSavedVideo(
+      { userId: user.id, videoId, saved: alreadySaved },
+      supabase,
+    );
 
     // Roll back if Supabase rejected the change
-    if (error) {
+    if (result.error) {
       setSavedIds(new Set(savedIds));
       setSavedVideos(await resolveSavedVideos(savedIds));
     }
