@@ -16,8 +16,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
+import { createComment } from "../lib/video/createComment";
 
 interface CommentRow {
   id: string;
@@ -36,8 +35,6 @@ interface Props {
   videoId: string;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const s = Math.floor(diff / 1000);
@@ -49,32 +46,31 @@ function timeAgo(dateStr: string) {
   return `${Math.floor(h / 24)}d`;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
 export default function CommentsSheet({ visible, onClose, commentCount, videoId }: Props) {
   const [text, setText] = useState("");
   const [comments, setComments] = useState<CommentRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
   const { user, profile } = useAuth();
   const inputRef = useRef<TextInput>(null);
 
-  // Load comments when sheet opens
   useEffect(() => {
     if (!visible || !videoId) return;
     setLoading(true);
+    setError(null);
     supabase
       .from("comments")
       .select("*")
       .eq("video_id", videoId)
       .order("created_at", { ascending: false })
-      .then(({ data }) => {
+      .then(({ data, error: loadError }) => {
         setComments((data as CommentRow[]) ?? []);
+        if (loadError) setError("No se pudieron cargar los comentarios");
         setLoading(false);
       });
 
-    // Real-time subscription
     const channel = supabase
       .channel(`comments-${videoId}`)
       .on(
@@ -82,25 +78,37 @@ export default function CommentsSheet({ visible, onClose, commentCount, videoId 
         { event: "INSERT", schema: "public", table: "comments", filter: `video_id=eq.${videoId}` },
         (payload) => {
           setComments((prev) => [payload.new as CommentRow, ...prev]);
-        }
+        },
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [visible, videoId]);
 
   const send = async () => {
     if (!text.trim() || !user || sending) return;
     setSending(true);
-    const newComment = {
-      video_id: videoId,
-      user_id: user.id,
-      username: profile?.username ?? user.email?.split("@")[0] ?? "usuario",
-      avatar_url: profile?.avatar_url ?? null,
-      text: text.trim(),
-    };
-    setText("");
-    await supabase.from("comments").insert(newComment);
+    setError(null);
+
+    const result = await createComment(
+      {
+        videoId,
+        userId: user.id,
+        username: profile?.username ?? user.email?.split("@")[0] ?? "usuario",
+        avatarUrl: profile?.avatar_url ?? null,
+        text,
+      },
+      supabase,
+    );
+
+    if (result.error) {
+      setError(result.error);
+    } else {
+      setText("");
+    }
+
     setSending(false);
   };
 
@@ -124,6 +132,8 @@ export default function CommentsSheet({ visible, onClose, commentCount, videoId 
             <Feather name="x" size={22} color="#fff" />
           </TouchableOpacity>
         </View>
+
+        {error && <Text style={styles.errorText}>{error}</Text>}
 
         {loading ? (
           <View style={styles.center}>
@@ -181,28 +191,13 @@ export default function CommentsSheet({ visible, onClose, commentCount, videoId 
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)" },
-  sheet: {
-    backgroundColor: "#161823",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: "70%",
-    paddingHorizontal: 16,
-  },
-  handle: {
-    width: 40, height: 4, borderRadius: 2,
-    backgroundColor: "#444",
-    alignSelf: "center",
-    marginTop: 10, marginBottom: 16,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
+  sheet: { backgroundColor: "#161823", borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: "70%", paddingHorizontal: 16 },
+  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: "#444", alignSelf: "center", marginTop: 10, marginBottom: 16 },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   title: { color: "#fff", fontSize: 16, fontWeight: "700" },
   center: { height: 140, alignItems: "center", justifyContent: "center", gap: 12 },
   emptyText: { color: "#555", fontSize: 14 },
+  errorText: { color: "#ff6b6b", fontSize: 13, marginBottom: 10 },
   list: { flex: 1 },
   comment: { flexDirection: "row", marginBottom: 20, gap: 12 },
   avatar: { width: 40, height: 40, borderRadius: 20 },
@@ -210,23 +205,7 @@ const styles = StyleSheet.create({
   commentUser: { color: "#888", fontSize: 13, fontWeight: "600" },
   commentText: { color: "#fff", fontSize: 14, lineHeight: 20 },
   metaText: { color: "#555", fontSize: 12 },
-  inputRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderTopWidth: 1,
-    borderTopColor: "#2C2C2E",
-    paddingTop: 12,
-    gap: 12,
-  },
-  input: {
-    flex: 1,
-    backgroundColor: "#1C1C1E",
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    color: "#fff",
-    fontSize: 14,
-    maxHeight: 80,
-  },
+  inputRow: { flexDirection: "row", alignItems: "center", borderTopWidth: 1, borderTopColor: "#2C2C2E", paddingTop: 12, gap: 12 },
+  input: { flex: 1, backgroundColor: "#1C1C1E", borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, color: "#fff", fontSize: 14, maxHeight: 80 },
   sendBtn: { padding: 8 },
 });
