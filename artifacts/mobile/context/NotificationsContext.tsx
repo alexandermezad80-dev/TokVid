@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "./AuthContext";
+import { markAllNotificationsRead, markNotificationRead } from "../lib/notifications/notificationActions";
 
 export interface AppNotification {
   id: string;
@@ -43,7 +44,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         .limit(50);
       setNotifications((data as AppNotification[]) ?? []);
     } catch {
-      // Table may not exist yet
+      // Keep the existing notification state when loading fails.
     } finally {
       setLoading(false);
     }
@@ -51,10 +52,8 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     fetchNotifications();
-
     if (!user) return;
 
-    // Real-time subscription for new notifications
     const channel = supabase
       .channel(`notifications:${user.id}`)
       .on(
@@ -62,7 +61,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
         (payload) => {
           setNotifications((prev) => [payload.new as AppNotification, ...prev]);
-        }
+        },
       )
       .subscribe();
 
@@ -70,14 +69,20 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   }, [user, fetchNotifications]);
 
   const markRead = async (id: string) => {
+    const previous = notifications;
     setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
-    await supabase.from("notifications").update({ read: true }).eq("id", id);
+
+    const result = await markNotificationRead(id, supabase);
+    if (result.error) setNotifications(previous);
   };
 
   const markAllRead = async () => {
     if (!user) return;
+    const previous = notifications;
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    await supabase.from("notifications").update({ read: true }).eq("user_id", user.id);
+
+    const result = await markAllNotificationsRead(user.id, supabase);
+    if (result.error) setNotifications(previous);
   };
 
   const unreadCount = notifications.filter((n) => !n.read).length;
