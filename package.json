@@ -8,7 +8,7 @@
     "dev:mobile": "pnpm --filter @workspace/mobile run dev",
     "dev:api": "pnpm --filter @workspace/api-server run dev",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
-    "build:fast": "PORT=5173 BASE_PATH=/ pnpm run typecheck && PORT=5173 BASE_PATH=/ pnpm -r --if-present --filter './artifacts/**' --filter './scripts' --filter '!./artifacts/mobile' run build",
+    "build:fast": "PORT=5173 BASE_PATH=/ pnpm run typecheck && PORT=5173 BASE_PATH=/ pnpm -r --if-present --filter './artifacts/**' --filter './scripts' --if-present --filter '!./artifacts/mobile' run build",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
     "test": "vitest run"
@@ -18,5 +18,16 @@
     "prettier": "^3.8.3",
     "typescript": "~5.9.3",
     "vitest": "latest"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@firebase/util",
+      "@swc/core",
+      "esbuild",
+      "msw",
+      "protobufjs",
+      "sharp",
+      "unrs-resolver"
+    ]
   }
 }
