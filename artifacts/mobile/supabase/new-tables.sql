@@ -99,6 +99,25 @@ CREATE TRIGGER protect_message_authoritative_fields
   BEFORE UPDATE ON messages
   FOR EACH ROW EXECUTE FUNCTION protect_message_authoritative_fields();
 
+-- Conversation preview metadata is derived from messages, not trusted from clients.
+-- Only advance the preview when the inserted message is newer than the current preview.
+CREATE OR REPLACE FUNCTION update_conversation_metadata_from_message()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE conversations
+  SET last_message = NEW.text,
+      last_message_at = NEW.created_at
+  WHERE id = NEW.conversation_id
+    AND (last_message_at IS NULL OR NEW.created_at >= last_message_at);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+DROP TRIGGER IF EXISTS update_conversation_metadata_from_message ON messages;
+CREATE TRIGGER update_conversation_metadata_from_message
+  AFTER INSERT ON messages
+  FOR EACH ROW EXECUTE FUNCTION update_conversation_metadata_from_message();
+
 -- 4. VIDEOS (for uploads from Create screen)
 CREATE TABLE IF NOT EXISTS videos (
   id              uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -132,7 +151,7 @@ CREATE POLICY "authenticated hashtag update" ON hashtags FOR UPDATE TO authentic
 CREATE TABLE IF NOT EXISTS video_hashtags (
   video_id    uuid NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
   hashtag_id  uuid NOT NULL REFERENCES hashtags(id) ON DELETE CASCADE,
-  created_at  timestamptz DEFAULT now(),
+  created_at   timestamptz DEFAULT now(),
   PRIMARY KEY (video_id, hashtag_id)
 );
 ALTER TABLE video_hashtags ENABLE ROW LEVEL SECURITY;
