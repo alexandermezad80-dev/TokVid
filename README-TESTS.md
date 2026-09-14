@@ -10,7 +10,7 @@ En este proyecto usamos **Vitest** para las pruebas unitarias. La infraestructur
 
 Necesitas tener instalado en tu computadora:
 
-- Node.js 20 o una versión compatible con el proyecto.
+- Node.js 20 o superior. El workflow de Vitest en GitHub Actions utiliza Node.js 24.
 - pnpm.
 - Git.
 
