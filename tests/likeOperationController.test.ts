@@ -32,7 +32,8 @@ describe("like operation concurrency", () => {
       return { error: null };
     });
 
-    // Let the queued first operation start before asserting its call arguments.
+    // Allow the promise chain that starts the first queued operation to run.
+    await Promise.resolve();
     await Promise.resolve();
 
     expect([...controller.snapshot()]).toEqual([]);
