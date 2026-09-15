@@ -167,6 +167,8 @@ CREATE POLICY "read own follows" ON public.follows FOR SELECT USING (auth.uid() 
 CREATE POLICY "insert own follows" ON public.follows FOR INSERT WITH CHECK (auth.uid() = follower_id);
 CREATE POLICY "delete own follows" ON public.follows FOR DELETE USING (auth.uid() = follower_id);
 
+-- SECURITY DEFINER is required for the trigger to update profile counters.
+-- It is trigger-only: direct RPC execution is revoked from client roles.
 CREATE OR REPLACE FUNCTION public.update_follow_counts()
 RETURNS trigger AS $$
 BEGIN
@@ -187,7 +189,10 @@ BEGIN
   END IF;
   RETURN NULL;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+REVOKE EXECUTE ON FUNCTION public.update_follow_counts() FROM anon;
+REVOKE EXECUTE ON FUNCTION public.update_follow_counts() FROM authenticated;
 
 DROP TRIGGER IF EXISTS on_follow_change ON public.follows;
 CREATE TRIGGER on_follow_change
