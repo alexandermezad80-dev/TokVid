@@ -22,7 +22,9 @@ CREATE POLICY "delete own follows"
   ON follows FOR DELETE
   USING (auth.uid() = follower_id);
 
--- Trigger: keep following_count / followers_count in profiles in sync
+-- Trigger: keep following_count / followers_count in profiles in sync.
+-- SECURITY DEFINER is required because this trigger updates profile counters,
+-- but direct RPC execution is intentionally revoked below.
 CREATE OR REPLACE FUNCTION update_follow_counts()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -43,7 +45,11 @@ BEGIN
   END IF;
   RETURN NULL;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+-- The function is trigger-only. Clients must not be able to call it as RPC.
+REVOKE EXECUTE ON FUNCTION update_follow_counts() FROM anon;
+REVOKE EXECUTE ON FUNCTION update_follow_counts() FROM authenticated;
 
 CREATE OR REPLACE TRIGGER on_follow_change
   AFTER INSERT OR DELETE ON follows
