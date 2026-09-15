@@ -35,14 +35,14 @@ function createClient(overrides: Partial<MessageClient> = {}): MessageClient {
 }
 
 describe("sendMessage", () => {
-  it("sends a valid message and updates the conversation preview", async () => {
+  it("sends a valid message without directly updating conversation preview metadata", async () => {
     const client = createClient();
 
     const result = await sendMessage(input, client);
 
     expect(result).toEqual({ error: null, messageId: "message-123" });
     expect(client.from).toHaveBeenCalledWith("messages");
-    expect(client.from).toHaveBeenCalledWith("conversations");
+    expect(client.from).not.toHaveBeenCalledWith("conversations");
   });
 
   it("rejects an empty message without calling the database", async () => {
