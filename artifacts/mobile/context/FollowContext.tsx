@@ -45,7 +45,7 @@ export function FollowProvider({ children }: { children: React.ReactNode }) {
 
   const toggleFollow = useCallback(
     async (creatorId: string) => {
-      if (!user) return;
+      if (!user || creatorId === user.id) return;
 
       const alreadyFollowing = followedIds.has(creatorId);
 
@@ -57,15 +57,25 @@ export function FollowProvider({ children }: { children: React.ReactNode }) {
       });
       setLoadingIds((prev) => new Set(prev).add(creatorId));
 
+      let error = null;
+
       if (alreadyFollowing) {
-        await supabase
+        ({ error } = await supabase
           .from("follows")
           .delete()
-          .match({ follower_id: user.id, following_id: creatorId });
+          .match({ follower_id: user.id, following_id: creatorId }));
       } else {
-        await supabase
+        ({ error } = await supabase
           .from("follows")
-          .insert({ follower_id: user.id, following_id: creatorId });
+          .insert({ follower_id: user.id, following_id: creatorId }));
+      }
+
+      if (error) {
+        setFollowedIds((prev) => {
+          const next = new Set(prev);
+          alreadyFollowing ? next.add(creatorId) : next.delete(creatorId);
+          return next;
+        });
       }
 
       setLoadingIds((prev) => {
