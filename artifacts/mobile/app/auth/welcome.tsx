@@ -9,24 +9,24 @@ import {
   StyleSheet,
   Text,
   View,
+  Image,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width, height } = Dimensions.get("window");
 
 const clips = [
-  { emoji: "🎸", label: "Música", tone: "#00F2EA", rotate: "-6deg" },
-  { emoji: "😂", label: "Humor", tone: "#FF0050", rotate: "5deg" },
-  { emoji: "🌴", label: "Latinoamérica", tone: "#7C5CFC", rotate: "-4deg" },
-  { emoji: "🍳", label: "Cocina", tone: "#FFB000", rotate: "7deg" },
-  { emoji: "⚽", label: "Deportes", tone: "#20D66B", rotate: "-5deg" },
-  { emoji: "🎨", label: "Arte", tone: "#FF4D9D", rotate: "4deg" },
+  { source: require("../../../assets/images/thumb1.png"), label: "Música", rotate: "-6deg" },
+  { source: require("../../../assets/images/thumb2.png"), label: "Humor", rotate: "5deg" },
+  { source: require("../../../assets/images/thumb3.png"), label: "Latinoamérica", rotate: "-4deg" },
+  { source: require("../../../assets/images/thumb4.png"), label: "Cocina", rotate: "7deg" },
+  { source: require("../../../assets/images/thumb5.png"), label: "Deportes", rotate: "-5deg" },
+  { source: require("../../../assets/images/thumb6.png"), label: "Arte", rotate: "4deg" },
 ];
 
 function ClipCard({
-  emoji,
+  source,
   label,
-  tone,
   rotate,
   index,
 }: (typeof clips)[number] & { index: number }) {
@@ -59,15 +59,14 @@ function ClipCard({
         styles.clip,
         {
           transform: [{ translateY }, { rotate }],
-          borderColor: tone,
-          opacity: 0.82,
+          opacity: 0.9,
         },
       ]}
     >
-      <View style={[styles.clipGlow, { backgroundColor: tone }]} />
-      <Text style={styles.clipEmoji}>{emoji}</Text>
+      <Image source={source} style={styles.clipImage} resizeMode="cover" />
+      <View style={styles.clipShade} />
       <View style={styles.clipFooter}>
-        <View style={[styles.clipDot, { backgroundColor: tone }]} />
+        <View style={styles.clipDot} />
         <Text style={styles.clipLabel}>{label}</Text>
       </View>
     </Animated.View>
@@ -191,7 +190,7 @@ const styles = StyleSheet.create({
   },
   clipEmoji: { fontSize: 46, textAlign: "center", marginTop: 18 },
   clipFooter: { flexDirection: "row", alignItems: "center", gap: 7 },
-  clipDot: { width: 7, height: 7, borderRadius: 4 },
+  clipDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#00F2EA" },
   clipLabel: { color: "#D4D4D8", fontSize: 10, fontWeight: "700" },
   veil: {
     ...StyleSheet.absoluteFillObject,
