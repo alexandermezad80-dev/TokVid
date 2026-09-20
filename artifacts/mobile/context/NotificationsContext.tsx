@@ -8,7 +8,7 @@ export interface AppNotification {
   actor_id: string | null;
   actor_name: string | null;
   actor_avatar: string | null;
-  type: "like" | "comment" | "follow" | "mention" | "system";
+  type: "like" | "comment" | "follow" | "mention" | "system" | "message";
   message: string;
   data: Record<string, unknown>;
   read: boolean;
@@ -54,7 +54,6 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
     if (!user) return;
 
-    // Real-time subscription for new notifications
     const channel = supabase
       .channel(`notifications:${user.id}`)
       .on(
