@@ -31,7 +31,12 @@ export default function AuthCallback() {
           setTimeout(() => router.replace("/auth/login"), 2500);
           return;
         }
-        router.replace("/auth/onboarding-profile");
+        const { data } = await supabase.auth.getUser();
+        router.replace(
+          data.user?.user_metadata?.onboarding_completed
+            ? "/(tabs)"
+            : "/auth/onboarding-profile"
+        );
         return;
       }
 
@@ -45,7 +50,12 @@ export default function AuthCallback() {
         }
       }
 
-      router.replace("/auth/onboarding-profile");
+      const { data } = await supabase.auth.getUser();
+      router.replace(
+        data.user?.user_metadata?.onboarding_completed
+          ? "/(tabs)"
+          : "/auth/onboarding-profile"
+      );
     };
 
     handle();
