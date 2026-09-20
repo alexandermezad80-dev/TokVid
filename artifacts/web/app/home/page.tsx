@@ -13,17 +13,13 @@ export default function HomePage() {
   useEffect(() => {
     void (async () => {
       const { data: sessionData } = await supabase.auth.getSession()
-
-      if (!sessionData.session) {
-        router.replace("/")
+      if (!sessionData.session) { router.replace("/"); return }
+      if (sessionData.session.user.user_metadata?.onboarding_completed !== true) {
+        router.replace("/auth/onboarding-profile")
         return
       }
-
       const { data: userData, error } = await supabase.auth.getUser()
-      if (error) {
-        console.error(error)
-        return
-      }
+      if (error) { console.error(error); return }
       setUser(userData.user)
     })()
   }, [router])
@@ -35,60 +31,12 @@ export default function HomePage() {
   }
 
   return (
-    <main
-      style={{
-        display: "flex",
-        minHeight: "100vh",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px",
-        background: "#f7f8fb",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 520,
-          borderRadius: 24,
-          background: "#fff",
-          padding: "32px",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.08)",
-          textAlign: "center",
-        }}
-      >
-        <h1 style={{ margin: 0, marginBottom: 20, fontSize: 30 }}>
-          Bienvenido a TokVid
-        </h1>
-        <p style={{ margin: 0, marginBottom: 28, color: "#666" }}>
-          Has iniciado sesión correctamente con Google.
-        </p>
-        {user ? (
-          <div style={{ marginBottom: 24, color: "#333" }}>
-            <p style={{ margin: 0, fontWeight: 600 }}>
-              {user.user_metadata?.full_name || user.email}
-            </p>
-            <p style={{ margin: 0, color: "#666" }}>{user.email}</p>
-          </div>
-        ) : (
-          <p style={{ marginBottom: 24, color: "#666" }}>
-            Cargando datos de usuario...
-          </p>
-        )}
-        <button
-          type="button"
-          onClick={handleSignOut}
-          disabled={loading}
-          style={{
-            padding: "12px 20px",
-            borderRadius: 999,
-            border: "none",
-            background: "#111",
-            color: "#fff",
-            cursor: loading ? "not-allowed" : "pointer",
-          }}
-        >
-          {loading ? "Cerrando sesión..." : "Cerrar sesión"}
-        </button>
+    <main style={{ display:"flex", minHeight:"100vh", alignItems:"center", justifyContent:"center", padding:24, background:"#090909", color:"#fff" }}>
+      <div style={{ width:"100%", maxWidth:520, borderRadius:24, background:"#141414", padding:32, textAlign:"center" }}>
+        <h1>Bienvenido a TokVid</h1>
+        <p style={{ color:"#bbb" }}>Has completado tu configuración.</p>
+        {user ? <div style={{ marginBottom:24 }}><p style={{ fontWeight:600 }}>{user.user_metadata?.display_name || user.email}</p><p style={{ color:"#888" }}>{user.email}</p></div> : <p style={{ color:"#aaa" }}>Cargando datos...</p>}
+        <button type="button" onClick={handleSignOut} disabled={loading} style={{ padding:"12px 20px", borderRadius:999, border:0, background:"#fff", color:"#111" }}>{loading ? "Cerrando sesión..." : "Cerrar sesión"}</button>
       </div>
     </main>
   )
