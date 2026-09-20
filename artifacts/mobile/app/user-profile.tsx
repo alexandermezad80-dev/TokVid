@@ -65,18 +65,17 @@ function avatarUrl(profile: PublicProfile) {
   return `https://api.dicebear.com/9.x/initials/png?seed=${seed}&backgroundColor=FE2C55&textColor=ffffff&fontSize=38&size=128`;
 }
 
-// ─── Mock video grid (same thumbnails as profile) ────────────────────────────
+interface ProfileVideo {
+  id: string;
+  video_url: string;
+  views_count: number;
+}
 
-const GRID_THUMBS = [
-  require("../assets/images/thumb1.png"),
-  require("../assets/images/thumb3.png"),
-  require("../assets/images/thumb5.png"),
-  require("../assets/images/thumb2.png"),
-  require("../assets/images/thumb4.png"),
-  require("../assets/images/thumb6.png"),
-];
-
-const MOCK_VIEWS = ["2.8M", "5.2M", "7.4M", "1.2M", "3.9M", "12M"];
+function formatVideoCount(n: number) {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
+}
 
 // ─── Follow button ────────────────────────────────────────────────────────────
 
@@ -111,7 +110,9 @@ export default function UserProfileScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
   const [profile, setProfile] = useState<PublicProfile | null>(null);
+  const [videos, setVideos] = useState<ProfileVideo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [videosLoading, setVideosLoading] = useState(true);
   const [tab, setTab] = useState<"videos" | "liked">("videos");
   const [msgLoading, setMsgLoading] = useState(false);
 
@@ -138,7 +139,35 @@ export default function UserProfileScreen() {
     setLoading(false);
   }, [userId]);
 
-  useEffect(() => { fetchProfile(); }, [fetchProfile]);
+  const fetchVideos = useCallback(async () => {
+    if (!userId) return;
+    setVideosLoading(true);
+    const { data, error } = await supabase
+      .from("videos")
+      .select("id, video_url, views_count")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (!error && data) {
+      setVideos(
+        (data as Array<{ id: string; video_url: string; views_count?: number | null }>).map(
+          (video) => ({
+            id: video.id,
+            video_url: video.video_url,
+            views_count: video.views_count ?? 0,
+          })
+        )
+      );
+    } else {
+      setVideos([]);
+    }
+    setVideosLoading(false);
+  }, [userId]);
+
+  useEffect(() => {
+    fetchProfile();
+    fetchVideos();
+  }, [fetchProfile, fetchVideos]);
 
   const isOwnProfile = user?.id === userId;
 
@@ -235,18 +264,47 @@ export default function UserProfileScreen() {
             ))}
           </View>
 
-          {/* Video grid (mock) */}
-          <View style={styles.grid}>
-            {GRID_THUMBS.map((src, i) => (
-              <TouchableOpacity key={i} style={styles.gridItem}>
-                <Image source={src} style={StyleSheet.absoluteFill} resizeMode="cover" />
-                <View style={styles.viewsBadge}>
-                  <Feather name="play" size={10} color="#fff" />
-                  <Text style={styles.viewsText}>{MOCK_VIEWS[i]}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
+          {tab === "videos" ? (
+            videosLoading ? (
+              <View style={styles.gridState}>
+                <ActivityIndicator color="#FE2C55" size="small" />
+              </View>
+            ) : videos.length === 0 ? (
+              <View style={styles.gridState}>
+                <Feather name="video-off" size={28} color="#555" />
+                <Text style={styles.gridStateTitle}>Todavía no hay videos</Text>
+                <Text style={styles.gridStateText}>
+                  Cuando publique videos, aparecerán acá.
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.grid}>
+                {videos.map((video) => (
+                  <TouchableOpacity key={video.id} style={styles.gridItem}>
+                    <Image
+                      source={{ uri: video.video_url }}
+                      style={StyleSheet.absoluteFill}
+                      resizeMode="cover"
+                    />
+                    <View style={styles.viewsBadge}>
+                      <Feather name="play" size={10} color="#fff" />
+                      <Text style={styles.viewsText}>
+                        {formatVideoCount(video.views_count)}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )
+          ) : (
+            <View style={styles.gridState}>
+              <Feather name="heart" size={28} color="#555" />
+              <Text style={styles.gridStateTitle}>Me gusta</Text>
+              <Text style={styles.gridStateText}>
+                Los videos que le gustan a este usuario no se muestran públicamente.
+              </Text>
+            </View>
+          )}
 
           <View style={{ height: Platform.OS === "web" ? 34 : insets.bottom + 40 }} />
         </ScrollView>
@@ -349,6 +407,15 @@ const styles = StyleSheet.create({
 
   // Grid
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 1 },
+  gridState: {
+    minHeight: 180,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: 28,
+  },
+  gridStateTitle: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  gridStateText: { color: "#777", fontSize: 13, textAlign: "center", lineHeight: 19 },
   gridItem: { width: "33.3%", height: 190, backgroundColor: "#111", overflow: "hidden" },
   viewsBadge: {
     position: "absolute", bottom: 6, left: 6,
