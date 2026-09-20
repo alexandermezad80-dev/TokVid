@@ -13,7 +13,11 @@ export default function Page() {
     void (async () => {
       const { data } = await supabase.auth.getSession()
       if (data.session) {
-        router.replace("/home")
+        router.replace(
+          data.session.user.user_metadata?.onboarding_completed === true
+            ? "/home"
+            : "/auth/onboarding-profile",
+        )
         return
       }
       setCheckingSession(false)
@@ -21,42 +25,13 @@ export default function Page() {
   }, [router])
 
   return (
-    <main
-      style={{
-        display: "flex",
-        minHeight: "100vh",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px",
-        background: "#f7f8fb",
-      }}
-    >
-      <section
-        style={{
-          width: "100%",
-          maxWidth: 420,
-          borderRadius: 24,
-          background: "#fff",
-          padding: "32px",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.08)",
-          textAlign: "center",
-        }}
-      >
-        <h1 style={{ margin: 0, marginBottom: 18, fontSize: 28 }}>
-          Iniciar sesión
-        </h1>
-        {checkingSession ? (
-          <p style={{ margin: 0, marginBottom: 28, color: "#666" }}>
-            Validando sesión...
-          </p>
-        ) : (
-          <>
-            <p style={{ margin: 0, marginBottom: 28, color: "#666" }}>
-              Accede con tu cuenta de Google para continuar.
-            </p>
-            <GoogleLogin />
-          </>
-        )}
+    <main style={{ display:"flex", minHeight:"100vh", alignItems:"center", justifyContent:"center", padding:24, background:"#090909", color:"#fff" }}>
+      <section style={{ width:"100%", maxWidth:420, borderRadius:24, background:"#141414", padding:32, boxShadow:"0 20px 60px rgba(0,0,0,.45)", textAlign:"center" }}>
+        <p style={{ color:"#aaa", margin:0 }}>TokVid</p>
+        <h1 style={{ margin:"10px 0 12px", fontSize:32 }}>Historias que se sienten reales</h1>
+        <p style={{ color:"#bbb", lineHeight:1.5, marginBottom:28 }}>Video corto para creadores de Latinoamérica.</p>
+        {checkingSession ? <p style={{ color:"#aaa" }}>Validando sesión...</p> : <GoogleLogin />}
+        <p style={{ color:"#888", fontSize:12, marginTop:24 }}>Al continuar aceptas nuestros términos y políticas.</p>
       </section>
     </main>
   )
