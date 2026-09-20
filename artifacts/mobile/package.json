@@ -61,6 +61,6 @@
     "date-fns": "^3.6.0",
     "expo-device": "^8.0.10",
     "expo-notifications": "^0.32.17",
-    "expo-video": "3.0.16",
+    "expo-video": "3.0.16"
   }
 }
