@@ -1,6 +1,6 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   Animated,
   Dimensions,
@@ -11,7 +11,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { requestNotificationPermission } from "../../services/notificationPermissions";
 
 const { width, height } = Dimensions.get("window");
 
@@ -79,18 +78,6 @@ export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
   const logoScale = useRef(new Animated.Value(0.88)).current;
   const contentOpacity = useRef(new Animated.Value(0)).current;
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [requestingNotifications, setRequestingNotifications] = useState(false);
-
-  const handleNotificationPermission = async () => {
-    if (requestingNotifications || notificationsEnabled) return;
-    setRequestingNotifications(true);
-    try {
-      setNotificationsEnabled(await requestNotificationPermission());
-    } finally {
-      setRequestingNotifications(false);
-    }
-  };
 
   useEffect(() => {
     Animated.parallel([
@@ -143,31 +130,6 @@ export default function WelcomeScreen() {
         </Animated.View>
 
         <Animated.View style={[styles.actions, { opacity: contentOpacity }]}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Activar notificaciones"
-            disabled={requestingNotifications || notificationsEnabled}
-            style={({ pressed }) => [
-              styles.permission,
-              pressed && styles.pressed,
-              notificationsEnabled && styles.permissionGranted,
-            ]}
-            onPress={handleNotificationPermission}
-          >
-            <Ionicons
-              name={notificationsEnabled ? "notifications" : "notifications-outline"}
-              size={19}
-              color={notificationsEnabled ? "#00F2EA" : "#F5F5F7"}
-            />
-            <Text style={styles.permissionText}>
-              {notificationsEnabled
-                ? "Notificaciones activadas"
-                : requestingNotifications
-                  ? "Activando notificaciones…"
-                  : "Activar notificaciones"}
-            </Text>
-          </Pressable>
-
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Crear cuenta"
@@ -288,25 +250,6 @@ const styles = StyleSheet.create({
     maxWidth: 330,
   },
   actions: { gap: 12 },
-  permission: {
-    minHeight: 48,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: "#3A3A46",
-    backgroundColor: "rgba(20,20,28,0.72)",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 9,
-  },
-  permissionGranted: {
-    borderColor: "#00F2EA",
-  },
-  permissionText: {
-    color: "#F5F5F7",
-    fontSize: 14,
-    fontWeight: "800",
-  },
   primary: {
     minHeight: 56,
     borderRadius: 17,
