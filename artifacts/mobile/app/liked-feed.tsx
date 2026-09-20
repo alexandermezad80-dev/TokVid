@@ -65,7 +65,6 @@ export default function LikedFeedScreen() {
         [item.id]: Math.max(0, (prev[item.id] ?? 1) - 1),
       }));
     }
-    } catch { /* no-op */ }
   }, []);
 
   const renderItem = useCallback(
