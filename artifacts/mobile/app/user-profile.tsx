@@ -67,14 +67,8 @@ function avatarUrl(profile: PublicProfile) {
 
 interface ProfileVideo {
   id: string;
-  video_url: string;
-  views_count: number;
-}
-
-function formatVideoCount(n: number) {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
+  url: string;
+  likes_count: number;
 }
 
 // ─── Follow button ────────────────────────────────────────────────────────────
@@ -144,17 +138,17 @@ export default function UserProfileScreen() {
     setVideosLoading(true);
     const { data, error } = await supabase
       .from("videos")
-      .select("id, video_url, views_count")
+      .select("id, url, likes_count")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
     if (!error && data) {
       setVideos(
-        (data as Array<{ id: string; video_url: string; views_count?: number | null }>).map(
+        (data as Array<{ id: string; url: string; likes_count?: number | null }>).map(
           (video) => ({
             id: video.id,
-            video_url: video.video_url,
-            views_count: video.views_count ?? 0,
+            url: video.url,
+            likes_count: video.likes_count ?? 0,
           })
         )
       );
@@ -282,14 +276,14 @@ export default function UserProfileScreen() {
                 {videos.map((video) => (
                   <TouchableOpacity key={video.id} style={styles.gridItem}>
                     <Image
-                      source={{ uri: video.video_url }}
+                      source={{ uri: video.url }}
                       style={StyleSheet.absoluteFill}
                       resizeMode="cover"
                     />
                     <View style={styles.viewsBadge}>
                       <Feather name="play" size={10} color="#fff" />
                       <Text style={styles.viewsText}>
-                        {formatVideoCount(video.views_count)}
+                        {video.likes_count} Me gusta
                       </Text>
                     </View>
                   </TouchableOpacity>
