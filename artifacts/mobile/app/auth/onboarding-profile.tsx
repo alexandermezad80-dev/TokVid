@@ -7,8 +7,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
 
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
-
 export default function OnboardingProfileScreen() {
   const { user, profile, refreshProfile } = useAuth();
   const insets = useSafeAreaInsets();
@@ -44,7 +42,7 @@ export default function OnboardingProfileScreen() {
         const ext = avatarUri.split(".").pop()?.toLowerCase() === "png" ? "png" : "jpg";
         const response = await fetch(avatarUri);
         const blob = await response.blob();
-        const fileName = `${user.id}.${ext}`;
+        const fileName = `${user.id}/avatar.${ext}`;
         const { error: uploadError } = await supabase.storage.from("avatars").upload(fileName, blob, {
           contentType: ext === "png" ? "image/png" : "image/jpeg", upsert: true,
         });
@@ -52,7 +50,7 @@ export default function OnboardingProfileScreen() {
         avatarUrl = supabase.storage.from("avatars").getPublicUrl(fileName).data.publicUrl;
       }
       const { error: profileError } = await supabase.from("profiles").upsert({
-        id: user.id, username: username.trim(), email: user.email ?? null,
+        id: user.id, username: username.trim(), email: user.email ?? null, full_name: name.trim(),
         ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
         updated_at: new Date().toISOString(),
       });
