@@ -27,19 +27,19 @@ import { useSavedVideos } from "../../hooks/useSavedVideos";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-function EmptyFollowing({ onDiscover }: { onDiscover: () => void }) {
+function EmptyFeed({\n  title,\n  message,\n  actionLabel,\n  onAction,\n}: {\n  title: string;\n  message: string;\n  actionLabel?: string;\n  onAction?: () => void;\n}) {
   return (
     <View style={styles.emptyWrap}>
       <View style={styles.emptyIcon}>
         <Feather name="user-plus" size={36} color="#333" />
       </View>
-      <Text style={styles.emptyTitle}>Seguí a alguien</Text>
-      <Text style={styles.emptyText}>
-        Cuando sigas a un creador, sus videos aparecerán acá.
-      </Text>
-      <TouchableOpacity style={styles.discoverBtn} onPress={onDiscover}>
-        <Text style={styles.discoverBtnText}>Ir a Discover</Text>
-      </TouchableOpacity>
+      <Text style={styles.emptyTitle}>{title}</Text>
+      <Text style={styles.emptyText}>{message}</Text>
+      {actionLabel && onAction ? (
+        <TouchableOpacity style={styles.discoverBtn} onPress={onAction}>
+          <Text style={styles.discoverBtnText}>{actionLabel}</Text>
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 }
@@ -220,7 +220,17 @@ export default function FeedScreen() {
         </View>
       ) : null}
       {activeTab === "following" && followingVideos.length === 0 ? (
-        <EmptyFollowing onDiscover={() => handleTabSwitch("foryou")} />
+        <EmptyFeed
+          title="Seguí a alguien"
+          message="Cuando sigas a un creador, sus videos aparecerán acá."
+          actionLabel="Ir a Discover"
+          onAction={() => handleTabSwitch("foryou")}
+        />
+      ) : activeTab === "foryou" && !isLoading && currentFeed.length === 0 ? (
+        <EmptyFeed
+          title="Todavía no hay videos"
+          message="Cuando los creadores publiquen videos, aparecerán acá."
+        />
       ) : (
         <FlatList
           key={activeTab}
