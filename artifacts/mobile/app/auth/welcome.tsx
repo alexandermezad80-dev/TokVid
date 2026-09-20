@@ -142,11 +142,11 @@ export default function WelcomeScreen() {
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Ya tengo cuenta"
+            accessibilityLabel="¿Tienes cuenta?"
             style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}
             onPress={() => router.push("/auth/login")}
           >
-            <Text style={styles.secondaryText}>Ya tengo cuenta</Text>
+            <Text style={styles.secondaryText}>¿Tienes cuenta?</Text>
           </Pressable>
 
           <Text style={styles.legal}>
