@@ -1,239 +1,183 @@
-# TOKVID — Auditoría integral: 30 resultados y dependencias
+# TOKVID — Auditoría integral y conciliación actualizada
 
 **Proyecto:** `alexandermezad80-dev/TokVid`  
 **Supabase:** `kvbppgofblldwnkkoscb`  
 **Rama de trabajo:** `feature/onboarding-profile-interests`  
 **Base protegida:** `main`  
-**PR relacionado:** #4 — `feat(onboarding): add profile and interests steps`  
-**Tipo de documento:** Resultado de auditoría y matriz de dependencias  
-**Regla:** Primero auditar. No modificar código, base de datos, migraciones ni configuración sin autorización explícita.
+**PR relacionado:** #4  
+**Fecha de conciliación:** 20 de septiembre de 2026
 
----
+> **Regla de protección:** primero auditar, documentar, identificar existente/incompleto/faltante y dependencias; después planificar, solicitar autorización, implementar, probar e integrar. Este documento no autoriza cambios en código, Supabase, migraciones, configuración, `main` ni merge.
 
-## Resumen
+## 1. Corrección del diagnóstico anterior
 
-La auditoría integral de TOKVID revisó repositorio, aplicación móvil/web/API, autenticación y onboarding, Supabase, tablas, RLS, Storage, notificaciones/push, CI/CD y la relación con los 38 requisitos maestros.
+La versión anterior de esta auditoría contenía estados que ya habían sido superados por reconciliaciones posteriores. En particular, los resultados sobre CI, likes, comments, shares, saved videos, hashtags, conversaciones, mensajes, notifications y push necesitaban actualizarse.
 
-Los siguientes **30 resultados** constituyen la matriz de conciliación. Las dependencias indican qué componente debe estar resuelto o validado antes de intervenir en cada punto.
+Esta versión es la **matriz documental de referencia actual**.
 
-> **Importante:** este documento registra hallazgos; no autoriza por sí mismo cambios en código, Supabase, migraciones, configuración ni `main`.
+## 2. Estado actual de los 30 resultados
 
----
-
-## 30 resultados de auditoría
-
-### 01. Integridad de ramas y protección de `main`
-**Estado:** 🟢  
-**Resultado:** La auditoría y el trabajo de onboarding se mantienen fuera de `main`, en `feature/onboarding-profile-interests`.  
-**Dependencias:** revisión de PR, CI verde y autorización explícita antes de cualquier merge.
+### 01. Integridad de ramas y protección de main
+**🟢** El trabajo permanece fuera de `main`, en `feature/onboarding-profile-interests`. No se realizará merge sin autorización explícita.
 
 ### 02. PR #4 — onboarding
-**Estado:** 🟡  
-**Resultado:** PR #4 está abierto y en estado draft; contiene el tramo verificación → perfil → intereses → entrada a la aplicación.  
-**Dependencias:** CI, revisión funcional del flujo y conciliación con Supabase.
+**🟡** El PR #4 contiene el trabajo de onboarding. Su integración sigue pendiente de revisión y autorización.
 
-### 03. CI bloqueado por `pnpm-lock.yaml`
-**Estado:** 🔴  
-**Resultado:** La instalación de dependencias falla antes de ejecutar typecheck/build por YAML malformado alrededor de la línea 10493, incluyendo el bloque `unpipe: 1.0.0    transitivePeerDependencies:`.  
-**Dependencias:** reparación/regeneración válida del lockfile y nueva ejecución de CI.
+### 03. CI
+**🟢** La CI actual está operativa. Usa `actions/checkout@v6`, Node 24, pnpm 10.15.1, typecheck y builds. Las ejecuciones recientes revisadas están verdes.
 
-### 04. Historial de reparaciones del lockfile
-**Estado:** ⚠️  
-**Resultado:** El lockfile acumuló varias reparaciones manuales de sintaxis y sincronización durante la conciliación de dependencias.  
-**Dependencias:** manifestos actuales, versión de pnpm y regeneración consistente del lockfile; no borrar paquetes huérfanos manualmente sin validación.
+### 04. Historial de lockfile
+**🟢** El problema histórico del lockfile ya no bloquea la CI actual. No se debe volver a editar manualmente el lockfile sin necesidad.
 
 ### 05. Flujo visual de bienvenida
-**Estado:** 🟢  
-**Resultado:** `welcome.tsx` ya implementa una pantalla propia de TOKVID y no debe sustituirse por el HTML de referencia.  
-**Dependencias:** navegación de Auth y estado de sesión.
+**🟢** `welcome.tsx` usa una implementación propia de TOKVID con thumbnails locales como fondo visual. No copia el HTML de referencia.
 
-### 06. Regla de permisos durante onboarding
-**Estado:** 🟢  
-**Resultado:** El onboarding no solicita cámara, micrófono ni notificaciones. La galería se solicita únicamente cuando el usuario elige una foto.  
-**Dependencias:** Expo Image Picker y configuración de permisos del proyecto.
+### 06. Permisos durante onboarding
+**🟢** No se solicitan cámara, micrófono ni notificaciones durante onboarding. La galería se solicita al elegir foto.
 
-### 07. Paso de perfil del onboarding
-**Estado:** 🟡  
-**Resultado:** Existe `onboarding-profile.tsx` con nombre, username y foto opcional; valida username y guarda perfil.  
-**Dependencias:** esquema `profiles`, Storage `avatars`, `refreshProfile()` y dependencia de Image Picker.
+### 07. Perfil del onboarding
+**🟢** Existe el paso de nombre, username y foto opcional; valida username, guarda en `profiles`, usa Storage `avatars` y continúa a intereses.
 
-### 08. Esquema real de `profiles`
-**Estado:** 🟡  
-**Resultado:** La tabla real contiene `id`, `username`, `full_name`, `avatar_url`, `created_at`, `push_token`; el código espera además campos como `email`, `bio`, contadores y `updated_at`.  
-**Dependencias:** AuthContext, editor de perfil, funciones de edición y decisión de esquema antes de crear migraciones.
+### 08. Esquema de profiles / AuthContext
+**🟡** La tabla real incluye `id, username, full_name, email, avatar_url, bio, followers_count, following_count, likes_count, push_token, updated_at`. El código está conciliado para esos campos. Permanece un problema de seguridad: SELECT público expone también `email` y `push_token`, y el UPDATE propio conserva privilegios amplios sobre campos sensibles/contadores.
 
-### 09. AuthContext y perfil
-**Estado:** ⚠️  
-**Resultado:** Debe conciliarse lo que AuthContext considera perfil con el esquema real de producción. Se confirmó deuda previa en operaciones que escriben campos no presentes en la tabla real.  
-**Dependencias:** resultado 08, onboarding y `edit-profile`.
+### 09. Callback OAuth/verificación
+**🟢** El callback verifica el estado de onboarding y dirige usuarios completados a `/(tabs)` y usuarios incompletos a `/auth/onboarding-profile`.
 
-### 10. Callback OAuth/verificación
-**Estado:** 🟡  
-**Resultado:** El callback dirige usuarios autenticados al onboarding; falta comprobar el estado `onboarding_completed` para evitar repetir onboarding a usuarios que ya terminaron.  
-**Dependencias:** metadata de Auth, perfil existente y navegación raíz.
+### 10. Intereses de onboarding
+**🟢** El segundo paso exige mínimo tres intereses y guarda `interests` y `onboarding_completed: true` en metadata de Auth.
 
-### 11. Intereses de onboarding
-**Estado:** 🟡  
-**Resultado:** El segundo paso exige mínimo tres intereses y guarda `interests` y `onboarding_completed: true` en metadata de Supabase Auth.  
-**Dependencias:** Auth del usuario, futura personalización del feed y decisión posterior sobre persistencia relacional.
+### 11. Storage avatars
+**🟢/🟡** El bucket `avatars` existe, es coherente con el código y tiene políticas de ownership para subir, actualizar y eliminar. Falta hardening de límites de tamaño/MIME.
 
-### 12. Storage `avatars`
-**Estado:** 🔴  
-**Resultado:** Existe bucket público `avatars`, pero la auditoría no encontró las políticas necesarias para que el flujo de onboarding pueda subir/actualizar avatares de forma segura.  
-**Dependencias:** políticas Storage, usuario autenticado y contrato de `profiles.avatar_url`.
+### 12. Storage videos
+**🟡** El bucket `videos` y ownership existen. No hay límite de tamaño ni allowlist MIME. También queda una política de delete duplicada/legacy para limpiar posteriormente.
 
-### 13. Storage de videos
-**Estado:** 🟡  
-**Resultado:** Existe bucket público `videos` y políticas relacionadas, pero la configuración de límites/tipos y el endurecimiento de seguridad deben conciliarse antes de producción.  
-**Dependencias:** flujo de publicación, RLS/Storage y requisitos de formatos de video.
+### 13. Publicación de videos
+**🟢 base** La creación usa `video_url`, Storage `videos`, progreso de subida y publicación. Quedan pendientes drafts, edición avanzada, procesamiento/transcodificación y formatos avanzados.
 
-### 14. Esquema `videos` frente al código de publicación
-**Estado:** 🔴  
-**Resultado:** La tabla real usa `video_url`; el flujo de creación inserta `url`. Esto rompe la correspondencia entre aplicación y base de datos.  
-**Dependencias:** publicación de video, Storage `videos`, tipos/consultas de feed y cualquier contador relacionado.
+### 14. Likes
+**🟢** `video_likes` existe, tiene PK compuesta, RLS propia, índices y trigger para contadores. El hardening de privilegios de funciones/counters permanece pendiente.
 
-### 15. Persistencia de likes
-**Estado:** 🔴  
-**Resultado:** El código usa `video_likes`, pero la auditoría del esquema público no encontró esa tabla.  
-**Dependencias:** modelo de datos de likes, RLS, contador `likes_count`, feed y perfiles.
+### 15. Comentarios
+**🟢 base** `comments` existe con RLS de lectura/creación/eliminación y trigger que sincroniza `videos.comments_count`. El flujo completo de notificación/push/navegación aún no está cerrado.
 
-### 16. Comentarios
-**Estado:** 🟡  
-**Resultado:** Existe `comments` y hay operaciones de creación/eliminación, pero debe conciliarse la actualización consistente de `comments_count` en `videos`.  
-**Dependencias:** tabla `comments`, publicación de videos, RLS y mecanismo de conteo.
+### 16. Compartidos
+**🟡** Existe RPC segura `increment_video_share_count(uuid)`, exige usuario autenticado y limita EXECUTE. Sin embargo, `artifacts/mobile/app/tag.tsx` todavía actualiza `shares_count` directamente. Debe unificarse antes de cerrar shares.
 
-### 17. Compartidos
-**Estado:** 🟡  
-**Resultado:** La aplicación maneja `shares_count`, pero la auditoría requiere conciliar cómo se persiste y protege ese contador en Supabase.  
-**Dependencias:** tabla `videos`, política de actualización y flujo de compartir.
+### 17. Follows
+**🟢/🟡** Follow/unfollow, RLS, prevención de self-follow y rollback de errores están implementados. La integridad referencial con usuarios sigue como deuda estructural y los contadores requieren hardening.
 
-### 18. Follows
-**Estado:** 🟢/🟡  
-**Resultado:** Existe `follows`, RLS y un trigger `on_follow_change` para actualizar contadores de perfil. La relación con `auth.users` no tiene FK y queda como deuda estructural a revisar.  
-**Dependencias:** `profiles`, contadores, identidad de usuarios y reglas de integridad.
+### 18. Saved videos
+**🟢/🟡** RLS, PK, FK de usuario y UNIQUE(user_id, video_id) están correctos. Falta FK de `video_id` hacia `videos`; no debe modificarse durante esta auditoría.
 
-### 19. Videos guardados
-**Estado:** 🟢  
-**Resultado:** `saved_videos` existe, tiene RLS y restricción única `(user_id, video_id)`; la funcionalidad base está respaldada por datos reales de prueba.  
-**Dependencias:** existencia de `videos` y permisos de lectura/escritura.
+### 19. Hashtags
+**🟡** `hashtags` y `video_hashtags` tienen PK/FKs/UNIQUE/RLS/índices correctos. `usage_count` no tiene mecanismo de sincronización identificado.
 
-### 20. Hashtags
-**Estado:** 🟡  
-**Resultado:** Existen `hashtags`, `video_hashtags` y `upsert_hashtag()`. La funcionalidad está presente, pero las políticas y su relación con publicación deben conciliarse.  
-**Dependencias:** publicación de videos, RLS, índices y búsqueda por hashtag.
+### 20. Menciones
+**🟢 base / 🟡 flujo completo** La extracción y persistencia de menciones existe y excluye al autor. Falta cerrar de extremo a extremo notificación → push → navegación.
 
-### 21. Menciones
-**Estado:** 🟡  
-**Resultado:** La aplicación contempla menciones, pero la auditoría debe mantener alineados el procesamiento de menciones, notificaciones y datos de usuarios.  
-**Dependencias:** perfiles, comentarios/contenido, notificaciones y reglas de seguridad.
+### 21. Conversations
+**🟢** RLS de participantes y actualización de metadata están endurecidos. Los grants de UPDATE autenticado están limitados a `last_message` y `last_message_at`.
 
-### 22. Conversaciones
-**Estado:** 🟡  
-**Resultado:** Existe `conversations`; la política de actualización de participantes es más amplia de lo deseable y requiere revisión antes de producción.  
-**Dependencias:** identidad de participantes, RLS y flujo de chat privado.
+### 22. Messages
+**🟢 base / 🟡 producto** El mensaje solo puede ser insertado por el participante correspondiente y el sender puede actualizar `text`/`read_by_other`. DELETE está revocado. Falta implementar la UX/semántica completa de eliminación de mensajes.
 
-### 23. Mensajes
-**Estado:** 🟡  
-**Resultado:** Existe `messages` y el chat puede insertar mensajes; la política de actualización de participantes es amplia y no se encontró política DELETE.  
-**Dependencias:** conversaciones, RLS, eliminación de mensajes y futuras notificaciones de mensajes.
+### 23. Notifications
+**🟡** Los tipos incluyen `like, comment, follow, mention, system, message`; FKs y RLS base están presentes. El UPDATE del receptor sigue siendo demasiado amplio. Además, el flujo `message → push → tap → chat` aún no está completamente conectado.
 
-### 24. Notificaciones
-**Estado:** 🟡  
-**Resultado:** Los tipos actuales incluyen `like`, `comment`, `follow`, `mention` y `system`; no existe todavía el tipo `message`.  
-**Dependencias:** mensajes, actor/receptor, NotificationsContext, API y push.
+### 24. Push notifications
+**🟢 base / 🟡 verificación final** La configuración usa el projectId desde app config cuando existe y no solicita notificaciones durante onboarding. Falta verificar un build EAS real con el identificador de proyecto correcto antes de producción.
 
-### 25. Push notifications
-**Estado:** 🟡  
-**Resultado:** El permiso de notificaciones se solicita después de autenticación, respetando la regla de no pedirlo durante onboarding. El `projectId: "mobile"` usado para Expo Push Token requiere verificación contra el identificador EAS real antes de producción.  
-**Dependencias:** configuración EAS/Expo, autenticación, `push_token` y backend de notificaciones.
+### 25. API server
+**🟢** La API valida bearer token, identidad del actor, participantes y destinatarios según el tipo de notificación, y usa service role solo en servidor. CI está verde. Los servicios avanzados aún no existen.
 
-### 26. API server
-**Estado:** 🟡  
-**Resultado:** Existe API principalmente para salud y notificaciones; no cubre todavía Live, llamadas, moderación, recomendaciones, procesamiento de video ni otros servicios avanzados.  
-**Dependencias:** arquitectura backend, autenticación de servidor, Supabase y requisitos futuros.
+### 26. Web
+**🟢 base / 🟡 alcance** El onboarding web está implementado y CI lo construye correctamente. La plataforma web social completa aún no está desarrollada.
 
-### 27. Aplicación web
-**Estado:** 🟡  
-**Resultado:** Existe una capa web centrada principalmente en autenticación Google, sesión y home/logout; no representa todavía la aplicación social completa.  
-**Dependencias:** autenticación, modelo de datos común y alcance futuro de la plataforma web.
+### 27. Cross-review de producto
+**🟡** El feed consulta videos reales y pagina resultados, pero mantiene `BASE_VIDEOS` como fallback mock. El perfil público mantiene una cuadrícula mock (`GRID_THUMBS`/`MOCK_VIEWS`). Ambos deben resolverse antes de producción.
 
-### 28. Seguridad de autenticación: protección contra contraseñas filtradas
-**Estado:** ⚠️  
-**Resultado:** El Security Advisor de Supabase reportó **Leaked Password Protection Disabled**.  
-**Dependencias:** configuración de Auth en Supabase y política de contraseñas antes de producción.
+### 28. Leaked Password Protection
+**⚠️ pendiente por plan** Supabase Advisor reporta la protección deshabilitada. Se intentó habilitarla, pero Supabase indicó que la función requiere Pro o superior. No se debe alterar otra configuración de contraseñas para compensarlo.
 
-### 29. Índices marcados como no utilizados
-**Estado:** ⚠️  
-**Resultado:** El advisor reportó 9 índices no utilizados actualmente: `comments_user_id_idx`, `conversations_user1_id_idx`, `conversations_user2_id_idx`, `messages_conversation_id_idx`, `messages_sender_id_idx`, `notifications_actor_id_idx`, `notifications_user_id_idx`, `video_hashtags_hashtag_id_idx` y `videos_user_id_idx`. No deben eliminarse únicamente por el bajo uso actual, porque la base está casi vacía.  
-**Dependencias:** volumen real de producción, planes de consulta y medición de rendimiento.
+### 29. Performance Advisor
+**🟡** Existen advertencias `auth_rls_initplan` y 11 índices marcados como unused. Dado que la base está casi vacía, no se recomienda eliminar índices ahora. Debe revisarse con tráfico/datos reales.
 
 ### 30. Brecha frente a los 38 requisitos maestros
-**Estado:** 🟡/🔴  
-**Resultado:** La auditoría confirmó que existen bases funcionales para perfil, feed, follows, mensajes, notificaciones, hashtags, guardados y autenticación, pero permanecen parciales o ausentes áreas como Stories, llamadas, burbujas personalizables, Live completo, filtros/efectos avanzados, subtítulos, IA, drafts, moderación, protección de menores, copyright, monetización y panel administrativo.  
-**Dependencias:** resultados 01–29, arquitectura de datos, backend, seguridad, pruebas y priorización formal antes de implementación.
+**🟡/🔴** La base funcional existe para Auth, perfil, feed, follows, likes, comentarios, guardados, hashtags, menciones, conversaciones, mensajes, notificaciones y onboarding. Siguen incompletos o ausentes Stories, llamadas, burbujas personalizables, Live, enlace de perfil, edición avanzada, filtros/efectos, voz/sonido, subtítulos, IA, drafts, procesamiento avanzado, seguridad de mensajería avanzada, ayuda, protección de menores, políticas, copyright, monetización, herramientas de grandes creadores y panel administrativo.
 
----
+## 3. Hallazgos cruzados de seguridad
 
-## Dependencias críticas consolidadas
+1. **Profiles:** SELECT público expone `email` y `push_token`; UPDATE propio permite modificar más campos de los que deberían ser autoritativos.
+2. **Videos:** RLS bloquea actualmente UPDATE, pero los grants de columna son amplios.
+3. **Storage:** falta límite de tamaño y allowlist MIME.
+4. **Notifications:** UPDATE propio no está limitado por grants a campos como `read`.
+5. **Security Advisor:** tres funciones security-definer siguen apareciendo como warnings:
+   - `increment_video_share_count`
+   - `sync_video_comments_count`
+   - `update_video_like_counts`
+6. Estos puntos son **hardening pendiente**, no cambios que deban ejecutarse durante esta auditoría.
 
-### Cadena A — CI
-`pnpm-lock.yaml`  
-→ instalación correcta  
-→ typecheck/build  
-→ pruebas  
-→ validación del PR  
-→ posible merge.
+## 4. Requisitos maestros — resumen
 
-### Cadena B — Onboarding
-Auth  
-→ callback  
-→ `profiles`  
-→ Storage `avatars`  
-→ intereses  
-→ `onboarding_completed`  
-→ navegación a la aplicación.
+| # | Área | Estado |
+|---|---|---|
+| 1 | Identidad y perfil | 🟡 |
+| 2 | Feed | 🟡 |
+| 3 | Stories | 🔴 |
+| 4 | Seguidores/seguidos/amigos | 🟡 |
+| 5 | Mensajes privados | 🟡 |
+| 6 | Llamadas/videollamadas | 🔴 |
+| 7 | Burbujas de mensajes | 🔴 |
+| 8 | Live | 🔴 |
+| 9 | Requisitos Live | 🔗 |
+| 10 | Enlace en perfil | 🔴 |
+| 11 | Creación/producción de video | 🟡 |
+| 12 | Filtros/efectos | 🔴 |
+| 13 | Voz/sonido | 🔴 |
+| 14 | Subtítulos | 🔴 |
+| 15 | IA para creadores | 🔴 |
+| 16 | Hashtags | 🟡 |
+| 17 | Menciones | 🟡 |
+| 18 | Borradores | 🔴 |
+| 19 | Formatos/procesamiento | 🔴 |
+| 20 | Notificaciones | 🟡 |
+| 21 | Seguridad mensajería | 🔴 |
+| 22 | Ayuda | 🔴 |
+| 23 | Ayuda psicológica | 🔴 |
+| 24 | Conducta repetida/advertencias | 🔴 |
+| 25 | Protección de menores | 🔴 |
+| 26 | Políticas TOKVID | 🔴 |
+| 27 | Copyright | 🔴 |
+| 28 | Monetización | 🔴 |
+| 29 | Herramientas grandes creadores | 🔴 |
+| 30 | Panel administrativo | 🔴 |
+| 31 | Arquitectura segura | 🟢 |
+| 32 | Ramas/workflow | 🟢 |
+| 33 | Propiedad de código | 🟡 |
+| 34 | Versiones/recuperación | 🟡 |
+| 35 | Supabase/DB versionada | 🟢 |
+| 36 | Auditoría antes de cambiar | 🟢 |
+| 37 | Regla de protección | 🟢 |
+| 38 | Principio general | 🟢 |
 
-### Cadena C — Publicación
-Storage `videos`  
-→ `videos.video_url`  
-→ feed  
-→ likes/comentarios/compartidos  
-→ contadores  
-→ hashtags/menciones.
+## 5. Dependencias críticas
 
-### Cadena D — Perfil/Social
-Auth user  
-→ `profiles`  
-→ follows  
-→ contadores  
-→ perfil público  
-→ notificaciones.
+- **CI:** lockfile → instalación → typecheck/build → pruebas → PR.
+- **Onboarding:** Auth → callback → profiles → avatars → interests → onboarding_completed → app.
+- **Publicación:** video Storage → video_url → feed → likes/comments/shares → contadores → hashtags/mentions.
+- **Social:** Auth → profiles → follows → contadores → perfil público → notifications.
+- **Mensajería:** conversations → messages → RLS → message notification → push → chat.
+- **Producción:** Auth security → Storage/RLS → CI → pruebas → observabilidad → hardening → producción.
 
-### Cadena E — Mensajería
-`conversations`  
-→ `messages`  
-→ RLS  
-→ notificación tipo `message`  
-→ push  
-→ navegación al chat.
+## 6. Cierre de esta conciliación
 
-### Cadena F — Producción
-Auth security  
-→ Storage/RLS  
-→ CI  
-→ pruebas  
-→ observabilidad  
-→ endurecimiento de seguridad  
-→ producción.
+**Auditoría técnica:** completada.  
+**Conciliación documental:** actualizada.  
+**main:** sin modificar.  
+**Supabase:** sin cambios durante esta conciliación.  
+**Merge:** no realizado.  
+**Código funcional pendiente:** no se modifica automáticamente por aparecer como 🟡/🔴.
 
----
-
-## Estado de cierre de la auditoría
-
-**Auditoría:** TERMINADA  
-**Resultados documentados:** 30  
-**Dependencias:** documentadas  
-**Cambios en `main`:** ninguno  
-**Cambios directos en Supabase durante esta auditoría:** ninguno  
-**Merge del PR #4:** no realizado  
-**Siguiente fase:** conciliación, comenzando por las dependencias críticas y respetando la autorización explícita para cada modificación.
+La siguiente etapa, cuando se autorice, debe comenzar por una dependencia concreta y verificable; no se deben atacar todos los rojos simultáneamente.
