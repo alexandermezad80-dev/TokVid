@@ -4,8 +4,14 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { supabase } from "../../lib/supabase";
 
 export default function AuthCallback() {
-  const params = useLocalSearchParams<{ code?: string; error?: string; error_description?: string }>();
-  const [status, setStatus] = useState("Iniciando sesión...");
+  const params = useLocalSearchParams<{
+    code?: string;
+    token_hash?: string;
+    type?: string;
+    error?: string;
+    error_description?: string;
+  }>();
+  const [status, setStatus] = useState("Confirmando tu cuenta...");
 
   useEffect(() => {
     const handle = async () => {
@@ -15,22 +21,38 @@ export default function AuthCallback() {
         return;
       }
 
+      if (params.token_hash && params.type) {
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: params.token_hash,
+          type: params.type as "signup" | "email",
+        });
+
+        if (error) {
+          setStatus("No se pudo confirmar tu correo.");
+          setTimeout(() => router.replace("/auth/login"), 2500);
+          return;
+        }
+
+        router.replace("/edit-profile");
+        return;
+      }
+
       if (params.code) {
         const href = typeof window !== "undefined" ? window.location.href : "";
         const { error } = await supabase.auth.exchangeCodeForSession(href);
+
         if (error) {
-          setStatus("No se pudo completar el login.");
+          setStatus("No se pudo completar la autenticación.");
           setTimeout(() => router.replace("/auth/login"), 2500);
           return;
         }
       }
 
-      // Session will be picked up by onAuthStateChange in AuthContext
       router.replace("/(tabs)");
     };
 
     handle();
-  }, []);
+  }, [params.code, params.error, params.error_description, params.token_hash, params.type]);
 
   return (
     <View style={styles.container}>
