@@ -1,5 +1,21 @@
 # TokVid — Requisitos funcionales y visión del producto
 
+## 0. Referencia visual y UX: modelo HTML de TokVid
+
+El archivo HTML de referencia **`tokvid-flujo.html`** forma parte de la definición visual/UX de TokVid, pero **no es la arquitectura de la aplicación ni debe importarse como código de producción**.
+
+- Se utiliza como referencia para la identidad visual, presentación y experiencia de usuario que se desea conservar.
+- La aplicación final mantiene su arquitectura nativa actual con Expo/React Native, Expo Router y Supabase.
+- No se debe convertir el HTML en pantallas de producción ni copiar literalmente su código.
+- La referencia visual incluye la dirección estética que se quiere preservar: tema oscuro, contraste cyan/magenta, presentación moderna, enfoque video-first y la experiencia de bienvenida.
+- La interfaz final debe adaptar esa identidad a una aplicación nativa y a las funciones reales de TokVid.
+- No trasladar al onboarding funciones que en el HTML aparezcan como demostración. En particular, cámara y micrófono pertenecen a los contextos reales de uso: Crear/grabación, Live y llamadas.
+- Las pantallas, permisos, verificaciones o comportamientos simulados del HTML no se consideran implementación funcional de producción.
+- La distribución de controles debe mantener una identidad propia de TokVid; el objetivo no es copiar literalmente la interfaz de TikTok ni la del HTML.
+
+**Principio:** el HTML define una **referencia visual/UX**, no una dependencia técnica. TokVid debe conservar la idea visual que fue aprobada, pero implementarla de forma nativa, segura, mantenible y coherente con sus funciones reales.
+
+
 > Documento maestro de requisitos acordados para planificación y auditoría.
 >
 > **Estado:** especificación de producto; no implica que todas las funciones estén implementadas.
