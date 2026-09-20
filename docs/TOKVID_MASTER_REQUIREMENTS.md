@@ -1,130 +1,639 @@
-# TOKVID — Documento maestro de requisitos y visión
+# TOKVID
+
+Documento maestro de requisitos y visión del proyecto
 
 **Estado:** Especificación de trabajo  
-**Propósito:** Servir como referencia para la auditoría, planificación y evolución de TokVid.
+**Propósito:** Servir como referencia para la auditoría, planificación y evolución de TokVid.  
+**Regla principal:** Primero auditar. No modificar código, base de datos, migraciones ni configuración sin autorización explícita.
 
-> **Regla principal:** Primero auditar. No modificar código, base de datos, migraciones ni configuración sin autorización explícita.
+## 1. IDENTIDAD Y PERFIL
 
-## 1. Identidad y perfil
-Cada usuario tendrá nombre, nombre de usuario, foto/avatar, videos publicados, seguidores, seguidos, amigos cuando exista seguimiento mutuo, favoritos/guardados, Me gusta, nichos/categorías y actividad/interacciones.
+Cada usuario tendrá un perfil con:
 
-## 2. Feed de videos
-Feed vertical con scroll infinito, reproducción automática, precarga inteligente limitada, adaptación a conexión, Me gusta, comentarios, compartir, guardar, perfil del creador, seguir, hashtags y menciones. La interfaz tendrá identidad propia y no copiará literalmente otras plataformas.
+- Nombre.
+- Nombre de usuario.
+- Foto/avatar.
+- Videos publicados.
+- Seguidores.
+- Seguidos.
+- Amigos, cuando exista seguimiento mutuo.
+- Videos favoritos/guardados.
+- Videos a los que dio Me gusta.
+- Nichos o categorías de contenido.
+- Actividad e interacciones correspondientes.
 
-## 3. Stories
-Publicar y ver Stories, Me gusta, notificaciones de interacción, acceso desde notificación y controles de privacidad.
+## 2. FEED DE VIDEOS
 
-## 4. Seguidores, seguidos y amigos
-Seguir/dejar de seguir, consultar seguidores y seguidos, identificar amistad por seguimiento mutuo, notificar nuevos seguidores y acceder al perfil.
+El feed debe proporcionar una experiencia de video vertical con:
 
-## 5. Mensajes privados
-Conversaciones, envío/recepción, notificaciones, eliminación individual, selección múltiple, vaciado de conversación y diferencia clara entre «eliminar para mí» y, si se habilita, «eliminar para todos». Debe respetar privacidad, permisos y RLS.
+- Scroll infinito.
+- Reproducción automática del contenido visible.
+- Precarga inteligente del siguiente video.
+- Ventana limitada de precarga para no consumir excesivamente datos, memoria o batería.
+- Adaptación a diferentes velocidades de conexión.
+- Me gusta.
+- Comentarios.
+- Compartir.
+- Guardar/favoritos.
+- Acceso al perfil del creador.
+- Seguir al creador.
+- Hashtags.
+- Menciones.
 
-## 6. Llamadas y videollamadas
-Integradas en mensajes. Llamada de voz y videollamada, elección de voz o voz+video, activar/desactivar micrófono y cámara, finalizar, aceptar/rechazar y notificaciones de llamadas entrantes/perdidas. Cámara y micrófono se solicitan solo al utilizar la función.
+La interfaz debe tener identidad propia y no copiar literalmente la distribución de otras plataformas.
 
-## 7. Burbujas de mensajes
-Estilos de burbuja configurables, vista previa, selección y cambio posterior, diferenciación enviado/recibido, legibilidad y accesibilidad. No altera la lógica de almacenamiento.
+## 3. STORIES
 
-## 8. Live
-Sistema independiente del feed. El anfitrión gestiona invitados, autorizaciones, permisos de cámara/micrófono, acceso y sala. Cada participante controla físicamente su dispositivo dentro de los permisos concedidos. Invitados participan cuando son autorizados. Chat del Live separado de comentarios de videos y mensajes privados.
+Funciones previstas:
 
-## 9. Requisitos para Live
-Propuesta actual: 18+, mínimo 1.000 seguidores, cuenta con al menos 30 días, cuenta en buen estado y cumplimiento de políticas de Live/comunidad. Sujeto a revisión final.
+- Publicar Stories.
+- Ver Stories.
+- Me gusta.
+- Notificaciones de interacción.
+- Acceso a la Story desde la notificación.
+- Controles de privacidad correspondientes.
 
-## 10. Enlace en el perfil
-Propuesta: desbloqueo después de 60 días, cuenta en buen estado, verificación correspondiente y controles de seguridad. No necesariamente exige mínimo de seguidores.
+## 4. SEGUIDORES, SEGUIDOS Y AMIGOS
 
-## 11. Creación y producción de video
-Grabar/importar, recortar, unir clips, editar, texto, música/sonido, efectos, filtros, ajustes visuales, vista previa, publicar y guardar borradores.
+TokVid debe permitir:
 
-## 12. Filtros y efectos
-Filtros de imagen/video, ajustes visuales, efectos especiales y de audio y vista previa.
+- Seguir usuarios.
+- Dejar de seguir.
+- Consultar seguidores.
+- Consultar seguidos.
+- Identificar relaciones de amistad cuando el seguimiento sea mutuo.
+- Notificar nuevos seguidores.
+- Acceder al perfil correspondiente.
 
-## 13. Voz y sonido
-Cambio/efectos de voz, ajustes de audio, aplausos, risas y otros efectos, con previsualización. La imitación de voces reales requiere reglas de seguridad y consentimiento.
+## 5. MENSAJES PRIVADOS
 
-## 14. Subtítulos
-Generación automática desde audio/voz, edición manual, sincronización, estilos, tamaño, posición, vista previa, idiomas y activación/desactivación durante reproducción.
+Sistema de mensajería privada entre usuarios.
 
-## 15. IA para creadores
-Ideas, guiones, textos, recursos visuales, edición asistida, transformación y generación audiovisual cuando corresponda. La IA debe mantener el control del usuario sobre lo publicado y contar con política específica de IA y propiedad intelectual.
+Funciones:
 
-## 16. Hashtags
-Crear/reconocer #hashtag, abrir contenido asociado, página/feed del hashtag, descubrimiento y asociación con videos y contenido compatible.
+- Conversaciones.
+- Envío y recepción de mensajes.
+- Notificaciones.
+- Eliminar un mensaje individual.
+- Seleccionar varios mensajes y eliminarlos.
+- Eliminar todos los mensajes de una conversación de una vez.
+- Eliminar/vaciar una conversación.
 
-## 17. Menciones
-@usuario, sugerencias al escribir, acceso al perfil, notificación al mencionado y controles de privacidad.
+Definir claramente la diferencia entre:
 
-## 18. Borradores
-Guardar y continuar posteriormente, conservar elementos de edición, múltiples borradores, eliminar borradores e impedir publicación accidental. Un borrador no es contenido publicado hasta confirmación.
+- Eliminar para mí.
+- Eliminar para todos, si TokVid decide habilitarlo.
 
-## 19. Formatos y procesamiento de video
-Definir formatos, duración, resoluciones, tamaños, códecs, validación, conversión/transcodificación y optimización móvil. Debe equilibrar calidad, velocidad, almacenamiento y consumo de datos.
+Las operaciones deben respetar privacidad, permisos y RLS.
 
-## 20. Notificaciones
-Área propia para Me gusta de videos/Stories, comentarios, seguidores, mensajes, llamadas, videollamadas, actividad relevante de Live, menciones y otras interacciones. Deben llevar al destino correspondiente cuando sea posible.
+## 6. LLAMADAS Y VIDEOLLAMADAS
 
-## 21. Seguridad de mensajería
-Protección frente a mensajes potencialmente peligrosos: ocultar/proteger, decidir si abrir, reportar, bloquear y explicar. No asumir automáticamente una situación personal por una detección automática.
+Integradas directamente dentro de los mensajes privados.
 
-## 22. «¿Necesitas ayuda?»
-Cuando corresponda, mostrar información de apoyo, reporte, bloqueo, recursos profesionales y recursos de emergencia ante riesgo inmediato.
+Opciones:
 
-## 23. Ayuda psicológica
-Podrá incluir una entidad profesional y verificable, enlace oficial, tipo de ayuda e información actualizada. Los recursos deben verificarse antes de publicarse.
+- 📞 Llamada de voz.
+- 📹 Videollamada.
 
-## 24. Conducta repetida y advertencias
-Propuesta: ante tres mensajes relacionados con una misma conducta/intención de riesgo, mostrar advertencia; una posible medida posterior sería suspensión temporal de 24 horas. Antes de automatizar: definir categorías, criterios, umbrales, revisión, protección contra falsos positivos y apelación.
+El usuario podrá decidir si utiliza solamente voz o voz + video.
 
-## 25. Protección de menores
-Como Live será 18+, la edad forma parte de seguridad. La voz infantil solo es señal de posible riesgo, no prueba definitiva. Cualquier medida requiere protección de privacidad, revisión y apelación; no bloquear automáticamente por apariencia de voz.
+Durante la llamada:
 
-## 26. Políticas de TokVid
-Preparar políticas independientes para términos, privacidad, comunidad, contenido/moderación, mensajes, Live, derechos de autor, IA, seguridad, enlaces, cuentas/sanciones/apelaciones, menores/edad, datos/eliminación y creadores/monetización. Revisión legal antes de convertirlas en documentos jurídicos definitivos.
+- Activar/desactivar micrófono.
+- Activar/desactivar cámara.
+- Finalizar.
+- Aceptar/rechazar llamadas.
+- Notificaciones de llamadas entrantes.
+- Notificaciones de llamadas perdidas.
 
-## 27. Derechos de autor
-El usuario debe tener derechos o permisos necesarios. Debe existir reporte, revisión, retirada/restricción cuando corresponda y disputa/apelación. Reglas para música, imágenes, videos, terceros e IA. TokVid no asume automáticamente derechos de terceros.
+Los permisos de cámara y micrófono se solicitan cuando se utiliza la función.
 
-## 28. Monetización — función vital
-La arquitectura debe contemplar desde el principio regalos/apoyos en Live, suscripciones, reparto de ingresos, promoción, panel de ingresos, historial, retiros y, para TokVid, comisiones, publicidad, premium, servicios a creadores y funciones empresariales. Sistema financiero con saldo, ganancias, historial, umbral, métodos de pago por país, verificación cuando corresponda, fraude, reembolsos/disputas y registros. Las fórmulas de reparto deben poder evolucionar.
+## 7. BURBUJAS DE MENSAJES
 
-## 29. Herramientas para grandes creadores
-Estadísticas, retención, visualizaciones, crecimiento, horarios, moderación avanzada, moderadores de Live, protección de cuenta, alertas, comunidad, encuestas, preguntas, soporte y monetización según elegibilidad. Acceso progresivo por niveles.
+Los usuarios podrán elegir estilos de burbujas para sus conversaciones.
 
-## 30. Panel administrativo
-Panel protegido para equipo autorizado: usuarios, crecimiento, videos, Stories, Live, interacciones, reportes, moderación, seguridad, ingresos, comisiones, pagos a creadores y métricas.
+Funciones:
 
-## 31. Arquitectura de evolución segura
-Producción estable → desarrollo aislado → pruebas → revisión → integración → nueva versión. No cambiar directamente la versión estable sin control.
+- Diferentes diseños.
+- Vista previa.
+- Selección.
+- Cambio posterior.
+- Diferenciación entre mensajes enviados y recibidos.
+- Legibilidad y accesibilidad.
 
-## 32. Ramas y trabajo de desarrolladores
-Funciones importantes en ramas independientes, por ejemplo feature/chat, feature/video-editor, feature/live, feature/notifications y feature/monetization. Flujo: rama → CI → pruebas → revisión → aprobación → merge. Sin acceso total automático a producción.
+La personalización no debe alterar la lógica de almacenamiento de mensajes.
 
-## 33. Propiedad de código
-Responsables por Auth, Perfil, Feed, Crear, Mensajes, Live, Notificaciones, IA, Monetización, Seguridad y Supabase. Áreas sensibles pueden requerir revisiones obligatorias.
+## 8. LIVE
 
-## 34. Versiones estables y recuperación
-Identificar versiones funcionales, por ejemplo v1.0.0 estable y v1.1.0 nueva función. Ante problemas, poder volver de forma controlada a la última versión estable sin perderla.
+Sistema Live independiente del feed.
 
-## 35. Supabase y base de datos
-Cambios versionados y controlados mediante migraciones que identifiquen qué cambió, cuándo, versión y dependencias. Especial cuidado con cambios destructivos.
+### Anfitrión
 
-## 36. Auditoría antes de cambiar
-Para cada función revisar: interfaz → lógica → base de datos → relaciones → RLS/permisos → notificaciones → navegación → rendimiento → experiencia real. No basta con que exista una pantalla, botón, tabla o migración.
+Debe poder:
 
-## 37. Regla de protección del proyecto
-Durante auditoría: **NO modificar código, Supabase, migraciones, políticas ni configuración.** Primero auditar, documentar, identificar existente/incompleto/faltante/dependencias, planificar, solicitar autorización, implementar, probar e integrar.
+- Gestionar invitados.
+- Autorizar participantes.
+- Controlar permisos de cámara.
+- Controlar permisos de micrófono.
+- Abrir/cerrar acceso.
+- Revocar permisos.
+- Gestionar la sala.
 
-## 38. Principio general de TokVid
-Una función nueva no debe destruir una existente. La plataforma debe crecer progresivamente, recuperar una versión estable cuando sea necesario y permitir trabajo independiente por áreas sin interferencias innecesarias.
+El anfitrión controla la autorización, mientras que cada participante controla físicamente su propio dispositivo dentro de los permisos concedidos.
 
----
+### Invitados
 
-## Estado actual del documento
-Este documento representa la visión y lista de requisitos recopilados hasta este momento. **No significa que todas las funciones estén actualmente implementadas.**
+Podrán participar cuando estén autorizados y utilizar:
 
-La siguiente etapa es comparar cada requisito con el TokVid real y determinar:
+- Cámara.
+- Micrófono.
+
+### Chat del Live
+
+El Live tendrá comentarios/chat en tiempo real separado de:
+
+- Comentarios de videos.
+- Mensajes privados.
+
+## 9. REQUISITOS PARA LIVE
+
+Propuesta actual:
+
+- Edad: 18 años o más.
+- Mínimo: 1,000 seguidores.
+- Cuenta con al menos 30 días de antigüedad.
+- Cuenta en buen estado.
+- Cumplimiento de las políticas de Live y comunidad.
+
+Estos requisitos quedan sujetos a revisión final.
+
+## 10. ENLACE EN EL PERFIL
+
+Propuesta actual:
+
+- Desbloqueo después de 60 días de antigüedad.
+- Cuenta en buen estado.
+- Verificación correspondiente.
+- Controles de seguridad para enlaces.
+
+No se exige necesariamente un número mínimo de seguidores.
+
+## 11. CREACIÓN Y PRODUCCIÓN DE VIDEO
+
+La sección Crear debe evolucionar hacia herramientas de producción completas.
+
+Funciones previstas:
+
+- Grabar video.
+- Importar video.
+- Recortar.
+- Unir clips.
+- Editar.
+- Texto.
+- Música/sonido.
+- Efectos.
+- Filtros.
+- Ajustes visuales.
+- Vista previa.
+- Publicación.
+- Guardar borradores.
+
+## 12. FILTROS Y EFECTOS
+
+Herramientas previstas:
+
+- Filtros de imagen.
+- Filtros de video.
+- Ajustes visuales.
+- Efectos especiales.
+- Efectos de audio.
+- Vista previa antes de publicar.
+
+## 13. VOZ Y SONIDO
+
+Funciones previstas:
+
+- Cambio de voz.
+- Efectos de voz.
+- Ajustes de audio.
+- Aplausos.
+- Risas.
+- Reacciones sonoras.
+- Otros efectos especiales.
+- Previsualización antes de publicar.
+
+Los efectos de imitación de voces reales deberán tener reglas específicas de seguridad y consentimiento.
+
+## 14. SUBTÍTULOS
+
+Herramientas de subtítulos:
+
+- Generación automática desde audio/voz.
+- Edición manual.
+- Sincronización.
+- Diferentes estilos.
+- Tamaño configurable.
+- Posición configurable.
+- Vista previa.
+- Diferentes idiomas.
+- Activación/desactivación durante la reproducción.
+
+## 15. IA PARA CREADORES
+
+TokVid podrá incorporar IA como herramienta de creación.
+
+Posibles funciones:
+
+- Ideas.
+- Guiones.
+- Texto para publicaciones.
+- Recursos visuales.
+- Edición asistida.
+- Transformación de contenido.
+- Generación de elementos audiovisuales cuando corresponda.
+
+La IA debe ayudar al creador manteniendo el control del usuario sobre lo que publica.
+
+Debe existir una política específica para IA y propiedad intelectual.
+
+## 16. HASHTAGS
+
+Funciones:
+
+- Crear hashtags.
+- Reconocer formato #hashtag.
+- Abrir el contenido asociado al seleccionar un hashtag.
+- Página/feed del hashtag.
+- Descubrimiento de contenido.
+- Asociación de hashtags con videos y contenido compatible.
+
+## 17. MENCIONES
+
+Funciones:
+
+- Mencionar mediante @usuario.
+- Sugerencias al escribir.
+- Abrir perfil desde la mención.
+- Notificar al usuario mencionado.
+- Controles de privacidad sobre quién puede mencionar.
+
+## 18. BORRADORES
+
+Crear debe permitir:
+
+- Guardar borradores.
+- Continuar posteriormente.
+- Mantener los elementos necesarios de edición.
+- Tener múltiples borradores.
+- Eliminar borradores.
+- Impedir publicación accidental.
+
+Un borrador no se considera contenido publicado hasta que el usuario confirme.
+
+## 19. FORMATOS Y PROCESAMIENTO DE VIDEO
+
+TokVid debe definir:
+
+- Formatos aceptados.
+- Duración máxima.
+- Resoluciones.
+- Tamaños máximos.
+- Códecs compatibles.
+- Validación de archivos.
+- Conversión/transcodificación cuando sea necesaria.
+- Optimización para dispositivos móviles.
+- Versiones apropiadas para diferentes conexiones.
+
+El objetivo es equilibrar:
+
+**calidad + velocidad + almacenamiento + consumo de datos.**
+
+## 20. NOTIFICACIONES
+
+Área propia de notificaciones.
+
+Debe contemplar:
+
+- ❤️ Me gusta en videos.
+- ❤️ Me gusta en Stories.
+- 💬 Comentarios.
+- 👤 Nuevos seguidores.
+- 📨 Mensajes.
+- 📞 Llamadas.
+- 📹 Videollamadas.
+- 🔴 Actividad relevante de Live.
+- Menciones.
+- Otras interacciones relevantes.
+
+Las notificaciones deben llevar al destino correspondiente cuando sea posible.
+
+## 21. SEGURIDAD DE MENSAJERÍA
+
+TokVid debe contemplar protección frente a mensajes potencialmente peligrosos.
+
+Cuando corresponda:
+
+- Ocultar/proteger el mensaje.
+- Permitir decidir si abrirlo.
+- Reportar.
+- Bloquear al usuario.
+- Mostrar explicación.
+
+No se debe asumir automáticamente una situación personal únicamente por una detección automática.
+
+## 22. “¿NECESITAS AYUDA?”
+
+Cuando corresponda, mostrar un recurso de ayuda que pueda incluir:
+
+- Información de apoyo.
+- Opciones de reporte.
+- Bloqueo.
+- Recursos profesionales.
+- Recursos de emergencia cuando exista riesgo inmediato.
+
+## 23. AYUDA PSICOLÓGICA
+
+El sistema podrá proporcionar un enlace a una entidad profesional y verificable de ayuda psicológica.
+
+Debe incluir:
+
+- Nombre de la entidad.
+- Enlace oficial.
+- Tipo de ayuda disponible.
+- Información actualizada.
+
+Los recursos deben verificarse antes de publicarse.
+
+## 24. CONDUCTA REPETIDA Y ADVERTENCIAS
+
+Propuesta:
+
+Si se detectan tres mensajes relacionados con una misma conducta/intención de riesgo, puede aparecer una advertencia.
+
+Una posible medida posterior sería una suspensión temporal de 24 horas, conforme a las políticas de TokVid.
+
+Antes de automatizarla deberán definirse:
+
+- Categorías.
+- Criterios.
+- Umbrales.
+- Revisión.
+- Protección contra falsos positivos.
+- Apelación.
+
+## 25. PROTECCIÓN DE MENORES
+
+Como Live será 18+:
+
+- La edad debe formar parte del sistema de seguridad.
+- La detección de voz infantil solamente será una señal de posible riesgo, no una prueba definitiva.
+- Una posible detección puede activar medidas de protección o verificación.
+- No se debe bloquear automáticamente a alguien únicamente por la apariencia de su voz.
+- Debe existir mecanismo de revisión/apelación.
+- Protección especial de privacidad y datos de menores.
+
+## 26. POLÍTICAS DE TOKVID
+
+Se preparará un conjunto de políticas independientes:
+
+- Términos y condiciones.
+- Política de privacidad.
+- Reglas de la comunidad.
+- Política de contenido y moderación.
+- Política de mensajes privados.
+- Política de Live.
+- Derechos de autor y propiedad intelectual.
+- Política de IA.
+- Seguridad y protección de usuarios.
+- Política de enlaces externos.
+- Cuentas, sanciones y apelaciones.
+- Menores y requisitos de edad.
+- Datos, eliminación de cuenta y contenido.
+- Política para creadores y monetización.
+
+Estas políticas deberán revisarse legalmente antes de convertirse en documentos jurídicos definitivos.
+
+## 27. DERECHOS DE AUTOR ©️
+
+TokVid debe contemplar:
+
+- El usuario debe tener los derechos o permisos necesarios sobre el contenido que publique.
+- Sistema para reportar infracciones.
+- Revisión de reclamaciones.
+- Retirada o restricción cuando corresponda.
+- Mecanismo de disputa/apelación.
+- Reglas para música, imágenes, videos y material de terceros.
+- Reglas para contenido generado mediante IA.
+
+TokVid no debe asumir automáticamente derechos sobre material de terceros.
+
+## 28. MONETIZACIÓN — FUNCIÓN VITAL
+
+La monetización debe formar parte de la arquitectura desde el principio.
+
+### Para creadores
+
+Posibles vías:
+
+- Regalos/apoyos en Live.
+- Suscripciones.
+- Participación en ingresos.
+- Herramientas promocionales.
+- Panel de ingresos.
+- Historial de pagos.
+- Retiros.
+
+### Para TokVid
+
+Posibles vías:
+
+- Comisiones de determinadas transacciones.
+- Publicidad.
+- Herramientas premium.
+- Servicios para creadores.
+- Funciones empresariales.
+
+### Sistema financiero
+
+Debe contemplar:
+
+- Saldo.
+- Ganancias.
+- Historial.
+- Umbral de retiro.
+- Métodos de pago según país.
+- Verificación de identidad cuando sea necesaria.
+- Prevención de fraude.
+- Reembolsos/disputas.
+- Registros financieros.
+
+Las fórmulas de reparto de ingresos deben poder evolucionar sin reconstruir toda la plataforma.
+
+## 29. HERRAMIENTAS PARA GRANDES CREADORES
+
+Usuarios con una audiencia importante podrán acceder progresivamente a:
+
+- Estadísticas.
+- Retención.
+- Visualizaciones.
+- Crecimiento.
+- Horarios de actividad.
+- Moderación avanzada.
+- Moderadores para Live.
+- Protección de cuenta.
+- Alertas de seguridad.
+- Herramientas de comunidad.
+- Encuestas.
+- Preguntas.
+- Soporte especializado.
+- Herramientas de monetización cuando sean elegibles.
+
+El acceso puede organizarse mediante niveles progresivos.
+
+## 30. PANEL ADMINISTRATIVO
+
+TokVid debe contemplar un panel administrativo para el propietario/equipo autorizado.
+
+Debe permitir supervisar, según los permisos correspondientes:
+
+- Usuarios.
+- Crecimiento.
+- Videos.
+- Stories.
+- Live.
+- Interacciones.
+- Reportes.
+- Moderación.
+- Seguridad.
+- Ingresos.
+- Comisiones.
+- Pagos a creadores.
+- Métricas de plataforma.
+
+El acceso administrativo debe estar fuertemente protegido.
+
+## 31. ARQUITECTURA DE EVOLUCIÓN SEGURA
+
+TokVid debe poder crecer sin romper funcionalidades existentes.
+
+Principios:
+
+**Producción estable → desarrollo aislado → pruebas → revisión → integración → nueva versión.**
+
+No se deben realizar cambios directamente sobre la versión estable sin control.
+
+## 32. RAMAS Y TRABAJO DE DESARROLLADORES
+
+Cada función importante podrá desarrollarse en una rama independiente.
+
+Ejemplos:
+
+- feature/chat
+- feature/video-editor
+- feature/live
+- feature/notifications
+- feature/monetization
+
+El desarrollador trabaja en su área y posteriormente presenta un Pull Request.
+
+Flujo:
+
+**Rama → CI → pruebas → revisión → aprobación → merge**
+
+No se debe entregar automáticamente acceso total a producción.
+
+## 33. PROPIEDAD DE CÓDIGO
+
+Se podrán definir responsables por áreas:
+
+- Auth.
+- Perfil.
+- Feed.
+- Crear.
+- Mensajes.
+- Live.
+- Notificaciones.
+- IA.
+- Monetización.
+- Seguridad.
+- Supabase.
+
+Las áreas sensibles pueden requerir revisiones obligatorias antes de integrar cambios.
+
+## 34. VERSIONES ESTABLES Y RECUPERACIÓN
+
+Cada versión funcional debe identificarse.
+
+Ejemplo:
+
+- v1.0.0 = estable
+- v1.1.0 = nueva función
+
+Si una nueva versión presenta un problema:
+
+**Nueva versión ❌ ↓ Última versión estable ✅**
+
+La recuperación debe poder realizarse de forma controlada.
+
+No se debe perder la versión funcional mientras se investiga el problema.
+
+## 35. SUPABASE Y BASE DE DATOS
+
+Los cambios de base de datos deben estar versionados y controlados.
+
+Las migraciones deben permitir identificar:
+
+- Qué cambio se realizó.
+- Cuándo.
+- Qué versión lo introdujo.
+- Qué dependencias tiene.
+
+Se debe tener especial cuidado con cambios destructivos.
+
+## 36. AUDITORÍA ANTES DE CAMBIAR
+
+Para cada función se debe revisar:
+
+**Interfaz ↓ Lógica ↓ Base de datos ↓ Relaciones ↓ RLS/permisos ↓ Notificaciones ↓ Navegación ↓ Rendimiento ↓ Experiencia real**
+
+No basta con que exista una pantalla, botón, tabla o migración.
+
+## 37. REGLA DE PROTECCIÓN DEL PROYECTO
+
+Durante la auditoría:
+
+**NO modificar código. NO modificar Supabase. NO modificar migraciones. NO modificar políticas. NO modificar configuración.**
+
+Primero:
+
+- Auditar.
+- Documentar.
+- Identificar lo existente.
+- Identificar lo incompleto.
+- Identificar lo que falta.
+- Identificar dependencias.
+- Planificar.
+- Solicitar autorización.
+- Implementar.
+- Probar.
+- Integrar.
+
+## 38. PRINCIPIO GENERAL DE TOKVID
+
+TokVid debe construirse para que:
+
+- Una función nueva no destruya una función existente.
+- La plataforma pueda crecer progresivamente.
+- Se pueda recuperar una versión estable cuando sea necesario.
+- Diferentes desarrolladores puedan trabajar en partes específicas sin interferir innecesariamente con otras áreas.
+
+## ESTADO ACTUAL DEL DOCUMENTO
+
+Este documento representa la visión y lista de requisitos recopilados hasta este momento.
+
+No significa que todas las funciones estén actualmente implementadas.
+
+La siguiente etapa será comparar cada requisito con el TokVid real para determinar:
 
 - ✅ Ya existe.
 - 🟡 Existe parcialmente.
