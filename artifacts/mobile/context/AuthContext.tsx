@@ -4,9 +4,10 @@ import { supabase } from "../lib/supabase";
 
 export interface Profile {
   id: string;
-  username: string;
+  username: string | null;
   email: string | null;
   avatar_url: string | null;
+  full_name: string | null;
   bio: string | null;
   followers_count: number;
   following_count: number;
@@ -26,6 +27,8 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+const PROFILE_COLUMNS = "id,username,email,full_name,avatar_url,bio,followers_count,following_count,likes_count";
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -33,16 +36,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    try {
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
-      if (data) setProfile(data as Profile);
-    } catch {
-      // Table may not exist yet — silently ignore
+    const { data, error } = await supabase
+      .from("profiles")
+      .select(PROFILE_COLUMNS)
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (error) {
+      setProfile(null);
+      return;
     }
+
+    setProfile(data as Profile | null);
   };
 
   useEffect(() => {
@@ -83,14 +88,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (data.user) {
       // Try to upsert profile — gracefully fails if table doesn't exist yet
-      try {
-        await supabase.from("profiles").upsert({
-          id: data.user.id,
-          username,
-          email,
-          created_at: new Date().toISOString(),
-        });
-      } catch { /* ignore — table may not exist yet */ }
+      const { error: profileError } = await supabase.from("profiles").upsert({
+        id: data.user.id,
+        username,
+        email,
+        full_name: username,
+      });
+      if (profileError) return { error: profileError.message };
     }
 
     return { error: null };
