@@ -133,8 +133,6 @@ router.post("/send", async (req, res) => {
   }
 
   const { data: notif, error: insertError } = await supabase
-
-  const { data: notif, error: insertError } = await supabase
     .from("notifications")
     .insert({
       user_id: userId,
