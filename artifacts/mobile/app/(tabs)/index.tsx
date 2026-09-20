@@ -137,7 +137,6 @@ export default function FeedScreen() {
       [item.id]: (prev[item.id] ?? 0) + 1,
     }));
 
-    // Open system share sheet
     try {
       await Share.share({
         title: item.caption,
@@ -145,7 +144,7 @@ export default function FeedScreen() {
         url: item.uri,
       });
     } catch {
-      // Share cancelled or failed — revert optimistic update
+      // Share cancelled or failed — revert optimistic update.
       setShareOverrides((prev) => ({
         ...prev,
         [item.id]: Math.max(0, (prev[item.id] ?? 1) - 1),
@@ -153,21 +152,17 @@ export default function FeedScreen() {
       return;
     }
 
-    // Increment in Supabase (best-effort — no-op for mock videos not in DB)
-    try {
-      const { data } = await supabase
-        .from("videos")
-        .select("shares_count")
-        .eq("id", item.id)
-        .maybeSingle();
-      if (data) {
-        await supabase
-          .from("videos")
-          .update({ shares_count: (data.shares_count ?? 0) + 1 })
-          .eq("id", item.id);
-      }
-    } catch {
-      // Silently ignore — local count already updated
+    // Persist the share through the protected RPC. Mock videos that are
+    // not persisted in Supabase are reverted without affecting the DB.
+    const { error } = await supabase.rpc("increment_video_share_count", {
+      p_video_id: item.id,
+    });
+
+    if (error) {
+      setShareOverrides((prev) => ({
+        ...prev,
+        [item.id]: Math.max(0, (prev[item.id] ?? 1) - 1),
+      }));
     }
   }, []);
 
