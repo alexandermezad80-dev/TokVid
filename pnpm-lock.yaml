@@ -1500,7 +1500,8 @@ packages:
   '@img/sharp-linux-ppc64@0.34.5':
     resolution: {integrity: sha512-7zznwNaqW6YtsfrGGDA6BRkISKAAE1Jo0QdpNYXNMHu2+0dTrPflTLNkpc8l7MUP5M16ZJcUvysVWWrMefZquA==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
-    cpu: [ppc64]    os: [linux]
+    cpu: [ppc64]
+    os: [linux]
     libc: [glibc]
 
   '@img/sharp-linux-riscv64@0.34.5':
