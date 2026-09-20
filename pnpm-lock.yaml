@@ -5991,7 +5991,8 @@ packages:
       sugarss: ^5.0.0
       terser: ^5.16.0
       tsx: ^4.8.1
-      yaml: ^2.4.2    peerDependenciesMeta:
+      yaml: ^2.4.2
+    peerDependenciesMeta:
       '@types/node':
         optional: true
       jiti:
