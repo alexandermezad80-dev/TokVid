@@ -30,8 +30,6 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-
   const handleRegister = async () => {
     if (!username.trim() || !email.trim() || !password || !confirmPassword) {
       setError("Completá todos los campos.");
@@ -52,7 +50,10 @@ export default function RegisterScreen() {
     if (error) {
       setError(error);
     } else {
-      setSuccess(true);
+      router.replace({
+        pathname: "/auth/verify-email",
+        params: { email: email.trim() },
+      });
     }
   };
 
@@ -65,23 +66,6 @@ export default function RegisterScreen() {
       setError(error);
     }
   };
-
-  if (success) {
-    return (
-      <View style={[styles.root, styles.successContainer]}>
-        <View style={styles.successIcon}>
-          <Feather name="check" size={40} color="#fff" />
-        </View>
-        <Text style={styles.successTitle}>¡Cuenta creada!</Text>
-        <Text style={styles.successText}>
-          Revisá tu email para confirmar tu cuenta y luego iniciá sesión.
-        </Text>
-        <TouchableOpacity style={styles.btn} onPress={() => router.replace("/auth/login")}>
-          <Text style={styles.btnText}>Ir al login</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
 
   return (
     <KeyboardAvoidingView
@@ -206,17 +190,6 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#000" },
   container: { paddingHorizontal: 28, flexGrow: 1 },
-  successContainer: { alignItems: "center", justifyContent: "center", paddingHorizontal: 40, gap: 20 },
-  successIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#FE2C55",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  successTitle: { color: "#fff", fontSize: 26, fontWeight: "800" },
-  successText: { color: "#888", fontSize: 15, textAlign: "center", lineHeight: 22 },
   logo: {
     fontSize: 38,
     fontWeight: "900",
