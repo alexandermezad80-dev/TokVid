@@ -5,9 +5,6 @@ import { z } from "zod";
 const router = Router();
 
 function getSupabaseAdmin() {
-  // Env var names are inverted in this project:
-  // EXPO_PUBLIC_SUPABASE_ANON_KEY may actually hold the URL (starts with "https://")
-  // EXPO_PUBLIC_SUPABASE_URL may actually hold the anon key
   const c1 = process.env["EXPO_PUBLIC_SUPABASE_URL"] ?? "";
   const c2 = process.env["EXPO_PUBLIC_SUPABASE_ANON_KEY"] ?? "";
   const realUrl = c1.startsWith("http") ? c1 : c2;
@@ -20,7 +17,7 @@ function getSupabaseAdmin() {
 
 const SendSchema = z.object({
   userId: z.string().uuid(),
-  type: z.enum(["like", "comment", "follow", "mention", "system"]),
+  type: z.enum(["like", "comment", "follow", "mention", "system", "message"]),
   message: z.string().min(1).max(500),
   actorId: z.string().uuid().optional(),
   actorName: z.string().optional(),
@@ -28,7 +25,6 @@ const SendSchema = z.object({
   data: z.record(z.unknown()).optional(),
 });
 
-// POST /api/notifications/send
 router.post("/send", async (req, res) => {
   const parsed = SendSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -39,7 +35,6 @@ router.post("/send", async (req, res) => {
   const { userId, type, message, actorId, actorName, actorAvatar, data } = parsed.data;
   const supabase = getSupabaseAdmin();
 
-  // 1. Insert notification record
   const { data: notif, error: insertError } = await supabase
     .from("notifications")
     .insert({
@@ -60,7 +55,6 @@ router.post("/send", async (req, res) => {
     return;
   }
 
-  // 2. Fetch push token
   const { data: profile } = await supabase
     .from("profiles")
     .select("push_token")
@@ -70,7 +64,6 @@ router.post("/send", async (req, res) => {
   const pushToken = profile?.push_token;
 
   if (pushToken && pushToken.startsWith("ExponentPushToken")) {
-    // 3. Send via Expo Push API
     try {
       const response = await fetch("https://exp.host/--/api/v2/push/send", {
         method: "POST",
