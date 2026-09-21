@@ -5,7 +5,6 @@ import { supabase } from "../lib/supabase";
 export interface Profile {
   id: string;
   username: string | null;
-  email: string | null;
   avatar_url: string | null;
   full_name: string | null;
   bio: string | null;
@@ -27,7 +26,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const PROFILE_COLUMNS = "id,username,email,full_name,avatar_url,bio,followers_count,following_count,likes_count";
+const PROFILE_COLUMNS = "id,username,full_name,avatar_url,bio,followers_count,following_count,likes_count";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -91,7 +90,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error: profileError } = await supabase.from("profiles").upsert({
         id: data.user.id,
         username,
-        email,
         full_name: username,
       });
       if (profileError) return { error: profileError.message };
