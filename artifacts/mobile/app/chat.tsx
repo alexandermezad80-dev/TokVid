@@ -111,11 +111,28 @@ export default function ChatScreen() {
     setMessages((prev) => [...prev, optimistic]);
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
 
-    await supabase.from("messages").insert({
+    const { error: messageError } = await supabase.from("messages").insert({
       conversation_id: conversationId,
       sender_id: user.id,
       text: msgText,
     });
+
+    if (!messageError && otherUserId) {
+      await supabase.from("notifications").insert({
+        user_id: otherUserId,
+        actor_id: user.id,
+        actor_name: user.user_metadata?.username ?? user.user_metadata?.display_name ?? null,
+        actor_avatar: null,
+        type: "message",
+        message: "Te envió un mensaje",
+        data: {
+          conversationId,
+          otherUserId: user.id,
+          otherUsername: user.user_metadata?.username ?? "",
+          otherAvatar: "",
+        },
+      });
+    }
 
     // Update conversation last_message
     await supabase
