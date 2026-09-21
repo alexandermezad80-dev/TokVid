@@ -27,7 +27,7 @@ export function usePushNotifications(userId: string | undefined) {
       if (!token) return;
       setExpoPushToken(token);
       await supabase
-        .from("profiles")
+        .from("profile_private")
         .update({ push_token: token })
         .eq("id", userId);
     });
