@@ -6,7 +6,7 @@
 
 ## Objetivo
 
-Cerrar de forma controlada los hallazgos de auditoría y mantener `main` intacta hasta el cierre final.
+Cerrar de forma controlada los hallazgos de auditoría y construir las funcionalidades del producto por bloques pequeños, verificables y sin tocar `main` hasta el cierre final.
 
 ## Estado de cierre
 
@@ -43,6 +43,34 @@ Cerrar de forma controlada los hallazgos de auditoría y mantener `main` intacta
 
 Las migraciones aplicadas en Supabase para las fases A–C están registradas en el historial de Supabase. Las migraciones de B6, C3 y C1 también quedan representadas en `supabase/migrations/` de esta rama para mantener Git y Supabase alineados.
 
+## Fase D — Funcionalidades del producto
+
+### D1 — Stories
+**🟡 EN CONSTRUCCIÓN**
+
+Primer bloque iniciado el 21 de septiembre de 2026.
+
+Fundación implementada y verificada:
+- tabla `public.stories`;
+- historias de imagen o video;
+- expiración automática lógica a las 24 horas mediante `expires_at`;
+- RLS habilitado;
+- lectura solo de historias activas para usuarios autenticados;
+- creación y eliminación restringidas al propietario;
+- índices para propietario y expiración.
+
+Migración aplicada en Supabase y representada en:
+`supabase/migrations/20260921110000_stories_foundation.sql`.
+
+Pendiente dentro de D1:
+- almacenamiento de media de Stories;
+- creación desde la app;
+- visor de Stories;
+- integración visual con Home;
+- pruebas funcionales y CI.
+
+No se inicia D2 hasta cerrar D1.
+
 ## Criterio general de cierre
 
 Una tarea se considera cerrada cuando:
@@ -58,11 +86,9 @@ Una tarea se considera cerrada cuando:
 
 - `main` permanece intacta.
 - No se hace merge automáticamente.
-- No se inicia Fase D en este cierre.
 - Los cambios se mantienen en `feature/onboarding-profile-interests`.
+- Se trabaja un solo bloque de Fase D a la vez.
 
-## Siguiente etapa
+## Siguiente paso
 
-**Fases A–C cerradas.**
-
-La siguiente etapa es **Fase D — funcionalidades del producto**, pero queda fuera de este cierre y requiere autorización explícita para iniciar cada bloque.
+Continuar **D1 — Stories**, empezando por el almacenamiento y flujo de creación, y validar antes de avanzar al visor/integración.
