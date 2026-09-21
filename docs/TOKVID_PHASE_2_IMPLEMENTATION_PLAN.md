@@ -46,30 +46,53 @@ Las migraciones aplicadas en Supabase para las fases A–C están registradas en
 ## Fase D — Funcionalidades del producto
 
 ### D1 — Stories
-**🟡 EN CONSTRUCCIÓN**
+**🟢 COMPLETA**
 
-Primer bloque iniciado el 21 de septiembre de 2026.
+D1 fue construida y validada por bloques en la rama `feature/onboarding-profile-interests`.
 
-Fundación implementada y verificada:
+Implementado:
 - tabla `public.stories`;
 - historias de imagen o video;
-- expiración automática lógica a las 24 horas mediante `expires_at`;
-- RLS habilitado;
-- lectura solo de historias activas para usuarios autenticados;
-- creación y eliminación restringidas al propietario;
-- índices para propietario y expiración.
+- expiración lógica a las 24 horas mediante `expires_at`;
+- RLS y políticas de lectura/creación/eliminación;
+- bucket `stories` público con límite de 50 MB y MIME permitidos;
+- Storage restringido por propietario para upload/update/delete;
+- flujo de creación desde la galería;
+- publicación en Storage + registro en `public.stories`;
+- limpieza del objeto si falla el registro en DB;
+- entrada de creación desde Home;
+- tira horizontal de Stories;
+- visor de Stories para imagen y video;
+- navegación entre Stories y cierre;
+- manejo de Stories expiradas/eliminadas;
+- integración de Stories en Home;
+- rutas registradas en Expo Router;
+- CI validado en los bloques de implementación.
 
-Migración aplicada en Supabase y representada en:
-`supabase/migrations/20260921110000_stories_foundation.sql`.
+### Alineación arquitectónica de D1
 
-Pendiente dentro de D1:
-- almacenamiento de media de Stories;
-- creación desde la app;
-- visor de Stories;
-- integración visual con Home;
-- pruebas funcionales y CI.
+Se revisó la estructura real de `artifacts/mobile` antes de hacer una reorganización.
 
-No se inicia D2 hasta cerrar D1.
+El repositorio actual **no contiene un directorio `features/`** ni una arquitectura feature-based implementada físicamente. La organización real usa:
+- `app/` para las rutas/pantallas de Expo Router;
+- `components/` para componentes reutilizables;
+- `context/`, `hooks/`, `lib/` y otras áreas compartidas.
+
+Por ello, **no se creó una arquitectura nueva ni se movieron archivos de Stories a una carpeta `features/stories` inexistente**. Stories queda alineado con la arquitectura real vigente: pantallas en `app/` y el componente reutilizable `StoriesStrip` en `components/`.
+
+Esto evita introducir una convención arquitectónica nueva únicamente para D1.
+
+### Validación D1
+
+- La tabla `public.stories` existe y RLS está habilitado.
+- Las políticas de lectura, creación y eliminación fueron verificadas.
+- El bucket `stories` y sus límites/MIME fueron verificados.
+- No hay datos reales de Stories en la base durante esta validación, por lo que no se simuló una publicación autenticada inexistente.
+- CI del último bloque de D1: **#120 🟢**.
+- `main` permanece intacta.
+- No se ha hecho merge.
+
+No se inicia D2 automáticamente.
 
 ## Criterio general de cierre
 
@@ -91,4 +114,4 @@ Una tarea se considera cerrada cuando:
 
 ## Siguiente paso
 
-Continuar **D1 — Stories**, empezando por el almacenamiento y flujo de creación, y validar antes de avanzar al visor/integración.
+**D1 queda cerrado.** El siguiente bloque definido en el plan es **D2 — Live**. Se inicia únicamente con autorización explícita.
