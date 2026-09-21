@@ -1,76 +1,54 @@
 # TOKVID — Fase 2: Plan de implementación segura
 
-**Fecha:** 20 de septiembre de 2026  
-**Rama:** `feature/onboarding-profile-interests`  
+**Fecha de actualización:** 21 de septiembre de 2026
+**Rama:** `feature/onboarding-profile-interests`
 **Base protegida:** `main`
 
 ## Objetivo
 
-Convertir los hallazgos de la auditoría en una secuencia controlada de trabajo. Esta fase **no implementa funcionalidades ni modifica Supabase**; define el orden, dependencias y criterios de cierre.
+Cerrar de forma controlada los hallazgos de auditoría y mantener `main` intacta hasta el cierre final.
 
-## Regla
+## Estado de cierre
 
-Una tarea solo pasa a implementación cuando:
-1. su alcance está definido;
-2. sus dependencias están verificadas;
-3. existe una prueba de aceptación;
-4. se autoriza explícitamente el cambio.
+### Fase A — Inconsistencias existentes
+**🟢 COMPLETA**
 
-## Orden de trabajo propuesto
-
-### Fase A — Cerrar inconsistencias existentes
-1. Shares: eliminar la ruta directa de `tag.tsx` y dejar una única vía mediante RPC.
-2. Feed: sustituir/retirar el fallback mock cuando exista una estrategia real de estado vacío/error.
-3. Perfil público: conectar la cuadrícula con videos reales.
-4. Notifications: cerrar message → notification → push → navegación al chat.
-5. Mentions: cerrar notification → push → navegación.
-6. Hashtags: definir y cerrar sincronización de `usage_count`.
-
-**Criterio:** ninguna de estas tareas debe introducir cambios de esquema innecesarios.
+- Shares: una única vía segura mediante RPC.
+- Feed: estado real sin fallback que oculte ausencia funcional.
+- Perfil público: cuadrícula conectada al contenido real.
+- Notifications: flujo de mensaje → notificación → push → navegación.
+- Mentions: notificación → push → navegación.
+- Hashtags: sincronización atómica de `usage_count`.
 
 ### Fase B — Hardening de seguridad
-1. Revisar exposición pública de `profiles.email` y `profiles.push_token`.
-2. Limitar UPDATE de perfiles a campos editables.
-3. Revisar grants de `videos`.
-4. Limitar UPDATE de `notifications` a los campos necesarios.
-5. Definir límites de tamaño y MIME de Storage.
-6. Revisar las funciones security-definer señaladas por Advisor.
+**🟢 COMPLETA**
 
-**Criterio:** cada cambio debe probarse con roles anon/authenticated y con intentos explícitos de acceso no autorizado.
+- Datos privados de perfil separados de `profiles`.
+- UPDATE de `profiles` limitado a campos editables.
+- Grants de `videos` restringidos.
+- UPDATE de `notifications` limitado a `read`.
+- Límites y MIME de Storage definidos para `avatars` y `videos`.
+- Ejecución de funciones SECURITY DEFINER restringida según su uso.
 
 ### Fase C — Integridad y rendimiento
-1. Evaluar FK de `follows`.
-2. Evaluar FK `saved_videos.video_id → videos.id`.
-3. Revisar `auth_rls_initplan`.
-4. Revisar los índices unused después de disponer de datos/consultas representativas.
+**🟢 COMPLETA**
 
-**Criterio:** no eliminar índices solo por aparecer como unused en una base casi vacía.
+- `follows.follower_id → auth.users.id` con `ON DELETE CASCADE`.
+- `follows.following_id → auth.users.id` con `ON DELETE CASCADE`.
+- `saved_videos.video_id` permanece como `text`, sin FK a `videos`, porque el producto admite IDs demo y UUID reales.
+- `auth_rls_initplan` corregido usando `(select auth.uid())`.
+- Índices marcados como unused no fueron eliminados porque la base todavía no tiene datos/consultas representativas suficientes.
 
-### Fase D — Funcionalidades del producto
-Después de cerrar A–C, abordar los requisitos maestros faltantes por dependencia:
-- Stories.
-- Live.
-- Llamadas/videollamadas.
-- Edición avanzada.
-- Filtros/efectos.
-- Voz/sonido.
-- Subtítulos.
-- IA para creadores.
-- Borradores.
-- Procesamiento/transcodificación.
-- Seguridad y moderación.
-- Protección de menores.
-- Copyright.
-- Monetización.
-- Herramientas de grandes creadores.
-- Panel administrativo.
+## Conciliación de base de datos
+
+Las migraciones aplicadas en Supabase para las fases A–C están registradas en el historial de Supabase. Las migraciones de B6, C3 y C1 también quedan representadas en `supabase/migrations/` de esta rama para mantener Git y Supabase alineados.
 
 ## Criterio general de cierre
 
-Una tarea se considera cerrada solo cuando:
+Una tarea se considera cerrada cuando:
 - código y base están alineados;
 - RLS/grants están verificados;
-- no existen rutas alternativas inseguras;
+- no existen rutas alternativas inseguras conocidas;
 - CI pasa;
 - las pruebas correspondientes pasan;
 - la documentación refleja el estado real;
@@ -80,12 +58,11 @@ Una tarea se considera cerrada solo cuando:
 
 - `main` permanece intacta.
 - No se hace merge automáticamente.
-- No se modifican migraciones/RLS/Storage por iniciativa propia.
-- No se implementan varios bloques grandes simultáneamente.
-- Cada cambio se realiza en rama de trabajo y se valida antes de continuar.
+- No se inicia Fase D en este cierre.
+- Los cambios se mantienen en `feature/onboarding-profile-interests`.
 
-## Próximo bloque autorizado por planificación
+## Siguiente etapa
 
-**Bloque A1 — Shares:** auditar nuevamente el flujo de compartir y preparar el cambio mínimo para que todas las rutas persistentes utilicen la RPC segura.
+**Fases A–C cerradas.**
 
-Este bloque todavía requiere autorización explícita para modificar código.
+La siguiente etapa es **Fase D — funcionalidades del producto**, pero queda fuera de este cierre y requiere autorización explícita para iniciar cada bloque.
