@@ -121,18 +121,17 @@ export default function EditProfileScreen() {
         if (uploaded) avatarUrl = uploaded;
       }
 
-      const updates: Record<string, any> = {
-        id: user!.id,
+      const updates: Record<string, string> = {
         username: username.trim(),
         bio: bio.trim(),
         full_name: profile?.full_name ?? username.trim(),
-        updated_at: new Date().toISOString(),
       };
       if (avatarUrl) updates.avatar_url = avatarUrl;
 
       const { error: dbError } = await supabase
         .from("profiles")
-        .upsert(updates);
+        .update(updates)
+        .eq("id", user!.id);
 
       if (dbError) throw dbError;
 
