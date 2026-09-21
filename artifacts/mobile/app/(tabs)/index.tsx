@@ -24,6 +24,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useFollow } from "../../context/FollowContext";
 import { VideoItem, formatCount, useVideoFeed } from "../../hooks/useVideoFeed";
 import { useSavedVideos } from "../../hooks/useSavedVideos";
+import StoriesStrip from "../../components/StoriesStrip";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -277,6 +278,10 @@ export default function FeedScreen() {
         />
       )}
 
+      <View style={[styles.storiesOverlay, { top: topPad + 48 }]}>
+        <StoriesStrip />
+      </View>
+
       {/* Header overlay */}
       <View style={[styles.header, { paddingTop: topPad + 10 }]}>
         <TouchableOpacity onPress={() => handleTabSwitch("following")}>
@@ -320,6 +325,12 @@ export default function FeedScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000" },
+  storiesOverlay: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    zIndex: 8,
+  },
   header: {
     position: "absolute",
     top: 0,
