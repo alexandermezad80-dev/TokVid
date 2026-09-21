@@ -36,8 +36,19 @@ export function usePushNotifications(userId: string | undefined) {
       // Notification received while app is in foreground
     });
 
-    responseListener.current = Notifications.addNotificationResponseReceivedListener((_response) => {
-      // User tapped the notification
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(async (response) => {
+      const data = response.notification.request.content.data as Record<string, unknown>;
+      if (data.type !== "message" || typeof data.conversationId !== "string") return;
+
+      const conversationId = data.conversationId;
+      const otherUserId = typeof data.otherUserId === "string" ? data.otherUserId : "";
+      const otherUsername = typeof data.otherUsername === "string" ? data.otherUsername : "Usuario";
+      const otherAvatar = typeof data.otherAvatar === "string" ? data.otherAvatar : "";
+
+      const { router } = await import("expo-router");
+      router.push(
+        `/chat?conversationId=${conversationId}&otherUserId=${otherUserId}&otherUsername=${encodeURIComponent(otherUsername)}&otherAvatar=${encodeURIComponent(otherAvatar)}`
+      );
     });
 
     return () => {
