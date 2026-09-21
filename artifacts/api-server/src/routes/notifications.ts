@@ -153,7 +153,7 @@ router.post("/send", async (req, res) => {
   }
 
   const { data: profile } = await supabase
-    .from("profiles")
+    .from("profile_private")
     .select("push_token")
     .eq("id", userId)
     .single();
