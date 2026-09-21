@@ -291,6 +291,13 @@ export default function FeedScreen() {
           </Text>
         </TouchableOpacity>
 
+        <TouchableOpacity
+          onPress={() => router.push("/story-create")}
+          accessibilityLabel="Crear historia"
+        >
+          <Feather name="plus-circle" size={24} color="#fff" />
+        </TouchableOpacity>
+
         <Feather name="search" size={24} color="#fff" />
       </View>
 
