@@ -19,6 +19,43 @@ function response(body: unknown, status = 200) {
   });
 }
 
+async function sendIncomingCallPush(
+  admin: ReturnType<typeof createClient>,
+  receiverId: string,
+  call: { id: string; type: "voice" | "video"; conversation_id: string },
+) {
+  const { data: profile } = await admin
+    .from("profile_private")
+    .select("push_token")
+    .eq("id", receiverId)
+    .maybeSingle();
+
+  const pushToken = profile?.push_token;
+  if (typeof pushToken !== "string" || !pushToken.startsWith("ExponentPushToken")) return;
+
+  try {
+    await fetch("https://exp.host/--/api/v2/push/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to: pushToken,
+        sound: "default",
+        title: call.type === "video" ? "Videollamada entrante" : "Llamada entrante",
+        body: call.type === "video" ? "Te están llamando por video" : "Te están llamando",
+        data: {
+          type: "call",
+          callId: call.id,
+          callType: call.type,
+          conversationId: call.conversation_id,
+        },
+        channelId: "default",
+      }),
+    });
+  } catch {
+    // Push delivery is best-effort; Realtime remains the primary call-state channel.
+  }
+}
+
 async function uidFromUserId(userId: string) {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(userId));
   const uid = new DataView(digest).getUint32(0);
@@ -85,6 +122,13 @@ Deno.serve(async (req) => {
 
     if (error?.code === "23505") return response({ error: "An active call already exists" }, 409);
     if (error || !call) return response({ error: "Failed to create call" }, 500);
+
+    await sendIncomingCallPush(admin, receiverId, {
+      id: call.id,
+      type: call.type,
+      conversation_id: call.conversation_id,
+    });
+
     return response({ call });
   }
 
