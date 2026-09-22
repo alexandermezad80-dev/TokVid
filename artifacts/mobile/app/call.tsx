@@ -20,10 +20,14 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
 import {
+  cancelCall,
   endCall,
   getAgoraCredentials,
+  getCall,
+  type CallStatus,
   type CallType,
 } from "../lib/features/calls/services/calls-service";
+import { supabase } from "../lib/supabase";
 
 export default function CallScreen() {
   const { user } = useAuth();
@@ -31,19 +35,22 @@ export default function CallScreen() {
   const { callId, type } = useLocalSearchParams<{ callId: string; type: CallType }>();
   const engineRef = useRef<IRtcEngine | null>(null);
   const [remoteUid, setRemoteUid] = useState<number | null>(null);
+  const [callStatus, setCallStatus] = useState<CallStatus | null>(null);
+  const [answeredAt, setAnsweredAt] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(true);
   const [muted, setMuted] = useState(false);
   const [cameraEnabled, setCameraEnabled] = useState(type === "video");
   const [ending, setEnding] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   useEffect(() => {
-    let mounted = true;
+    if (!callId) return;
 
-    const start = async () => {
-      if (!user || !callId || (type !== "voice" && type !== "video")) {
-        if (mounted) setConnecting(false);
-        return;
-      }
+    let mounted = true;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    const startRtc = async (status: CallStatus, answered: string | null) => {
+      if (!mounted || status !== "accepted" || engineRef.current) return;
 
       try {
         const microphone = await Camera.requestMicrophonePermissionsAsync();
@@ -55,8 +62,11 @@ export default function CallScreen() {
         }
 
         const credentials = await getAgoraCredentials(callId);
+        if (!mounted) return;
+
         const engine = createAgoraRtcEngine();
         engineRef.current = engine;
+        setAnsweredAt(answered);
 
         engine.initialize({
           appId: credentials.appId,
@@ -99,25 +109,96 @@ export default function CallScreen() {
       }
     };
 
-    void start();
+    const loadCall = async () => {
+      try {
+        const call = await getCall(callId);
+        if (!mounted) return;
+        setCallStatus(call.status);
+        setAnsweredAt(call.answered_at);
+
+        if (call.status === "accepted") {
+          await startRtc(call.status, call.answered_at);
+        } else if (call.status !== "ringing") {
+          setConnecting(false);
+          Alert.alert("Llamada finalizada", "La llamada ya no está disponible.", [
+            { text: "Cerrar", onPress: () => router.back() },
+          ]);
+        }
+      } catch (error) {
+        if (mounted) {
+          setConnecting(false);
+          Alert.alert(
+            "No se pudo cargar la llamada",
+            error instanceof Error ? error.message : "Ocurrió un error inesperado.",
+            [{ text: "Cerrar", onPress: () => router.back() }],
+          );
+        }
+      }
+    };
+
+    void loadCall();
+
+    channel = supabase
+      .channel(`call-state-${callId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "calls", filter: `id=eq.${callId}` },
+        (payload) => {
+          const call = payload.new as CallRecord;
+          if (!mounted) return;
+
+          setCallStatus(call.status);
+          setAnsweredAt(call.answered_at);
+
+          if (call.status === "accepted") {
+            void startRtc(call.status, call.answered_at);
+          } else if (call.status !== "ringing") {
+            router.back();
+          }
+        },
+      )
+      .subscribe();
 
     return () => {
       mounted = false;
+      if (channel) void supabase.removeChannel(channel);
       const engine = engineRef.current;
       if (engine) {
-        engine.leaveChannel();
+        void engine.leaveChannel();
         engine.unregisterEventHandler({});
         engine.release();
         engineRef.current = null;
       }
     };
-  }, [callId, type, user]);
+  }, [callId, type]);
+
+  useEffect(() => {
+    if (!answeredAt || callStatus !== "accepted") {
+      setElapsedSeconds(0);
+      return;
+    }
+
+    const update = () => {
+      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - new Date(answeredAt).getTime()) / 1000)));
+    };
+
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
+  }, [answeredAt, callStatus]);
 
   const finish = async () => {
     if (!callId || ending) return;
     setEnding(true);
     try {
-      await endCall(callId);
+      if (callStatus === "ringing" && user) {
+        const call = await getCall(callId);
+        if (call.caller_id === user.id) {
+          await cancelCall(callId);
+        }
+      } else if (callStatus === "accepted") {
+        await endCall(callId);
+      }
     } catch {
       // The RTC engine is still closed locally even if the backend request fails.
     } finally {
@@ -144,11 +225,17 @@ export default function CallScreen() {
     setCameraEnabled(next);
   };
 
+  const formattedTime = `${Math.floor(elapsedSeconds / 60)
+    .toString()
+    .padStart(2, "0")}:${(elapsedSeconds % 60).toString().padStart(2, "0")}`;
+
   if (connecting) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <ActivityIndicator size="large" color="#fff" />
-        <Text style={styles.connectingText}>Conectando llamada…</Text>
+        <Text style={styles.connectingText}>
+          {callStatus === "ringing" ? "Esperando respuesta…" : "Conectando llamada…"}
+        </Text>
       </View>
     );
   }
@@ -166,7 +253,9 @@ export default function CallScreen() {
           ) : (
             <View style={styles.waiting}>
               <Feather name="video" size={34} color="#777" />
-              <Text style={styles.waitingText}>Esperando a la otra persona…</Text>
+              <Text style={styles.waitingText}>
+                {callStatus === "accepted" ? "Conectando con la otra persona…" : "Esperando a la otra persona…"}
+              </Text>
             </View>
           )}
 
@@ -187,19 +276,19 @@ export default function CallScreen() {
           <Feather name="phone" size={48} color="#fff" />
           <Text style={styles.voiceTitle}>Llamada de voz</Text>
           <Text style={styles.voiceStatus}>
-            {remoteUid !== null ? "Conectada" : "Esperando respuesta…"}
+            {callStatus === "accepted" ? formattedTime : "Esperando respuesta…"}
           </Text>
         </View>
       )}
 
       <View style={[styles.controls, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-        <TouchableOpacity style={styles.control} onPress={toggleMute}>
+        <TouchableOpacity style={styles.control} onPress={toggleMute} disabled={callStatus !== "accepted"}>
           <Feather name={muted ? "mic-off" : "mic"} size={22} color="#fff" />
           <Text style={styles.controlLabel}>{muted ? "Activar" : "Silenciar"}</Text>
         </TouchableOpacity>
 
         {type === "video" && (
-          <TouchableOpacity style={styles.control} onPress={toggleCamera}>
+          <TouchableOpacity style={styles.control} onPress={toggleCamera} disabled={callStatus !== "accepted"}>
             <Feather name={cameraEnabled ? "video" : "video-off"} size={22} color="#fff" />
             <Text style={styles.controlLabel}>{cameraEnabled ? "Cámara" : "Sin cámara"}</Text>
           </TouchableOpacity>
@@ -220,6 +309,11 @@ export default function CallScreen() {
     </View>
   );
 }
+
+type CallRecord = {
+  status: CallStatus;
+  answered_at: string | null;
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000", alignItems: "center", justifyContent: "center" },
@@ -247,7 +341,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   waiting: { flex: 1, alignItems: "center", justifyContent: "center", gap: 14 },
-  waitingText: { color: "#777", fontSize: 14 },
+  waitingText: { color: "#777", fontSize: 14, textAlign: "center", paddingHorizontal: 24 },
   voiceStage: { alignItems: "center", gap: 12 },
   voiceTitle: { color: "#fff", fontSize: 22, fontWeight: "700" },
   voiceStatus: { color: "#999", fontSize: 14 },
