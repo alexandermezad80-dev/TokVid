@@ -1,5 +1,6 @@
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
 import { useEffect, useRef, useState } from "react";
 import { Platform } from "react-native";
 import { supabase } from "../lib/supabase";
@@ -25,9 +26,8 @@ export function usePushNotifications(userId: string | undefined) {
     registerForPushNotificationsAsync().then(async (token) => {
       if (!token) return;
       setExpoPushToken(token);
-      // Save token to Supabase profile
       await supabase
-        .from("profiles")
+        .from("profile_private")
         .update({ push_token: token })
         .eq("id", userId);
     });
@@ -36,8 +36,19 @@ export function usePushNotifications(userId: string | undefined) {
       // Notification received while app is in foreground
     });
 
-    responseListener.current = Notifications.addNotificationResponseReceivedListener((_response) => {
-      // User tapped the notification
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(async (response) => {
+      const data = response.notification.request.content.data as Record<string, unknown>;
+      if (data.type !== "message" || typeof data.conversationId !== "string") return;
+
+      const conversationId = data.conversationId;
+      const otherUserId = typeof data.otherUserId === "string" ? data.otherUserId : "";
+      const otherUsername = typeof data.otherUsername === "string" ? data.otherUsername : "Usuario";
+      const otherAvatar = typeof data.otherAvatar === "string" ? data.otherAvatar : "";
+
+      const { router } = await import("expo-router");
+      router.push(
+        `/chat?conversationId=${conversationId}&otherUserId=${otherUserId}&otherUsername=${encodeURIComponent(otherUsername)}&otherAvatar=${encodeURIComponent(otherAvatar)}`
+      );
     });
 
     return () => {
@@ -63,9 +74,10 @@ async function registerForPushNotificationsAsync(): Promise<string | null> {
   if (finalStatus !== "granted") return null;
 
   try {
-    const { data } = await Notifications.getExpoPushTokenAsync({
-      projectId: "mobile", // matches app.json slug
-    });
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+    const { data } = await Notifications.getExpoPushTokenAsync(
+      projectId ? { projectId } : undefined,
+    );
 
     if (Platform.OS === "android") {
       await Notifications.setNotificationChannelAsync("default", {

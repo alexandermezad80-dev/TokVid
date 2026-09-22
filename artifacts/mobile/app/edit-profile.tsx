@@ -20,8 +20,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
 
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
-
 function avatarPlaceholder(user: any, profile: any): string {
   if (profile?.avatar_url) return profile.avatar_url;
   const seed = encodeURIComponent(user?.email ?? "user");
@@ -71,30 +69,14 @@ export default function EditProfileScreen() {
     setUploadingPhoto(true);
     try {
       const ext = avatarUri.split(".").pop()?.toLowerCase() ?? "jpg";
-      const fileName = `${user.id}.${ext}`;
+      const fileName = `${user.id}/avatar.${ext}`;
       const contentType = ext === "png" ? "image/png" : "image/jpeg";
 
       // Fetch the image as blob
       const response = await fetch(avatarUri);
       const blob = await response.blob();
 
-      // Upload to Supabase Storage
-      const uploadRes = await fetch(
-        `${SUPABASE_URL}/storage/v1/object/avatars/${fileName}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": contentType,
-            Authorization: `Bearer ${user.id}`, // will use RLS
-            apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.startsWith("http")
-              ? process.env.EXPO_PUBLIC_SUPABASE_URL ?? ""
-              : process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "",
-          },
-          body: blob,
-        }
-      );
-
-      // Use supabase-js for the upload (handles auth automatically)
+      // Upload with supabase-js so the authenticated session is applied to Storage RLS
       const { data, error } = await supabase.storage
         .from("avatars")
         .upload(fileName, blob, {
@@ -139,17 +121,17 @@ export default function EditProfileScreen() {
         if (uploaded) avatarUrl = uploaded;
       }
 
-      const updates: Record<string, any> = {
-        id: user!.id,
+      const updates: Record<string, string> = {
         username: username.trim(),
         bio: bio.trim(),
-        updated_at: new Date().toISOString(),
+        full_name: profile?.full_name ?? username.trim(),
       };
       if (avatarUrl) updates.avatar_url = avatarUrl;
 
       const { error: dbError } = await supabase
         .from("profiles")
-        .upsert(updates);
+        .update(updates)
+        .eq("id", user!.id);
 
       if (dbError) throw dbError;
 

@@ -14,9 +14,24 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Tokvid necesita acceso a la cámara para videollamadas.",
+        "NSMicrophoneUsageDescription": "Tokvid necesita acceso al micrófono para llamadas de voz y video."
+      }
     },
-    "android": {},
+    "android": {
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.ACCESS_WIFI_STATE",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.BLUETOOTH",
+        "android.permission.FOREGROUND_SERVICE"
+      ],
+      "allowBackup": false
+    },
     "web": {
       "favicon": "./assets/images/icon.png"
     },
@@ -24,6 +39,24 @@
       "expo-router",
       "expo-font",
       "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Tokvid necesita acceso a la cámara para videollamadas.",
+          "microphonePermission": "Tokvid necesita acceso al micrófono para llamadas de voz y video."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 24
+          },
+          "ios": {
+            "deploymentTarget": "15.1"
+          }
+        }
+      ],
       [
         "expo-notifications",
         {
