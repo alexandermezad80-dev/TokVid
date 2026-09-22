@@ -4,17 +4,9 @@ begin;
 create index if not exists follows_following_id_idx
   on public.follows(following_id);
 
--- Saved videos now reference only persisted videos. The mobile feed no longer
--- contains demo/seed video IDs, so the relation can use a real FK.
-alter table public.saved_videos
-  alter column video_id type uuid
-  using video_id::uuid;
-
-alter table public.saved_videos
-  add constraint saved_videos_video_id_fkey
-  foreign key (video_id)
-  references public.videos(id)
-  on delete cascade;
+-- saved_videos intentionally remains text for legacy saved IDs (2, 4, 6).
+-- The current feed uses persisted UUID videos, but legacy saves must not be
+-- destroyed just to force a new FK contract.
 
 -- Messages: recipients may mark received messages as read, but nobody may
 -- edit message text through UPDATE. The sender may delete their own message.
