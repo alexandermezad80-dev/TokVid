@@ -232,6 +232,25 @@ export function useVideoFeed(followedIds: Set<string>) {
         next.delete(id);
         return next;
       });
+      return;
+    }
+
+    const { data: video } = await supabase
+      .from("videos")
+      .select("user_id")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (video?.user_id && video.user_id !== user.id) {
+      await supabase.from("notifications").insert({
+        user_id: video.user_id,
+        actor_id: user.id,
+        actor_name: user.user_metadata?.username ?? user.user_metadata?.display_name ?? null,
+        actor_avatar: null,
+        type: "like",
+        message: "Le dio me gusta a tu video",
+        data: { video_id: id },
+      });
     }
   }, [likedIds]);
 
