@@ -25,6 +25,7 @@ import {
   endCall,
   getAgoraCredentials,
   getCall,
+  heartbeatCall,
   type CallStatus,
   type CallType,
 } from "../lib/features/calls/services/calls-service";
@@ -214,6 +215,20 @@ export default function CallScreen() {
       }
     };
   }, [callId, type]);
+
+  useEffect(() => {
+    if (!callId || callStatus !== "accepted") return;
+
+    const sendHeartbeat = () => {
+      void heartbeatCall(callId).catch(() => {
+        // Retry on the next heartbeat; call state remains authoritative on the server.
+      });
+    };
+
+    sendHeartbeat();
+    const heartbeat = setInterval(sendHeartbeat, 15_000);
+    return () => clearInterval(heartbeat);
+  }, [callId, callStatus]);
 
   useEffect(() => {
     if (!answeredAt || callStatus !== "accepted") {
