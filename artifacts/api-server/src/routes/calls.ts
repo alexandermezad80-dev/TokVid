@@ -80,6 +80,10 @@ const CallIdSchema = z.object({
   id: z.string().uuid(),
 });
 
+const AgoraTokenSchema = z.object({
+  call_id: z.string().uuid(),
+});
+
 router.post("/", async (req, res) => {
   const callerId = await authenticate(req);
   if (!callerId) {
@@ -159,7 +163,7 @@ router.post("/token", async (req, res) => {
     return;
   }
 
-  const parsed = CallIdSchema.safeParse(req.body);
+  const parsed = AgoraTokenSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid call id" });
     return;
@@ -169,7 +173,7 @@ router.post("/token", async (req, res) => {
   const { data: call, error } = await supabase
     .from("calls")
     .select("id, caller_id, receiver_id, type, status, agora_channel")
-    .eq("id", parsed.data.id)
+    .eq("id", parsed.data.call_id)
     .maybeSingle();
 
   if (error) {
