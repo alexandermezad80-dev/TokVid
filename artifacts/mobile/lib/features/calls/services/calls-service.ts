@@ -88,3 +88,8 @@ export async function getCall(callId: string): Promise<Call> {
 export async function getAgoraCredentials(callId: string): Promise<AgoraCredentials> {
   return invoke<AgoraCredentials>({ action: "token", call_id: callId });
 }
+
+export async function heartbeatCall(callId: string): Promise<Call> {
+  const result = await invoke<{ call: Call }>({ action: "heartbeat", call_id: callId });
+  return result.call;
+}
