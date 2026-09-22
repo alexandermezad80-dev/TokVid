@@ -52,4 +52,12 @@ jobs:
       - name: Build iOS simulator
         working-directory: artifacts/mobile/ios
         run: |
-          xcodebuild             -workspace Tokvid.xcworkspace             -scheme Tokvid             -sdk iphonesimulator             -configuration Debug             -derivedDataPath build             CODE_SIGNING_ALLOWED=NO             CODE_SIGNING_REQUIRED=NO             build
+          xcodebuild \
+            -workspace Tokvid.xcworkspace \
+            -scheme Tokvid \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
