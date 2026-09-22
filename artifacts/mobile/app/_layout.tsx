@@ -21,6 +21,7 @@ import { AuthProvider, useAuth } from "../context/AuthContext";
 import { FollowProvider } from "../context/FollowContext";
 import { NotificationsProvider } from "../context/NotificationsContext";
 import { usePushNotifications } from "../hooks/usePushNotifications";
+import { IncomingCallListener } from "../components/IncomingCallListener";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -73,6 +74,13 @@ function RootLayoutNav() {
             name="user-profile"
             options={{
               animation: "slide_from_right",
+            }}
+          />
+          <Stack.Screen
+            name="call"
+            options={{
+              presentation: "fullScreenModal",
+              animation: "fade",
             }}
           />
           <Stack.Screen
@@ -130,6 +138,7 @@ export default function RootLayout() {
                 <FollowProvider>
                   <NotificationsProvider>
                     <PushNotificationSetup />
+                    <IncomingCallListener />
                     <StatusBar style="light" />
                     <RootLayoutNav />
                   </NotificationsProvider>
