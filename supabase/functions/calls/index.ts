@@ -10,7 +10,7 @@ const corsHeaders = {
 
 const TOKEN_EXPIRE_SECONDS = 3600;
 
-type Action = "create" | "accept" | "reject" | "cancel" | "end" | "token";
+type Action = "create" | "accept" | "reject" | "cancel" | "end" | "heartbeat" | "token";
 
 function response(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -178,6 +178,25 @@ Deno.serve(async (req) => {
       status: "ended", ended_at: new Date().toISOString(),
     }).eq("id", call.id).eq("status", "accepted").select("*").single();
     if (error || !updated) return response({ error: "Failed to end call" }, 409);
+    return response({ call: updated });
+  }
+
+  if (action === "heartbeat") {
+    if (call.status !== "accepted") return response({ error: "Call is not active" }, 409);
+
+    const heartbeatColumn = user.id === call.caller_id
+      ? "caller_heartbeat_at"
+      : "receiver_heartbeat_at";
+
+    const { data: updated, error } = await admin
+      .from("calls")
+      .update({ [heartbeatColumn]: new Date().toISOString() })
+      .eq("id", call.id)
+      .eq("status", "accepted")
+      .select("*")
+      .single();
+
+    if (error || !updated) return response({ error: "Failed to update call heartbeat" }, 409);
     return response({ call: updated });
   }
 
