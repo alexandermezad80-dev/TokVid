@@ -1,6 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { createHash } from "node:crypto";
 import { RtcTokenBuilder } from "npm:agora-token@2.0.5";
 
 const corsHeaders = {
@@ -18,9 +17,9 @@ function json(body: unknown, status = 200) {
   });
 }
 
-function uidFromUserId(userId: string) {
-  const digest = createHash("sha256").update(userId).digest();
-  const uid = digest.readUInt32BE(0);
+async function uidFromUserId(userId: string) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(userId));
+  const uid = new DataView(digest).getUint32(0);
   return uid === 0 ? 1 : uid;
 }
 
@@ -98,7 +97,7 @@ Deno.serve(async (req) => {
     return json({ error: "Call is not active" }, 409);
   }
 
-  const uid = uidFromUserId(user.id);
+  const uid = await uidFromUserId(user.id);
   const token = RtcTokenBuilder.buildTokenWithUidAndPrivilege(
     appId,
     appCertificate,
