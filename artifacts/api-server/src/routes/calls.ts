@@ -1,8 +1,29 @@
 import { Router, type Request } from "express";
+import { createHash } from "node:crypto";
+import { RtcTokenBuilder } from "agora-token";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
 const router = Router();
+
+function getAgoraConfig() {
+  const appId = process.env["AGORA_APP_ID"] ?? "";
+  const appCertificate = process.env["AGORA_APP_CERTIFICATE"] ?? "";
+
+  if (!appId || !appCertificate) {
+    throw new Error("Agora server configuration is incomplete");
+  }
+
+  return { appId, appCertificate };
+}
+
+function getAgoraUid(userId: string) {
+  const digest = createHash("sha256").update(userId).digest();
+  const uid = digest.readUInt32BE(0) >>> 0;
+  return uid === 0 ? 1 : uid;
+}
+
+const AGORA_TOKEN_EXPIRE_SECONDS = 60 * 60;
 
 function getSupabaseConfig() {
   const url = process.env["EXPO_PUBLIC_SUPABASE_URL"] ?? "";
@@ -128,6 +149,78 @@ router.post("/", async (req, res) => {
   }
 
   res.status(201).json({ call });
+});
+
+
+router.post("/token", async (req, res) => {
+  const userId = await authenticate(req);
+  if (!userId) {
+    res.status(401).json({ error: "Invalid authentication token" });
+    return;
+  }
+
+  const parsed = CallIdSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid call id" });
+    return;
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { data: call, error } = await supabase
+    .from("calls")
+    .select("id, caller_id, receiver_id, type, status, agora_channel")
+    .eq("id", parsed.data.id)
+    .maybeSingle();
+
+  if (error) {
+    req.log.error({ err: error }, "Failed to load call for Agora token");
+    res.status(500).json({ error: "Failed to load call" });
+    return;
+  }
+
+  if (!call) {
+    res.status(404).json({ error: "Call not found" });
+    return;
+  }
+
+  if (call.caller_id !== userId && call.receiver_id !== userId) {
+    res.status(403).json({ error: "User is not a participant in this call" });
+    return;
+  }
+
+  if (call.status !== "accepted") {
+    res.status(409).json({ error: "Call is not active" });
+    return;
+  }
+
+  try {
+    const { appId, appCertificate } = getAgoraConfig();
+    const uid = getAgoraUid(userId);
+    const publishVideo = call.type === "video" ? AGORA_TOKEN_EXPIRE_SECONDS : 0;
+
+    const token = RtcTokenBuilder.buildTokenWithUidAndPrivilege(
+      appId,
+      appCertificate,
+      call.agora_channel,
+      uid,
+      AGORA_TOKEN_EXPIRE_SECONDS,
+      AGORA_TOKEN_EXPIRE_SECONDS,
+      AGORA_TOKEN_EXPIRE_SECONDS,
+      publishVideo,
+      0,
+    );
+
+    res.json({
+      appId,
+      channel: call.agora_channel,
+      uid,
+      token,
+      expiresIn: AGORA_TOKEN_EXPIRE_SECONDS,
+    });
+  } catch (error) {
+    req.log.error({ err: error }, "Failed to generate Agora token");
+    res.status(500).json({ error: "Failed to generate Agora token" });
+  }
 });
 
 router.post("/:id/accept", async (req, res) => {
