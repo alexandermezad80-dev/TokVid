@@ -24,11 +24,23 @@ export default function CallHistoryScreen() {
   const insets = useSafeAreaInsets();
   const [calls, setCalls] = useState<Call[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!conversationId) return;
+    if (!conversationId) {
+      setLoading(false);
+      setError("No se encontró la conversación.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
     void getCallHistory(conversationId)
       .then(setCalls)
+      .catch((loadError) => {
+        setCalls([]);
+        setError(loadError instanceof Error ? loadError.message : "No se pudo cargar el historial.");
+      })
       .finally(() => setLoading(false));
   }, [conversationId]);
 
@@ -42,6 +54,28 @@ export default function CallHistoryScreen() {
       </View>
       {loading ? (
         <View style={styles.center}><ActivityIndicator color="#FE2C55" /></View>
+      ) : error ? (
+        <View style={styles.center}>
+          <Feather name="alert-circle" size={38} color="#777" />
+          <Text style={styles.error}>{error}</Text>
+          <TouchableOpacity
+            style={styles.retry}
+            onPress={() => {
+              if (!conversationId) return;
+              setLoading(true);
+              setError(null);
+              void getCallHistory(conversationId)
+                .then(setCalls)
+                .catch((loadError) => {
+                  setCalls([]);
+                  setError(loadError instanceof Error ? loadError.message : "No se pudo cargar el historial.");
+                })
+                .finally(() => setLoading(false));
+            }}
+          >
+            <Text style={styles.retryText}>Reintentar</Text>
+          </TouchableOpacity>
+        </View>
       ) : calls.length === 0 ? (
         <View style={styles.center}>
           <Feather name="phone" size={38} color="#444" />
@@ -76,8 +110,11 @@ const styles = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderBottomWidth: 1, borderBottomColor: "#151515" },
   back: { padding: 4 },
   title: { color: "#fff", fontSize: 18, fontWeight: "700" },
-  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 14 },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 14, paddingHorizontal: 24 },
   empty: { color: "#666", fontSize: 14 },
+  error: { color: "#aaa", fontSize: 14, textAlign: "center" },
+  retry: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 10, backgroundColor: "#1c1c1e" },
+  retryText: { color: "#fff", fontSize: 14, fontWeight: "600" },
   list: { paddingVertical: 8 },
   row: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: "#111" },
   icon: { width: 42, height: 42, borderRadius: 21, backgroundColor: "#1c1c1e", alignItems: "center", justifyContent: "center" },

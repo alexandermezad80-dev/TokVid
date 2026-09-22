@@ -19,6 +19,7 @@ export function usePushNotifications(userId: string | undefined) {
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
   const notificationListener = useRef<Notifications.EventSubscription>(null);
   const responseListener = useRef<Notifications.EventSubscription>(null);
+  const handledResponseId = useRef<string | null>(null);
 
   useEffect(() => {
     if (!userId || Platform.OS === "web") return;
@@ -36,7 +37,10 @@ export function usePushNotifications(userId: string | undefined) {
       // Notification received while app is in foreground
     });
 
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(async (response) => {
+    const handleNotificationResponse = async (response: Notifications.NotificationResponse) => {
+      if (handledResponseId.current === response.notification.request.identifier) return;
+      handledResponseId.current = response.notification.request.identifier;
+
       const data = response.notification.request.content.data as Record<string, unknown>;
       const { router } = await import("expo-router");
 
@@ -56,9 +60,21 @@ export function usePushNotifications(userId: string | undefined) {
       router.push(
         `/chat?conversationId=${conversationId}&otherUserId=${otherUserId}&otherUsername=${encodeURIComponent(otherUsername)}&otherAvatar=${encodeURIComponent(otherAvatar)}`
       );
+    };
+
+    responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
+      void handleNotificationResponse(response);
     });
 
+    let coldStartTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+      coldStartTimer = null;
+      void Notifications.getLastNotificationResponseAsync().then((response) => {
+        if (response) void handleNotificationResponse(response);
+      });
+    }, 500);
+
     return () => {
+      if (coldStartTimer) clearTimeout(coldStartTimer);
       notificationListener.current?.remove();
       responseListener.current?.remove();
     };
