@@ -12,6 +12,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -158,6 +159,27 @@ export default function CallScreen() {
 
     void loadCall();
 
+    const appStateSubscription = AppState.addEventListener("change", (nextState) => {
+      if (nextState !== "active") return;
+
+      void getCall(callId)
+        .then((call) => {
+          if (!mounted) return;
+          setCallStatus(call.status);
+          setAnsweredAt(call.answered_at);
+
+          if (call.status === "accepted") {
+            setConnecting(false);
+            void startRtc(call.status, call.answered_at);
+          } else if (call.status !== "ringing") {
+            router.back();
+          }
+        })
+        .catch(() => {
+          // Realtime remains the primary live-state channel.
+        });
+    });
+
     channel = supabase
       .channel(`call-state-${callId}`)
       .on(
@@ -181,6 +203,7 @@ export default function CallScreen() {
 
     return () => {
       mounted = false;
+      appStateSubscription.remove();
       if (channel) void supabase.removeChannel(channel);
       const engine = engineRef.current;
       if (engine) {
