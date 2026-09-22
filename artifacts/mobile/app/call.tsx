@@ -42,6 +42,9 @@ export default function CallScreen() {
   const [cameraEnabled, setCameraEnabled] = useState(type === "video");
   const [ending, setEnding] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [speakerOn, setSpeakerOn] = useState(true);
+  const [frontCamera, setFrontCamera] = useState(true);
+  const [rtcState, setRtcState] = useState<"connecting" | "connected" | "reconnecting">("connecting");
 
   useEffect(() => {
     if (!callId) return;
@@ -80,6 +83,20 @@ export default function CallScreen() {
           onUserOffline: (_connection, uid) => {
             if (mounted) setRemoteUid((current) => (current === uid ? null : current));
           },
+          onConnectionStateChanged: (_connection, state) => {
+            if (!mounted) return;
+            if (state === 3) setRtcState("connected");
+            else if (state === 4 || state === 5) setRtcState("reconnecting");
+            else setRtcState("connecting");
+          },
+          onTokenPrivilegeWillExpire: async () => {
+            try {
+              const refreshed = await getAgoraCredentials(callId);
+              if (mounted) await engine.renewToken(refreshed.token);
+            } catch {
+              // The call remains controlled by the backend call state.
+            }
+          },
         });
 
         engine.setClientRole(ClientRoleType.clientRoleBroadcaster);
@@ -96,7 +113,10 @@ export default function CallScreen() {
           autoSubscribeVideo: type === "video",
         });
 
-        if (mounted) setConnecting(false);
+        if (mounted) {
+          setRtcState("connected");
+          setConnecting(false);
+        }
       } catch (error) {
         if (mounted) {
           setConnecting(false);
@@ -219,10 +239,23 @@ export default function CallScreen() {
   };
 
   const toggleCamera = () => {
-    if (type !== "video") return;
+    if (type !== "video" || callStatus !== "accepted") return;
     const next = !cameraEnabled;
     engineRef.current?.enableLocalVideo(next);
     setCameraEnabled(next);
+  };
+
+  const toggleSpeaker = () => {
+    if (callStatus !== "accepted") return;
+    const next = !speakerOn;
+    engineRef.current?.setEnableSpeakerphone(next);
+    setSpeakerOn(next);
+  };
+
+  const flipCamera = () => {
+    if (type !== "video" || callStatus !== "accepted") return;
+    engineRef.current?.switchCamera();
+    setFrontCamera((current) => !current);
   };
 
   const formattedTime = `${Math.floor(elapsedSeconds / 60)
@@ -278,6 +311,9 @@ export default function CallScreen() {
           <Text style={styles.voiceStatus}>
             {callStatus === "accepted" ? formattedTime : "Esperando respuesta…"}
           </Text>
+          {callStatus === "accepted" && rtcState !== "connected" && (
+            <Text style={styles.rtcStatus}>{rtcState === "reconnecting" ? "Reconectando…" : "Conectando…"}</Text>
+          )}
         </View>
       )}
 
@@ -288,10 +324,16 @@ export default function CallScreen() {
         </TouchableOpacity>
 
         {type === "video" && (
-          <TouchableOpacity style={styles.control} onPress={toggleCamera} disabled={callStatus !== "accepted"}>
-            <Feather name={cameraEnabled ? "video" : "video-off"} size={22} color="#fff" />
-            <Text style={styles.controlLabel}>{cameraEnabled ? "Cámara" : "Sin cámara"}</Text>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity style={styles.control} onPress={toggleCamera} disabled={callStatus !== "accepted"}>
+              <Feather name={cameraEnabled ? "video" : "video-off"} size={22} color="#fff" />
+              <Text style={styles.controlLabel}>{cameraEnabled ? "Cámara" : "Sin cámara"}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.control} onPress={flipCamera} disabled={callStatus !== "accepted" || !cameraEnabled}>
+              <Feather name="refresh-cw" size={22} color="#fff" />
+              <Text style={styles.controlLabel}>{frontCamera ? "Trasera" : "Frontal"}</Text>
+            </TouchableOpacity>
+          </>
         )}
 
         <TouchableOpacity
@@ -345,6 +387,7 @@ const styles = StyleSheet.create({
   voiceStage: { alignItems: "center", gap: 12 },
   voiceTitle: { color: "#fff", fontSize: 22, fontWeight: "700" },
   voiceStatus: { color: "#999", fontSize: 14 },
+  rtcStatus: { color: "#aaa", fontSize: 13 },
   controls: {
     position: "absolute",
     left: 0,
