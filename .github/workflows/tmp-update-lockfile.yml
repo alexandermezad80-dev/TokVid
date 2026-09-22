@@ -1,0 +1,33 @@
+name: Temporary lockfile update
+
+on:
+  push:
+    branches:
+      - tmp/update-lockfile-agora
+
+permissions:
+  contents: write
+
+jobs:
+  lockfile:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.1
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Update lockfile
+        run: pnpm install --lockfile-only
+      - name: Commit lockfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          git diff --cached --quiet && exit 0
+          git commit -m "chore: update lockfile for Agora Expo 54 [skip ci]"
+          git push
