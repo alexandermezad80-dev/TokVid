@@ -93,3 +93,15 @@ export async function heartbeatCall(callId: string): Promise<Call> {
   const result = await invoke<{ call: Call }>({ action: "heartbeat", call_id: callId });
   return result.call;
 }
+
+
+export async function getCallHistory(conversationId: string): Promise<Call[]> {
+  const { data, error } = await supabase
+    .from("calls")
+    .select("*")
+    .eq("conversation_id", conversationId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message || "No se pudo cargar el historial de llamadas.");
+  return (data as Call[]) ?? [];
+}
