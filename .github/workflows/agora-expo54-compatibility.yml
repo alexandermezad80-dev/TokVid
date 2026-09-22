@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - test/agora-expo54-compatibility
+  pull_request:
+    branches:
+      - main
 
 jobs:
   android:
