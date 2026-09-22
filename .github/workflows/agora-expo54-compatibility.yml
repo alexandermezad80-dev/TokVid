@@ -32,7 +32,7 @@ jobs:
           git add pnpm-lock.yaml
           git diff --cached --quiet && exit 0
           git commit -m "chore: update lockfile for Agora Expo 54 [skip ci]"
-          git push
+          git push origin HEAD:test/agora-expo54-compatibility
       - name: Validate Expo config
         working-directory: artifacts/mobile
         run: pnpm exec expo config --type public
