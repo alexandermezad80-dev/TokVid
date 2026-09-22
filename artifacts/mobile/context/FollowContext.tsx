@@ -70,6 +70,18 @@ export function FollowProvider({ children }: { children: React.ReactNode }) {
           .insert({ follower_id: user.id, following_id: creatorId }));
       }
 
+      if (!error && !alreadyFollowing) {
+        await supabase.from("notifications").insert({
+          user_id: creatorId,
+          actor_id: user.id,
+          actor_name: user.user_metadata?.username ?? user.user_metadata?.display_name ?? null,
+          actor_avatar: null,
+          type: "follow",
+          message: "Comenzó a seguirte",
+          data: { actorId: user.id },
+        });
+      }
+
       if (error) {
         setFollowedIds((prev) => {
           const next = new Set(prev);
