@@ -74,6 +74,17 @@ export async function endCall(callId: string): Promise<Call> {
   return result.call;
 }
 
+export async function getCall(callId: string): Promise<Call> {
+  const { data, error } = await supabase
+    .from("calls")
+    .select("*")
+    .eq("id", callId)
+    .single();
+
+  if (error) throw new Error(error.message || "No se pudo consultar la llamada.");
+  return data as Call;
+}
+
 export async function getAgoraCredentials(callId: string): Promise<AgoraCredentials> {
   return invoke<AgoraCredentials>({ action: "token", call_id: callId });
 }
