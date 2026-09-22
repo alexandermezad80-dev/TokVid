@@ -70,7 +70,11 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
   const markRead = async (id: string) => {
     setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
-    await supabase.from("notifications").update({ read: true }).eq("id", id);
+    await supabase
+      .from("notifications")
+      .update({ read: true })
+      .eq("id", id)
+      .eq("user_id", user?.id ?? "");
   };
 
   const markAllRead = async () => {
