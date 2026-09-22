@@ -38,6 +38,14 @@ export function usePushNotifications(userId: string | undefined) {
 
     responseListener.current = Notifications.addNotificationResponseReceivedListener(async (response) => {
       const data = response.notification.request.content.data as Record<string, unknown>;
+      const { router } = await import("expo-router");
+
+      if (data.type === "call" && typeof data.callId === "string") {
+        const callType = data.callType === "video" ? "video" : "voice";
+        router.push(`/call?callId=${encodeURIComponent(data.callId)}&type=${callType}`);
+        return;
+      }
+
       if (data.type !== "message" || typeof data.conversationId !== "string") return;
 
       const conversationId = data.conversationId;
@@ -45,7 +53,6 @@ export function usePushNotifications(userId: string | undefined) {
       const otherUsername = typeof data.otherUsername === "string" ? data.otherUsername : "Usuario";
       const otherAvatar = typeof data.otherAvatar === "string" ? data.otherAvatar : "";
 
-      const { router } = await import("expo-router");
       router.push(
         `/chat?conversationId=${conversationId}&otherUserId=${otherUserId}&otherUsername=${encodeURIComponent(otherUsername)}&otherAvatar=${encodeURIComponent(otherAvatar)}`
       );
