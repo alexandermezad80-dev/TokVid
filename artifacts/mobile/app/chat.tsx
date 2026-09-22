@@ -193,6 +193,10 @@ export default function ChatScreen() {
               <Feather name="video" size={19} color="#fff" />}
           </TouchableOpacity>
           <TouchableOpacity style={styles.profileBtn}
+            onPress={() => router.push(`/call-history?conversationId=${encodeURIComponent(conversationId)}`)}>
+            <Feather name="clock" size={20} color="#888" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.profileBtn}
             onPress={() => router.push(`/user-profile?userId=${otherUserId}`)}>
             <Feather name="user" size={20} color="#888" />
           </TouchableOpacity>
