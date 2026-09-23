@@ -141,7 +141,7 @@ Debe poder:
 
 El anfitrión controla la autorización, pero **no puede encender ni activar remotamente la cámara o el micrófono de un invitado**.
 
-El invitado conserva el control físico de su propio dispositivo y decide si acepta o rechaza el uso de cámara y/o micrófono.
+El invitado conserva el control físico de su propio dispositivo y decide si acepta o rechaza el uso de cámara y/o micrófono. **El Guest tampoco puede encender ni activar remotamente la cámara o el micrófono de ningún otro participante.** Cada usuario controla exclusivamente sus propios dispositivos.
 
 Cuando el anfitrión autorice o invite a un invitado a abrir la cámara, TokVid podrá mostrar al invitado una notificación, por ejemplo: **“El anfitrión te invita a abrir la cámara”**.
 
