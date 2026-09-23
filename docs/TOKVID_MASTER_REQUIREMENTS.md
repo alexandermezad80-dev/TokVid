@@ -139,7 +139,7 @@ Debe poder:
 - Revocar permisos.
 - Gestionar la sala.
 
-El anfitrión controla la autorización, pero **no puede encender ni activar remotamente la cámara o el micrófono de un invitado**.
+El anfitrión controla la autorización, pero **no puede encender ni activar remotamente la cámara o el micrófono de ningún participante, incluido el propio anfitrión desde la perspectiva de otros usuarios**.
 
 El invitado conserva el control físico de su propio dispositivo y decide si acepta o rechaza el uso de cámara y/o micrófono. **El Guest tampoco puede encender ni activar remotamente la cámara o el micrófono de ningún otro participante.** Cada usuario controla exclusivamente sus propios dispositivos. **Ningún participante puede activar remotamente la cámara o el micrófono de otra persona.**
 
@@ -159,6 +159,18 @@ Podrán participar cuando estén autorizados y decidir individualmente si utiliz
 - Micrófono.
 
 El anfitrión no puede activar estos dispositivos por ellos.
+
+### Interacciones del Live
+
+El Live debe contemplar una interacción de **Me gusta mediante Tap-Tap en pantalla**, independiente de los Me gusta del Feed.
+
+- Tap-Tap sobre la pantalla.
+- Animación visual inmediata de los taps/me gusta.
+- Contador acumulado de Me gusta del Live.
+- Actualización del contador en tiempo real.
+- La interacción pertenece exclusivamente al Live activo.
+
+Los Tap-Tap y su contador deben diseñarse de forma escalable, sin convertir cada tap en una escritura persistente individual innecesaria.
 
 ### Chat del Live
 
