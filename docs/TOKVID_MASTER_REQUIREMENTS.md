@@ -1463,3 +1463,335 @@ Para cerrar el módulo deberán verificarse:
 - compatibilidad con los dominios existentes.
 
 **Este contrato protege la arquitectura del Documento Maestro. No autoriza todavía la creación de tablas, migraciones, servicios, pantallas ni cambios en Supabase.**
+
+
+---
+
+# 41. DISEÑO DE BASE DE DATOS DE LIVE — PREIMPLEMENTACIÓN
+
+**Estado:** Diseño conceptual/técnico; no ejecutado.  
+**Regla:** no crea tablas ni modifica Supabase. Los nombres físicos, tipos exactos, índices, constraints, RPC y migraciones se definirán después de revisar el esquema vigente de Supabase.
+
+## 41.1 Principio de diseño
+
+La base de datos de LIVE debe representar el estado autoritativo de la sala y sus relaciones, mientras que los eventos efímeros de alta frecuencia se manejan mediante Realtime/infraestructura adecuada.
+
+No se debe usar la base de datos como canal de señalización por cada evento audiovisual o Tap-Tap.
+
+## 41.2 Entidades y relaciones
+
+Modelo conceptual:
+
+```text
+profiles
+   │
+   ├──< live_rooms
+   │       │
+   │       ├──< live_participants >── profiles
+   │       │
+   │       ├──< live_invitations >── profiles
+   │       │
+   │       ├──< live_join_requests >── profiles
+   │       │
+   │       ├──< live_moderators >── profiles
+   │       │
+   │       ├──< live_chat_messages >── profiles
+   │       │
+   │       ├── live_pinned_message
+   │       │
+   │       ├──< live_quiéreme >── profiles
+   │       │
+   │       ├──< live_gifts >── profiles
+   │       │
+   │       └──< live_shares >
+   │
+   └── relaciones sociales existentes
+```
+
+La relación con `profiles` reutiliza el usuario existente y no crea un perfil paralelo.
+
+## 41.3 Live Rooms
+
+La entidad Room deberá conservar como mínimo conceptualmente:
+
+- identificador único;
+- Host/propietario;
+- modalidad: solo o con Guests;
+- estado de la sala;
+- título/metadatos públicos necesarios;
+- timestamps de creación, inicio y finalización;
+- configuración necesaria para acceso/moderación.
+
+Reglas:
+
+- una sala tiene un único Host;
+- el Host debe corresponder a un usuario válido;
+- solo una transición autorizada puede finalizar la sala;
+- la capacidad de Guests no se debe confiar al cliente.
+
+## 41.4 Participantes
+
+`live_participants` representa la relación de un usuario con una sala.
+
+Debe poder distinguir:
+
+- usuario;
+- sala;
+- rol;
+- estado de participación;
+- ventanilla asignada;
+- autorización audiovisual;
+- estado de cámara;
+- estado de micrófono;
+- timestamps relevantes.
+
+Los estados físicos de cámara/micrófono deben distinguirse de los permisos concedidos.
+
+**Permiso ≠ dispositivo encendido.**
+
+Nunca se debe almacenar un campo que implique que el servidor puede encender remotamente el dispositivo.
+
+## 41.5 Invitaciones y solicitudes
+
+Las invitaciones y solicitudes deben permanecer como entidades separadas porque representan intenciones diferentes:
+
+- invitación iniciada por Host/Guest autorizado;
+- solicitud iniciada por Spectator.
+
+Cada registro deberá poder identificar:
+
+- sala;
+- actor;
+- usuario objetivo;
+- estado;
+- timestamps;
+- quién tomó la decisión cuando corresponda.
+
+Las transiciones deberán ser idempotentes y validar capacidad antes de activar un Guest.
+
+## 41.6 Moderadores
+
+La autorización de moderación debe ser independiente de ser participante.
+
+Conceptualmente:
+
+```text
+Host
+ └── concede permisos → Moderator
+```
+
+El modelo debe permitir permisos específicos, por ejemplo:
+
+- gestionar participantes;
+- gestionar solicitudes;
+- gestionar chat;
+- bloquear;
+- retirar;
+- silenciar.
+
+No se debe convertir automáticamente a un moderador en Guest ni a un Guest en moderador.
+
+## 41.7 Live Chat
+
+Los mensajes de Live deben tener identidad propia como contenido perteneciente a una sala.
+
+Relaciones mínimas conceptuales:
+
+```text
+live_room → live_chat_message → author/profile
+```
+
+Debe poder determinarse:
+
+- quién escribió;
+- en qué Live;
+- cuándo;
+- estado de moderación;
+- si está fijado.
+
+El sistema de chat del Live no debe reutilizar la tabla de mensajes privados para almacenar estos mensajes.
+
+## 41.8 Tap-Tap
+
+No se diseñará una fila persistente por cada tap.
+
+Separación:
+
+```text
+Tap físico
+   ↓
+evento efímero / agregación
+   ↓
+contador realtime
+   ↓
+persistencia agregada cuando corresponda
+```
+
+Si posteriormente se requiere historial, se almacenarán agregados por ventanas de tiempo o por sesión, no eventos individuales indiscriminados.
+
+El diseño deberá poder identificar actividad por usuario para el resumen del Host sin convertir cada tap en una escritura de DB.
+
+## 41.9 Quiéreme
+
+Quiéreme debe poder representarse como relación única:
+
+```text
+usuario → Host/LIVE
+```
+
+Debe existir una restricción lógica/física que impida duplicados.
+
+El contador deberá derivarse de una fuente consistente, no de incrementos directos desde clientes no confiables.
+
+La eventual creación de Follow deberá respetar las reglas del sistema social existente y mantener idempotencia.
+
+## 41.10 Gifts
+
+Los registros de Gifts deberán separar:
+
+- identidad del Live;
+- remitente;
+- receptor;
+- elemento/regalo;
+- cantidad;
+- referencia financiera cuando exista.
+
+Los saldos y movimientos financieros no deben residir dentro de la lógica básica de LIVE.
+
+La integridad monetaria deberá pertenecer a un ledger financiero posterior.
+
+## 41.11 Share Live
+
+Compartir un Live debe guardar, cuando sea necesario, una referencia al Live y al contexto de entrega.
+
+No debe copiar la lógica de participación a Messages.
+
+Conceptualmente:
+
+```text
+LIVE → referencia de Share → Messages → receptor
+```
+
+La apertura de la tarjeta devuelve al usuario al dominio LIVE.
+
+## 41.12 Integridad y constraints
+
+Antes de implementar deberán definirse explícitamente:
+
+- claves primarias;
+- referencias a usuarios;
+- referencias a salas;
+- unicidad;
+- estados permitidos;
+- reglas de capacidad;
+- timestamps;
+- comportamiento ante eliminación de usuario/sala;
+- protección contra relaciones huérfanas.
+
+La regla 1 Host + máximo 11 Guests debe quedar protegida por lógica server-side y, donde sea viable, por constraints/transacciones, no solamente por la UI.
+
+## 41.13 RLS y operaciones críticas
+
+Cada entidad persistente deberá tener RLS definida antes de considerarse terminada.
+
+Las operaciones críticas —crear/finalizar sala, aceptar Guest, retirar Guest, asignar moderador, moderar chat, registrar apoyo y otras operaciones autoritativas— deberán validar actor y estado en servidor.
+
+Los clientes no deben poder:
+
+- cambiar su rol a Host;
+- elevarse a Moderator;
+- superar el límite de Guests;
+- modificar contadores autoritativos arbitrariamente;
+- modificar registros de otros usuarios sin permiso.
+
+## 41.14 Realtime frente a persistencia
+
+Se distinguirán tres clases:
+
+**A. Efímero:** presencia, estado de conexión, eventos audiovisuales inmediatos.
+
+**B. Realtime + agregado:** Tap-Tap y señales de actividad de alta frecuencia.
+
+**C. Persistente:** salas, participantes, invitaciones, solicitudes, moderación, chat, Quiéreme, Gifts y datos históricos necesarios.
+
+Esta separación evita convertir Supabase/Postgres en el cuello de botella del Live.
+
+## 41.15 Transacciones y concurrencia
+
+Las operaciones que consumen una de las 11 ventanillas deberán ser atómicas.
+
+Ejemplo conceptual:
+
+```text
+solicitud/invitación
+      ↓
+validar sala activa
+      ↓
+validar actor/permisos
+      ↓
+contar/capturar capacidad
+      ↓
+asignar Guest
+      ↓
+confirmar
+```
+
+Dos usuarios intentando ocupar la última ventanilla simultáneamente no deben poder obtener ambas.
+
+La estrategia concreta —constraint, transacción, lock o función/RPC— se elegirá al diseñar la implementación sobre el esquema real.
+
+## 41.16 Índices y rendimiento
+
+Los índices se definirán a partir de las consultas reales, especialmente para:
+
+- salas activas;
+- Host;
+- participantes por sala;
+- solicitudes pendientes;
+- invitaciones pendientes;
+- chat por sala/tiempo;
+- moderadores por sala;
+- Quiéreme por Host;
+- Gifts por Live/usuario.
+
+No se crearán índices indiscriminadamente. Cada índice deberá justificar su consulta y coste de escritura.
+
+## 41.17 Retención y limpieza
+
+Antes de producción deberá definirse qué datos:
+
+- permanecen históricamente;
+- se agregan;
+- se archivan;
+- se eliminan al finalizar el Live;
+- requieren retención por seguridad, moderación o finanzas.
+
+Presencia y señalización efímera no deben permanecer indefinidamente como datos históricos.
+
+## 41.18 Migraciones
+
+Cuando el diseño sea aprobado para implementación:
+
+1. revisar esquema Supabase vigente;
+2. verificar nombres y dependencias;
+3. diseñar migración incremental;
+4. revisar RLS/constraints;
+5. probar en entorno controlado;
+6. ejecutar CI;
+7. revisar resultado;
+8. integrar mediante PR autorizado.
+
+**No se debe crear una migración de LIVE todavía solamente porque este diseño exista.**
+
+## 41.19 Resultado del diseño
+
+La arquitectura de datos queda preparada para implementar LIVE sin mezclar:
+
+- Feed;
+- Messages;
+- Calls;
+- Bubbles;
+- Profile/Social;
+- Monetization.
+
+La siguiente fase, antes de escribir migraciones, será **auditar el esquema Supabase vigente y contrastarlo entidad por entidad con este diseño**.
