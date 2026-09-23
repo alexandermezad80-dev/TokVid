@@ -179,6 +179,201 @@ El Live tendrá comentarios/chat en tiempo real separado de:
 - Comentarios de videos.
 - Mensajes privados.
 
+
+### Arquitectura de participación y ventanillas
+
+El mismo usuario puede desempeñar distintos roles según el Live:
+
+- Espectador.
+- Guest.
+- Anfitrión cuando crea su propio Live.
+
+Un Live con invitados tendrá:
+
+- 1 anfitrión.
+- Hasta 11 Guests.
+- Máximo de 12 participantes audiovisuales simultáneos contando al anfitrión.
+
+Las ventanillas son dinámicas. Un Guest puede salir voluntariamente, solicitar que lo bajen o ser retirado conforme a las herramientas de moderación. Cuando exista una ventanilla disponible, el anfitrión puede gestionar la entrada de otro participante.
+
+El Live podrá ofrecer distintos modelos de distribución visual de ventanillas, por ejemplo:
+
+- Anfitrión principal + Guests en cuadrícula.
+- Distribución equilibrada.
+- Anfitrión principal + carrusel de Guests.
+- Guest destacado temporalmente.
+- Vista compacta.
+- Distribución dinámica.
+
+La presentación debe adaptarse al tamaño y proporción del dispositivo móvil sin saturar ni ocultar innecesariamente la transmisión.
+
+### Modalidades de Live
+
+El anfitrión podrá iniciar:
+
+- **Live con Guests:** permite la gestión de hasta 11 ventanillas de Guests.
+- **Live solo:** solamente participa el anfitrión y no se muestran invitaciones ni controles de entrada de Guests.
+
+### Solicitudes e invitaciones
+
+Dentro del Live:
+
+- Un espectador puede solicitar participar.
+- El anfitrión puede invitar a un usuario.
+- Un Guest puede proponer/invitar a otro usuario.
+- La aceptación final de una solicitud o invitación corresponde al anfitrión o a un moderador autorizado por el anfitrión.
+- El usuario invitado puede aceptar o rechazar desde la propia interfaz del Live.
+- Aceptar una invitación no activa remotamente cámara ni micrófono.
+- La disponibilidad de las 11 ventanillas debe respetarse antes de incorporar un nuevo Guest.
+
+Los controles de micrófono, cámara, solicitud e invitación deben estar diseñados para interacción rápida y clara en la pantalla móvil.
+
+### Cámara, micrófono y efectos
+
+Cada usuario controla físicamente sus propios dispositivos.
+
+La moderación puede **silenciar/cortar el audio** de un participante, pero no encender remotamente su micrófono. Para volver a transmitir audio, el propio usuario debe activar su micrófono si conserva el permiso.
+
+La cámara permanece bajo control del propio usuario.
+
+Cada usuario podrá disponer de herramientas visuales y audiovisuales para su propia participación, incluyendo cuando corresponda:
+
+- Filtros.
+- Efectos visuales.
+- Fondos virtuales.
+- Pantalla verde/chroma key.
+- Cambios de voz.
+- Efectos de sonido.
+
+El anfitrión podrá utilizar herramientas de ambientación/apoyo dirigidas a sus Guests, tales como:
+
+- Aplausos.
+- Risas.
+- Celebraciones.
+- Efectos de sonido.
+- Cambios de voz.
+- Efectos visuales de apoyo.
+
+Estas herramientas no otorgan control remoto sobre la cámara o el micrófono del Guest.
+
+### Moderación y roles
+
+El anfitrión podrá designar moderadores para ayudar a gestionar el Live.
+
+Las capacidades de moderación podrán incluir, según los permisos concedidos:
+
+- Gestionar participantes.
+- Aceptar solicitudes o invitaciones.
+- Retirar Guests.
+- Gestionar el chat.
+- Eliminar comentarios.
+- Bloquear usuarios del Live.
+- Silenciar/cortar el micrófono de un participante.
+- Gestionar otras herramientas de moderación.
+
+El anfitrión mantiene la autoridad principal de la sala y puede conceder o retirar permisos de moderación.
+
+### Live Chat
+
+El Live Chat permite comentar en tiempo real a:
+
+- Anfitrión.
+- Guest.
+- Espectador.
+
+El chat es independiente de los comentarios del Feed y de los mensajes privados.
+
+El anfitrión podrá fijar un comentario para destacarlo en el Live. El comentario fijado se actualizará en tiempo real para los participantes y espectadores.
+
+Al tocar el avatar o comentario de un usuario podrá abrirse una mini ficha sin abandonar el Live, con información como:
+
+- Avatar.
+- Nombre.
+- @usuario.
+- Seguidores.
+- Seguir/Siguiendo.
+- Ver perfil.
+
+La misma identidad de perfil debe reutilizarse para anfitrión, Guests y participantes del chat.
+
+### Tap-Tap y Quiéreme
+
+**Tap-Tap** es una interacción de apoyo exclusiva del Live y distinta de los Me gusta del Feed, del Follow y de Quiéreme.
+
+Cada usuario, sea espectador, Guest o anfitrión, puede realizar Tap-Tap.
+
+Cada usuario tendrá un **medidor individual de Tap-Tap**:
+
+- Se llena progresivamente mientras realiza taps.
+- Se vacía gradualmente cuando deja de hacer taps.
+- Debe tener una presentación visual elegante, fluida, adaptable y no obstructiva.
+- El usuario podrá elegir su reacción/figura de Tap-Tap desde un catálogo.
+- La reacción puede mostrar temporalmente el nombre o @usuario y luego desaparecer.
+
+El Live tendrá además:
+
+- Contador global de Tap-Tap.
+- Actualización en tiempo real.
+- Animaciones inmediatas.
+- Señales agregadas de actividad/apoyo.
+
+Los Tap-Tap deben diseñarse de forma escalable, evitando una escritura persistente individual por cada tap. La fórmula exacta mediante la cual estas señales puedan influir en descubrimiento o distribución del Live deberá definirse posteriormente y no debe asumirse como una garantía de exposición.
+
+**Quiéreme** es una interacción distinta de Tap-Tap y está integrada en el área de Seguir del anfitrión.
+
+- Activar Quiéreme puede hacer que el usuario siga al anfitrión si todavía no lo sigue.
+- No debe crear seguimientos duplicados.
+- El anfitrión tendrá contador de Quiéremes.
+- El anfitrión podrá conocer quién dio Quiéreme.
+- El anfitrión podrá consultar actividad de apoyo correspondiente.
+
+El anfitrión podrá disponer de un resumen de interacción con:
+
+- Quiéremes totales.
+- Usuarios que dieron Quiéreme.
+- Tap-Tap totales.
+- Usuarios con mayor actividad de Tap-Tap.
+
+### Perfiles, seguimiento y regalos dentro del Live
+
+Desde una ventanilla, avatar o comentario del Live podrá accederse a la mini ficha del usuario y a la acción de Seguir.
+
+Esto aplica a:
+
+- Anfitrión.
+- Guests.
+- Espectadores/participantes del chat.
+
+Cada anfitrión y Guest podrá tener una **galería de regalos obtenidos**.
+
+- La galería será visible para los espectadores.
+- El espectador podrá consultarla libremente.
+- El espectador no podrá administrarla ni modificarla.
+- Los regalos podrán organizarse por niveles y precios.
+- Los regalos podrán incluir categorías y elementos especiales.
+- La presentación debe ser visualmente premium y propia de TOKVID.
+
+### Compartir un Live
+
+Los usuarios podrán compartir un Live con otros usuarios.
+
+Cuando un usuario de TOKVID comparta un Live directamente con otro usuario, este podrá recibirlo en su **bandeja de Mensajes** como una tarjeta/enlace de Live que permita abrir la transmisión.
+
+Compartir un Live no convierte automáticamente al receptor en Guest.
+
+La recepción mediante Mensajes es un mecanismo de entrega; la lógica y participación del Live permanecen separadas del dominio de Mensajes privados.
+
+### Separación de dominios
+
+LIVE es un módulo independiente.
+
+- Las llamadas de voz y videollamadas pertenecen a **Mensajes privados**.
+- Bubbles pertenece a **Mensajes privados**.
+- Live Chat pertenece exclusivamente al Live.
+- Tap-Tap, Quiéreme, regalos, ventanillas, Guests, moderación y efectos específicos del Live pertenecen al dominio Live.
+
+Puede reutilizarse infraestructura técnica común cuando corresponda, pero no debe mezclarse la lógica de negocio entre dominios.
+
 ## 9. REQUISITOS PARA LIVE
 
 Propuesta actual:
