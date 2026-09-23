@@ -861,3 +861,153 @@ La siguiente etapa será comparar cada requisito con el TokVid real para determi
 - 🔗 Depende de otra función.
 
 **No se debe implementar nada solamente por aparecer en este documento. Primero se audita el estado real del proyecto.**
+
+
+---
+
+# 39. ESTADO ACTUAL CONSOLIDADO — CONCILIACIÓN CON AUDITORÍA 30
+
+**Fuente de conciliación:** `docs/TOKVID_AUDIT_30_RESULTS.md`  
+**Fecha de referencia de la auditoría:** 20 de septiembre de 2026  
+**Rama auditada:** `feature/onboarding-profile-interests`  
+**Base protegida:** `main`
+
+Esta sección integra en el Documento Maestro el estado técnico conocido de los 30 resultados de auditoría. **No reemplaza la arquitectura ni modifica los requisitos 1–38.** Los requisitos anteriores continúan siendo la referencia de producto y arquitectura; esta sección añade el estado real conocido para evitar mantener la información operativa en dos documentos.
+
+## 39.1 Matriz consolidada de estado
+
+| # | Área | Estado actual | Nota de conciliación |
+|---|---|---|---|
+| 1 | Identidad y perfil | 🟡 | Existe base funcional; quedan puntos de seguridad/hardening de perfiles. |
+| 2 | Feed | 🟡 | Funcional con datos reales; permanece fallback mock que debe resolverse antes de producción. |
+| 3 | Stories | 🔴 | No implementado. |
+| 4 | Seguidores/seguidos/amigos | 🟡 | Follow/unfollow y RLS existen; quedan hardening e integridad estructural. |
+| 5 | Mensajes privados | 🟡 | Base funcional existe; eliminación completa y flujo de notificaciones siguen pendientes. |
+| 6 | Llamadas/videollamadas | 🔗 | La arquitectura las mantiene dentro de Mensajes privados; la implementación existente se trata como trabajo separado y no se redefine aquí. |
+| 7 | Burbujas de mensajes | 🔴 | No implementado como personalización completa. |
+| 8 | LIVE | 🔴 | Arquitectura y requisitos definidos en este documento; no existe aún módulo funcional Live en el código revisado. |
+| 9 | Requisitos Live | 🔗 | Dependiente del sistema de Live; propuesta actual 18+, 1,000 seguidores, 30 días y cuenta en buen estado, sujeta a revisión final. |
+| 10 | Enlace en perfil | 🔴 | No implementado. |
+| 11 | Creación/producción de video | 🟡 | Publicación base existe; edición avanzada y drafts pendientes. |
+| 12 | Filtros/efectos | 🔴 | Pendiente. |
+| 13 | Voz/sonido | 🔴 | Pendiente. |
+| 14 | Subtítulos | 🔴 | Pendiente. |
+| 15 | IA para creadores | 🔴 | Pendiente. |
+| 16 | Hashtags | 🟡 | Base de datos y relaciones existen; sincronización de `usage_count` pendiente. |
+| 17 | Menciones | 🟡 | Extracción/persistencia base existe; falta cerrar notificación → push → navegación. |
+| 18 | Borradores | 🔴 | Pendiente. |
+| 19 | Formatos/procesamiento | 🔴 | Pendiente definición/implementación avanzada. |
+| 20 | Notificaciones | 🟡 | Base existe; UPDATE del receptor y flujo completo requieren hardening/cierre. |
+| 21 | Seguridad de mensajería | 🔴 | Pendiente. |
+| 22 | Ayuda | 🔴 | Pendiente. |
+| 23 | Ayuda psicológica | 🔴 | Pendiente. |
+| 24 | Conducta repetida/advertencias | 🔴 | Pendiente de definición segura y política. |
+| 25 | Protección de menores | 🔴 | Pendiente; Live previsto 18+. |
+| 26 | Políticas TOKVID | 🔴 | Pendiente. |
+| 27 | Copyright | 🔴 | Pendiente. |
+| 28 | Monetización | 🔴 | Pendiente, pero preservada como parte de la arquitectura futura. |
+| 29 | Herramientas grandes creadores | 🔴 | Pendiente. |
+| 30 | Panel administrativo | 🔴 | Pendiente. |
+| 31 | Arquitectura segura | 🟢 | Principios de aislamiento, ramas, revisión e integración definidos. |
+| 32 | Ramas/workflow | 🟢 | Flujo de trabajo por ramas y PR establecido. |
+| 33 | Propiedad de código | 🟡 | Áreas/responsables definidos conceptualmente; falta formalización completa. |
+| 34 | Versiones/recuperación | 🟡 | Principio definido; falta completar mecanismo operativo. |
+| 35 | Supabase/DB versionada | 🟢 | Migraciones versionadas; cambios DB deben seguir control y auditoría. |
+| 36 | Auditoría antes de cambiar | 🟢 | Regla vigente y obligatoria. |
+| 37 | Regla de protección | 🟢 | No modificar sin autorización explícita. |
+| 38 | Principio general | 🟢 | Arquitectura modular y evolución segura preservadas. |
+
+## 39.2 Hallazgos técnicos y de seguridad consolidados
+
+Estos hallazgos son **estado/documentación**, no autorización para corregirlos automáticamente:
+
+1. **Profiles:** el diagnóstico de auditoría identificó exposición pública de campos privados y permisos de actualización demasiado amplios. Cualquier corrección debe revisarse contra el esquema real vigente antes de ejecutarse.
+2. **Storage:** avatars y videos requieren hardening de tamaño/MIME antes de producción.
+3. **Videos:** existe una ruta de incremento seguro de compartidos, pero el flujo de la interfaz aún tiene una actualización directa de `shares_count` que debe unificarse.
+4. **Saved videos:** falta verificar/cerrar la integridad referencial de `video_id`.
+5. **Hashtags:** falta mecanismo de sincronización de `usage_count`.
+6. **Notifications:** los permisos de UPDATE requieren restricción al campo autoritativo correspondiente.
+7. **Security Advisor:** quedaron advertencias relacionadas con funciones security-definer de contadores; deben revisarse como hardening separado.
+8. **Performance Advisor:** existen advertencias de `auth_rls_initplan` y 11 índices marcados como unused; no se deben eliminar índices basándose solamente en una base casi vacía.
+9. **Leaked Password Protection:** la auditoría registró que la función requiere un plan compatible; no se deben cambiar otras configuraciones de contraseña como sustituto.
+10. **Mock data:** el feed y el perfil público aún contienen elementos de fallback/mock que deben resolverse antes de declarar producción.
+
+## 39.3 Dependencias consolidadas
+
+- **CI:** lockfile → instalación → typecheck/build → pruebas → PR.
+- **Onboarding:** Auth → callback → profiles → avatars → interests → `onboarding_completed` → app.
+- **Publicación:** Storage de video → `video_url` → feed → likes/comments/shares → contadores → hashtags/mentions.
+- **Social:** Auth → profiles → follows → contadores → perfil público → notifications.
+- **Mensajería:** conversations → messages → RLS → notification → push → chat.
+- **Producción:** seguridad de Auth → Storage/RLS → CI → pruebas → observabilidad → hardening → producción.
+
+## 39.4 Arquitectura que NO debe perderse durante la implementación
+
+La conciliación confirma y refuerza la arquitectura definida en este Documento Maestro:
+
+```text
+TOKVID
+├── LIVE 🔴
+│   ├── Live Rooms
+│   ├── Host
+│   ├── Guests
+│   ├── Ventanillas
+│   ├── Live Chat
+│   ├── Tap-Tap
+│   ├── Quiéreme
+│   ├── Gifts
+│   ├── Moderation
+│   └── Effects
+│
+└── PRIVATE MESSAGES 💬
+    ├── Chats
+    ├── Voice Calls
+    ├── Video Calls
+    └── Bubbles
+```
+
+**Reglas de separación:**
+
+- LIVE es un dominio independiente del Feed y de Mensajes privados.
+- Calls y Video Calls permanecen dentro de Mensajes privados.
+- Bubbles permanece dentro de Mensajes privados.
+- Live Chat, Tap-Tap, Quiéreme, Gifts, Guests, ventanillas, moderación y efectos específicos pertenecen a LIVE.
+- Compartir un Live puede utilizar Mensajes como mecanismo de entrega, pero no convierte Live en parte del dominio de Mensajes.
+- La infraestructura técnica puede reutilizarse cuando corresponda; la lógica de negocio debe permanecer modular.
+- Cada bloque debe poder desarrollarse, auditarse, probarse y revisarse de forma independiente para permitir trabajo futuro de distintos desarrolladores sin mezclar dominios.
+
+## 39.5 Estado de protección y control de cambios
+
+La auditoría y esta consolidación **no autorizan** por sí mismas cambios funcionales.
+
+Reglas vigentes:
+
+- `main` permanece protegida.
+- No hacer merge sin autorización explícita.
+- No modificar Supabase, migraciones, políticas o configuración solo porque exista un hallazgo pendiente.
+- No implementar todos los 🔴 simultáneamente.
+- Antes de cada función: interfaz → lógica → DB → relaciones → RLS/permisos → notificaciones → navegación → rendimiento → experiencia real.
+- Toda nueva función importante debe aislarse en su rama correspondiente.
+- Las correcciones deben ser quirúrgicas y verificables.
+
+## 39.6 Historial documental
+
+`TOKVID_AUDIT_30_RESULTS.md` queda como **registro histórico de la auditoría de 30 resultados**. El presente Documento Maestro pasa a concentrar:
+
+**requisitos + arquitectura + estado conciliado + hallazgos + dependencias + reglas de protección.**
+
+El archivo histórico no se elimina ni se altera como consecuencia de esta consolidación.
+
+## 39.7 Nota sobre onboarding
+
+El onboarding fue objeto de una reparación autorizada posteriormente a la fecha de la auditoría de 20 de septiembre de 2026. Por tanto, cualquier lectura del estado de onboarding debe considerar el código vigente de la rama `feature/onboarding-profile-interests`, no únicamente el snapshot histórico de la auditoría.
+
+## 39.8 Regla de precedencia documental
+
+Cuando exista una diferencia entre el **requisito/arquitectura** y el **estado actual**, no se debe borrar ni reinterpretar el requisito para hacerlo coincidir con la implementación.
+
+- El Documento Maestro define **qué debe ser TOKVID**.
+- La sección 39 documenta **qué estado se conoce actualmente**.
+- El código y Supabase vigentes son la fuente de verificación técnica del estado real.
+- La implementación nunca se considera completa solamente porque esté descrita en este documento.
+
