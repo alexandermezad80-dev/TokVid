@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -40,6 +40,6 @@ export default function Bubble({text,direction,groupPosition="single",styleVaria
   if(styleVariant==="glass") visual=<BlurView intensity={18} tint="dark" style={[styles.bubble,base]}>{textNode}</BlurView>;
   if(styleVariant==="classic"&&direction==="sent") visual=<LinearGradient colors={["#00F2EA","#FF0050"]} start={{x:0,y:0}} end={{x:1,y:1}} style={[styles.bubble,base]}>{textNode}</LinearGradient>;
   if(styleVariant==="gradient") visual=<LinearGradient colors={direction==="sent"?["#00F2EA","#FF0050"]:["#24242E","#17131F"]} start={{x:0,y:0}} end={{x:1,y:1}} style={[styles.bubble,base]}>{textNode}</LinearGradient>;
-  return <View style={[styles.row,{alignItems:direction==="sent"?"flex-end":"flex-start"}]}>{visual}{timestamp?<Text style={styles.time}>{timestamp}</Text>:null}</View>;
+  return <View style={[styles.row,{alignItems:direction==="sent"?"flex-end":"flex-start"}]}><Pressable onLongPress={onLongPress}>{visual}</Pressable>{timestamp?<Text style={styles.time}>{timestamp}</Text>:null}</View>;
 }
 const styles=StyleSheet.create({row:{width:"100%",marginVertical:2},bubble:{overflow:"hidden",shadowColor:"#000",shadowOpacity:.22,shadowRadius:7,shadowOffset:{width:0,height:3}},text:{fontFamily:"Inter",includeFontPadding:false},time:{color:"#444",fontSize:11,marginTop:4,paddingHorizontal:2}});
