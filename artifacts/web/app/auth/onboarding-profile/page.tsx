@@ -20,6 +20,10 @@ export default function OnboardingProfilePage() {
         router.replace("/")
         return
       }
+      if (user.user_metadata?.onboarding_completed === true) {
+        router.replace("/home")
+        return
+      }
       setName(user.user_metadata?.display_name || user.user_metadata?.full_name || "")
       setUsername(user.user_metadata?.username || "")
       setLoading(false)
@@ -36,7 +40,7 @@ export default function OnboardingProfilePage() {
     const cleanName = name.trim()
     const cleanUsername = username.trim()
 
-    if (!cleanName) {
+    if (cleanName.length < 2) {
       setError("Escribe tu nombre.")
       return
     }
@@ -63,7 +67,6 @@ export default function OnboardingProfilePage() {
 
       const profile = {
         id: user.id,
-        email: user.email ?? null,
         full_name: cleanName,
         username: cleanUsername,
         ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
