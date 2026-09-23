@@ -16,6 +16,9 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
+import BubbleStylePicker from "../lib/features/messages/components/BubbleStylePicker";
+import Bubble, { type BubbleStyleVariant } from "../lib/features/messages/components/Bubble";
+import { getBubbleStyleVariant, setBubbleStyleVariant } from "../lib/features/messages/services/bubble-preferences";
 import { createCall, type CallType } from "../lib/features/calls/services/calls-service";
 import { supabase } from "../lib/supabase";
 
@@ -55,7 +58,18 @@ export default function ChatScreen() {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [startingCall, setStartingCall] = useState<CallType | null>(null);
+  const [bubbleStyle, setBubbleStyle] = useState<BubbleStyleVariant>("classic");
+  const [bubblePickerVisible, setBubblePickerVisible] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+
+  useEffect(() => {
+    void getBubbleStyleVariant().then(setBubbleStyle);
+  }, []);
+
+  const selectBubbleStyle = async (variant: BubbleStyleVariant) => {
+    setBubbleStyle(variant);
+    await setBubbleStyleVariant(variant);
+  };
 
   const avatarUri = otherAvatar
     ? decodeURIComponent(otherAvatar)
@@ -161,13 +175,26 @@ export default function ChatScreen() {
     return (
       <View>
         {showTime && <Text style={styles.timeLabel}>{timeLabel(item.created_at)}</Text>}
-        <TouchableOpacity activeOpacity={0.9} disabled={!isMe}
-          onLongPress={isMe ? () => deleteMessage(item.id) : undefined}
-          style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleThem]}>
-          <Text style={[styles.bubbleText, isMe ? styles.bubbleTextMe : styles.bubbleTextThem]}>
-            {item.text}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.bubbleRow}>
+          <Bubble
+            text={item.text}
+            direction={isMe ? "sent" : "received"}
+            styleVariant={bubbleStyle}
+            groupPosition={
+              (!messages[index - 1] || messages[index - 1].sender_id !== item.sender_id)
+                ? (messages[index + 1]?.sender_id === item.sender_id ? "first" : "single")
+                : (messages[index + 1]?.sender_id === item.sender_id ? "middle" : "last")
+            }
+            timestamp={showTime ? timeLabel(item.created_at) : undefined}
+          />
+          {isMe && !item.id.startsWith("opt-") ? (
+            <TouchableOpacity
+              accessibilityLabel="Opciones del mensaje"
+              onLongPress={() => deleteMessage(item.id)}
+              style={styles.messageActions}
+            />
+          ) : null}
+        </View>
       </View>
     );
   };
@@ -191,6 +218,10 @@ export default function ChatScreen() {
             onPress={() => void startCall("video")} disabled={startingCall !== null}>
             {startingCall === "video" ? <ActivityIndicator size="small" color="#fff" /> :
               <Feather name="video" size={19} color="#fff" />}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerAction}
+            onPress={() => setBubblePickerVisible(true)}>
+            <Feather name="sliders" size={19} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.profileBtn}
             onPress={() => router.push(`/call-history?conversationId=${encodeURIComponent(conversationId)}`)}>
@@ -231,6 +262,12 @@ export default function ChatScreen() {
               <Feather name="send" size={18} color="#fff" />}
           </TouchableOpacity>
         </View>
+        <BubbleStylePicker
+          visible={bubblePickerVisible}
+          value={bubbleStyle}
+          onSelect={(variant) => void selectBubbleStyle(variant)}
+          onClose={() => setBubblePickerVisible(false)}
+        />
       </KeyboardAvoidingView>
     </View>
   );
@@ -256,6 +293,8 @@ const styles = StyleSheet.create({
   emptyText: { color: "#555", fontSize: 14 },
   messageList: { paddingHorizontal: 16, paddingVertical: 12, gap: 4 },
   timeLabel: { color: "#444", fontSize: 12, textAlign: "center", marginVertical: 12 },
+  bubbleRow: { width: "100%" },
+  messageActions: { width: 1, height: 1 },
   bubble: { maxWidth: "78%", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18, marginVertical: 2 },
   bubbleMe: { backgroundColor: "#FE2C55", alignSelf: "flex-end", borderBottomRightRadius: 4 },
   bubbleThem: { backgroundColor: "#1C1C1E", alignSelf: "flex-start", borderBottomLeftRadius: 4 },
