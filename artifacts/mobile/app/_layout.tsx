@@ -6,7 +6,7 @@ import {
   useFonts,
 } from "@expo-google-fonts/inter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
+import { Stack, router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
@@ -35,6 +35,13 @@ function PushNotificationSetup() {
 
 function RootLayoutNav() {
   const { session, loading } = useAuth();
+  const onboardingCompleted = session?.user?.user_metadata?.onboarding_completed === true;
+
+  useEffect(() => {
+    if (!loading && session && !onboardingCompleted) {
+      router.replace("/auth/onboarding-profile");
+    }
+  }, [loading, onboardingCompleted, session]);
 
   if (loading) {
     return (
@@ -46,55 +53,16 @@ function RootLayoutNav() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {session ? (
+      {session && onboardingCompleted ? (
         <>
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen
-            name="story-viewer"
-            options={{
-              presentation: "fullScreenModal",
-              animation: "fade",
-            }}
-          />
-          <Stack.Screen
-            name="story-create"
-            options={{
-              presentation: "modal",
-              animation: "slide_from_bottom",
-            }}
-          />
-          <Stack.Screen
-            name="edit-profile"
-            options={{
-              presentation: "modal",
-              animation: "slide_from_bottom",
-            }}
-          />
-          <Stack.Screen
-            name="user-profile"
-            options={{
-              animation: "slide_from_right",
-            }}
-          />
-          <Stack.Screen
-            name="call"
-            options={{
-              presentation: "fullScreenModal",
-              animation: "fade",
-            }}
-          />
-          <Stack.Screen
-            name="chat"
-            options={{
-              animation: "slide_from_right",
-            }}
-          />
-          <Stack.Screen
-            name="tag"
-            options={{
-              animation: "slide_from_right",
-            }}
-          />
+          <Stack.Screen name="story-viewer" options={{ presentation: "fullScreenModal", animation: "fade" }} />
+          <Stack.Screen name="story-create" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+          <Stack.Screen name="edit-profile" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+          <Stack.Screen name="user-profile" options={{ animation: "slide_from_right" }} />
+          <Stack.Screen name="call" options={{ presentation: "fullScreenModal", animation: "fade" }} />
+          <Stack.Screen name="chat" options={{ animation: "slide_from_right" }} />
+          <Stack.Screen name="tag" options={{ animation: "slide_from_right" }} />
         </>
       ) : (
         <Stack.Screen name="auth" />
@@ -113,20 +81,13 @@ export default function RootLayout() {
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
-    }
+    if (fontsLoaded || fontError) SplashScreen.hideAsync();
   }, [fontsLoaded, fontError]);
 
-  const handleSplashFinish = () => {
-    setShowSplash(false);
-  };
+  const handleSplashFinish = () => setShowSplash(false);
 
   if (!fontsLoaded && !fontError) return null;
-
-  if (showSplash) {
-    return <SplashScreenComponent onFinish={handleSplashFinish} />;
-  }
+  if (showSplash) return <SplashScreenComponent onFinish={handleSplashFinish} />;
 
   return (
     <SafeAreaProvider>
