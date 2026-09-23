@@ -185,15 +185,8 @@ export default function ChatScreen() {
                 ? (messages[index + 1]?.sender_id === item.sender_id ? "first" : "single")
                 : (messages[index + 1]?.sender_id === item.sender_id ? "middle" : "last")
             }
-            timestamp={showTime ? timeLabel(item.created_at) : undefined}
+            onLongPress={isMe && !item.id.startsWith("opt-") ? () => deleteMessage(item.id) : undefined}
           />
-          {isMe && !item.id.startsWith("opt-") ? (
-            <TouchableOpacity
-              accessibilityLabel="Opciones del mensaje"
-              onLongPress={() => deleteMessage(item.id)}
-              style={styles.messageActions}
-            />
-          ) : null}
         </View>
       </View>
     );
@@ -294,7 +287,6 @@ const styles = StyleSheet.create({
   messageList: { paddingHorizontal: 16, paddingVertical: 12, gap: 4 },
   timeLabel: { color: "#444", fontSize: 12, textAlign: "center", marginVertical: 12 },
   bubbleRow: { width: "100%" },
-  messageActions: { width: 1, height: 1 },
   bubble: { maxWidth: "78%", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18, marginVertical: 2 },
   bubbleMe: { backgroundColor: "#FE2C55", alignSelf: "flex-end", borderBottomRightRadius: 4 },
   bubbleThem: { backgroundColor: "#1C1C1E", alignSelf: "flex-start", borderBottomLeftRadius: 4 },
