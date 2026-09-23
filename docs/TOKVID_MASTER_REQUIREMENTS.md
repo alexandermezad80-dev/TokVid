@@ -121,7 +121,28 @@ Funciones:
 - Diferenciación entre mensajes enviados y recibidos.
 - Legibilidad y accesibilidad.
 
-La personalización no debe alterar la lógica de almacenamiento de mensajes.
+Familia visual cerrada: **8 variantes** de un mismo componente:
+
+1. Classic.
+2. Minimal.
+3. Rounded.
+4. Glass.
+5. Gradient.
+6. Neon.
+7. Elegant.
+8. Compact.
+
+Reglas técnicas cerradas:
+
+- Un único componente reutilizable `Bubble`, parametrizado por variante, dirección (enviado/recibido) y posición dentro del grupo (single/first/middle/last).
+- La posición del grupo es un dato derivado en cliente; no se almacena en la base de datos.
+- La preferencia de estilo se conserva en almacenamiento local del usuario.
+- Los estilos no crean nuevos tipos de mensajes ni modifican el modelo de `messages`.
+- La implementación usa los tokens visuales definidos en el catálogo Bubbles y los SVG entregados como referencia vectorial.
+- La selección se realiza desde el selector de Bubbles dentro de Messages.
+- No requiere migraciones ni cambios de esquema en Supabase.
+
+**Estado de implementación:** 🟢 integrado en el chat de la rama de trabajo.
 
 ## 8. LIVE
 
