@@ -139,14 +139,26 @@ Debe poder:
 - Revocar permisos.
 - Gestionar la sala.
 
-El anfitrión controla la autorización, mientras que cada participante controla físicamente su propio dispositivo dentro de los permisos concedidos.
+El anfitrión controla la autorización, pero **no puede encender ni activar remotamente la cámara o el micrófono de un invitado**.
+
+El invitado conserva el control físico de su propio dispositivo y decide si acepta o rechaza el uso de cámara y/o micrófono.
+
+Cuando el anfitrión autorice o invite a un invitado a abrir la cámara, TokVid podrá mostrar al invitado una notificación, por ejemplo: **“El anfitrión te invita a abrir la cámara”**.
+
+El invitado puede aceptar o rechazar la invitación.
+
+Si el invitado rechaza abrir la cámara, **no se activa su cámara** y su participación puede mostrarse mediante el audio autorizado y la imagen/avatar de su perfil, según los permisos concedidos.
 
 ### Invitados
 
-Podrán participar cuando estén autorizados y utilizar:
+Los invitados son los usuarios que participan en una **ventanilla** dentro del mismo Live.
+
+Podrán participar cuando estén autorizados y decidir individualmente si utilizan:
 
 - Cámara.
 - Micrófono.
+
+El anfitrión no puede activar estos dispositivos por ellos.
 
 ### Chat del Live
 
