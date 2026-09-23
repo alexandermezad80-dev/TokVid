@@ -49,16 +49,21 @@ export default function OnboardingProfileScreen() {
         if (uploadError) throw uploadError;
         avatarUrl = supabase.storage.from("avatars").getPublicUrl(fileName).data.publicUrl;
       }
+
       const { error: profileError } = await supabase.from("profiles").upsert({
-        id: user.id, username: username.trim(), email: user.email ?? null, full_name: name.trim(),
+        id: user.id,
+        username: username.trim(),
+        full_name: name.trim(),
         ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
         updated_at: new Date().toISOString(),
       });
       if (profileError) throw profileError;
+
       const { error: authError } = await supabase.auth.updateUser({
         data: { display_name: name.trim(), username: username.trim() },
       });
       if (authError) throw authError;
+
       await refreshProfile();
       router.replace("/auth/interests");
     } catch (e: any) {
