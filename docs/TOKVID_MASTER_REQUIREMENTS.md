@@ -1011,3 +1011,455 @@ Cuando exista una diferencia entre el **requisito/arquitectura** y el **estado a
 - El código y Supabase vigentes son la fuente de verificación técnica del estado real.
 - La implementación nunca se considera completa solamente porque esté descrita en este documento.
 
+
+
+---
+
+# 40. CONTRATO TÉCNICO DE LIVE — PREIMPLEMENTACIÓN
+
+**Estado:** Diseño técnico aprobado para implementación posterior.  
+**Propósito:** convertir los requisitos de LIVE de las secciones 8 y 9 en límites técnicos claros antes de crear código, tablas o migraciones.  
+**Regla:** este contrato no constituye una autorización para implementar. Cualquier implementación deberá hacerse posteriormente, por bloques, en una rama propia y con revisión.
+
+## 40.1 Límite del dominio
+
+LIVE es un dominio funcional independiente.
+
+LIVE es responsable de:
+
+- Salas Live.
+- Estado de la sala.
+- Host.
+- Guests.
+- Ventanillas.
+- Solicitudes e invitaciones.
+- Moderadores y permisos de moderación.
+- Live Chat.
+- Comentario fijado.
+- Tap-Tap.
+- Quiéreme.
+- Gifts.
+- Efectos específicos del Live.
+- Estado audiovisual de los participantes.
+- Compartir/referenciar un Live.
+
+LIVE no es responsable de:
+
+- Conversaciones privadas.
+- Mensajes privados.
+- Bubbles.
+- Llamadas de voz.
+- Videollamadas.
+- Comentarios del Feed.
+- Likes del Feed.
+
+Messages puede transportar una tarjeta/enlace para compartir un Live, pero LIVE conserva la autoridad sobre la sala y su participación.
+
+## 40.2 Módulos internos
+
+La implementación deberá conservar módulos separables:
+
+```text
+LIVE
+├── rooms
+├── participants
+├── invitations
+├── moderation
+├── chat
+├── tap-tap
+├── quiéreme
+├── gifts
+├── effects
+├── layout/ventanillas
+└── share
+```
+
+Cada módulo deberá tener responsabilidades propias y evitar dependencias circulares.
+
+## 40.3 Entidades conceptuales
+
+El diseño de datos deberá representar, como mínimo, estos conceptos:
+
+- **Live Room:** sala creada por un usuario.
+- **Live Participant:** relación de un usuario con una sala y su rol/estado.
+- **Live Invitation:** invitación a participar.
+- **Live Join Request:** solicitud de un espectador para participar.
+- **Live Moderator:** autorización de moderación dentro de una sala.
+- **Live Chat Message:** mensaje perteneciente exclusivamente a una sala Live.
+- **Live Pinned Message:** referencia al mensaje fijado actualmente.
+- **Live Reaction/Tap aggregate:** señales agregadas de Tap-Tap, sin una escritura persistente por cada tap.
+- **Live Quiéreme:** apoyo de un usuario hacia el Host.
+- **Live Gift:** registro de regalo enviado/recibido cuando el sistema de monetización esté habilitado.
+- **Live Share:** referencia a una sala compartida mediante Messages.
+- **Live Participant State:** estado de presencia/participación y permisos audiovisuales necesarios para la sala.
+
+Los nombres físicos de tablas, columnas y RPC deberán definirse durante el diseño de base de datos y no deben inventarse desde la interfaz.
+
+## 40.4 Roles y autoridad
+
+Los roles funcionales son:
+
+- **Spectator:** observa e interactúa con las funciones permitidas del Live.
+- **Guest:** participa en una ventanilla después de autorización.
+- **Host:** propietario y autoridad principal de su Live.
+- **Moderator:** usuario autorizado por el Host para capacidades concretas de moderación.
+
+Reglas:
+
+1. Un Live tiene un único Host.
+2. Un Live con Guests admite como máximo 11 Guests.
+3. El máximo audiovisual simultáneo es 12: 1 Host + 11 Guests.
+4. El Host conserva la autoridad final sobre su sala.
+5. Un Moderator solo puede ejecutar acciones expresamente concedidas.
+6. Un Guest no adquiere autoridad de Host.
+7. Ningún rol puede activar remotamente la cámara o el micrófono físico de otro usuario.
+
+## 40.5 Máquina de estados de la sala
+
+El estado de una sala deberá permitir distinguir, como mínimo:
+
+- Live activa.
+- Live finalizada.
+
+Las transiciones deberán estar controladas por el servidor y por permisos del Host.
+
+No se debe confiar únicamente en el estado enviado por el cliente para determinar si una sala puede recibir participantes o interacciones.
+
+## 40.6 Máquina de estados de participación
+
+La relación de un usuario con una sala deberá distinguir estados como:
+
+- espectador;
+- solicitud pendiente;
+- invitación pendiente;
+- Guest activo;
+- salida voluntaria;
+- retirado;
+- rechazado;
+- finalizado.
+
+Las transiciones deberán validar:
+
+- existencia de la sala;
+- estado de la sala;
+- identidad del actor;
+- rol del actor;
+- disponibilidad de ventanilla;
+- permisos correspondientes.
+
+## 40.7 Cámara y micrófono
+
+Principio obligatorio:
+
+**el usuario controla exclusivamente sus propios dispositivos.**
+
+El servidor podrá autorizar, revocar o silenciar capacidades dentro de la sala, pero no puede encender físicamente cámara o micrófono de otra persona.
+
+Flujo de invitación audiovisual:
+
+1. Host/moderador autorizado invita o autoriza.
+2. Guest recibe la indicación.
+3. Guest acepta o rechaza.
+4. El propio Guest activa cámara y/o micrófono si lo desea.
+5. El estado resultante se refleja en la sala.
+
+Si moderación corta el audio:
+
+- el audio deja de transmitirse;
+- el sistema no vuelve a activar el micrófono remotamente;
+- el usuario debe volver a activarlo si conserva autorización.
+
+## 40.8 Ventanillas
+
+La disponibilidad de ventanillas deberá ser una condición validada por servidor.
+
+Regla base:
+
+```text
+1 Host + máximo 11 Guests = máximo 12 participantes audiovisuales
+```
+
+La interfaz podrá presentar distintos layouts, pero el layout visual no debe alterar la autoridad ni el límite real de participantes.
+
+La implementación deberá separar:
+
+- estado de participante;
+- asignación de ventanilla;
+- presentación visual.
+
+Esto permitirá cambiar el diseño de la interfaz sin reconstruir la lógica de participación.
+
+## 40.9 Solicitudes e invitaciones
+
+Acciones permitidas:
+
+- Spectator → solicitar entrada.
+- Host → invitar usuario.
+- Guest → proponer/invitar usuario.
+- Host/Moderator autorizado → aceptar o rechazar según permisos.
+- Invitado → aceptar o rechazar.
+- Guest → salir.
+- Host/Moderator autorizado → retirar Guest.
+
+Toda acción deberá comprobar servidor-side:
+
+- actor autenticado;
+- pertenencia/rol;
+- sala activa;
+- capacidad disponible;
+- objetivo válido;
+- permiso específico.
+
+## 40.10 Live Chat
+
+El Live Chat es un dominio de datos separado de:
+
+- comentarios del Feed;
+- Messages privados.
+
+Debe soportar:
+
+- escritura en tiempo real;
+- lectura según participación/acceso al Live;
+- moderación;
+- eliminación de mensajes cuando corresponda;
+- bloqueo dentro del Live;
+- comentario fijado por Host o Moderator autorizado.
+
+El perfil mostrado desde avatar/comentario reutilizará la identidad de perfil existente, sin duplicar el sistema de perfiles.
+
+## 40.11 Tap-Tap
+
+Tap-Tap será tratado como evento de alta frecuencia.
+
+Regla técnica:
+
+**no persistir una fila ni ejecutar una escritura de base de datos por cada tap individual.**
+
+La arquitectura deberá separar:
+
+- evento/contador efímero de alta frecuencia;
+- agregación;
+- persistencia de métricas agregadas cuando corresponda.
+
+Debe existir:
+
+- contador global en tiempo real;
+- señal individual de actividad;
+- medidor individual visual;
+- catálogo de reacción/figura;
+- posibilidad de mostrar temporalmente identidad del usuario;
+- resumen para el Host.
+
+La fórmula de descubrimiento o distribución del Live no forma parte de este contrato y deberá definirse posteriormente.
+
+## 40.12 Quiéreme
+
+Quiéreme es una interacción independiente de Tap-Tap.
+
+Debe mantener:
+
+- relación usuario → Host;
+- ausencia de duplicados;
+- contador total;
+- consulta de usuarios que dieron Quiéreme.
+
+Si el usuario no sigue al Host, activar Quiéreme podrá crear el Follow correspondiente conforme a las reglas del sistema social.
+
+La operación deberá ser idempotente.
+
+## 40.13 Gifts
+
+Los regalos pertenecen a LIVE, pero los movimientos monetarios deben integrarse posteriormente con el dominio de monetización.
+
+El contrato de LIVE debe permitir:
+
+- catálogo;
+- niveles/categorías;
+- envío;
+- recepción;
+- historial necesario;
+- visualización de galería obtenida.
+
+No se deben fijar todavía precios, porcentajes de reparto ni métodos de pago dentro del módulo Live.
+
+Esos valores pertenecen al diseño financiero/monetización.
+
+## 40.14 Moderación y seguridad
+
+Las acciones de moderación deberán estar protegidas por permisos explícitos.
+
+Como mínimo se deberán distinguir:
+
+- gestionar participantes;
+- aceptar solicitudes/invitaciones;
+- retirar Guests;
+- moderar chat;
+- eliminar comentarios;
+- bloquear usuarios;
+- silenciar/cortar audio;
+- gestionar otras capacidades autorizadas.
+
+Las acciones sensibles deberán validar el actor en servidor.
+
+No se debe confiar en que ocultar un botón en la interfaz sea una medida de seguridad.
+
+## 40.15 Realtime y presencia
+
+LIVE requiere comunicación en tiempo real para:
+
+- estado de sala;
+- participantes;
+- entrada/salida;
+- invitaciones y solicitudes;
+- chat;
+- comentario fijado;
+- Tap-Tap agregado;
+- Quiéreme cuando corresponda;
+- estados audiovisuales;
+- moderación relevante.
+
+La presencia efímera no debe confundirse automáticamente con datos históricos persistentes.
+
+La arquitectura deberá definir qué eventos:
+
+- se transmiten únicamente;
+- se agregan;
+- se persisten;
+- se eliminan al terminar el Live.
+
+## 40.16 Seguridad de datos y RLS
+
+Toda entidad persistente de LIVE deberá tener una política de acceso definida antes de declararse terminada.
+
+Principios:
+
+- El usuario autenticado solo puede actuar como sí mismo.
+- El Host solo administra sus propias salas.
+- Los Moderators solo ejercen permisos concedidos.
+- Los Guests no obtienen privilegios de Host.
+- Los espectadores no pueden modificar datos autoritativos de la sala.
+- Las métricas sensibles no deben quedar expuestas mediante consultas públicas innecesarias.
+- Las operaciones críticas deberán preferir funciones/RPC o rutas servidoras con validación de actor cuando corresponda.
+
+## 40.17 Contrato de interfaz entre módulos
+
+LIVE podrá exponer a otros dominios únicamente interfaces claras.
+
+### LIVE → Messages
+
+LIVE puede solicitar/crear una referencia compartible de una sala.
+
+Messages se encarga de entregar la tarjeta/enlace.
+
+Messages no decide:
+
+- quién es Host;
+- quién es Guest;
+- quién entra;
+- qué permisos tiene un participante;
+- cuándo termina la sala.
+
+### LIVE → Profile/Social
+
+LIVE reutiliza:
+
+- avatar;
+- username;
+- nombre;
+- seguidores;
+- estado de Follow.
+
+LIVE no debe crear un segundo sistema de perfiles.
+
+### LIVE → Notifications
+
+LIVE podrá emitir eventos notificables como:
+
+- invitación;
+- solicitud;
+- actividad relevante;
+- Live compartido;
+- otras notificaciones definidas posteriormente.
+
+Notifications se encargará del mecanismo de entrega.
+
+### LIVE → Monetization
+
+LIVE podrá registrar eventos de Gifts elegibles.
+
+El dominio financiero será responsable de:
+
+- saldo;
+- ledger;
+- comisiones;
+- reparto;
+- retiros;
+- fraude;
+- reembolsos.
+
+## 40.18 Observabilidad
+
+Antes de producción deberá ser posible identificar, como mínimo:
+
+- creación/finalización de sala;
+- errores de entrada;
+- errores de invitación;
+- cambios de participación;
+- errores de Realtime;
+- fallos de moderación;
+- anomalías de capacidad;
+- fallos de Gifts cuando exista monetización.
+
+No se deben registrar secretos ni datos sensibles innecesarios.
+
+## 40.19 Orden de implementación
+
+LIVE deberá implementarse progresivamente:
+
+1. Contrato de dominio y tipos.
+2. Room/Host.
+3. Participantes/Guests y límite 1+11.
+4. Solicitudes/invitaciones.
+5. Realtime/presencia.
+6. Ventanillas/layout.
+7. Cámara/micrófono y permisos.
+8. Moderación.
+9. Live Chat.
+10. Tap-Tap.
+11. Quiéreme.
+12. Share Live.
+13. Effects.
+14. Gifts cuando monetización esté preparada.
+15. Hardening, pruebas y observabilidad.
+
+Cada bloque deberá pasar por:
+
+**interfaz → lógica → DB → relaciones → RLS/permisos → Realtime/notificaciones → navegación → rendimiento → UX real → pruebas.**
+
+## 40.20 Criterios de cierre de LIVE
+
+LIVE no se considerará terminado solamente porque exista una pantalla.
+
+Para cerrar el módulo deberán verificarse:
+
+- límites 1 Host + 11 Guests;
+- estados de sala y participantes;
+- autorización server-side;
+- RLS;
+- Realtime;
+- presencia;
+- cámara/micrófono bajo control del usuario;
+- moderación;
+- Live Chat separado;
+- Tap-Tap escalable;
+- Quiéreme sin duplicados;
+- compartir Live sin mezclar dominios;
+- layouts adaptativos;
+- manejo de salida/retiro;
+- errores y reconexión;
+- pruebas;
+- observabilidad;
+- compatibilidad con los dominios existentes.
+
+**Este contrato protege la arquitectura del Documento Maestro. No autoriza todavía la creación de tablas, migraciones, servicios, pantallas ni cambios en Supabase.**
