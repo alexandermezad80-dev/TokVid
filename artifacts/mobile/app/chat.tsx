@@ -69,6 +69,7 @@ export default function ChatScreen() {
   const selectBubbleStyle = async (variant: BubbleStyleVariant) => {
     setBubbleStyle(variant);
     await setBubbleStyleVariant(variant);
+    setBubblePickerVisible(false);
   };
 
   const avatarUri = otherAvatar
