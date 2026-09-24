@@ -136,6 +136,17 @@ export default function ChatScreen() {
     const nextSame = messages[index + 1]?.sender_id === item.sender_id;
     const groupPosition = !previousSame ? (nextSame ? "first" : "single") : (nextSame ? "middle" : "last");
 
+    const isLiveShare = item.text.startsWith("[TOKVID_LIVE_SHARE]|");
+    if (isLiveShare) {
+      const [, shareId, roomId] = item.text.split("|");
+      return (
+        <View>
+          {showTime && <Text style={styles.timeLabel}>{timeLabel(item.created_at)}</Text>}
+          <LiveShareCard shareId={shareId} roomId={roomId} />
+        </View>
+      );
+    }
+
     return (
       <View>
         {showTime && <Text style={styles.timeLabel}>{timeLabel(item.created_at)}</Text>}
