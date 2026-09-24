@@ -9,10 +9,6 @@ on:
 jobs:
   migrate:
     runs-on: ubuntu-latest
-    env:
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
 
     steps:
       - name: Checkout
@@ -23,76 +19,44 @@ jobs:
         with:
           version: latest
 
-      - name: Link Supabase project
-        run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
-
-      - name: Reconcile existing remote migration history
+      - name: Validate Supabase credentials
         shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
         run: |
           set -euo pipefail
+          test -n "$SUPABASE_ACCESS_TOKEN" || { echo "SUPABASE_ACCESS_TOKEN is unavailable to this workflow"; exit 1; }
+          test -n "$SUPABASE_DB_PASSWORD" || { echo "SUPABASE_DB_PASSWORD is unavailable to this workflow"; exit 1; }
+          test -n "$SUPABASE_PROJECT_ID" || { echo "SUPABASE_PROJECT_ID is unavailable to this workflow"; exit 1; }
 
-          repair_reverted() {
-            local version="$1"
-            if supabase migration list | grep -q "$version"; then
-              supabase migration repair "$version" --status reverted
-            fi
-          }
-
-          remote_has() {
-            local version="$1"
-            supabase migration list > /tmp/migrations.txt
-            awk -F '│' -v v="$version" '
-              NF >= 2 {
-                gsub(/[[:space:]]/, "", $2)
-                if ($2 == v) found=1
-              }
-              END { exit(found ? 0 : 1) }
-            ' /tmp/migrations.txt
-          }
-
-          repair_applied() {
-            local version="$1"
-            if ! remote_has "$version"; then
-              supabase migration repair "$version" --status applied
-            fi
-          }
-
-          # Remove the incorrect history timestamps created by earlier direct
-          # migration applications. The schema changes themselves remain intact.
-          repair_reverted 20260921050055
-          repair_reverted 20260921050807
-          repair_reverted 20260921052701
-          repair_reverted 20260921053319
-          repair_reverted 20260921053700
-          repair_reverted 20260921053800
-          repair_reverted 20260921163211
-          repair_reverted 20260921171240
-          repair_reverted 20260922043145
-          repair_reverted 20260922170559
-          repair_reverted 20260922220951
-          repair_reverted 20260922222928
-          repair_reverted 20260922223605
-          repair_reverted 20260922224835
-          repair_reverted 20260924035837
-          repair_reverted 20260924041927
-          repair_reverted 20260924042443
-          repair_reverted 20260924045132
-
-          # The following migrations are already represented in the database
-          # state, so repair only their history record; db push will not rerun them.
-          repair_applied 20260924095000
-          repair_applied 20260924100000
-
-          # The previous Chat migration was applied with a non-repository
-          # timestamp. Reinsert the repository timestamp as reverted first;
-          # db push then executes the exact GitHub migration file.
-          repair_applied 20260924150000
+      - name: Link Supabase project
+        shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          supabase link --project-ref "$SUPABASE_PROJECT_ID"
 
       - name: Push repository migrations
-        run: supabase db push --yes
+        shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          supabase db push --yes
 
       - name: Verify migration history
         shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
         run: |
           set -euo pipefail
           supabase migration list
