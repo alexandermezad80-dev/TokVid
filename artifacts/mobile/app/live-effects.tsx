@@ -1,11 +1,9 @@
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack } from "expo-router";
 import React from "react";
 import { SafeAreaView, StyleSheet } from "react-native";
 import LiveEffects from "../lib/features/live/LiveEffects";
 
 export default function LiveEffectsRoute() {
-  const { roomId } = useLocalSearchParams<{ roomId?: string }>();
-
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ title: "Efectos", headerShown: false }} />
