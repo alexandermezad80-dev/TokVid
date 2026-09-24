@@ -183,15 +183,17 @@ El anfitrión no puede activar estos dispositivos por ellos.
 
 ### Interacciones del Live
 
-El Live debe contemplar una interacción de **Me gusta mediante Tap-Tap en pantalla**, independiente de los Me gusta del Feed.
+El Live debe contemplar una interacción de **Tap-Tap en pantalla**, independiente de los Me gusta del Feed.
 
 - Tap-Tap sobre la pantalla.
-- Animación visual inmediata de los taps/me gusta.
-- Contador acumulado de Me gusta del Live.
-- Actualización del contador en tiempo real.
-- La interacción pertenece exclusivamente al Live activo.
-
-Los Tap-Tap y su contador deben diseñarse de forma escalable, sin convertir cada tap en una escritura persistente individual innecesaria.
+- La interacción pertenece exclusivamente al LIVE activo del Host.
+- Espectadores, Guests y Host pueden realizar Tap-Tap.
+- Todos los Tap-Tap contribuyen al LIVE del Host.
+- Cada usuario ve su propia interacción en su móvil.
+- Animación visual inmediata de la interacción propia.
+- Contador global acumulado del LIVE en tiempo real.
+- El contador se reinicia al finalizar el LIVE; no es un contador histórico.
+- Los Tap-Tap deben diseñarse de forma escalable, sin convertir cada tap en una escritura persistente individual innecesaria.
 
 ### Chat del Live
 
@@ -319,9 +321,17 @@ La misma identidad de perfil debe reutilizarse para anfitrión, Guests y partici
 
 ### Tap-Tap y Quiéreme
 
-**Tap-Tap** es una interacción de apoyo exclusiva del Live y distinta de los Me gusta del Feed, del Follow y de Quiéreme.
+**Tap-Tap** es una interacción de apoyo **exclusiva del Live del Host** y distinta de los Me gusta del Feed, del Follow y de Quiéreme.
 
-Cada usuario, sea espectador, Guest o anfitrión, puede realizar Tap-Tap.
+Los Tap-Tap siempre se acumulan para el **LIVE activo del Host**:
+
+- El espectador puede realizar Tap-Tap al LIVE que está viendo.
+- Un Guest puede realizar Tap-Tap al LIVE del Host.
+- El Host también puede realizar Tap-Tap dentro de su propio LIVE.
+- Los Tap-Tap de todos ellos contribuyen al contador global del LIVE del Host.
+- Tap-Tap no está dirigido individualmente a un espectador o Guest; el destinatario de la interacción es el LIVE del Host.
+- Cada usuario ve en su propio móvil su propia interacción de Tap-Tap.
+- Un usuario no debe ver los Tap-Tap individuales de otros usuarios como si fueran propios.
 
 Cada usuario tendrá un **medidor individual de Tap-Tap**:
 
@@ -329,14 +339,21 @@ Cada usuario tendrá un **medidor individual de Tap-Tap**:
 - Se vacía gradualmente cuando deja de hacer taps.
 - Debe tener una presentación visual elegante, fluida, adaptable y no obstructiva.
 - El usuario podrá elegir su reacción/figura de Tap-Tap desde un catálogo.
-- La reacción puede mostrar temporalmente el nombre o @usuario y luego desaparecer.
+- La reacción/figura elegida es personal de cada usuario y se muestra en su propia interacción.
+- La figura no cambia el destinatario: todos los Tap-Tap siguen perteneciendo al LIVE del Host.
 
-El Live tendrá además:
+El LIVE tendrá además:
 
-- Contador global de Tap-Tap.
+- Contador global acumulado de Tap-Tap del LIVE.
 - Actualización en tiempo real.
-- Animaciones inmediatas.
-- Señales agregadas de actividad/apoyo.
+- Animaciones inmediatas para la interacción propia.
+- Resumen de actividad de Tap-Tap disponible para el Host.
+
+Los Tap-Tap **no son históricos ni persistentes al finalizar el LIVE**:
+
+- El contador corresponde únicamente a la sesión LIVE activa.
+- Al cerrar o finalizar el LIVE, el contador de Tap-Tap desaparece y deja de acumularse.
+- Un nuevo LIVE del mismo Host comienza con el contador de Tap-Tap en cero.
 
 Los Tap-Tap deben diseñarse de forma escalable, evitando una escritura persistente individual por cada tap. La fórmula exacta mediante la cual estas señales puedan influir en descubrimiento o distribución del Live deberá definirse posteriormente y no debe asumirse como una garantía de exposición.
 
