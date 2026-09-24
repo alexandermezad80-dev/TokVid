@@ -50,7 +50,6 @@ export default function LiveRoom() {
   const [micAuthorized, setMicAuthorized] = useState(false);
   const [cameraOn, setCameraOn] = useState(false);
   const [micOn, setMicOn] = useState(false);
-  const [remoteUids, setRemoteUids] = useState<number[]>([]);
   const [spectatorCount, setSpectatorCount] = useState(0);
   const [joining, setJoining] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -58,11 +57,6 @@ export default function LiveRoom() {
   const [error, setError] = useState<string | null>(null);
 
   const isMember = role === "host" || role === "guest";
-  const currentParticipant = useMemo(
-    () => participants.find((participant) => participant.userId === user?.id) ?? null,
-    [participants, user?.id],
-  );
-
   const refreshRoom = useCallback(async () => {
     if (!roomId || !user?.id) return;
 
@@ -199,11 +193,9 @@ export default function LiveRoom() {
         engine.registerEventHandler({
           onUserJoined: (_connection, uid) => {
             if (!cancelled) {
-              setRemoteUids((current) => current.includes(uid) ? current : [...current, uid]);
             }
           },
           onUserOffline: (_connection, uid) => {
-            if (!cancelled) setRemoteUids((current) => current.filter((item) => item !== uid));
           },
           onTokenPrivilegeWillExpire: async () => {
             try {
@@ -246,7 +238,6 @@ export default function LiveRoom() {
     return () => {
       cancelled = true;
       setRtcReady(false);
-      setRemoteUids([]);
       const engine = engineRef.current;
       if (engine) {
         void engine.leaveChannel();
@@ -372,8 +363,7 @@ export default function LiveRoom() {
 
   const activeRemoteParticipants = layout.guests
     .concat(layout.host ? [layout.host] : [])
-    .filter((participant) => participant.userId !== user?.id)
-    .filter((participant) => remoteUids.includes(agoraUidFromUserId(participant.userId)));
+    .filter((participant) => participant.userId !== user?.id);
 
   return (
     <View style={styles.container}>
