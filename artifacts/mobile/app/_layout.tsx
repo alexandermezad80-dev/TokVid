@@ -61,6 +61,7 @@ function RootLayoutNav() {
           <Stack.Screen name="edit-profile" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
           <Stack.Screen name="user-profile" options={{ animation: "slide_from_right" }} />
           <Stack.Screen name="call" options={{ presentation: "fullScreenModal", animation: "fade" }} />
+          <Stack.Screen name="live-room" options={{ presentation: "fullScreenModal", animation: "fade" }} />
           <Stack.Screen name="chat" options={{ animation: "slide_from_right" }} />
           <Stack.Screen name="tag" options={{ animation: "slide_from_right" }} />
         </>
