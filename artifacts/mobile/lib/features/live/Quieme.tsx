@@ -70,7 +70,27 @@ export default function Quieme({ roomId, userId, onClose }: Props) {
 
   useEffect(() => {
     void load();
-  }, [load]);
+
+    const channel = supabase
+      .channel(`live:${roomId}:quieme`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "live_quieme",
+          filter: `room_id=eq.${roomId}`,
+        },
+        () => {
+          void load();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [load, roomId]); 
 
   const send = useCallback(async () => {
     if (!hostId || hostId === userId || given || busy) return;
