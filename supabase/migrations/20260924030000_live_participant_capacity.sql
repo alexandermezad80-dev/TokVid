@@ -25,11 +25,19 @@ begin
   select r.host_id, r.mode
     into room_host, room_mode
   from public.live_rooms r
-  where r.id = new.room_id
-    and r.state = 'active';
+  where r.id = new.room_id;
 
   if room_host is null then
-    raise exception 'LIVE room is not active or does not exist'
+    raise exception 'LIVE room does not exist'
+      using errcode = '22023';
+  end if;
+
+  if new.participation_state in ('spectator','pending_request','pending_invitation','active')
+     and exists (
+       select 1 from public.live_rooms r
+       where r.id = new.room_id and r.state <> 'active'
+     ) then
+    raise exception 'LIVE room is not active'
       using errcode = '22023';
   end if;
 
