@@ -11,6 +11,7 @@ import BubbleStylePicker from "../lib/features/messages/components/BubbleStylePi
 import Bubble, { type BubbleStyleVariant } from "../lib/features/messages/components/Bubble";
 import { getBubbleStyleVariant, setBubbleStyleVariant } from "../lib/features/messages/services/bubble-preferences";
 import { createCall, type CallType } from "../lib/features/calls/services/calls-service";
+import LiveShareCard from "../lib/features/live/LiveShareCard";
 import { supabase } from "../lib/supabase";
 
 interface MessageRow {
