@@ -38,9 +38,21 @@ jobs:
             fi
           }
 
+          remote_has() {
+            local version="$1"
+            supabase migration list > /tmp/migrations.txt
+            awk -F '│' -v v="$version" '
+              NF >= 2 {
+                gsub(/[[:space:]]/, "", $2)
+                if ($2 == v) found=1
+              }
+              END { exit(found ? 0 : 1) }
+            ' /tmp/migrations.txt
+          }
+
           repair_applied() {
             local version="$1"
-            if ! supabase migration list | grep -q "$version"; then
+            if ! remote_has "$version"; then
               supabase migration repair "$version" --status applied
             fi
           }
