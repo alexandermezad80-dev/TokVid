@@ -340,6 +340,33 @@ El Live tendrá además:
 
 Los Tap-Tap deben diseñarse de forma escalable, evitando una escritura persistente individual por cada tap. La fórmula exacta mediante la cual estas señales puedan influir en descubrimiento o distribución del Live deberá definirse posteriormente y no debe asumirse como una garantía de exposición.
 
+**Contador de espectadores**
+
+El Live deberá mostrar un contador de espectadores en tiempo real, independiente de Tap-Tap y de Gifts.
+
+- Representa las personas que están viendo el Live en ese momento.
+- Se gestionará mediante presencia/Realtime.
+- Al entrar un espectador, el contador se actualiza.
+- Al salir o desconectarse, el contador se actualiza.
+- No representa usuarios históricos ni se conserva como contador del Live una vez finalizado.
+- No debe confundirse con Guests: un Guest participa audiovisualmente; un espectador observa el Live.
+- El contador debe permanecer separado de cualquier métrica de Tap-Tap o de apoyo económico.
+
+**MVP del Live (Most Valuable Player)**
+
+El Live tendrá un reconocimiento dinámico para el usuario que acumule mayor apoyo mediante Gifts durante ese Live.
+
+- El MVP puede ser un espectador o un Guest.
+- Existe un único MVP actual por Live.
+- El MVP se determina por el apoyo acumulado mediante Gifts durante la sesión.
+- Cuando otro usuario supera al MVP actual, el reconocimiento pasa al nuevo MVP.
+- Al convertirse alguien en MVP, puede mostrarse una animación destacada durante unos segundos, con avatar, identidad e insignia MVP, como una celebración especial del Live.
+- Después de la animación, queda una insignia MVP pequeña junto o debajo del avatar del usuario mientras conserve el primer lugar.
+- Si cambia el MVP, la animación vuelve a mostrarse para el nuevo MVP y la insignia se traslada.
+- El MVP es independiente del contador de espectadores y de Tap-Tap.
+- El reconocimiento MVP pertenece exclusivamente al Live activo y desaparece al finalizar la sesión.
+- La interfaz deberá mantener la celebración visible sin saturar permanentemente la pantalla.
+
 **Quiéreme** es una interacción distinta de Tap-Tap y está integrada en el área de Seguir del anfitrión.
 
 - Activar Quiéreme puede hacer que el usuario siga al anfitrión si todavía no lo sigue.
