@@ -79,20 +79,55 @@ export async function mapRowsToVideoItems(vids: any[]): Promise<VideoItem[]> {
 
 const PAGE_SIZE = 12;
 
-async function fetchRealVideos(page = 0): Promise<VideoItem[]> {
+function normalizeInterest(value: string): string {
+  return value
+    .toLocaleLowerCase("es")
+    .normalize("NFD")
+    .replace(/[\\u0300-\\u036f]/g, "")
+    .trim();
+}
+
+function interestScore(video: VideoItem, interests: string[], tags: string[] = []): number {
+  if (interests.length === 0) return 0;
+  const haystack = normalizeInterest(
+    [video.caption, ...tags].join(" ")
+  );
+  return interests.reduce((score, interest) => {
+    const normalized = normalizeInterest(interest);
+    return normalized && haystack.includes(normalized) ? score + 1 : score;
+  }, 0);
+}
+
+async function fetchRealVideos(page = 0, interests: string[] = []): Promise<VideoItem[]> {
   try {
     // select("*") avoids 400s caused by explicitly naming missing columns
     const from = page * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
     const { data: vids, error } = await supabase
       .from("videos")
-      .select("*")
+      .select("*, video_hashtags(hashtag:hashtags(tag))")
       .order("created_at", { ascending: false })
       .range(from, to);
 
     if (error || !vids || vids.length === 0) return [];
 
-    return mapRowsToVideoItems(vids);
+    const mapped = await mapRowsToVideoItems(vids);
+    if (interests.length === 0) return mapped;
+
+    const tagMap = new Map<string, string[]>();
+    for (const row of vids as any[]) {
+      const tags = (row.video_hashtags ?? [])
+        .map((relation: any) => relation?.hashtag?.tag)
+        .filter((tag: any): tag is string => typeof tag === "string");
+      tagMap.set(row.id, tags);
+    }
+
+    return mapped.sort(
+      (a, b) =>
+        interestScore(b, interests, tagMap.get(b.id) ?? []) -
+        interestScore(a, interests, tagMap.get(a.id) ?? []) ||
+        rankScore(b) - rankScore(a)
+    );
   } catch {
     return [];
   }
@@ -110,6 +145,7 @@ export function useVideoFeed(followedIds: Set<string>) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [likedLoading, setLikedLoading] = useState(true);
+  const [interests, setInterests] = useState<string[]>([]);
   const pageRef = useRef(0);
 
   const removeVideo = useCallback((id: string) => {
@@ -176,8 +212,52 @@ export function useVideoFeed(followedIds: Set<string>) {
   }, []);
 
   useEffect(() => {
-    loadPage(0);
-  }, [loadPage]);
+    let cancelled = false;
+
+    const loadInterestsAndFeed = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      let userInterests: string[] = [];
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("interests")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        userInterests = Array.isArray(profile?.interests)
+          ? profile.interests.filter((value: any): value is string => typeof value === "string")
+          : [];
+      }
+
+      if (cancelled) return;
+      setInterests(userInterests);
+
+      setError(null);
+      setIsRefreshing(true);
+      try {
+        const items = await fetchRealVideos(0, userInterests);
+        if (!cancelled) {
+          setRealVideos(items);
+          setPage(0);
+          pageRef.current = 0;
+          setHasMore(items.length === PAGE_SIZE);
+        }
+      } catch {
+        if (!cancelled) setError("No se pudo cargar el feed");
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+          setIsRefreshing(false);
+        }
+      }
+    };
+
+    loadInterestsAndFeed();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const loadMore = useCallback(() => {
     if (isLoading || !hasMore) return;
@@ -254,7 +334,7 @@ export function useVideoFeed(followedIds: Set<string>) {
     }
   }, [likedIds]);
 
-  // Only persisted videos belong in the feed. No mock/demo fallback is used.\n  const rankedReal = [...realVideos].sort((a, b) => rankScore(b) - rankScore(a));\n  const combined: VideoItem[] = rankedReal.filter(\n    (v) => !removedIds.has(v.id)\n  );\n\n  // Merge follow state.\n  const videos: VideoItem[] = combined.map((v) => ({\n    ...v,\n    isFollowing: followedIds.has(v.creatorId),\n  }));\n\n  const followingVideos = videos.filter((v) => followedIds.has(v.creatorId));\n\n  // Liked videos (for the liked tab).\n  const likedVideos = videos.filter((v) => likedIds.has(v.id));\n\n  return {
+  // Only persisted videos belong in the feed. Interests influence ranking when available.\n  const rankedReal = [...realVideos].sort((a, b) => rankScore(b) - rankScore(a));\n  const combined: VideoItem[] = rankedReal.filter(\n    (v) => !removedIds.has(v.id)\n  );\n\n  // Merge follow state.\n  const videos: VideoItem[] = combined.map((v) => ({\n    ...v,\n    isFollowing: followedIds.has(v.creatorId),\n  }));\n\n  const followingVideos = videos.filter((v) => followedIds.has(v.creatorId));\n\n  // Liked videos (for the liked tab).\n  const likedVideos = videos.filter((v) => likedIds.has(v.id));\n\n  return {
     videos,
     followingVideos,
     likedIds,
