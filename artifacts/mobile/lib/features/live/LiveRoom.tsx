@@ -525,7 +525,7 @@ export default function LiveRoom() {
             {cameraOn ? (
               <RtcSurfaceView
                 style={StyleSheet.absoluteFill}
-                canvas={{ uid: 0 }}
+                canvas={{ uid: agoraUidFromUserId(user?.id ?? "") }}
                 zOrderMediaOverlay
               />
             ) : (
