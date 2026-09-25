@@ -15,6 +15,10 @@ export default function InterestsScreen() {
   const finish=async()=>{
     if(selected.length<3){setError("Elegí al menos 3 intereses.");return;}
     setSaving(true);setError(null);
+    const { data: { user } } = await supabase.auth.getUser();
+    if(!user){setSaving(false);setError("No hay una sesión activa.");return;}
+    const { error:profileError }=await supabase.from("profiles").update({interests:selected}).eq("id",user.id);
+    if(profileError){setSaving(false);setError(profileError.message);return;}
     const {error:e}=await supabase.auth.updateUser({data:{interests:selected,onboarding_completed:true}});
     setSaving(false);
     if(e){setError(e.message);return;}
