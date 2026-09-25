@@ -644,16 +644,6 @@ export default function LiveRoom() {
         <Pressable
           style={styles.action}
           onPress={() =>
-            router.push(`/live-gifts?roomId=${roomId}`)
-          }
-        >
-          <Feather name="gift" size={21} color="#fff" />
-          <Text style={styles.actionText}>Regalos</Text>
-        </Pressable>
-
-        <Pressable
-          style={styles.action}
-          onPress={() =>
             router.push(`/live-effects?roomId=${roomId}`)
           }
         >
