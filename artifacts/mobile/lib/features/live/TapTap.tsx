@@ -5,7 +5,6 @@ import { supabase } from "../../supabase";
 
 interface Props { roomId: string; userId: string; }
 interface TapEvent { userId: string; count: number; nonce: string; }
-interface PresenceState { tapCount?: number; figureId?: string; }
 
 const TAP_WINDOW_MS = 1000;
 const MAX_TAPS_PER_WINDOW = 8;
@@ -48,29 +47,33 @@ export default function TapTap({ roomId, userId }: Props) {
     });
     channelRef.current = channel;
 
-    const syncTotal = () => {
-      const state = channel.presenceState<PresenceState>();
-      const total = Object.values(state).reduce((sum, entries) => {
-        const entry = entries[0];
-        return sum + Math.max(Number(entry?.tapCount ?? 0), 0);
-      }, 0);
-      if (active) setGlobalTaps(total);
+    const syncTotal = async () => {
+      const { data, error } = await supabase
+        .from("live_tap_totals")
+        .select("total_taps")
+        .eq("room_id", roomId)
+        .maybeSingle();
+      if (!error && active) setGlobalTaps(Number(data?.total_taps ?? 0));
     };
 
-    channel
-      .on("broadcast", { event: "tap" }, ({ payload }) => {
-        const event = payload as TapEvent;
-        if (!event || event.userId === userId || event.count < 1) return;
-      })
-      .on("presence", { event: "sync" }, syncTotal)
-      .on("presence", { event: "join" }, syncTotal)
-      .on("presence", { event: "leave" }, syncTotal);
+    channel.on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "live_tap_totals",
+        filter: `room_id=eq.${roomId}`,
+      },
+      () => {
+        void syncTotal();
+      },
+    );
 
     void channel.subscribe(async (status) => {
       if (status !== "SUBSCRIBED" || !active) return;
       setChannelReady(true);
-      await channel.track({ tapCount: 0, figureId });
-      syncTotal();
+      await channel.track({ figureId });
+      await syncTotal();
     });
 
     return () => {
@@ -105,6 +108,12 @@ export default function TapTap({ roomId, userId }: Props) {
     setTimeout(() => setShowFigure(false), 420);
 
     const channel = channelRef.current;
+    const { error } = await supabase.rpc("live_send_taps", {
+      p_room_id: roomId,
+      p_count: accepted,
+    });
+    if (error) return;
+
     if (!channel || !channelReady) return;
     await channel.send({
       type: "broadcast",
@@ -115,7 +124,7 @@ export default function TapTap({ roomId, userId }: Props) {
         nonce: `${userId}-${now}-${Math.random().toString(36).slice(2)}`,
       } satisfies TapEvent,
     });
-  }, [channelReady, userId]);
+  }, [channelReady, roomId, userId]);
 
   const handlePress = () => {
     const now = Date.now();
@@ -128,7 +137,7 @@ export default function TapTap({ roomId, userId }: Props) {
     <View style={styles.container}>
       <Text style={styles.label}>Tap-Tap del LIVE</Text>
       <Text style={styles.count}>{globalTaps}</Text>
-      <Text style={styles.sub}>Total acumulado del LIVE</Text>
+      <Text style={styles.sub}>Total acumulado de esta sesión LIVE</Text>
       <Text style={styles.personal}>Mis Tap-Tap: {tapCount}</Text>
       <View style={styles.preview}>{showFigure && <Text style={styles.animation}>{selectedFigure.emoji}</Text>}</View>
 
