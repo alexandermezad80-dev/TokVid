@@ -1860,3 +1860,83 @@ La arquitectura de datos queda preparada para implementar LIVE sin mezclar:
 - Monetization.
 
 La siguiente fase, antes de escribir migraciones, será **auditar el esquema Supabase vigente y contrastarlo entidad por entidad con este diseño**.
+
+---
+
+# 42. MONETIZACIÓN Y CATÁLOGO DE REGALOS — ESPECIFICACIÓN VIGENTE
+
+**Estado:** Requisito maestro incorporado a partir del documento completo de monetización.  
+**Documento financiero de referencia:** `docs/monetization/sistema_monetizacion_completo.md`  
+**Regla:** este documento completo integra el sistema de monetización blindado y constituye la referencia vigente del diseño financiero. No se debe sustituir por una especificación económica distinta.
+
+## 42.1 Sistema de monetización completo
+
+El sistema de monetización de TOKVID queda vinculado al documento completo vigente y contempla, entre otros elementos definidos allí:
+
+- arquitectura financiera con reparto **70/30**;
+- valor neto interno de **1 Moneda = $0.010 USD**;
+- precios asimétricos para evitar que TOKVID absorba las comisiones de los procesadores;
+- fórmulas diferenciadas para Web y compras In-App;
+- paquetes cerrados de monedas;
+- regla de cantidades basada en módulo 5, con excepción del regalo base de 1 moneda;
+- Ledger contable para registrar las operaciones;
+- procesamiento atómico y protección contra concurrencia;
+- controles de idempotencia para referencias externas;
+- protección antifraude mediante **escrow de 14 días** para los diamantes;
+- políticas de retiro y controles operativos;
+- integración futura con los mecanismos de pago y liquidación definidos por el sistema de monetización.
+
+Los valores económicos, precios, reparto, reglas de conversión, retiros y demás parámetros financieros deben tomarse del documento completo de monetización vigente y no deben inventarse ni sustituirse durante la implementación.
+
+## 42.2 Catálogo de regalos TOKVID
+
+TOKVID tendrá un catálogo objetivo de **445 regalos digitales**.
+
+El catálogo:
+
+- tendrá identidad visual y sello propio de TOKVID;
+- se organizará en **2 o 3 categorías**;
+- podrá utilizar niveles y elementos especiales conforme al sistema de regalos;
+- deberá integrarse con LIVE;
+- permitirá selección y envío de regalos;
+- permitirá recepción y registro de regalos;
+- permitirá la visualización de regalos obtenidos en la galería correspondiente;
+- deberá mantener separación entre la experiencia visual de LIVE y la contabilidad financiera.
+
+**No se fija en este documento una distribución numérica entre las 2 o 3 categorías ni se inventan nombres, precios o contenido individual de los 445 regalos.** Esos detalles deberán definirse posteriormente con autorización explícita.
+
+## 42.3 Relación entre LIVE y Monetización
+
+LIVE mantiene la responsabilidad de:
+
+- selector/experiencia de regalos;
+- envío y recepción dentro de la sala;
+- presentación visual;
+- historial/galería de regalos correspondiente al contrato de LIVE.
+
+Monetización mantiene la responsabilidad de:
+
+- saldo;
+- Ledger;
+- compra de monedas;
+- reparto;
+- liquidación;
+- retiros;
+- antifraude;
+- reembolsos;
+- referencias financieras.
+
+La integración entre ambos dominios debe respetar el contrato definido en la sección 40.17.
+
+## 42.4 Regla de implementación
+
+La incorporación de los 445 regalos y del sistema financiero completo al Documento Maestro **no autoriza por sí misma cambios de código, migraciones, Supabase, precios adicionales ni implementación del catálogo**.
+
+Antes de implementar cualquier parte pendiente se deberá:
+
+1. auditar el estado real existente;
+2. contrastarlo con esta especificación y con el documento completo de monetización;
+3. identificar las diferencias;
+4. presentar los cambios necesarios;
+5. solicitar autorización antes de modificar código o base de datos.
+
