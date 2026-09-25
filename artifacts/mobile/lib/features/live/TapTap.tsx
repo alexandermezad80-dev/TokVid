@@ -4,7 +4,8 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { supabase } from "../../supabase";
 
 interface Props { roomId: string; userId: string; }
-interface TapEvent { userId: string; count: number; nonce: string; }
+interface TapEvent { userId: string; count: number; nonce: string; figureId: string; }
+interface TapActivity { user_id: string; tap_count: number; }
 
 const TAP_WINDOW_MS = 1000;
 const MAX_TAPS_PER_WINDOW = 8;
@@ -25,20 +26,62 @@ export default function TapTap({ roomId, userId }: Props) {
   const [tapCount, setTapCount] = useState(0);
   const [globalTaps, setGlobalTaps] = useState(0);
   const [figureId, setFigureId] = useState("spark");
-  const [showFigure, setShowFigure] = useState(false);
+  const [remoteFigure, setRemoteFigure] = useState<string | null>(null);
+  const [isHost, setIsHost] = useState(false);
+  const [activity, setActivity] = useState<TapActivity[]>([]);
   const [channelReady, setChannelReady] = useState(false);
   const windowStart = useRef(0);
   const tapsInWindow = useRef(0);
   const lastEventAt = useRef(0);
+  const remoteAnimationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const channelName = useMemo(() => `live:${roomId}:tap-tap`, [roomId]);
   const selectedFigure = FIGURES.find((f) => f.id === figureId) ?? FIGURES[0];
+  const remoteSelectedFigure = FIGURES.find((f) => f.id === remoteFigure) ?? FIGURES[0];
 
   useEffect(() => {
     void AsyncStorage.getItem(FIGURE_STORAGE_KEY).then((stored) => {
       if (stored && FIGURES.some((f) => f.id === stored)) setFigureId(stored);
     });
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    const loadHost = async () => {
+      const { data } = await supabase.from("live_rooms").select("host_id").eq("id", roomId).maybeSingle();
+      if (active) setIsHost(data?.host_id === userId);
+    };
+    void loadHost();
+    return () => { active = false; };
+  }, [roomId, userId]);
+
+  useEffect(() => {
+    if (!isHost) return;
+    let active = true;
+    const syncActivity = async () => {
+      const { data, error } = await supabase
+        .from("live_tap_activity")
+        .select("user_id,tap_count")
+        .eq("room_id", roomId)
+        .order("tap_count", { ascending: false })
+        .limit(8);
+      if (!error && active) setActivity((data ?? []) as TapActivity[]);
+    };
+    void syncActivity();
+    const channel = supabase
+      .channel(`live:${roomId}:tap-activity`)
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "live_tap_activity",
+        filter: `room_id=eq.${roomId}`,
+      }, () => { void syncActivity(); })
+      .subscribe();
+    return () => {
+      active = false;
+      void supabase.removeChannel(channel);
+    };
+  }, [isHost, roomId]);
 
   useEffect(() => {
     let active = true;
@@ -56,18 +99,20 @@ export default function TapTap({ roomId, userId }: Props) {
       if (!error && active) setGlobalTaps(Number(data?.total_taps ?? 0));
     };
 
-    channel.on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "live_tap_totals",
-        filter: `room_id=eq.${roomId}`,
-      },
-      () => {
-        void syncTotal();
-      },
-    );
+    channel.on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "live_tap_totals",
+      filter: `room_id=eq.${roomId}`,
+    }, () => { void syncTotal(); });
+
+    channel.on("broadcast", { event: "tap" }, ({ payload }) => {
+      const event = payload as TapEvent;
+      if (!active || event.userId === userId || !FIGURES.some((f) => f.id === event.figureId)) return;
+      setRemoteFigure(event.figureId);
+      if (remoteAnimationTimer.current) clearTimeout(remoteAnimationTimer.current);
+      remoteAnimationTimer.current = setTimeout(() => setRemoteFigure(null), 420);
+    });
 
     void channel.subscribe(async (status) => {
       if (status !== "SUBSCRIBED" || !active) return;
@@ -80,6 +125,7 @@ export default function TapTap({ roomId, userId }: Props) {
       active = false;
       setChannelReady(false);
       channelRef.current = null;
+      if (remoteAnimationTimer.current) clearTimeout(remoteAnimationTimer.current);
       void supabase.removeChannel(channel);
     };
   }, [channelName, userId]);
@@ -111,9 +157,6 @@ export default function TapTap({ roomId, userId }: Props) {
     if (error) return;
 
     setTapCount((v) => v + accepted);
-    setShowFigure(true);
-    setTimeout(() => setShowFigure(false), 420);
-
     const channel = channelRef.current;
     if (!channel || !channelReady) return;
     await channel.send({
@@ -122,10 +165,11 @@ export default function TapTap({ roomId, userId }: Props) {
       payload: {
         userId,
         count: accepted,
+        figureId,
         nonce: `${userId}-${now}-${Math.random().toString(36).slice(2)}`,
       } satisfies TapEvent,
     });
-  }, [channelReady, roomId, userId]);
+  }, [channelReady, figureId, roomId, userId]);
 
   const handlePress = () => {
     const now = Date.now();
@@ -140,7 +184,9 @@ export default function TapTap({ roomId, userId }: Props) {
       <Text style={styles.count}>{globalTaps}</Text>
       <Text style={styles.sub}>Total acumulado de esta sesión LIVE</Text>
       <Text style={styles.personal}>Mis Tap-Tap: {tapCount}</Text>
-      <View style={styles.preview}>{showFigure && <Text style={styles.animation}>{selectedFigure.emoji}</Text>}</View>
+      <View style={styles.preview}>
+        {remoteFigure ? <Text style={styles.animation}>{remoteSelectedFigure.emoji}</Text> : null}
+      </View>
 
       <Pressable
         accessibilityRole="button"
@@ -157,17 +203,25 @@ export default function TapTap({ roomId, userId }: Props) {
       <Text style={styles.selectorTitle}>Elige tu figura</Text>
       <View style={styles.row}>
         {FIGURES.map((figure) => (
-          <Pressable
-            key={figure.id}
-            accessibilityRole="button"
-            accessibilityLabel={figure.label}
-            onPress={() => selectFigure(figure.id)}
-            style={[styles.option, figure.id === figureId && styles.selected]}
-          >
+          <Pressable key={figure.id} accessibilityRole="button" accessibilityLabel={figure.label} onPress={() => selectFigure(figure.id)} style={[styles.option, figure.id === figureId && styles.selected]}>
             <Text style={styles.emoji}>{figure.emoji}</Text>
           </Pressable>
         ))}
       </View>
+
+      {isHost ? (
+        <View style={styles.activityPanel}>
+          <Text style={styles.activityTitle}>Actividad Tap-Tap</Text>
+          {activity.length === 0 ? (
+            <Text style={styles.sub}>Todavía no hay actividad.</Text>
+          ) : activity.map((item) => (
+            <View key={item.user_id} style={styles.activityRow}>
+              <Text style={styles.activityUser}>Usuario {item.user_id.slice(0, 8)}</Text>
+              <Text style={styles.activityCount}>{item.tap_count}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -190,4 +244,9 @@ const styles = StyleSheet.create({
   option: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", backgroundColor: "#171717", borderWidth: 1, borderColor: "#333" },
   selected: { borderColor: "#fff", backgroundColor: "#292929" },
   emoji: { fontSize: 22 },
+  activityPanel: { width: "100%", marginTop: 24, gap: 6 },
+  activityTitle: { color: "#fff", fontSize: 16, fontWeight: "800", marginBottom: 4 },
+  activityRow: { flexDirection: "row", justifyContent: "space-between", backgroundColor: "#151515", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
+  activityUser: { color: "#ddd", fontSize: 12 },
+  activityCount: { color: "#fff", fontWeight: "800" },
 });
