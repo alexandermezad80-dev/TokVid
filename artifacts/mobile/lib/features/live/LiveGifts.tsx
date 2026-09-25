@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { supabase } from "../../supabase";
 
 type Participant = { userId: string; role: string };
-type GiftRecord = { id: string; recipient_id: string; gift_type: string; quantity: number; created_at: string };
+type GiftRecord = { id: string; sender_id: string; recipient_id: string; gift_type: string; quantity: number; created_at: string };
 
 type GiftCatalogItem = {
   id: string;
@@ -14,7 +14,6 @@ type GiftCatalogItem = {
 };
 
 const GIFT_ICONS = ["🎁", "✨", "💎", "🌟", "🎉", "🏆"];
-
 const giftIcon = (index: number) => GIFT_ICONS[index % GIFT_ICONS.length];
 
 export default function LiveGifts({ roomId }: { roomId: string }) {
@@ -23,6 +22,8 @@ export default function LiveGifts({ roomId }: { roomId: string }) {
   const [sending, setSending] = useState(false);
   const [giftActivity, setGiftActivity] = useState<GiftRecord[]>([]);
   const [gifts, setGifts] = useState<GiftCatalogItem[]>([]);
+  const [receivedGift, setReceivedGift] = useState<GiftRecord | null>(null);
+  const animationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -39,9 +40,7 @@ export default function LiveGifts({ roomId }: { roomId: string }) {
         }
         setGifts((data ?? []) as GiftCatalogItem[]);
       });
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, []);
 
   useEffect(() => {
@@ -57,13 +56,51 @@ export default function LiveGifts({ roomId }: { roomId: string }) {
           Alert.alert("Regalos", error.message);
           return;
         }
-        setParticipants(
-          (data ?? []).map((row) => ({ userId: row.user_id, role: row.role })),
-        );
+        setParticipants((data ?? []).map((row) => ({ userId: row.user_id, role: row.role })));
         if (data?.[0]) setSelectedRecipient(data[0].user_id);
       });
+    return () => { active = false; };
+  }, [roomId]);
+
+  useEffect(() => {
+    let active = true;
+    const loadActivity = async () => {
+      const { data, error } = await supabase
+        .from("live_gifts")
+        .select("id,sender_id,recipient_id,gift_type,quantity,created_at")
+        .eq("room_id", roomId)
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (!active) return;
+      if (error) {
+        Alert.alert("Regalos", error.message);
+        return;
+      }
+      setGiftActivity((data ?? []) as GiftRecord[]);
+    };
+
+    void loadActivity();
+    const channel = supabase
+      .channel(`live:${roomId}:gifts`)
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "live_gifts",
+        filter: `room_id=eq.${roomId}`,
+      }, ({ new: row }) => {
+        const gift = row as GiftRecord;
+        if (!active) return;
+        setGiftActivity((current) => [gift, ...current.filter((item) => item.id !== gift.id)].slice(0, 30));
+        setReceivedGift(gift);
+        if (animationTimer.current) clearTimeout(animationTimer.current);
+        animationTimer.current = setTimeout(() => setReceivedGift(null), 1200);
+      })
+      .subscribe();
+
     return () => {
       active = false;
+      if (animationTimer.current) clearTimeout(animationTimer.current);
+      void supabase.removeChannel(channel);
     };
   }, [roomId]);
 
@@ -91,57 +128,47 @@ export default function LiveGifts({ roomId }: { roomId: string }) {
       <Text style={styles.subtitle}>Elige a quién enviar</Text>
       <View style={styles.recipients}>
         {participants.map((participant) => (
-          <Pressable
-            key={participant.userId}
-            style={[styles.recipient, selectedRecipient === participant.userId && styles.selected]}
-            onPress={() => setSelectedRecipient(participant.userId)}
-          >
-            <Text style={styles.recipientText}>
-              {participant.role === "host" ? "Anfitrión" : "Guest"}
-            </Text>
+          <Pressable key={participant.userId} style={[styles.recipient, selectedRecipient === participant.userId && styles.selected]} onPress={() => setSelectedRecipient(participant.userId)}>
+            <Text style={styles.recipientText}>{participant.role === "host" ? "Anfitrión" : "Guest"}</Text>
           </Pressable>
         ))}
       </View>
+
+      {receivedGift ? (
+        <View style={styles.receivedBanner} accessibilityLiveRegion="polite">
+          <Text style={styles.receivedIcon}>🎁</Text>
+          <Text style={styles.receivedText}>Nuevo regalo · {receivedGift.gift_type} × {receivedGift.quantity}</Text>
+        </View>
+      ) : null}
+
       <View style={styles.gifts}>
         {gifts.map((gift, index) => (
-          <Pressable
-            key={gift.id}
-            style={styles.gift}
-            onPress={() => void sendGift(gift.id)}
-            disabled={sending || !selectedRecipient}
-          >
+          <Pressable key={gift.id} style={styles.gift} onPress={() => void sendGift(gift.id)} disabled={sending || !selectedRecipient}>
             <Text style={styles.icon}>{giftIcon(index)}</Text>
             <Text style={styles.label}>{gift.name}</Text>
             <Text style={styles.cost}>{gift.coin_cost} 🪙</Text>
           </Pressable>
         ))}
       </View>
+
       <Text style={styles.activityTitle}>Actividad de regalos</Text>
       {giftActivity.length === 0 ? (
         <Text style={styles.empty}>Todavía no hay regalos en este LIVE.</Text>
       ) : (
         <View style={styles.activity}>
           {giftActivity.map((gift) => {
-            const recipient = participants.find(
-              (participant) => participant.userId === gift.recipient_id,
-            );
+            const recipient = participants.find((participant) => participant.userId === gift.recipient_id);
             return (
               <View key={gift.id} style={styles.activityRow}>
-                <Text style={styles.activityText}>
-                  {gift.gift_type} × {gift.quantity}
-                </Text>
-                <Text style={styles.activityRecipient}>
-                  {recipient?.role === "host" ? "Anfitrión" : "Guest"}
-                </Text>
+                <Text style={styles.activityText}>{gift.gift_type} × {gift.quantity}</Text>
+                <Text style={styles.activityRecipient}>{recipient?.role === "host" ? "Anfitrión" : "Guest"}</Text>
               </View>
             );
           })}
         </View>
       )}
 
-      {participants.length === 0 ? (
-        <Text style={styles.empty}>No hay participantes activos para recibir regalos.</Text>
-      ) : null}
+      {participants.length === 0 ? <Text style={styles.empty}>No hay participantes activos para recibir regalos.</Text> : null}
     </View>
   );
 }
@@ -154,6 +181,9 @@ const styles = StyleSheet.create({
   recipient: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 18, backgroundColor: "#1b1b1b" },
   selected: { borderWidth: 1, borderColor: "#fff" },
   recipientText: { color: "#fff", fontWeight: "700" },
+  receivedBanner: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#202020", borderRadius: 14, padding: 12, marginBottom: 14 },
+  receivedIcon: { fontSize: 26 },
+  receivedText: { color: "#fff", fontWeight: "800", flex: 1 },
   gifts: { flexDirection: "row", justifyContent: "space-between" },
   gift: { alignItems: "center", padding: 10 },
   icon: { fontSize: 34 },
