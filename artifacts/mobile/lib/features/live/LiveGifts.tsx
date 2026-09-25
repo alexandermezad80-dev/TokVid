@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { supabase } from "../../supabase";
 
-type Participant = { userId: string; role: string };
+type Participant = { userId: string; role: string };\ntype GiftRecord = { id: string; recipient_id: string; gift_type: string; quantity: number; created_at: string };
 
 const GIFTS = [
   { id: "rose", label: "Rosa", icon: "🌹" },
@@ -15,7 +15,7 @@ const GIFTS = [
 export default function LiveGifts({ roomId }: { roomId: string }) {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [selectedRecipient, setSelectedRecipient] = useState<string | null>(null);
-  const [sending, setSending] = useState(false);
+  const [sending, setSending] = useState(false);\n  const [giftActivity, setGiftActivity] = useState<GiftRecord[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -88,6 +88,29 @@ export default function LiveGifts({ roomId }: { roomId: string }) {
           </Pressable>
         ))}
       </View>
+      <Text style={styles.activityTitle}>Actividad de regalos</Text>
+      {giftActivity.length === 0 ? (
+        <Text style={styles.empty}>Todavía no hay regalos en este LIVE.</Text>
+      ) : (
+        <View style={styles.activity}>
+          {giftActivity.map((gift) => {
+            const recipient = participants.find(
+              (participant) => participant.userId === gift.recipient_id,
+            );
+            return (
+              <View key={gift.id} style={styles.activityRow}>
+                <Text style={styles.activityText}>
+                  {gift.gift_type} × {gift.quantity}
+                </Text>
+                <Text style={styles.activityRecipient}>
+                  {recipient?.role === "host" ? "Anfitrión" : "Guest"}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+      )}
+
       {participants.length === 0 ? (
         <Text style={styles.empty}>No hay participantes activos para recibir regalos.</Text>
       ) : null}
@@ -107,5 +130,5 @@ const styles = StyleSheet.create({
   gift: { alignItems: "center", padding: 10 },
   icon: { fontSize: 34 },
   label: { color: "#fff", fontSize: 11, marginTop: 5 },
-  empty: { color: "#999", marginTop: 20, textAlign: "center" },
+  empty: { color: "#999", marginTop: 20, textAlign: "center" },\n  activityTitle: { color: "#fff", fontSize: 18, fontWeight: "800", marginTop: 28, marginBottom: 10 },\n  activity: { gap: 8 },\n  activityRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#151515", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },\n  activityText: { color: "#fff", fontWeight: "700" },\n  activityRecipient: { color: "#999", fontSize: 12 },
 });
