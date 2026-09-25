@@ -81,7 +81,7 @@ export default function CreateScreen() {
         .from("videos")
         .insert({
           user_id: user.id,
-          url: urlData.publicUrl,
+          video_url: urlData.publicUrl,
           caption: trimmedCaption,
         })
         .select("id")
@@ -135,6 +135,11 @@ export default function CreateScreen() {
           </View>
           <Text style={styles.pickHeading}>Subí tu video</Text>
           <Text style={styles.pickSub}>Elegí un video de tu galería para compartir con tu comunidad</Text>
+
+          <TouchableOpacity style={styles.liveBtn} onPress={() => router.push("/live-create")}>
+            <Feather name="radio" size={20} color="#fff" />
+            <Text style={styles.pickBtnText}>Crear LIVE</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity style={styles.pickBtn} onPress={pickVideo}>
             <Feather name="image" size={20} color="#fff" />
@@ -281,6 +286,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   pickBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  liveBtn: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#1C1C1E", borderWidth: 1, borderColor: "#FE2C55", borderRadius: 14, paddingHorizontal: 28, paddingVertical: 14 },
   tipsBox: {
     backgroundColor: "#111", borderRadius: 14,
     padding: 16, gap: 10, width: "100%", marginTop: 8,

@@ -24,22 +24,23 @@ import { useAuth } from "../../context/AuthContext";
 import { useFollow } from "../../context/FollowContext";
 import { VideoItem, formatCount, useVideoFeed } from "../../hooks/useVideoFeed";
 import { useSavedVideos } from "../../hooks/useSavedVideos";
+import StoriesStrip from "../../components/StoriesStrip";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-function EmptyFollowing({ onDiscover }: { onDiscover: () => void }) {
+function EmptyFeed({\n  title,\n  message,\n  actionLabel,\n  onAction,\n}: {\n  title: string;\n  message: string;\n  actionLabel?: string;\n  onAction?: () => void;\n}) {
   return (
     <View style={styles.emptyWrap}>
       <View style={styles.emptyIcon}>
         <Feather name="user-plus" size={36} color="#333" />
       </View>
-      <Text style={styles.emptyTitle}>Seguí a alguien</Text>
-      <Text style={styles.emptyText}>
-        Cuando sigas a un creador, sus videos aparecerán acá.
-      </Text>
-      <TouchableOpacity style={styles.discoverBtn} onPress={onDiscover}>
-        <Text style={styles.discoverBtnText}>Ir a Discover</Text>
-      </TouchableOpacity>
+      <Text style={styles.emptyTitle}>{title}</Text>
+      <Text style={styles.emptyText}>{message}</Text>
+      {actionLabel && onAction ? (
+        <TouchableOpacity style={styles.discoverBtn} onPress={onAction}>
+          <Text style={styles.discoverBtnText}>{actionLabel}</Text>
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 }
@@ -137,7 +138,6 @@ export default function FeedScreen() {
       [item.id]: (prev[item.id] ?? 0) + 1,
     }));
 
-    // Open system share sheet
     try {
       await Share.share({
         title: item.caption,
@@ -145,7 +145,7 @@ export default function FeedScreen() {
         url: item.uri,
       });
     } catch {
-      // Share cancelled or failed — revert optimistic update
+      // Share cancelled or failed — revert optimistic update.
       setShareOverrides((prev) => ({
         ...prev,
         [item.id]: Math.max(0, (prev[item.id] ?? 1) - 1),
@@ -153,21 +153,17 @@ export default function FeedScreen() {
       return;
     }
 
-    // Increment in Supabase (best-effort — no-op for mock videos not in DB)
-    try {
-      const { data } = await supabase
-        .from("videos")
-        .select("shares_count")
-        .eq("id", item.id)
-        .maybeSingle();
-      if (data) {
-        await supabase
-          .from("videos")
-          .update({ shares_count: (data.shares_count ?? 0) + 1 })
-          .eq("id", item.id);
-      }
-    } catch {
-      // Silently ignore — local count already updated
+    // Persist the share through the protected RPC. Mock videos that are
+    // not persisted in Supabase are reverted without affecting the DB.
+    const { error } = await supabase.rpc("increment_video_share_count", {
+      p_video_id: item.id,
+    });
+
+    if (error) {
+      setShareOverrides((prev) => ({
+        ...prev,
+        [item.id]: Math.max(0, (prev[item.id] ?? 1) - 1),
+      }));
     }
   }, []);
 
@@ -225,7 +221,17 @@ export default function FeedScreen() {
         </View>
       ) : null}
       {activeTab === "following" && followingVideos.length === 0 ? (
-        <EmptyFollowing onDiscover={() => handleTabSwitch("foryou")} />
+        <EmptyFeed
+          title="Seguí a alguien"
+          message="Cuando sigas a un creador, sus videos aparecerán acá."
+          actionLabel="Ir a Discover"
+          onAction={() => handleTabSwitch("foryou")}
+        />
+      ) : activeTab === "foryou" && !isLoading && currentFeed.length === 0 ? (
+        <EmptyFeed
+          title="Todavía no hay videos"
+          message="Cuando los creadores publiquen videos, aparecerán acá."
+        />
       ) : (
         <FlatList
           key={activeTab}
@@ -272,6 +278,10 @@ export default function FeedScreen() {
         />
       )}
 
+      <View style={[styles.storiesOverlay, { top: topPad + 48 }]}>
+        <StoriesStrip />
+      </View>
+
       {/* Header overlay */}
       <View style={[styles.header, { paddingTop: topPad + 10 }]}>
         <TouchableOpacity onPress={() => handleTabSwitch("following")}>
@@ -284,6 +294,13 @@ export default function FeedScreen() {
           <Text style={[styles.tab, activeTab === "foryou" && styles.tabActive]}>
             For You
           </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => router.push("/story-create")}
+          accessibilityLabel="Crear historia"
+        >
+          <Feather name="plus-circle" size={24} color="#fff" />
         </TouchableOpacity>
 
         <Feather name="search" size={24} color="#fff" />
@@ -308,6 +325,12 @@ export default function FeedScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000" },
+  storiesOverlay: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    zIndex: 8,
+  },
   header: {
     position: "absolute",
     top: 0,

@@ -4,23 +4,43 @@ import { z } from "zod";
 
 const router = Router();
 
-function getSupabaseAdmin() {
-  // Env var names are inverted in this project:
-  // EXPO_PUBLIC_SUPABASE_ANON_KEY may actually hold the URL (starts with "https://")
-  // EXPO_PUBLIC_SUPABASE_URL may actually hold the anon key
-  const c1 = process.env["EXPO_PUBLIC_SUPABASE_URL"] ?? "";
-  const c2 = process.env["EXPO_PUBLIC_SUPABASE_ANON_KEY"] ?? "";
-  const realUrl = c1.startsWith("http") ? c1 : c2;
+function getSupabaseConfig() {
+  const url = process.env["EXPO_PUBLIC_SUPABASE_URL"] ?? "";
+  const anonKey = process.env["EXPO_PUBLIC_SUPABASE_ANON_KEY"] ?? "";
   const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"] ?? "";
 
-  return createClient(realUrl, serviceKey, {
+  if (!url.startsWith("http") || !anonKey || !serviceKey) {
+    throw new Error("Supabase server configuration is incomplete");
+  }
+
+  return { url, anonKey, serviceKey };
+}
+
+function getSupabaseAdmin() {
+  const { url, serviceKey } = getSupabaseConfig();
+
+  return createClient(url, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }
 
+function getSupabaseAuthClient() {
+  const { url, anonKey } = getSupabaseConfig();
+
+  return createClient(url, anonKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
+
+function getBearerToken(req: Parameters<Parameters<typeof router.post>[1]>[0]) {
+  const header = req.headers.authorization;
+  if (!header?.startsWith("Bearer ")) return null;
+  return header.slice("Bearer ".length).trim() || null;
+}
+
 const SendSchema = z.object({
   userId: z.string().uuid(),
-  type: z.enum(["like", "comment", "follow", "mention", "system"]),
+  type: z.enum(["like", "comment", "follow", "mention", "system", "message"]),
   message: z.string().min(1).max(500),
   actorId: z.string().uuid().optional(),
   actorName: z.string().optional(),
@@ -28,8 +48,13 @@ const SendSchema = z.object({
   data: z.record(z.unknown()).optional(),
 });
 
-// POST /api/notifications/send
 router.post("/send", async (req, res) => {
+  const token = getBearerToken(req);
+  if (!token) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+
   const parsed = SendSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid payload", details: parsed.error.issues });
@@ -38,8 +63,75 @@ router.post("/send", async (req, res) => {
 
   const { userId, type, message, actorId, actorName, actorAvatar, data } = parsed.data;
   const supabase = getSupabaseAdmin();
+  const authClient = getSupabaseAuthClient();
 
-  // 1. Insert notification record
+  const { data: authData, error: authError } = await authClient.auth.getUser(token);
+  if (authError || !authData.user) {
+    res.status(401).json({ error: "Invalid authentication token" });
+    return;
+  }
+
+  const callerId = authData.user.id;
+
+  if (!actorId || actorId !== callerId) {
+    res.status(403).json({ error: "actorId must match the authenticated user" });
+    return;
+  }
+
+  if (type === "system") {
+    res.status(403).json({ error: "System notifications are server-only" });
+    return;
+  }
+
+  if (type === "follow") {
+    if (userId === callerId) {
+      res.status(400).json({ error: "Self-follow notifications are not allowed" });
+      return;
+    }
+  } else if (type === "like" || type === "comment" || type === "mention") {
+    const videoId = typeof data?.videoId === "string" ? data.videoId : null;
+    if (!videoId) {
+      res.status(400).json({ error: "videoId is required for this notification type" });
+      return;
+    }
+
+    const { data: video, error: videoError } = await supabase
+      .from("videos")
+      .select("user_id")
+      .eq("id", videoId)
+      .maybeSingle();
+
+    if (videoError || !video || video.user_id !== userId) {
+      res.status(403).json({ error: "Notification recipient is not the video owner" });
+      return;
+    }
+  } else if (type === "message") {
+    const conversationId =
+      typeof data?.conversationId === "string" ? data.conversationId : null;
+
+    if (!conversationId) {
+      res.status(400).json({ error: "conversationId is required for message notifications" });
+      return;
+    }
+
+    const { data: conversation, error: conversationError } = await supabase
+      .from("conversations")
+      .select("user1_id, user2_id")
+      .eq("id", conversationId)
+      .maybeSingle();
+
+    if (
+      conversationError ||
+      !conversation ||
+      (conversation.user1_id !== callerId && conversation.user2_id !== callerId) ||
+      userId === callerId ||
+      (conversation.user1_id !== userId && conversation.user2_id !== userId)
+    ) {
+      res.status(403).json({ error: "Notification recipient is not a conversation participant" });
+      return;
+    }
+  }
+
   const { data: notif, error: insertError } = await supabase
     .from("notifications")
     .insert({
@@ -60,9 +152,8 @@ router.post("/send", async (req, res) => {
     return;
   }
 
-  // 2. Fetch push token
   const { data: profile } = await supabase
-    .from("profiles")
+    .from("profile_private")
     .select("push_token")
     .eq("id", userId)
     .single();
@@ -70,7 +161,6 @@ router.post("/send", async (req, res) => {
   const pushToken = profile?.push_token;
 
   if (pushToken && pushToken.startsWith("ExponentPushToken")) {
-    // 3. Send via Expo Push API
     try {
       const response = await fetch("https://exp.host/--/api/v2/push/send", {
         method: "POST",
