@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { supabase } from "../../supabase";
 
-type Participant = { userId: string; role: string };\ntype GiftRecord = { id: string; recipient_id: string; gift_type: string; quantity: number; created_at: string };
+type Participant = { userId: string; role: string };
+type GiftRecord = { id: string; recipient_id: string; gift_type: string; quantity: number; created_at: string };
 
 const GIFTS = [
   { id: "rose", label: "Rosa", icon: "🌹" },
@@ -15,7 +16,8 @@ const GIFTS = [
 export default function LiveGifts({ roomId }: { roomId: string }) {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [selectedRecipient, setSelectedRecipient] = useState<string | null>(null);
-  const [sending, setSending] = useState(false);\n  const [giftActivity, setGiftActivity] = useState<GiftRecord[]>([]);
+  const [sending, setSending] = useState(false);
+  const [giftActivity, setGiftActivity] = useState<GiftRecord[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -130,5 +132,10 @@ const styles = StyleSheet.create({
   gift: { alignItems: "center", padding: 10 },
   icon: { fontSize: 34 },
   label: { color: "#fff", fontSize: 11, marginTop: 5 },
-  empty: { color: "#999", marginTop: 20, textAlign: "center" },\n  activityTitle: { color: "#fff", fontSize: 18, fontWeight: "800", marginTop: 28, marginBottom: 10 },\n  activity: { gap: 8 },\n  activityRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#151515", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },\n  activityText: { color: "#fff", fontWeight: "700" },\n  activityRecipient: { color: "#999", fontSize: 12 },
+  empty: { color: "#999", marginTop: 20, textAlign: "center" },
+  activityTitle: { color: "#fff", fontSize: 18, fontWeight: "800", marginTop: 28, marginBottom: 10 },
+  activity: { gap: 8 },
+  activityRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#151515", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
+  activityText: { color: "#fff", fontWeight: "700" },
+  activityRecipient: { color: "#999", fontSize: 12 },
 });
