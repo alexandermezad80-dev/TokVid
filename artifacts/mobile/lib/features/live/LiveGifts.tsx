@@ -5,19 +5,44 @@ import { supabase } from "../../supabase";
 type Participant = { userId: string; role: string };
 type GiftRecord = { id: string; recipient_id: string; gift_type: string; quantity: number; created_at: string };
 
-const GIFTS = [
-  { id: "rose", label: "Rosa", icon: "🌹" },
-  { id: "heart", label: "Corazón", icon: "❤️" },
-  { id: "star", label: "Estrella", icon: "⭐" },
-  { id: "fire", label: "Fuego", icon: "🔥" },
-  { id: "crown", label: "Corona", icon: "👑" },
-];
+type GiftCatalogItem = {
+  id: string;
+  name: string;
+  category: "CAT_01" | "CAT_02" | "CAT_03";
+  coin_cost: number;
+  animation_level: "LVL_1" | "LVL_2" | "LVL_3" | "LVL_4";
+};
+
+const GIFT_ICONS = ["🎁", "✨", "💎", "🌟", "🎉", "🏆"];
+
+const giftIcon = (index: number) => GIFT_ICONS[index % GIFT_ICONS.length];
 
 export default function LiveGifts({ roomId }: { roomId: string }) {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [selectedRecipient, setSelectedRecipient] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [giftActivity, setGiftActivity] = useState<GiftRecord[]>([]);
+  const [gifts, setGifts] = useState<GiftCatalogItem[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    void supabase
+      .from("live_gift_catalog")
+      .select("id,name,category,coin_cost,animation_level")
+      .eq("active", true)
+      .order("coin_cost", { ascending: true })
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (error) {
+          Alert.alert("Regalos", error.message);
+          return;
+        }
+        setGifts((data ?? []) as GiftCatalogItem[]);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -78,15 +103,16 @@ export default function LiveGifts({ roomId }: { roomId: string }) {
         ))}
       </View>
       <View style={styles.gifts}>
-        {GIFTS.map((gift) => (
+        {gifts.map((gift, index) => (
           <Pressable
             key={gift.id}
             style={styles.gift}
             onPress={() => void sendGift(gift.id)}
             disabled={sending || !selectedRecipient}
           >
-            <Text style={styles.icon}>{gift.icon}</Text>
-            <Text style={styles.label}>{gift.label}</Text>
+            <Text style={styles.icon}>{giftIcon(index)}</Text>
+            <Text style={styles.label}>{gift.name}</Text>
+            <Text style={styles.cost}>{gift.coin_cost} 🪙</Text>
           </Pressable>
         ))}
       </View>
@@ -132,6 +158,7 @@ const styles = StyleSheet.create({
   gift: { alignItems: "center", padding: 10 },
   icon: { fontSize: 34 },
   label: { color: "#fff", fontSize: 11, marginTop: 5 },
+  cost: { color: "#999", fontSize: 10, marginTop: 2 },
   empty: { color: "#999", marginTop: 20, textAlign: "center" },
   activityTitle: { color: "#fff", fontSize: 18, fontWeight: "800", marginTop: 28, marginBottom: 10 },
   activity: { gap: 8 },
