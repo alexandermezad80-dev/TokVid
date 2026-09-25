@@ -103,17 +103,18 @@ export default function TapTap({ roomId, userId }: Props) {
     const accepted = Math.min(count, Math.max(MAX_TAPS_PER_WINDOW - tapsInWindow.current, 0));
     if (accepted <= 0) return;
     tapsInWindow.current += accepted;
-    setTapCount((v) => v + accepted);
-    setShowFigure(true);
-    setTimeout(() => setShowFigure(false), 420);
 
-    const channel = channelRef.current;
     const { error } = await supabase.rpc("live_send_taps", {
       p_room_id: roomId,
       p_count: accepted,
     });
     if (error) return;
 
+    setTapCount((v) => v + accepted);
+    setShowFigure(true);
+    setTimeout(() => setShowFigure(false), 420);
+
+    const channel = channelRef.current;
     if (!channel || !channelReady) return;
     await channel.send({
       type: "broadcast",
