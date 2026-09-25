@@ -28,6 +28,21 @@ export default function InterestsPage() {
     }
     setSaving(true)
     setError("")
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setError("No hay una sesión activa.")
+      setSaving(false)
+      return
+    }
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({ interests: selected })
+      .eq("id", user.id)
+    if (profileError) {
+      setError(profileError.message)
+      setSaving(false)
+      return
+    }
     const { error: updateError } = await supabase.auth.updateUser({
       data: { interests: selected, onboarding_completed: true },
     })
