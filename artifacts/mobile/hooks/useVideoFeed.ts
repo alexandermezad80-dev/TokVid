@@ -194,7 +194,7 @@ export function useVideoFeed(followedIds: Set<string>) {
     }
 
     try {
-      const items = await fetchRealVideos(nextPage);
+      const items = await fetchRealVideos(nextPage, interests);
       if (nextPage === 0) {
         setRealVideos(items);
       } else {
@@ -209,7 +209,7 @@ export function useVideoFeed(followedIds: Set<string>) {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [interests]);
 
   useEffect(() => {
     let cancelled = false;
