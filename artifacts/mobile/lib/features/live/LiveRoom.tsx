@@ -28,6 +28,10 @@ import {
   deriveLiveLayout,
   type LiveParticipantLayoutItem,
 } from "./layout";
+import {
+  registerLiveEffectsEngine,
+  unregisterLiveEffectsEngine,
+} from "./live-effects-controller";
 
 type Participant = LiveParticipantLayoutItem & {
   participationState: string;
@@ -231,6 +235,7 @@ export default function LiveRoom() {
         });
 
         const broadcaster = credentials.role !== "spectator";
+        registerLiveEffectsEngine(engine, broadcaster);
 
         engine.setClientRole(
           broadcaster
@@ -288,6 +293,7 @@ export default function LiveRoom() {
       engineRef.current = null;
 
       if (engine) {
+        unregisterLiveEffectsEngine(engine);
         void engine.leaveChannel().finally(() => {
           engine.release();
         });
