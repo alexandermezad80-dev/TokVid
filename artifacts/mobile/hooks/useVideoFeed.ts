@@ -254,7 +254,7 @@ export function useVideoFeed(followedIds: Set<string>) {
     }
   }, [likedIds]);
 
-  // Only persisted videos belong in the feed.\n  const combined: VideoItem[] = rankedReal.filter(\n    (v) => !removedIds.has(v.id)\n  );\n\n  // Merge follow state\n  const videos: VideoItem[] = combined.map((v) => ({\n    ...v,\n    isFollowing: followedIds.has(v.creatorId),\n  }));\n\n  const followingVideos = videos.filter((v) => followedIds.has(v.creatorId));\n\n  // Liked videos (for the liked tab)\n  const likedVideos = videos.filter((v) => likedIds.has(v.id));\n\n  return {
+  // Only persisted videos belong in the feed. No mock/demo fallback is used.\n  const rankedReal = [...realVideos].sort((a, b) => rankScore(b) - rankScore(a));\n  const combined: VideoItem[] = rankedReal.filter(\n    (v) => !removedIds.has(v.id)\n  );\n\n  // Merge follow state.\n  const videos: VideoItem[] = combined.map((v) => ({\n    ...v,\n    isFollowing: followedIds.has(v.creatorId),\n  }));\n\n  const followingVideos = videos.filter((v) => followedIds.has(v.creatorId));\n\n  // Liked videos (for the liked tab).\n  const likedVideos = videos.filter((v) => likedIds.has(v.id));\n\n  return {
     videos,
     followingVideos,
     likedIds,
