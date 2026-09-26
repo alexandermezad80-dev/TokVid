@@ -1,0 +1,49 @@
+name: Android APK
+
+on:
+  push:
+    branches: [ feature/onboarding-profile-interests ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install pnpm
+        run: npm install -g pnpm@10.15.1
+
+      - name: Use Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: pnpm
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Generate Android project
+        working-directory: artifacts/mobile
+        run: pnpm exec expo prebuild --platform android --non-interactive
+
+      - name: Build debug APK
+        working-directory: artifacts/mobile/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tokvid-android-debug
+          path: artifacts/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
