@@ -45,4 +45,5 @@ jobs:
         with:
           name: tokvid-web-build
           path: artifacts/web/.next
+          include-hidden-files: true
           if-no-files-found: error
