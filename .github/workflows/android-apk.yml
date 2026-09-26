@@ -11,6 +11,7 @@ jobs:
     env:
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+      CI: 1
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -40,7 +41,7 @@ jobs:
 
       - name: Generate Android project
         working-directory: artifacts/mobile
-        run: pnpm exec expo prebuild --platform android --non-interactive
+        run: pnpm exec expo prebuild --platform android --no-install
 
       - name: Build debug APK
         working-directory: artifacts/mobile/android
