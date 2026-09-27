@@ -42,8 +42,7 @@ jobs:
       - name: Normalize Expo PNG assets
         working-directory: artifacts/mobile
         run: |
-          sudo apt-get update
-          sudo apt-get install -y imagemagick
+          python3 -m pip install --user --break-system-packages pillow
           python3 - <<'PY'
           from pathlib import Path
           from PIL import Image
