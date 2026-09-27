@@ -142,7 +142,7 @@ export default function ChatScreen() {
       return (
         <View>
           {showTime && <Text style={styles.timeLabel}>{timeLabel(item.created_at)}</Text>}
-          <LiveShareCard shareId={shareId} roomId={roomId} />
+          <LiveShareCard roomId={roomId} />
         </View>
       );
     }
