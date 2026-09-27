@@ -16,6 +16,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Free runner disk space
+        run: |
+          echo "Disk before cleanup:"
+          df -h /
+          sudo rm -rf /usr/local/lib/android/sdk/ndk/* || true
+          sudo rm -rf /usr/share/dotnet || true
+          sudo rm -rf /opt/ghc || true
+          sudo rm -rf /usr/local/share/powershell || true
+          sudo rm -rf /usr/local/lib/node_modules || true
+          sudo apt-get clean || true
+          echo "Disk after cleanup:"
+          df -h /
+
       - name: Install pnpm
         run: npm install -g pnpm@10.15.1
 
@@ -83,5 +96,3 @@ jobs:
           name: tokvid-android-release
           path: artifacts/mobile/android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
-
-# Build verification trigger
