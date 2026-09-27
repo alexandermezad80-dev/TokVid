@@ -75,7 +75,7 @@ export default function CallScreen() {
 
         engine.initialize({
           appId: credentials.appId,
-          channelProfile: ChannelProfileType.channelProfileCommunication,
+          channelProfile: ChannelProfileType.ChannelProfileCommunication,
         });
 
         engine.registerEventHandler({
@@ -101,14 +101,14 @@ export default function CallScreen() {
           },
         });
 
-        engine.setClientRole(ClientRoleType.clientRoleBroadcaster);
+        engine.setClientRole(ClientRoleType.ClientRoleBroadcaster);
         if (type === "video") engine.enableVideo();
         engine.enableLocalVideo(type === "video");
         engine.enableLocalAudio(true);
 
         await engine.joinChannel(credentials.token, credentials.channel, credentials.uid, {
-          clientRoleType: ClientRoleType.clientRoleBroadcaster,
-          channelProfile: ChannelProfileType.channelProfileCommunication,
+          clientRoleType: ClientRoleType.ClientRoleBroadcaster,
+          channelProfile: ChannelProfileType.ChannelProfileCommunication,
           publishMicrophoneTrack: true,
           publishCameraTrack: type === "video",
           autoSubscribeAudio: true,
