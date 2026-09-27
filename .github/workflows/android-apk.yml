@@ -12,6 +12,8 @@ jobs:
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
       CI: 1
+      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL || vars.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY || vars.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -60,9 +62,11 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           from PIL import Image
-          p = Path("assets/images/icon.png")
-          with Image.open(p) as im:
-              im.convert("RGBA").save(p, format="PNG", optimize=True)
+          for filename in ("icon.png", "splash.png"):
+              p = Path("assets/images") / filename
+              with Image.open(p) as im:
+                  im.convert("RGBA").save(p, format="PNG", optimize=True)
+                  print(f"{filename}: {im.size} -> valid RGBA PNG")
           PY
 
       - name: Generate Android project
