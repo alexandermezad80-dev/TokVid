@@ -95,7 +95,9 @@ export default function ShareLive() {
         })
         .single();
 
-      if (shareError || !share?.share_id) {
+      const shareRecord = share as { share_id?: string } | null;
+
+      if (shareError || !shareRecord?.share_id) {
         throw new Error(shareError?.message || "No se pudo crear la referencia del Live.");
       }
 
@@ -114,7 +116,7 @@ export default function ShareLive() {
         conversationId = conversation.id;
       }
 
-      const shareText = `${LIVE_SHARE_PREFIX}|${share.share_id}|${roomId}`;
+      const shareText = `${LIVE_SHARE_PREFIX}|${shareRecord.share_id}|${roomId}`;
 
       const { error: messageError } = await supabase
         .from("messages")
