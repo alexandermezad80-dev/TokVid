@@ -16,12 +16,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Use Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24.x
-          cache: pnpm
-
       - name: Free runner disk space
         run: |
           echo "Disk before cleanup:"
@@ -34,8 +28,17 @@ jobs:
           echo "Disk after cleanup:"
           df -h /
 
+      - name: Use Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: pnpm
+
       - name: Install pnpm
-        run: npm install -g pnpm@10.15.1
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.15.1 --activate
+          pnpm --version
 
       - name: Set up Java
         uses: actions/setup-java@v5
