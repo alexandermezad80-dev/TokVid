@@ -15,8 +15,8 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { SplashScreenComponent } from "@/components/SplashScreen";
+import { ErrorBoundary } from "../components/ErrorBoundary";
+import { SplashScreenComponent } from "../components/SplashScreen";
 import { AuthProvider, useAuth } from "../context/AuthContext";
 import { FollowProvider } from "../context/FollowContext";
 import { NotificationsProvider } from "../context/NotificationsContext";
