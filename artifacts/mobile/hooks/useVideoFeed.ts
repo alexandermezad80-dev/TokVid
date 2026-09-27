@@ -20,7 +20,14 @@ export interface VideoItem {
 }
 
 // Stable fake UUIDs for mock creators so follows persist in Supabase
-export const MOCK_CREATOR_IDS: Record<string, string> = {\n  "@lunareyes": "11111111-1111-1111-1111-111111111111",\n  "@chefmarco": "22222222-2222-2222-2222-222222222222",\n  "@miastrings": "33333333-3333-3333-3333-333333333333",\n  "@jakerides": "44444444-4444-4444-4444-444444444444",\n  "@artbykai": "55555555-5555-5555-5555-555555555555",\n  "@flexnation": "66666666-6666-6666-6666-666666666666",\n};
+export const MOCK_CREATOR_IDS: Record<string, string> = {
+  "@lunareyes": "11111111-1111-1111-1111-111111111111",
+  "@chefmarco": "22222222-2222-2222-2222-222222222222",
+  "@miastrings": "33333333-3333-3333-3333-333333333333",
+  "@jakerides": "44444444-4444-4444-4444-444444444444",
+  "@artbykai": "55555555-5555-5555-5555-555555555555",
+  "@flexnation": "66666666-6666-6666-6666-666666666666",
+};
 /**
  * The feed uses only videos persisted in Supabase. Demo videos are kept out of
  * the production feed so an empty database is represented by a real empty state.
