@@ -28,7 +28,17 @@ import StoriesStrip from "../../components/StoriesStrip";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-function EmptyFeed({\n  title,\n  message,\n  actionLabel,\n  onAction,\n}: {\n  title: string;\n  message: string;\n  actionLabel?: string;\n  onAction?: () => void;\n}) {
+function EmptyFeed({
+  title,
+  message,
+  actionLabel,
+  onAction,
+}: {
+  title: string;
+  message: string;
+  actionLabel?: string;
+  onAction?: () => void;
+}) {
   return (
     <View style={styles.emptyWrap}>
       <View style={styles.emptyIcon}>
@@ -141,7 +151,9 @@ export default function FeedScreen() {
     try {
       await Share.share({
         title: item.caption,
-        message: `${item.caption}\n\n${item.uri}`,
+        message: `${item.caption}
+
+${item.uri}`,
         url: item.uri,
       });
     } catch {
