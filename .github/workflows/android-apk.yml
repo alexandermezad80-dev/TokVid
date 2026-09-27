@@ -83,3 +83,5 @@ jobs:
           name: tokvid-android-release
           path: artifacts/mobile/android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
+
+# Build verification trigger
