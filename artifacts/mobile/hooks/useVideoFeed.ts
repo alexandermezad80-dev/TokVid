@@ -28,6 +28,10 @@ export const MOCK_CREATOR_IDS: Record<string, string> = {
   "@artbykai": "55555555-5555-5555-5555-555555555555",
   "@flexnation": "66666666-6666-6666-6666-666666666666",
 };
+
+// Kept as an explicit export for saved-video consumers; the production feed uses persisted videos only.
+export const BASE_VIDEOS: VideoItem[] = [];
+
 /**
  * The feed uses only videos persisted in Supabase. Demo videos are kept out of
  * the production feed so an empty database is represented by a real empty state.
