@@ -58,11 +58,20 @@ jobs:
       - name: Configure Gradle memory
         working-directory: artifacts/mobile/android
         run: |
-          cat >> gradle.properties <<'EOF'
-          org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8
-          org.gradle.workers.max=2
-          org.gradle.daemon=false
-          EOF
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("gradle.properties")
+          lines = p.read_text().splitlines()
+          lines = [line for line in lines if not line.startswith("org.gradle.jvmargs=")]
+          lines = [line for line in lines if not line.startswith("org.gradle.workers.max=")]
+          lines = [line for line in lines if not line.startswith("org.gradle.daemon=")]
+          lines += [
+              "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8",
+              "org.gradle.workers.max=2",
+              "org.gradle.daemon=false",
+          ]
+          p.write_text("\n".join(lines) + "\n")
+          PY
 
       - name: Build standalone release APK
         working-directory: artifacts/mobile/android
