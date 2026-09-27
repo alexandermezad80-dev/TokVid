@@ -12,6 +12,8 @@ export interface LiveParticipantLayoutItem {
   userId: string;
   role: LiveRole;
   windowSlot: number | null;
+  cameraState?: "on" | "off";
+  micState?: "on" | "off";
 }
 
 export interface LiveLayoutInput {
