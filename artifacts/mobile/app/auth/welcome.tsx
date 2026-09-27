@@ -16,10 +16,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 const { width, height } = Dimensions.get("window");
 
 const clips = [
-  { source: require("../../../assets/images/thumb1.png"), label: "Música", rotate: "-6deg" },
-  { source: require("../../../assets/images/thumb2.png"), label: "Humor", rotate: "5deg" },
-  { source: require("../../../assets/images/thumb3.png"), label: "Latinoamérica", rotate: "-4deg" },
-  { source: require("../../../assets/images/thumb4.png"), label: "Cocina", rotate: "7deg" },
+  { source: require("../../assets/images/thumb1.png"), label: "Música", rotate: "-6deg" },
+  { source: require("../../assets/images/thumb2.png"), label: "Humor", rotate: "5deg" },
+  { source: require("../../assets/images/thumb3.png"), label: "Latinoamérica", rotate: "-4deg" },
+  { source: require("../../assets/images/thumb4.png"), label: "Cocina", rotate: "7deg" },
   { source: require("../../../assets/images/thumb5.png"), label: "Deportes", rotate: "-5deg" },
   { source: require("../../../assets/images/thumb6.png"), label: "Arte", rotate: "4deg" },
 ];
