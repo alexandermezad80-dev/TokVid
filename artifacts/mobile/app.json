@@ -8,6 +8,11 @@
     "scheme": "mobile",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0A0A0F"
+    },
     "ios": {
       "supportsTablet": false,
       "infoPlist": {
@@ -16,60 +21,17 @@
       }
     },
     "android": {
-      "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS",
-        "android.permission.ACCESS_WIFI_STATE",
-        "android.permission.ACCESS_NETWORK_STATE",
-        "android.permission.BLUETOOTH",
-        "android.permission.FOREGROUND_SERVICE"
-      ],
+      "permissions": ["android.permission.CAMERA","android.permission.RECORD_AUDIO","android.permission.MODIFY_AUDIO_SETTINGS","android.permission.ACCESS_WIFI_STATE","android.permission.ACCESS_NETWORK_STATE","android.permission.BLUETOOTH","android.permission.FOREGROUND_SERVICE"],
       "allowBackup": false,
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.png",
-        "backgroundColor": "#00F2EA"
-      }
+      "adaptiveIcon": {"foregroundImage": "./assets/images/icon.png","backgroundColor": "#00F2EA"}
     },
-    "web": {
-      "favicon": "./assets/images/icon.png"
-    },
+    "web": {"favicon": "./assets/images/icon.png"},
     "plugins": [
-      "expo-router",
-      "expo-font",
-      "expo-web-browser",
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Tokvid necesita acceso a la cámara para videollamadas.",
-          "microphonePermission": "Tokvid necesita acceso al micrófono para llamadas de voz y video."
-        }
-      ],
-      [
-        "expo-build-properties",
-        {
-          "android": {
-            "minSdkVersion": 24
-          },
-          "ios": {
-            "deploymentTarget": "15.1"
-          }
-        }
-      ],
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/images/icon.png",
-          "color": "#FE2C55",
-          "sounds": [],
-          "androidMode": "default",
-          "androidCollapsedTitle": "Tokvid"
-        }
-      ]
+      "expo-router","expo-font","expo-web-browser",
+      ["expo-camera",{"cameraPermission":"Tokvid necesita acceso a la cámara para videollamadas.","microphonePermission":"Tokvid necesita acceso al micrófono para llamadas de voz y video."}],
+      ["expo-build-properties",{"android":{"minSdkVersion":24},"ios":{"deploymentTarget":"15.1"}}],
+      ["expo-notifications",{"icon":"./assets/images/icon.png","color":"#FE2C55","sounds":[],"androidMode":"default","androidCollapsedTitle":"Tokvid"}]
     ],
-    "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
-    }
+    "experiments": {"typedRoutes": true,"reactCompiler": true}
   }
 }
