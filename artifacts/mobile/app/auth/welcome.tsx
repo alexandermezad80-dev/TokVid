@@ -179,6 +179,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: 12,
   },
+  clipImage: { ...StyleSheet.absoluteFillObject, width: "100%", height: "100%" },
+  clipShade: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(10,10,15,0.18)" },
   clipGlow: {
     position: "absolute",
     width: 120,
