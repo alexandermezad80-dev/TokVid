@@ -67,7 +67,7 @@ jobs:
 
       - name: Generate Android project
         working-directory: artifacts/mobile
-        run: pnpm exec expo prebuild --platform android --clean --non-interactive --no-install
+        run: pnpm exec expo prebuild --platform android --clean --no-install
 
       - name: Configure Gradle memory
         working-directory: artifacts/mobile/android
