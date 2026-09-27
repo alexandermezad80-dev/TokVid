@@ -20,7 +20,11 @@ export interface VideoItem {
 }
 
 // Stable fake UUIDs for mock creators so follows persist in Supabase
-/**\n * The feed uses only videos persisted in Supabase. Demo videos are kept out of\n * the production feed so an empty database is represented by a real empty state.\n */\nfunction formatCount(n: number): string {
+/**
+ * The feed uses only videos persisted in Supabase. Demo videos are kept out of
+ * the production feed so an empty database is represented by a real empty state.
+ */
+function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return String(n);
@@ -334,7 +338,26 @@ export function useVideoFeed(followedIds: Set<string>) {
     }
   }, [likedIds]);
 
-  // Only persisted videos belong in the feed. Keep the interest-ranked order when interests are active; otherwise use activity ranking.\n  const rankedReal = interests.length > 0\n    ? [...realVideos]\n    : [...realVideos].sort((a, b) => rankScore(b) - rankScore(a));\n  const combined: VideoItem[] = rankedReal.filter(\n    (v) => !removedIds.has(v.id)\n  );\n\n  // Merge follow state.\n  const videos: VideoItem[] = combined.map((v) => ({\n    ...v,\n    isFollowing: followedIds.has(v.creatorId),\n  }));\n\n  const followingVideos = videos.filter((v) => followedIds.has(v.creatorId));\n\n  // Liked videos (for the liked tab).\n  const likedVideos = videos.filter((v) => likedIds.has(v.id));\n\n  return {
+  // Only persisted videos belong in the feed. Keep the interest-ranked order when interests are active; otherwise use activity ranking.
+  const rankedReal = interests.length > 0
+    ? [...realVideos]
+    : [...realVideos].sort((a, b) => rankScore(b) - rankScore(a));
+  const combined: VideoItem[] = rankedReal.filter(
+    (v) => !removedIds.has(v.id)
+  );
+
+  // Merge follow state.
+  const videos: VideoItem[] = combined.map((v) => ({
+    ...v,
+    isFollowing: followedIds.has(v.creatorId),
+  }));
+
+  const followingVideos = videos.filter((v) => followedIds.has(v.creatorId));
+
+  // Liked videos (for the liked tab).
+  const likedVideos = videos.filter((v) => likedIds.has(v.id));
+
+  return {
     videos,
     followingVideos,
     likedIds,
