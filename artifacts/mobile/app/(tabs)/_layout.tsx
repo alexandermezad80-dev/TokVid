@@ -6,7 +6,7 @@ import { SymbolView } from "expo-symbols";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { Platform, StyleSheet, Text, View, useColorScheme } from "react-native";
-import { useColors } from "@/hooks/useColors";
+import { useColors } from "../../hooks/useColors";
 import { useNotifications } from "../../context/NotificationsContext";
 
 function UnreadBadge({ count }: { count: number }) {
