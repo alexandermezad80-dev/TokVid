@@ -1,5 +1,5 @@
 import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View, type ViewStyle } from "react-native";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -21,7 +21,7 @@ type Token = {
   fs: number;
   lh: number;
   fw: "400" | "500";
-  maxWidth: string;
+  maxWidth: `${number}%`;
 };
 
 const T: Record<BubbleStyleVariant, Record<BubbleDirection, Token>> = {
@@ -93,10 +93,13 @@ export default function Bubble({
   timestamp, onLongPress,
 }: BubbleProps) {
   const token = T[styleVariant][direction];
-  const borderRadius = radius(token, direction, groupPosition);
-  const base = {
+  const [topLeft, topRight, bottomRight, bottomLeft] = radius(token, direction, groupPosition);
+  const base: ViewStyle = {
     maxWidth: token.maxWidth,
-    borderRadius,
+    borderTopLeftRadius: topLeft,
+    borderTopRightRadius: topRight,
+    borderBottomRightRadius: bottomRight,
+    borderBottomLeftRadius: bottomLeft,
     backgroundColor: token.bg,
     borderWidth: token.border ? 1 : 0,
     borderColor: token.border,
