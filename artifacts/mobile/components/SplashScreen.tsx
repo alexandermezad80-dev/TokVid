@@ -21,7 +21,7 @@ export function SplashScreenComponent({ onFinish }: SplashScreenProps) {
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
       <Animated.Image
-        source={require("../../assets/images/splash.png")}
+        source={require("../assets/images/splash.png")}
         style={{
           flex: 1,
           width: "100%",
