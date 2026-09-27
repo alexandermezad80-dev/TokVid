@@ -391,4 +391,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   discoverBtnText: { color: "#fff", fontWeight: "700", fontSize: 15 },
+  loadingOverlay: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center", zIndex: 20, backgroundColor: "rgba(0,0,0,0.35)" },
+  footer: { height: 72, alignItems: "center", justifyContent: "center" },
+  errorBanner: { position: "absolute", left: 16, right: 16, bottom: 90, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, backgroundColor: "rgba(30,30,36,0.96)", zIndex: 30 },
+  errorText: { color: "#fff", fontSize: 13, textAlign: "center" },
 });
