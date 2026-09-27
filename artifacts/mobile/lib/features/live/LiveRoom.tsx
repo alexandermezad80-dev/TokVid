@@ -488,6 +488,8 @@ export default function LiveRoom() {
           const guestIndex = participant.role === "guest" ? index : -1;
           const row = guestIndex >= 0 ? Math.floor(guestIndex / 3) : 0;
           const column = guestIndex >= 0 ? guestIndex % 3 : 0;
+          const left = `${3 + column * 33}%` as `${number}%`;
+          const top = `${56 + row * 10}%` as `${number}%`;
 
           const tileStyle =
             participant.role === "host"
@@ -495,8 +497,8 @@ export default function LiveRoom() {
               : [
                   styles.guestVideo,
                   {
-                    left: `${3 + column * 33}%`,
-                    top: `${56 + row * 10}%`,
+                    left,
+                    top,
                   },
                 ];
 
