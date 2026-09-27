@@ -17,8 +17,8 @@ import {
   Text,
   View,
 } from "react-native";
-import { useAuth } from "../../context/AuthContext";
-import { supabase } from "../../supabase";
+import { useAuth } from "../../../context/AuthContext";
+import { supabase } from "../../../lib/supabase";
 import {
   agoraUidFromUserId,
   getLiveRtcCredentials,
@@ -220,7 +220,7 @@ export default function LiveRoom() {
         engine.initialize({
           appId: credentials.appId,
           channelProfile:
-            ChannelProfileType.channelProfileLiveBroadcasting,
+            ChannelProfileType.ChannelProfileLiveBroadcasting,
         });
 
         engine.registerEventHandler({
@@ -239,8 +239,8 @@ export default function LiveRoom() {
 
         engine.setClientRole(
           broadcaster
-            ? ClientRoleType.clientRoleBroadcaster
-            : ClientRoleType.clientRoleAudience,
+            ? ClientRoleType.ClientRoleBroadcaster
+            : ClientRoleType.ClientRoleAudience,
         );
         engine.enableAudio();
 
@@ -254,10 +254,10 @@ export default function LiveRoom() {
           credentials.uid,
           {
             clientRoleType: broadcaster
-              ? ClientRoleType.clientRoleBroadcaster
-              : ClientRoleType.clientRoleAudience,
+              ? ClientRoleType.ClientRoleBroadcaster
+              : ClientRoleType.ClientRoleAudience,
             channelProfile:
-              ChannelProfileType.channelProfileLiveBroadcasting,
+              ChannelProfileType.ChannelProfileLiveBroadcasting,
             publishMicrophoneTrack:
               broadcaster &&
               credentials.micAuthorized &&
@@ -294,9 +294,10 @@ export default function LiveRoom() {
 
       if (engine) {
         unregisterLiveEffectsEngine(engine);
-        void engine.leaveChannel().finally(() => {
+        void (async () => {
+          await engine.leaveChannel();
           engine.release();
-        });
+        })();
       }
     };
   }, [roomId, user?.id, room, role]);
