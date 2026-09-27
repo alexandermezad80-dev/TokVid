@@ -39,6 +39,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Normalize Expo PNG assets
+        working-directory: artifacts/mobile
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+          magick assets/images/icon.png -strip -define png:color-type=6 -define png:bit-depth=8 /tmp/tokvid-icon.png
+          mv /tmp/tokvid-icon.png assets/images/icon.png
+
       - name: Generate Android project
         working-directory: artifacts/mobile
         run: pnpm exec expo prebuild --platform android --no-install
