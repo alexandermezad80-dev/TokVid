@@ -75,7 +75,12 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           p = Path("gradle.properties")
-          lines = p.read_text().splitlines()
+          import re
+          raw = p.read_text()
+          # expo-build-properties can leave the next Gradle property attached to
+          # android.minSdkVersion=24; split it before applying our settings.
+          raw = re.sub(r"(\\d)(org\\.gradle\\.)", r"\\1\\n\\2", raw)
+          lines = raw.splitlines()
           lines = [line for line in lines if not line.startswith("org.gradle.jvmargs=")]
           lines = [line for line in lines if not line.startswith("org.gradle.workers.max=")]
           lines = [line for line in lines if not line.startswith("org.gradle.daemon=")]
