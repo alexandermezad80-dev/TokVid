@@ -145,7 +145,7 @@ export default function ShareLive() {
         message: "Te compartieron un Live",
         data: {
           conversationId,
-          liveShareId: share.share_id,
+          liveShareId: shareRecord.share_id,
           roomId,
         },
       });
