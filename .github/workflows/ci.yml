@@ -47,3 +47,45 @@ jobs:
           path: artifacts/web/.next
           include-hidden-files: true
           if-no-files-found: error
+
+  android-apk:
+    name: Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install pnpm
+        run: npm install -g pnpm@10.15.1
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Android project
+        working-directory: artifacts/mobile
+        run: pnpm exec expo prebuild --platform android --no-install --non-interactive
+
+      - name: Build release APK
+        working-directory: artifacts/mobile/android
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Upload TokVid APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tokvid-android-apk
+          path: artifacts/mobile/android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
