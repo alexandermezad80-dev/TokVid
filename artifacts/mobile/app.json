@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/images/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#00F2EA"
     },
     "ios": {
       "supportsTablet": false,
@@ -30,7 +30,11 @@
         "android.permission.BLUETOOTH",
         "android.permission.FOREGROUND_SERVICE"
       ],
-      "allowBackup": false
+      "allowBackup": false,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#00F2EA"
+      }
     },
     "web": {
       "favicon": "./assets/images/icon.png"
