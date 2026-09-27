@@ -44,8 +44,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y imagemagick
-          convert assets/images/icon.png -strip -define png:color-type=6 -define png:bit-depth=8 /tmp/tokvid-icon.png
-          mv /tmp/tokvid-icon.png assets/images/icon.png
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          p = Path("assets/images/icon.png")
+          with Image.open(p) as im:
+              im.convert("RGBA").save(p, format="PNG", optimize=True)
+          PY
 
       - name: Generate Android project
         working-directory: artifacts/mobile
