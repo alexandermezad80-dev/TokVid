@@ -73,6 +73,14 @@ jobs:
         working-directory: artifacts/mobile
         run: pnpm exec expo prebuild --platform android --clean --no-install
 
+      - name: Restore Android splash resource
+        working-directory: artifacts/mobile
+        run: |
+          mkdir -p android/app/src/main/res/drawable
+          cp assets/images/splash.png android/app/src/main/res/drawable/splashscreen_logo.png
+          test -s android/app/src/main/res/drawable/splashscreen_logo.png
+          echo "Verified: android/app/src/main/res/drawable/splashscreen_logo.png"
+
       - name: Configure Gradle memory
         working-directory: artifacts/mobile/android
         run: |
@@ -81,9 +89,7 @@ jobs:
           p = Path("gradle.properties")
           import re
           raw = p.read_text()
-          # expo-build-properties can leave the next Gradle property attached to
-          # android.minSdkVersion=24; split it before applying our settings.
-          raw = re.sub(r"(\\d)(org\\.gradle\\.)", r"\\1\\n\\2", raw)
+          raw = re.sub(r"(\d)(org\.gradle\.)", r"\1\n\2", raw)
           lines = raw.splitlines()
           lines = [line for line in lines if not line.startswith("org.gradle.jvmargs=")]
           lines = [line for line in lines if not line.startswith("org.gradle.workers.max=")]
