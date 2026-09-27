@@ -16,6 +16,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Use Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: pnpm
+
       - name: Free runner disk space
         run: |
           echo "Disk before cleanup:"
@@ -24,19 +30,12 @@ jobs:
           sudo rm -rf /usr/share/dotnet || true
           sudo rm -rf /opt/ghc || true
           sudo rm -rf /usr/local/share/powershell || true
-          sudo rm -rf /usr/local/lib/node_modules || true
           sudo apt-get clean || true
           echo "Disk after cleanup:"
           df -h /
 
       - name: Install pnpm
         run: npm install -g pnpm@10.15.1
-
-      - name: Use Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24.x
-          cache: pnpm
 
       - name: Set up Java
         uses: actions/setup-java@v5
