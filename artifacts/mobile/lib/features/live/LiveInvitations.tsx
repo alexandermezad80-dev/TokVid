@@ -297,7 +297,8 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
   prompt: {
-    width: "min(92%, 420px)",
+    width: "92%",
+    maxWidth: 420,
     borderRadius: 20,
     overflow: "hidden",
     borderWidth: 1,
@@ -368,7 +369,8 @@ const styles = StyleSheet.create({
     top: 50,
     right: 0,
     zIndex: 21,
-    width: "min(88%, 360px)",
+    width: "88%",
+    maxWidth: 360,
   },
   list: {
     borderRadius: 18,
