@@ -8,7 +8,7 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -20,7 +20,6 @@ import { FollowProvider } from "../context/FollowContext";
 import { NotificationsProvider } from "../context/NotificationsContext";
 import { usePushNotifications } from "../hooks/usePushNotifications";
 import { IncomingCallListener } from "../components/IncomingCallListener";
-
 
 const queryClient = new QueryClient();
 
@@ -70,24 +69,12 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({
+  useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
   });
-  // Do not block the app behind a custom splash. Expo hides the native splash
-  // automatically once the root view is mounted; this prevents the blue splash
-  // from remaining on screen when a JS module fails during startup.
-  if (!fontsLoaded && !fontError) {
-    return (
-      <View style={{ flex: 1, backgroundColor: "#0A0A0F", alignItems: "center", justifyContent: "center" }}>
-        <View style={{ width: 64, height: 64, borderRadius: 18, backgroundColor: "#00F2EA", alignItems: "center", justifyContent: "center" }}>
-          <View style={{ width: 0, height: 0, borderTopWidth: 11, borderBottomWidth: 11, borderLeftWidth: 18, borderTopColor: "transparent", borderBottomColor: "transparent", borderLeftColor: "#0A0A0F", marginLeft: 4 }} />
-        </View>
-      </View>
-    );
-  }
 
   return (
     <SafeAreaProvider>
