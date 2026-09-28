@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - feature/onboarding-profile-interests
+    paths:
+      - "supabase/migrations/**"
   workflow_dispatch:
 
 jobs:
