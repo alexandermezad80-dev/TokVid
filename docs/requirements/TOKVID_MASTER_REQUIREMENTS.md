@@ -1982,154 +1982,193 @@ La compilación/prueba de login y la preparación del APK quedan para la etapa p
 
 No se debe introducir trabajo de APK dentro de los bloques actuales salvo autorización explícita.
 
-## 43.4 LIVE — implementación visual y de interacción acordada
 
-La implementación de LIVE debe respetar el contrato funcional y de seguridad de las secciones anteriores y, además, mantener estas decisiones de interfaz ya acordadas:
+## 43.4 FUENTE DE VERDAD VISUAL — UI DEFINITIVA
 
-- La distribución audiovisual será adaptativa y se calculará a partir de los participantes activos.
-- Se contemplan las variantes de layout ya definidas en el módulo de LIVE: Host principal con Guests, distribución equilibrada, carrusel, Guest destacado, vista compacta y distribución dinámica.
-- El límite autoritativo continúa siendo **1 Host + hasta 11 Guests**, con máximo de 12 participantes audiovisuales.
-- La UI no debe crear una segunda representación fija del participante local cuando este ya forma parte de la distribución audiovisual.
-- Cada participante audiovisual debe ocupar el frame asignado por el layout.
-- La presentación debe adaptarse al dispositivo móvil y respetar el área segura de la interfaz.
-- Los controles flotantes deben ser pequeños pero utilizables con el dedo y no deben cubrir innecesariamente la transmisión.
-- La interfaz debe mantener una presentación visual de tipo glassmorphism conforme a la referencia visual acordada.
-- Las acciones visibles deben corresponder a funciones reales; no se deben duplicar botones para una misma función.
+**Estado:** vigente para la implementación actual.  
+**Prioridad:** para la implementación de **LIVE**, esta especificación visual y de interacción sustituye cualquier descripción visual anterior que la contradiga o duplique. No se deben inventar componentes, posiciones, controles, animaciones ni comportamientos fuera de lo definido aquí.  
+**Alcance:** el documento describe la UI de Home Feed, Comments Drawer, Share Sheet, Live, Studio y Bottom Tab Bar. En la etapa actual se implementa el flujo hasta **LIVE**; las pantallas restantes quedan documentadas para su implementación posterior.
 
-## 43.5 Acciones y navegación de LIVE
+### 43.4.1 Rejilla y layout global
+- Diseño base: **390 × 844 px**, proporción 19.5:9.
+- Safe Area: **Top 44 px**, **Bottom 34 px**.
+- z-index: 0 video/cámara; 10 elementos interactivos flotantes; 50 hojas/modales inferiores; 100 notificaciones/toasts.
+- Paleta principal: **Cian Eléctrico #00F2FE** y **Magenta Vibrante #FE0979**.
 
-La superficie principal de LIVE deberá mantener una única entrada visible por función, con las acciones correspondientes al rol y permisos del usuario.
+### 43.4.2 Home Feed
+Ocupa 100vw × 100vh.
 
-Las funciones acordadas para la superficie de LIVE incluyen:
+Header:
+- En Vivo: Top 44 px, Left 16 px; antena en Cian; abre feeds de Live.
+- Selector central Siguiendo/Para ti: Top 44 px, centrado; activo Cian con línea inferior de 2 px; inactivo blanco al 60%.
+- Búsqueda: Top 44 px, Right 16 px; abre búsqueda avanzada.
 
-- cámara;
-- micrófono;
-- Chat;
-- Tap-Tap;
-- Quiéreme;
-- Efectos;
-- Compartir Live;
-- gestión/moderación cuando corresponda;
-- finalizar/Salir según el rol;
-- Gifts como elemento visible del producto.
+Acciones derechas, Right 12 px, botones circulares de 48 × 48 px con separación vertical de 25 px:
+- Perfil creador: Top 320 px; avatar circular con borde Cian y botón + Magenta de 18 px; al seguir, el + se anima con scale(0) en 200 ms.
+- Like: Top 395 px; SVG; blanco → Magenta con rebote spring 1.3x; contador 12 px.
+- Comentarios: Top 470 px; Cian; abre Comments Drawer.
+- Favoritos: Top 545 px; marcador; activo Cian con partículas laterales.
+- Compartir: Top 620 px; flecha; borde Magenta si existe interacción sugerida.
+- Música: Top 695 px; disco 40 × 40 px, borde Cian, rotación continua 360deg, 4 s linear infinite.
 
-Chat, Tap-Tap y Quiéreme permanecen separados conceptualmente y no deben convertirse en duplicados de los controles del Feed o de Messages.
+Bloque inferior izquierdo:
+- Left 16 px, Top 650–750 px.
+- @usuario bold 16 px blanco.
+- Descripción 14 px; hashtags/menciones en Cian.
+- Sobre 80 caracteres: mostrar "...más" gris; al pulsarlo, expandir hacia arriba duplicando la altura máxima.
+- Audio: nota Cian 14 px y título con marquee en contenedor de 200 px.
 
-## 43.6 Roles y gestión de LIVE
+### 43.4.3 Comments Drawer
+- Modal inferior: position absolute, bottom 0, width 100vw, height 65vh, z-index 50.
+- Esquinas superiores redondeadas 16 px.
+- Glassmorphism oscuro: backdrop-filter blur(20px) y negro al 80%.
+- Barra de arrastre: 40 × 4 px, centrada, Top 8 px.
+- Cabecera: contador de comentarios Left 16 px, 14 px bold; X circular Right 16 px.
+- Lista vertical con scroll infinito.
+- Usuarios de hilos en Cian/Magenta.
+- Input fijo inferior: caja 70% del ancho, placeholder exacto "escribe algo", borde Cian, menciones @, selector de emojis y enviar Magenta iluminado solamente con al menos un carácter.
 
-La interfaz de gestión debe respetar el rol y los permisos efectivos:
+### 43.4.4 Share Sheet
+- Modal inferior de 40vh, fondo oscuro translúcido.
+- Fila 1: carrusel infinito de contactos, avatares 50 px, indicador verde y nombre 11 px.
+- Fila 2: WhatsApp, Instagram Stories, Facebook, Messenger y Copiar Enlace; Copiar Enlace destacado en Cian.
+- Fila 3: Reportar (bandera Magenta), No me interesa (corazón roto), Guardar Video (descarga Cian) y Dúo/Pegar (herramientas de edición).
 
-### Host
+### 43.4.5 LIVE — interfaz de espectador/participante
+Diseño para video dividido, chat y herramientas de interacción.
 
-El Host conserva las capacidades de gestión de su sala, incluyendo:
+Barra superior:
+- Host Card: Left 12 px, Top 44 px, 140 × 36 px; avatar 28 px, nombre abreviado y Seguir en Cian.
+- Al pulsar Seguir, el estado pasa a "Unirse", fondo Magenta y corona/estrella.
+- LiveViewers inmediatamente al lado, icono ojo + métrica realtime, fondo negro translúcido.
+- Cerrar X: Right 16 px, Top 44 px, área táctil 44 × 44 px. Al salir se interrumpe la sesión de red audiovisual y se vuelve al Home Feed.
 
-- participantes;
-- solicitudes;
-- invitaciones;
-- autorización audiovisual;
-- moderación;
-- gestión de moderadores;
-- finalización de la sala.
+Área audiovisual:
+- Ocupa el espacio principal.
+- Soporta layout dividido 50/50 cuando existe invitado.
+- Debe respetar el contrato funcional de LIVE del Documento Maestro: 1 Host + hasta 11 Guests, máximo 12 participantes audiovisuales.
+- Las ventanillas son dinámicas; no se crea una segunda representación fija del participante local cuando ya está en el layout.
+- El layout se adapta al dispositivo y al área segura.
 
-### Moderator
+Chat Live:
+- Left 12 px, width aproximado 90%, Bottom 150 px.
+- Scroll/auto-scroll.
+- Fondo rgba(0,0,0,0.3).
+- Usuarios en bold; Cian para moderadores/suscriptores y Magenta para usuarios comunes; cuerpo blanco.
+- Es independiente de comentarios del Feed y Messages.
 
-Un Guest que sea Moderator debe recibir únicamente las capacidades que le fueron concedidas.
+Bottom Live Tools:
+- Bottom 75 px.
+- Input izquierda, 60% del espacio; border-radius 20px; borde Cian; placeholder exacto "escribe algo".
+- Acciones derechas, 36 × 36 px, separación 10 px:
+  - Invitación 👥: Cian; solicita conexión en pantalla dividida.
+  - Gifts 🎁: Magenta; abre la experiencia de regalos.
+  - Compartir ➡️: comparte enlace directo.
+- La superficie visible debe respetar el rol/permisos efectivos y no mostrar controles no autorizados.
 
-La interfaz de moderación del Moderator no debe exponer las funciones exclusivas del Host para asignar, revocar o editar moderadores.
+### 43.4.6 LIVE — Creator Panel
+Visible solamente para un usuario con permisos de transmisión/Host.
+- Se abre mediante control flotante de herramientas y ocupa la mitad inferior.
+- Filtros: fila de sliders, nodos Cian; enfoque, suavizado de piel y filtros de color.
+- Efectos de audio: cuadrícula 2 × 3 con bordes Magenta:
+  - Aplausos.
+  - Risas.
+  - Besos, con partículas de corazones Magenta.
+  - Sonidos Extra/efectos personalizables.
+- Estos efectos nunca conceden control remoto de cámara o micrófono de otra persona.
 
-La entrada de moderación se mostrará únicamente cuando el usuario tenga al menos un permiso de moderación efectivo.
+### 43.4.7 LIVE — reglas de interacción y seguridad visual
+- Cámara y micrófono: cada usuario controla físicamente sus propios dispositivos.
+- Autorización server-side y activación física son conceptos distintos.
+- Ningún Host, Guest o Moderator puede activar remotamente cámara/micrófono de otra persona.
+- Moderación puede silenciar/cortar audio conforme a permisos, pero no encender remotamente el micrófono.
+- La UI debe mostrar únicamente funciones reales y evitar botones duplicados.
+- Chat, Tap-Tap, Quiéreme, Gifts y Share Live permanecen separados por dominio.
+- Tap-Tap es interacción exclusiva del Live del Host, independiente de Like del Feed.
+- Quiéreme permanece separado de Tap-Tap.
+- Gifts pertenece a LIVE visualmente, mientras que saldo/Ledger/finanzas pertenecen a Monetization.
+- Los límites de capacidad y permisos no se confían al cliente.
 
-### Guest sin moderación
+### 43.4.8 Studio / Centro de Creación
+Se activa desde el botón central +.
 
-Un Guest sin permisos de moderación no debe recibir controles de moderación.
+Header:
+- X: Top 44 px, Left 16 px.
+- Añadir sonido: Top 44 px, centrado; cápsula negra con borde Cian.
 
-### Spectator
+Herramientas laterales Right 16 px desde Top 100 px:
+- Voltear.
+- Velocidad: 0.3x, 0.5x, 1x por defecto, 2x, 3x.
+- Filtros.
+- Tiempo: 3 o 10 s.
+- Voz: helio, robot, eco, gigante.
+- Efectos.
 
-El espectador mantiene las acciones propias de espectador y, cuando el Live permita Guests, podrá solicitar participar conforme al flujo de solicitudes.
+Obturador:
+- centro, Bottom 110 px;
+- diámetro 76 px;
+- Magenta #FE0979;
+- anillo Cian, separación negra de 4 px.
+- Tap: inicia grabación; cambia a Stop; progreso blanco sobre anillo.
+- Mantener pulsado: grabación analógica y zoom mediante arrastre vertical.
 
-Las restricciones de interfaz no sustituyen las validaciones server-side ni RLS.
+Controles:
+- Efectos: Left 45 px.
+- Cargar multimedia: Right 45 px.
+- Modos inferiores: FOTO / VIDEO / STORY; selector centrado, Cian activo y transición snapping.
 
-## 43.7 Moderación
+### 43.4.9 Bottom Tab Bar global
+- position fixed, bottom 0, width 100vw, height 80 px, z-index 100.
+- En Home Feed: fondo transparente.
+- En pantallas secundarias: bloque negro sólido.
+- Cinco columnas iguales, 20% cada una: Inicio, Descubrir, +, Inbox, Perfil.
+- Pestaña activa: Cian; pasivas: blanco atenuado.
 
-La autorización de moderación seguirá utilizando las capacidades explícitas del contrato de LIVE y no una autorización implícita basada solamente en la interfaz.
+Botón central +:
+- columna 3.
+- Capa base izquierda Cian, desplazada 2 px a la izquierda.
+- Capa base derecha Magenta, desplazada 2 px a la derecha.
+- Capa frontal central blanca sobre Home oscuro o negra en Perfil/Inbox.
+- Símbolo + centrado.
+- Al pulsar: scale(0.95) y apertura de Studio.
 
-Las capacidades actuales definidas para moderación son:
+### 43.4.10 Regla de precedencia y eliminación de duplicados
+Para la **implementación actual de LIVE**, esta sección es la única referencia visual y de interacción de este Documento Maestro.
 
-- `invite_guests`;
-- `manage_requests`;
-- `manage_participants`;
-- `manage_chat`;
-- `remove_users`;
-- `mute_users`;
-- `block_users`.
+Si una sección anterior del Documento Maestro contiene una descripción visual de LIVE que contradice esta sección, repite la misma decisión con valores diferentes o añade una decisión visual no presente aquí, esa descripción anterior queda **sin efecto para implementación de LIVE** y no debe duplicarse en código ni documentación operativa.
 
-El Host mantiene la autoridad para conceder, revocar y modificar estos permisos.
+Los requisitos funcionales, de seguridad, roles, RLS, Realtime, límites de participantes, separación de dominios y demás contratos no visuales del Documento Maestro **siguen vigentes** salvo contradicción explícita de esta especificación visual.
 
-La UI debe mostrar a cada Moderator solamente las funciones que correspondan a sus permisos efectivos.
+No se eliminan requisitos funcionales válidos solamente por no aparecer en este mapa visual.
 
-## 43.8 Cámara y micrófono
+### 43.4.11 Supabase y migraciones
+No se autoriza una migración por el solo hecho de existir un elemento visual en esta especificación.
 
-La implementación debe conservar la separación entre autorización y activación física:
-
-- el servidor puede autorizar o revocar;
-- el usuario controla físicamente su propia cámara;
-- el usuario controla físicamente su propio micrófono;
-- ningún participante puede activar remotamente los dispositivos de otra persona;
-- una revocación de autorización no debe interpretarse como una orden remota de activación;
-- el estado del dispositivo y el permiso concedido son conceptos separados.
-
-## 43.9 Gifts
-
-Gifts deben formar parte visible de la experiencia LIVE para que la función no quede olvidada en la implementación de la interfaz.
-
-En esta etapa, la presencia visual de Gifts **no autoriza** inventar:
-
-- catálogo;
-- nombres;
-- precios;
-- cantidades;
-- reparto;
-- saldo;
-- ledger;
-- métodos de pago;
-- reglas financieras.
-
-La implementación financiera y el catálogo se realizarán cuando corresponda conforme a la especificación de Monetización y previa auditoría del estado real.
-
-## 43.10 Supabase y migraciones
-
-No se creará una migración solamente porque un requisito conceptual exista.
-
-Antes de cualquier migración:
-
+Antes de cualquier cambio:
 1. auditar el esquema Supabase vigente;
-2. comprobar si la entidad, columna, función, RLS o relación ya existe;
-3. identificar exactamente la diferencia;
-4. determinar si la diferencia requiere migración;
-5. informar el cambio;
-6. solicitar autorización cuando corresponda;
-7. probar la migración antes de considerar cerrado el bloque.
+2. comprobar tablas, columnas, funciones, RLS y relaciones existentes;
+3. identificar la diferencia exacta;
+4. informar qué debe modificarse;
+5. obtener autorización cuando corresponda;
+6. probar el cambio antes de cerrar el bloque.
 
-Las funciones, RLS y tablas existentes de LIVE no deben duplicarse ni reemplazarse sin una diferencia real y justificada.
+No duplicar ni reemplazar entidades existentes sin una diferencia real y justificada.
 
-## 43.11 Criterio de cierre de cada bloque
+### 43.4.12 Cierre por bloque y Git
+Cada bloque debe:
+- corresponder a esta fuente visual y al contrato funcional vigente;
+- ser comprobado;
+- registrar errores o bloqueos sin ocultarlos;
+- tener commit en feature/onboarding-profile-interests;
+- hacer push;
+- registrar la verificación disponible.
 
-Un bloque se considera cerrado solamente cuando:
+GitHub Actions y las pruebas locales deben distinguirse: un fallo por cuota/límite externo no se marca como éxito de CI.
 
-- la implementación corresponde al Documento Maestro;
-- no existen requisitos inventados;
-- el comportamiento fue comprobado;
-- las rutas/navegación relacionadas funcionan;
-- las funciones de Supabase utilizadas corresponden al esquema real;
-- RLS/permisos se han considerado cuando el bloque los requiere;
-- no quedan errores conocidos ocultos;
-- existe el commit correspondiente en la rama;
-- el push fue realizado;
-- la verificación disponible queda registrada.
+La compilación de la app, prueba de login y APK quedan para después de completar y comprobar el flujo hasta LIVE, según el plan acordado.
 
-Un fallo de CI por una limitación externa de GitHub Actions debe registrarse como **verificación CI pendiente**, no como éxito.
-
-## 43.12 Estado de la etapa
-
-Esta sección describe el orden y las decisiones ya acordadas para implementar la etapa actual. No autoriza por sí sola nuevas tablas, migraciones, servicios externos, precios, catálogos financieros ni cambios fuera del bloque en curso.
+### 43.4.13 Estado
+**Vigente para la implementación actual:** ONBOARDING → LIVE.  
+**Fuente visual canónica:** el mapa técnico/visual definitivo proporcionado para TOKVID.  
+**Regla:** no inventar, no ocultar, no duplicar y no avanzar al siguiente bloque sin comprobar el bloque actual.
 
