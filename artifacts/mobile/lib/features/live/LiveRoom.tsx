@@ -19,7 +19,6 @@ import {
 } from "react-native";
 import { useAuth } from "../../../context/AuthContext";
 import { supabase } from "../../../lib/supabase";
-import { LiveInvitations } from "./LiveInvitations";
 import {
   agoraUidFromUserId,
   getLiveRtcCredentials,
