@@ -12,12 +12,11 @@ jobs:
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
       CI: 1
-      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL || vars.EXPO_PUBLIC_SUPABASE_URL }}
-      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY || vars.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+      EXPO_PUBLIC_SUPABASE_URL: \${{ secrets.EXPO_PUBLIC_SUPABASE_URL || vars.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: \${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY || vars.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
       - name: Free runner disk space
         run: |
           echo "Disk before cleanup:"
@@ -29,32 +28,26 @@ jobs:
           sudo apt-get clean || true
           echo "Disk after cleanup:"
           df -h /
-
       - name: Use Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 24.x
-
       - name: Install pnpm
         run: |
           corepack enable
           corepack prepare pnpm@10.15.1 --activate
           pnpm --version
-
       - name: Set up Java
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
-
       - name: Accept Android SDK licenses
         run: |
           SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | sort -V | tail -n 1)
           yes | "$SDKMANAGER" --licenses > /dev/null || true
-
       - name: Install dependencies
         run: pnpm install
-
       - name: Normalize Expo PNG assets
         working-directory: artifacts/mobile
         run: |
@@ -68,26 +61,23 @@ jobs:
                   im.convert("RGBA").save(p, format="PNG", optimize=True)
                   print(f"{filename}: {im.size} -> valid RGBA PNG")
           PY
-
       - name: Generate Android project
         working-directory: artifacts/mobile
         run: pnpm exec expo prebuild --platform android --clean --no-install
-
       - name: Restore Android splash resource
         working-directory: artifacts/mobile
         run: |
           mkdir -p android/app/src/main/res/drawable
-          cp assets/images/splash.png android/app/src/main/res/drawable/splashscreen_logo.png
+          cp assets/images/icon.png android/app/src/main/res/drawable/splashscreen_logo.png
           test -s android/app/src/main/res/drawable/splashscreen_logo.png
           echo "Verified: android/app/src/main/res/drawable/splashscreen_logo.png"
-
       - name: Configure Gradle memory
         working-directory: artifacts/mobile/android
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p = Path("gradle.properties")
           import re
+          p = Path("gradle.properties")
           raw = p.read_text()
           raw = re.sub(r"(\d)(org\.gradle\.)", r"\1\n\2", raw)
           lines = raw.splitlines()
@@ -101,11 +91,9 @@ jobs:
           ]
           p.write_text("\n".join(lines) + "\n")
           PY
-
       - name: Build standalone release APK
         working-directory: artifacts/mobile/android
         run: ./gradlew assembleRelease --no-daemon
-
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
