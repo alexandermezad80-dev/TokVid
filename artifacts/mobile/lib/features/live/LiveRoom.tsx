@@ -33,6 +33,7 @@ import {
   registerLiveEffectsEngine,
   unregisterLiveEffectsEngine,
 } from "./live-effects-controller";
+import { LiveRoomVisualOverlay } from "./LiveRoomVisualOverlay";
 
 type Participant = LiveParticipantLayoutItem & {
   participationState: string;
@@ -539,41 +540,19 @@ export default function LiveRoom() {
           );
         })}
 
-        <View style={styles.topBar}>
-          <View>
-            <Text style={styles.title}>{room.title || "LIVE"}</Text>
-            <Text style={styles.meta}>
-              {spectatorCount} viendo · {layout.guestCount}/11 Guests
-            </Text>
-          </View>
-
-          <View style={styles.topBarActions}>
-            {user?.id ? (
-              <LiveInvitations roomId={roomId ?? ""} userId={user.id} />
-            ) : null}
-
-            {isHost || hasModeratorPermission ? (
-              <Pressable
-                style={styles.manageButton}
-                onPress={() =>
-                  router.push(`/live-manage?roomId=${encodeURIComponent(roomId ?? "")}`)
-                }
-              >
-                <Feather name="settings" size={18} color="#fff" />
-                <Text style={styles.manageButtonText}>
-                  {isHost ? "Gestionar" : "Moderación"}
-                </Text>
-              </Pressable>
-            ) : null}
-
-            <Pressable
-              style={styles.closeButton}
-              onPress={() => router.back()}
-            >
-              <Feather name="x" size={22} color="#fff" />
-            </Pressable>
-          </View>
-        </View>
+        <LiveRoomVisualOverlay
+          title={room.title || "LIVE"}
+          spectatorCount={spectatorCount}
+          guestCount={layout.guestCount}
+          isHost={isHost}
+          hasModeratorPermission={hasModeratorPermission}
+          onManage={() => router.push("/live-manage?roomId=" + encodeURIComponent(roomId ?? ""))}
+          onClose={() => void leave()}
+          onOpenChat={() => router.push("/live-chat?roomId=" + roomId)}
+          onInvite={() => Alert.alert("Invitación", "Se conserva el flujo actual de invitaciones.")}
+          onGifts={() => Alert.alert("Gifts", "Botón visual preparado; la transacción queda pendiente del dominio de monetización.")}
+          onShare={() => router.push("/live-share?roomId=" + roomId)}
+        />
       </View>
 
       {!isMember && room.mode === "guests" ? (
