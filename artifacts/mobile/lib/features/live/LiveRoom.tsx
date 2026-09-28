@@ -67,8 +67,11 @@ export default function LiveRoom() {
   const [loading, setLoading] = useState(true);
   const [rtcReady, setRtcReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [moderatorPermissions, setModeratorPermissions] = useState<Record<string, boolean>>({});
 
   const isMember = role === "host" || role === "guest";
+  const isHost = role === "host";
+  const hasModeratorPermission = Object.values(moderatorPermissions).some(Boolean);
 
   const refreshRoom = useCallback(async () => {
     if (!roomId || !user?.id) return;
@@ -76,6 +79,7 @@ export default function LiveRoom() {
     const [
       { data: roomData, error: roomError },
       { data: participantRows, error: participantError },
+      { data: moderatorRow, error: moderatorError },
     ] = await Promise.all([
       supabase
         .from("live_rooms")
@@ -94,10 +98,18 @@ export default function LiveRoom() {
           "pending_request",
           "pending_invitation",
         ]),
+      supabase
+        .from("live_moderators")
+        .select("permissions")
+        .eq("room_id", roomId)
+        .eq("user_id", user.id)
+        .is("revoked_at", null)
+        .maybeSingle(),
     ]);
 
     if (roomError) throw new Error(roomError.message);
     if (participantError) throw new Error(participantError.message);
+    if (moderatorError) throw new Error(moderatorError.message);
     if (!roomData) throw new Error("LIVE no encontrado.");
 
     const normalized = (participantRows ?? []).map((row) => ({
@@ -113,6 +125,9 @@ export default function LiveRoom() {
 
     setRoom(roomData as Room);
     setParticipants(normalized);
+    setModeratorPermissions(
+      roomData.host_id === user.id ? {} : ((moderatorRow?.permissions ?? {}) as Record<string, boolean>),
+    );
 
     const own = normalized.find((participant) => participant.userId === user.id);
     if (own) {
@@ -560,7 +575,7 @@ export default function LiveRoom() {
               <LiveInvitations roomId={roomId ?? ""} userId={user.id} />
             ) : null}
 
-            {isMember ? (
+            {isHost || hasModeratorPermission ? (
               <Pressable
                 style={styles.manageButton}
                 onPress={() =>
@@ -568,7 +583,9 @@ export default function LiveRoom() {
                 }
               >
                 <Feather name="settings" size={18} color="#fff" />
-                <Text style={styles.manageButtonText}>Gestionar</Text>
+                <Text style={styles.manageButtonText}>
+                  {isHost ? "Gestionar" : "Moderación"}
+                </Text>
               </Pressable>
             ) : null}
 
