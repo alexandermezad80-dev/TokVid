@@ -483,14 +483,13 @@ export default function LiveRoom() {
     participants: activeParticipants,
   });
 
-  const activeRemoteParticipants = layout.guests
-    .concat(layout.host ? [layout.host] : [])
-    .filter((participant) => participant.userId !== user?.id);
+  const audiovisualParticipants = layout.guests
+    .concat(layout.host ? [layout.host] : []);
 
   return (
     <View style={styles.container}>
       <View style={styles.stage}>
-        {activeRemoteParticipants.length === 0 && !cameraOn ? (
+        {audiovisualParticipants.length === 0 ? (
           <View style={styles.emptyStage}>
             <Feather name="video" size={42} color="#666" />
             <Text style={styles.emptyTitle}>LIVE activo</Text>
@@ -500,23 +499,13 @@ export default function LiveRoom() {
           </View>
         ) : null}
 
-        {activeRemoteParticipants.map((participant, index) => {
-          const guestIndex = participant.role === "guest" ? index : -1;
-          const row = guestIndex >= 0 ? Math.floor(guestIndex / 3) : 0;
-          const column = guestIndex >= 0 ? guestIndex % 3 : 0;
-          const left = `${3 + column * 33}%` as `${number}%`;
-          const top = `${56 + row * 10}%` as `${number}%`;
-
-          const tileStyle =
-            participant.role === "host"
-              ? styles.hostVideo
-              : [
-                  styles.guestVideo,
-                  {
-                    left,
-                    top,
-                  },
-                ];
+        {audiovisualParticipants.map((participant) => {
+          const isLocal = participant.userId === user?.id;
+          const tileStyle = [
+            styles.videoTile,
+            participant.frame,
+            isLocal && styles.localTile,
+          ];
 
           return (
             <View key={participant.userId} style={tileStyle}>
@@ -526,41 +515,29 @@ export default function LiveRoom() {
                   canvas={{
                     uid: agoraUidFromUserId(participant.userId),
                   }}
+                  zOrderMediaOverlay={isLocal}
                 />
               ) : (
                 <View style={styles.offVideo}>
                   <Feather name="video-off" size={28} color="#aaa" />
                   <Text style={styles.muted}>
-                    {participant.role === "host" ? "Anfitrión" : "Guest"}
+                    {isLocal
+                      ? "Tu cámara está apagada"
+                      : participant.role === "host"
+                        ? "Anfitrión"
+                        : "Guest"}
                   </Text>
                 </View>
               )}
 
               <View style={styles.nameBadge}>
                 <Text style={styles.nameText}>
-                  {participant.role === "host" ? "Anfitrión" : "Guest"}
+                  {isLocal ? "Tú" : participant.role === "host" ? "Anfitrión" : "Guest"}
                 </Text>
               </View>
             </View>
           );
         })}
-
-        {isMember ? (
-          <View style={styles.localVideo}>
-            {cameraOn ? (
-              <RtcSurfaceView
-                style={StyleSheet.absoluteFill}
-                canvas={{ uid: agoraUidFromUserId(user?.id ?? "") }}
-                zOrderMediaOverlay
-              />
-            ) : (
-              <View style={styles.offVideo}>
-                <Feather name="video-off" size={20} color="#aaa" />
-                <Text style={styles.muted}>Tu cámara está apagada</Text>
-              </View>
-            )}
-          </View>
-        ) : null}
 
         <View style={styles.topBar}>
           <View>
@@ -733,31 +710,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#080808",
     position: "relative",
   },
-  hostVideo: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#111",
-  },
-  guestVideo: {
+  videoTile: {
     position: "absolute",
-    width: "31%",
-    height: "9%",
-    backgroundColor: "#151515",
+    backgroundColor: "#111",
     borderRadius: 10,
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "#333",
   },
-  localVideo: {
-    position: "absolute",
-    width: 112,
-    height: 164,
-    right: 12,
-    top: 92,
-    backgroundColor: "#1b1b1b",
-    borderRadius: 12,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#555",
+  localTile: {
+    borderColor: "#fff",
   },
   emptyStage: {
     ...StyleSheet.absoluteFillObject,
