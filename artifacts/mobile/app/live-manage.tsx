@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { useAuth } from "../../context/AuthContext";
-import { supabase } from "../../lib/supabase";
+import { useAuth } from "../context/AuthContext";
+import { supabase } from "../lib/supabase";
 
 type Permission =
   | "invite_guests"
@@ -388,8 +388,8 @@ export default function LiveManage() {
                 <View key={participant.user_id} style={styles.participant}>
                   <Text style={styles.rowTitle}>{participant.user_id}</Text>
                   <Text style={styles.muted}>
-                    Cámara: {participant.cameraState === "on" ? "on" : "off"} · Mic:{" "}
-                    {participant.micState === "on" ? "on" : "off"}
+                    Cámara: {participant.camera_state === "on" ? "on" : "off"} · Mic:{" "}
+                    {participant.mic_state === "on" ? "on" : "off"}
                   </Text>
 
                   {can("manage_participants") ? (
