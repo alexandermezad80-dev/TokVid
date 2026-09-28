@@ -1940,3 +1940,196 @@ Antes de implementar cualquier parte pendiente se deberá:
 4. presentar los cambios necesarios;
 5. solicitar autorización antes de modificar código o base de datos.
 
+---
+
+# 43. PLAN DE IMPLEMENTACIÓN ACORDADO PARA LA RAMA `feature/onboarding-profile-interests`
+
+**Estado:** Plan de ejecución acordado; este apartado no sustituye los requisitos funcionales anteriores.  
+**Regla de trabajo:** implementar bloque por bloque, auditar antes de modificar y no declarar un bloque cerrado hasta comprobarlo.
+
+## 43.1 Alcance de esta etapa
+
+La etapa actual tiene como objetivo llevar la implementación desde **ONBOARDING** hasta **LIVE**, manteniendo el Documento Maestro como referencia de requisitos.
+
+El flujo de trabajo será:
+
+1. auditar el bloque actual y el código existente;
+2. contrastarlo con este Documento Maestro;
+3. identificar diferencias reales;
+4. implementar únicamente el bloque autorizado;
+5. comprobar el cambio;
+6. hacer commit en `feature/onboarding-profile-interests`;
+7. hacer push;
+8. pasar al siguiente bloque solamente cuando el anterior pueda considerarse comprobado.
+
+No se deben inventar requisitos ni ocultar errores, bloqueos o diferencias.
+
+## 43.2 Verificación y GitHub Actions
+
+La verificación forma parte del cierre de cada bloque.
+
+Si GitHub Actions no está disponible por límite de uso, el bloque no se marcará como verificado por CI. Se podrán realizar únicamente las comprobaciones locales que estén realmente disponibles y deberán distinguirse de la verificación de GitHub Actions.
+
+Mientras la cuota de Actions esté agotada, no se deben realizar ejecuciones repetitivas destinadas solamente a consumir minutos.
+
+El reinicio de la cuota de Actions se utilizará posteriormente para volver a ejecutar la verificación correspondiente.
+
+## 43.3 APK
+
+**La etapa actual no consiste en construir el APK.**
+
+La compilación/prueba de login y la preparación del APK quedan para la etapa posterior acordada una vez que el flujo hasta LIVE esté implementado y comprobado.
+
+No se debe introducir trabajo de APK dentro de los bloques actuales salvo autorización explícita.
+
+## 43.4 LIVE — implementación visual y de interacción acordada
+
+La implementación de LIVE debe respetar el contrato funcional y de seguridad de las secciones anteriores y, además, mantener estas decisiones de interfaz ya acordadas:
+
+- La distribución audiovisual será adaptativa y se calculará a partir de los participantes activos.
+- Se contemplan las variantes de layout ya definidas en el módulo de LIVE: Host principal con Guests, distribución equilibrada, carrusel, Guest destacado, vista compacta y distribución dinámica.
+- El límite autoritativo continúa siendo **1 Host + hasta 11 Guests**, con máximo de 12 participantes audiovisuales.
+- La UI no debe crear una segunda representación fija del participante local cuando este ya forma parte de la distribución audiovisual.
+- Cada participante audiovisual debe ocupar el frame asignado por el layout.
+- La presentación debe adaptarse al dispositivo móvil y respetar el área segura de la interfaz.
+- Los controles flotantes deben ser pequeños pero utilizables con el dedo y no deben cubrir innecesariamente la transmisión.
+- La interfaz debe mantener una presentación visual de tipo glassmorphism conforme a la referencia visual acordada.
+- Las acciones visibles deben corresponder a funciones reales; no se deben duplicar botones para una misma función.
+
+## 43.5 Acciones y navegación de LIVE
+
+La superficie principal de LIVE deberá mantener una única entrada visible por función, con las acciones correspondientes al rol y permisos del usuario.
+
+Las funciones acordadas para la superficie de LIVE incluyen:
+
+- cámara;
+- micrófono;
+- Chat;
+- Tap-Tap;
+- Quiéreme;
+- Efectos;
+- Compartir Live;
+- gestión/moderación cuando corresponda;
+- finalizar/Salir según el rol;
+- Gifts como elemento visible del producto.
+
+Chat, Tap-Tap y Quiéreme permanecen separados conceptualmente y no deben convertirse en duplicados de los controles del Feed o de Messages.
+
+## 43.6 Roles y gestión de LIVE
+
+La interfaz de gestión debe respetar el rol y los permisos efectivos:
+
+### Host
+
+El Host conserva las capacidades de gestión de su sala, incluyendo:
+
+- participantes;
+- solicitudes;
+- invitaciones;
+- autorización audiovisual;
+- moderación;
+- gestión de moderadores;
+- finalización de la sala.
+
+### Moderator
+
+Un Guest que sea Moderator debe recibir únicamente las capacidades que le fueron concedidas.
+
+La interfaz de moderación del Moderator no debe exponer las funciones exclusivas del Host para asignar, revocar o editar moderadores.
+
+La entrada de moderación se mostrará únicamente cuando el usuario tenga al menos un permiso de moderación efectivo.
+
+### Guest sin moderación
+
+Un Guest sin permisos de moderación no debe recibir controles de moderación.
+
+### Spectator
+
+El espectador mantiene las acciones propias de espectador y, cuando el Live permita Guests, podrá solicitar participar conforme al flujo de solicitudes.
+
+Las restricciones de interfaz no sustituyen las validaciones server-side ni RLS.
+
+## 43.7 Moderación
+
+La autorización de moderación seguirá utilizando las capacidades explícitas del contrato de LIVE y no una autorización implícita basada solamente en la interfaz.
+
+Las capacidades actuales definidas para moderación son:
+
+- `invite_guests`;
+- `manage_requests`;
+- `manage_participants`;
+- `manage_chat`;
+- `remove_users`;
+- `mute_users`;
+- `block_users`.
+
+El Host mantiene la autoridad para conceder, revocar y modificar estos permisos.
+
+La UI debe mostrar a cada Moderator solamente las funciones que correspondan a sus permisos efectivos.
+
+## 43.8 Cámara y micrófono
+
+La implementación debe conservar la separación entre autorización y activación física:
+
+- el servidor puede autorizar o revocar;
+- el usuario controla físicamente su propia cámara;
+- el usuario controla físicamente su propio micrófono;
+- ningún participante puede activar remotamente los dispositivos de otra persona;
+- una revocación de autorización no debe interpretarse como una orden remota de activación;
+- el estado del dispositivo y el permiso concedido son conceptos separados.
+
+## 43.9 Gifts
+
+Gifts deben formar parte visible de la experiencia LIVE para que la función no quede olvidada en la implementación de la interfaz.
+
+En esta etapa, la presencia visual de Gifts **no autoriza** inventar:
+
+- catálogo;
+- nombres;
+- precios;
+- cantidades;
+- reparto;
+- saldo;
+- ledger;
+- métodos de pago;
+- reglas financieras.
+
+La implementación financiera y el catálogo se realizarán cuando corresponda conforme a la especificación de Monetización y previa auditoría del estado real.
+
+## 43.10 Supabase y migraciones
+
+No se creará una migración solamente porque un requisito conceptual exista.
+
+Antes de cualquier migración:
+
+1. auditar el esquema Supabase vigente;
+2. comprobar si la entidad, columna, función, RLS o relación ya existe;
+3. identificar exactamente la diferencia;
+4. determinar si la diferencia requiere migración;
+5. informar el cambio;
+6. solicitar autorización cuando corresponda;
+7. probar la migración antes de considerar cerrado el bloque.
+
+Las funciones, RLS y tablas existentes de LIVE no deben duplicarse ni reemplazarse sin una diferencia real y justificada.
+
+## 43.11 Criterio de cierre de cada bloque
+
+Un bloque se considera cerrado solamente cuando:
+
+- la implementación corresponde al Documento Maestro;
+- no existen requisitos inventados;
+- el comportamiento fue comprobado;
+- las rutas/navegación relacionadas funcionan;
+- las funciones de Supabase utilizadas corresponden al esquema real;
+- RLS/permisos se han considerado cuando el bloque los requiere;
+- no quedan errores conocidos ocultos;
+- existe el commit correspondiente en la rama;
+- el push fue realizado;
+- la verificación disponible queda registrada.
+
+Un fallo de CI por una limitación externa de GitHub Actions debe registrarse como **verificación CI pendiente**, no como éxito.
+
+## 43.12 Estado de la etapa
+
+Esta sección describe el orden y las decisiones ya acordadas para implementar la etapa actual. No autoriza por sí sola nuevas tablas, migraciones, servicios externos, precios, catálogos financieros ni cambios fuera del bloque en curso.
+
