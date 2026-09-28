@@ -19,6 +19,7 @@ import {
 } from "react-native";
 import { useAuth } from "../../../context/AuthContext";
 import { supabase } from "../../../lib/supabase";
+import { LiveInvitations } from "./LiveInvitations";
 import {
   agoraUidFromUserId,
   getLiveRtcCredentials,
@@ -555,6 +556,10 @@ export default function LiveRoom() {
           </View>
 
           <View style={styles.topBarActions}>
+            {user?.id ? (
+              <LiveInvitations roomId={roomId ?? ""} userId={user.id} />
+            ) : null}
+
             {isMember ? (
               <Pressable
                 style={styles.manageButton}
