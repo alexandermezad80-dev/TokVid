@@ -219,16 +219,7 @@ Un Live con invitados tendrá:
 
 Las ventanillas son dinámicas. Un Guest puede salir voluntariamente, solicitar que lo bajen o ser retirado conforme a las herramientas de moderación. Cuando exista una ventanilla disponible, el anfitrión puede gestionar la entrada de otro participante.
 
-El Live podrá ofrecer distintos modelos de distribución visual de ventanillas, por ejemplo:
-
-- Anfitrión principal + Guests en cuadrícula.
-- Distribución equilibrada.
-- Anfitrión principal + carrusel de Guests.
-- Guest destacado temporalmente.
-- Vista compacta.
-- Distribución dinámica.
-
-La presentación debe adaptarse al tamaño y proporción del dispositivo móvil sin saturar ni ocultar innecesariamente la transmisión.
+La arquitectura de LIVE debe soportar layouts de ventanillas sin alterar la autoridad ni el límite real de participantes. La definición visual vigente de esos layouts pertenece exclusivamente a la fuente visual canónica de la sección 43.4.
 
 ### Modalidades de Live
 
@@ -248,8 +239,6 @@ Dentro del Live:
 - El usuario invitado puede aceptar o rechazar desde la propia interfaz del Live.
 - Aceptar una invitación no activa remotamente cámara ni micrófono.
 - La disponibilidad de las 11 ventanillas debe respetarse antes de incorporar un nuevo Guest.
-
-Los controles de micrófono, cámara, solicitud e invitación deben estar diseñados para interacción rápida y clara en la pantalla móvil.
 
 ### Cámara, micrófono y efectos
 
