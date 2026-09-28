@@ -554,12 +554,26 @@ export default function LiveRoom() {
             </Text>
           </View>
 
-          <Pressable
-            style={styles.closeButton}
-            onPress={() => router.back()}
-          >
-            <Feather name="x" size={22} color="#fff" />
-          </Pressable>
+          <View style={styles.topBarActions}>
+            {isMember ? (
+              <Pressable
+                style={styles.manageButton}
+                onPress={() =>
+                  router.push(`/live-manage?roomId=${encodeURIComponent(roomId ?? "")}`)
+                }
+              >
+                <Feather name="settings" size={18} color="#fff" />
+                <Text style={styles.manageButtonText}>Gestionar</Text>
+              </Pressable>
+            ) : null}
+
+            <Pressable
+              style={styles.closeButton}
+              onPress={() => router.back()}
+            >
+              <Feather name="x" size={22} color="#fff" />
+            </Pressable>
+          </View>
         </View>
       </View>
 
@@ -768,6 +782,25 @@ const styles = StyleSheet.create({
     color: "#bbb",
     fontSize: 12,
     marginTop: 3,
+  },
+  topBarActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  manageButton: {
+    minHeight: 38,
+    paddingHorizontal: 11,
+    borderRadius: 19,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  manageButtonText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "700",
   },
   closeButton: {
     width: 38,
