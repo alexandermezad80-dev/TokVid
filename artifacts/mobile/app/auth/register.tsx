@@ -25,18 +25,13 @@ export default function RegisterScreen() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const handleRegister = async () => {
-    if (!username.trim() || !email.trim() || !password || !confirmPassword) {
-      setError("Completá todos los campos.");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden.");
+    if (!username.trim() || !email.trim() || !password) {
+      setError("Completá usuario, email y contraseña.");
       return;
     }
     if (password.length < 6) {
@@ -149,19 +144,6 @@ export default function RegisterScreen() {
           </View>
         </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Confirmar contraseña</Text>
-          <TextInput
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            placeholder="Repetí tu contraseña"
-            placeholderTextColor="#555"
-            secureTextEntry={!showPass}
-            autoCapitalize="none"
-            style={styles.input}
-          />
-        </View>
-
         <TouchableOpacity
           style={[styles.btn, loading && styles.btnDisabled]}
           onPress={handleRegister}
@@ -193,7 +175,7 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: 38,
     fontWeight: "900",
-    color: "#00F2EA",
+    color: "#FE0979",
     textAlign: "center",
     letterSpacing: -1,
     marginBottom: 32,
@@ -204,9 +186,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "rgba(0,242,234,0.1)",
+    backgroundColor: "rgba(254,9,121,0.1)",
     borderWidth: 1,
-    borderColor: "rgba(0,242,234,0.3)",
+    borderColor: "rgba(254,9,121,0.3)",
     borderRadius: 10,
     padding: 12,
     marginBottom: 20,
@@ -244,7 +226,7 @@ const styles = StyleSheet.create({
   },
   eyeBtn: { padding: 4 },
   btn: {
-    backgroundColor: "#00F2EA",
+    backgroundColor: "#FE0979",
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: "center",
@@ -259,5 +241,5 @@ const styles = StyleSheet.create({
     marginTop: 28,
   },
   footerText: { color: "#888", fontSize: 14 },
-  footerLink: { color: "#00F2EA", fontSize: 14, fontWeight: "700" },
+  footerLink: { color: "#FE0979", fontSize: 14, fontWeight: "700" },
 });
