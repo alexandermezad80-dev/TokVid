@@ -100,6 +100,12 @@ function FollowButton({ userId }: { userId: string }) {
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) router.replace("/auth/register");
+  }, [user]);
+
+  if (!user) return null;
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
