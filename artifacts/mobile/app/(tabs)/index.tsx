@@ -142,6 +142,10 @@ export default function FeedScreen() {
   );
 
   const handleShare = useCallback(async (item: VideoItem) => {
+    if (!user) {
+      router.push("/auth/register");
+      return;
+    }
     // Optimistic UI update
     setShareOverrides((prev) => ({
       ...prev,
