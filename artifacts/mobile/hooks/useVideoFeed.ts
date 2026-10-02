@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { router } from "expo-router";
 
 export interface VideoItem {
   id: string;
@@ -287,6 +288,10 @@ export function useVideoFeed(followedIds: Set<string>) {
 
   const toggleLike = useCallback(async (id: string) => {
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push("/auth/register");
+      return;
+    }
     let alreadyLiked = false;
 
     setLikedIds((prev) => {
@@ -295,13 +300,6 @@ export function useVideoFeed(followedIds: Set<string>) {
       alreadyLiked ? next.delete(id) : next.add(id);
       return next;
     });
-
-    if (!user) {
-      const next = new Set(likedIds);
-      alreadyLiked ? next.delete(id) : next.add(id);
-      AsyncStorage.setItem(LIKED_KEY, JSON.stringify([...next])).catch(() => {});
-      return;
-    }
 
     if (alreadyLiked) {
       const { error } = await supabase
