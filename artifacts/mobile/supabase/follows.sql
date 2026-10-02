@@ -10,9 +10,13 @@ CREATE TABLE IF NOT EXISTS follows (
 
 ALTER TABLE follows ENABLE ROW LEVEL SECURITY;
 
+-- A user can read relationships where they are either the follower or followed user.
 CREATE POLICY "read own follows"
   ON follows FOR SELECT
-  USING (auth.uid() = follower_id);
+  USING (
+    auth.uid() = follower_id
+    OR auth.uid() = following_id
+  );
 
 CREATE POLICY "insert own follows"
   ON follows FOR INSERT
