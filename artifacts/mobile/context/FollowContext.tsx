@@ -30,7 +30,7 @@ export function FollowProvider({ children }: { children: React.ReactNode }) {
     supabase
       .from("follows")
       .select("following_id")
-      .eq("follower_id", currentUser.id)
+      .eq("follower_id", user.id)
       .then(({ data }) => {
         if (data) {
           setFollowedIds(new Set(data.map((r) => r.following_id as string)));
@@ -75,7 +75,7 @@ export function FollowProvider({ children }: { children: React.ReactNode }) {
         await supabase.from("notifications").insert({
           user_id: creatorId,
           actor_id: currentUser.id,
-          actor_name: user.user_metadata?.username ?? user.user_metadata?.display_name ?? null,
+          actor_name: currentUser.user_metadata?.username ?? currentUser.user_metadata?.display_name ?? null,
           actor_avatar: null,
           type: "follow",
           message: "Comenzó a seguirte",
