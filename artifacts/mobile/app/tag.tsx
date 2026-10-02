@@ -18,6 +18,7 @@ import { supabase } from "../lib/supabase";
 import CommentsSheet from "../components/CommentsSheet";
 import VideoCard from "../components/VideoCard";
 import { useFollow } from "../context/FollowContext";
+import { useAuth } from "../context/AuthContext";
 import {
   VideoItem,
   formatCount,
@@ -39,6 +40,14 @@ export default function TagScreen() {
   const [shareOverrides, setShareOverrides] = useState<Record<string, number>>({});
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList>(null);
+
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) router.replace("/auth/register");
+  }, [user]);
+
+  if (!user) return null;
 
   const { followedIds, toggleFollow } = useFollow();
   const { likedIds, toggleLike } = useVideoFeed(followedIds);
