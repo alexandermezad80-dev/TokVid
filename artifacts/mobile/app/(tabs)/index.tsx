@@ -325,7 +325,13 @@ ${item.uri}`,
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => router.push("/story-create")}
+          onPress={() => {
+            if (!user) {
+              router.push("/auth/register");
+              return;
+            }
+            router.push("/story-create");
+          }}
           accessibilityLabel="Crear historia"
         >
           <Feather name="plus-circle" size={24} color="#fff" />
