@@ -90,7 +90,12 @@ export default function CommentsSheet({ visible, onClose, commentCount, videoId 
   }, [visible, videoId]);
 
   const send = async () => {
-    if (!text.trim() || !user || sending) return;
+    if (!text.trim() || sending) return;
+    if (!user) {
+      const { router } = await import("expo-router");
+      router.push("/auth/register");
+      return;
+    }
     setSending(true);
     const newComment = {
       video_id: videoId,
