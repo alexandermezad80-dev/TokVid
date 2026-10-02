@@ -86,7 +86,7 @@ export default function RegisterScreen() {
 
         {error && (
           <View style={styles.errorBox}>
-            <Feather name="alert-circle" size={14} color="#FE2C55" />
+            <Feather name="alert-circle" size={14} color="#00F2EA" />
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: 38,
     fontWeight: "900",
-    color: "#FE2C55",
+    color: "#00F2EA",
     textAlign: "center",
     letterSpacing: -1,
     marginBottom: 32,
@@ -204,14 +204,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "rgba(254,44,85,0.1)",
+    backgroundColor: "rgba(0,242,234,0.1)",
     borderWidth: 1,
-    borderColor: "rgba(254,44,85,0.3)",
+    borderColor: "rgba(0,242,234,0.3)",
     borderRadius: 10,
     padding: 12,
     marginBottom: 20,
   },
-  errorText: { color: "#FE2C55", fontSize: 13, flex: 1 },
+  errorText: { color: "#00F2EA", fontSize: 13, flex: 1 },
   divider: {
     flexDirection: "row",
     alignItems: "center",
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
   },
   eyeBtn: { padding: 4 },
   btn: {
-    backgroundColor: "#FE2C55",
+    backgroundColor: "#00F2EA",
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: "center",
@@ -259,5 +259,5 @@ const styles = StyleSheet.create({
     marginTop: 28,
   },
   footerText: { color: "#888", fontSize: 14 },
-  footerLink: { color: "#FE2C55", fontSize: 14, fontWeight: "700" },
+  footerLink: { color: "#00F2EA", fontSize: 14, fontWeight: "700" },
 });
