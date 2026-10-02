@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { router } from "expo-router";
 import { BASE_VIDEOS, VideoItem, mapRowsToVideoItems } from "./useVideoFeed";
 
 /**
@@ -59,7 +60,10 @@ export function useSavedVideos() {
 
   const toggleSave = useCallback(async (videoId: string) => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      router.push("/auth/register");
+      return;
+    }
 
     const alreadySaved = savedIds.has(videoId);
 
