@@ -49,7 +49,7 @@ function RootLayoutNav() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {session && onboardingCompleted ? (
+      {!session || onboardingCompleted ? (
         <>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="story-viewer" options={{ presentation: "fullScreenModal", animation: "fade" }} />
