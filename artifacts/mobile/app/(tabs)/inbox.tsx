@@ -128,6 +128,12 @@ export default function InboxScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const { user } = useAuth();
 
+  useEffect(() => {
+    if (!user) router.replace("/auth/register");
+  }, [user]);
+
+  if (!user) return null;
+
   // Messages state
   const [convos, setConvos] = useState<ConversationRow[]>([]);
   const [convosLoading, setConvosLoading] = useState(false);
