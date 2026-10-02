@@ -30,6 +30,12 @@ export default function ChatScreen() {
   const params = useLocalSearchParams<{ conversationId:string; otherUserId:string; otherUsername:string; otherAvatar:string }>();
   const { conversationId, otherUserId, otherUsername, otherAvatar } = params;
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) router.replace("/auth/register");
+  }, [user]);
+
+  if (!user) return null;
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 20 : insets.bottom;
