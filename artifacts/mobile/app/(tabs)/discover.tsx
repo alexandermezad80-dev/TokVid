@@ -124,6 +124,12 @@ export default function DiscoverScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const { user } = useAuth();
 
+  useEffect(() => {
+    if (!user) router.replace("/auth/register");
+  }, [user]);
+
+  if (!user) return null;
+
   const doSearch = useCallback(async (q: string) => {
     if (q.trim().length < 2) {
       setResults([]);
