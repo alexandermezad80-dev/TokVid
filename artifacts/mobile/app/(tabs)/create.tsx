@@ -28,11 +28,15 @@ export default function CreateScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 : insets.bottom;
-  const { user, profile } = useAuth();
+  const { user, profile, requireAuth } = useAuth();
 
   const player = useVideoPlayer(videoUri ?? "", (p) => { p.loop = true; });
 
   const pickVideo = async () => {
+    if (!user) {
+      await requireAuth();
+      return;
+    }
     setError(null);
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
@@ -52,7 +56,9 @@ export default function CreateScreen() {
   };
 
   const upload = async () => {
-    if (!videoUri || !user) return;
+    if (!videoUri) return;
+    const currentUser = user ?? await requireAuth();
+    if (!currentUser) return;
     setPhase("uploading");
     setProgress(0);
     setError(null);
@@ -65,7 +71,7 @@ export default function CreateScreen() {
       setProgress(40);
 
       const ext = videoUri.split(".").pop() ?? "mp4";
-      const fileName = `${user.id}/${Date.now()}.${ext}`;
+      const fileName = `${currentUser.id}/${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from("videos")
@@ -80,7 +86,7 @@ export default function CreateScreen() {
       const { data: inserted, error: insertError } = await supabase
         .from("videos")
         .insert({
-          user_id: user.id,
+          user_id: currentUser.id,
           video_url: urlData.publicUrl,
           caption: trimmedCaption,
         })
@@ -96,7 +102,7 @@ export default function CreateScreen() {
           await saveVideoTags({
             videoId: inserted.id,
             caption: trimmedCaption,
-            authorId: user.id,
+            authorId: currentUser.id,
             authorName: profile?.username ?? "Alguien",
             authorAvatar: profile?.avatar_url ?? null,
           });
