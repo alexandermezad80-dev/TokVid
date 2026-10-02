@@ -7,6 +7,7 @@ on:
 
 jobs:
   build-android:
+    environment: production
     runs-on: ubuntu-latest
     env:
       ANDROID_HOME: /usr/local/lib/android/sdk
