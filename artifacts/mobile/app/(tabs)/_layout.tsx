@@ -5,8 +5,10 @@ import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
 import { SymbolView } from "expo-symbols";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useNotifications } from "../../context/NotificationsContext";
+import { useAuth } from "../../context/AuthContext";
+import { router } from "expo-router";
 
 const PRIMARY = "#FE0979";
 const CYAN = "#00F2FE";
@@ -49,10 +51,45 @@ function NativeTabLayout() {
   );
 }
 
+function GuestTabButton({
+  label,
+  icon,
+  create = false,
+}: {
+  label: string;
+  icon: string;
+  create?: boolean;
+}) {
+  const isIOS = Platform.OS === "ios";
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={() => router.push("/auth/register")}
+      style={styles.guestButton}
+    >
+      {create ? (
+        <View style={styles.createBtn}>
+          <View style={styles.createBtnInner}>
+            <Feather name="plus" size={24} color="#fff" />
+          </View>
+        </View>
+      ) : isIOS ? (
+        <SymbolView name={icon} tintColor="#8A8B97" size={24} />
+      ) : (
+        <Feather name={icon} size={22} color="#8A8B97" />
+      )}
+      {!create ? <Text style={styles.guestLabel}>{label}</Text> : null}
+    </Pressable>
+  );
+}
+
 function ClassicTabLayout() {
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
   const { unreadCount } = useNotifications();
+  const { user } = useAuth();
+  const guest = !user;
 
   return (
     <Tabs
@@ -84,6 +121,7 @@ function ClassicTabLayout() {
         name="index"
         options={{
           title: "Inicio",
+          tabBarButton: guest ? () => <GuestTabButton label="Inicio" icon="house" /> : undefined,
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="house" tintColor={color} size={24} />
@@ -96,6 +134,7 @@ function ClassicTabLayout() {
         name="friends"
         options={{
           title: "Amigos",
+          tabBarButton: guest ? () => <GuestTabButton label="Amigos" icon="person.2" /> : undefined,
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="person.2" tintColor={color} size={24} />
@@ -108,6 +147,7 @@ function ClassicTabLayout() {
         name="create"
         options={{
           title: "",
+          tabBarButton: guest ? () => <GuestTabButton label="Crear" icon="plus" create /> : undefined,
           tabBarIcon: () => (
             <View style={styles.createBtn}>
               <View style={styles.createBtnInner}>
@@ -121,6 +161,7 @@ function ClassicTabLayout() {
         name="inbox"
         options={{
           title: "Mensajes",
+          tabBarButton: guest ? () => <GuestTabButton label="Mensajes" icon="message" /> : undefined,
           tabBarIcon: ({ color }) => (
             <View>
               {isIOS ? (
@@ -137,6 +178,7 @@ function ClassicTabLayout() {
         name="profile"
         options={{
           title: "Perfil",
+          tabBarButton: guest ? () => <GuestTabButton label="Perfil" icon="person" /> : undefined,
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="person" tintColor={color} size={24} />
@@ -150,11 +192,24 @@ function ClassicTabLayout() {
 }
 
 export default function TabLayout() {
+  const { user } = useAuth();
+  // Guests use the classic bar so every bottom action can intentionally
+  // intercept the tap and open registration. Authenticated users keep the
+  // native iOS tab bar when available.
+  if (!user) return <ClassicTabLayout />;
   if (isLiquidGlassAvailable()) return <NativeTabLayout />;
   return <ClassicTabLayout />;
 }
 
 const styles = StyleSheet.create({
+  guestButton: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 58,
+    gap: 2,
+  },
+  guestLabel: { color: "#8A8B97", fontSize: 10, fontWeight: "600" },
   createBtn: {
     width: 52,
     height: 32,
