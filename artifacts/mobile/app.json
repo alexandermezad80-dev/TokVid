@@ -32,7 +32,10 @@
       "favicon": "./assets/images/branding/icon_glass_full.png"
     },
     "plugins": [
-      "expo-router","expo-font","expo-web-browser",
+      "expo-router",
+      "expo-font",
+      "expo-web-browser",
+      ["./plugins/withGlassBranding"],
       ["expo-camera",{"cameraPermission":"Tokvid necesita acceso a la cámara para videollamadas.","microphonePermission":"Tokvid necesita acceso al micrófono para llamadas de voz y video."}],
       ["expo-build-properties",{"android":{"minSdkVersion":24},"ios":{"deploymentTarget":"15.1"}}],
       ["expo-notifications",{"icon":"./assets/images/icon.png","color":"#FE2C55","sounds":[],"androidMode":"default","androidCollapsedTitle":"Tokvid"}]
