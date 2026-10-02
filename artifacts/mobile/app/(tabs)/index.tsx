@@ -211,11 +211,23 @@ ${item.uri}`,
           onLike={() => toggleLike(item.id)}
           onDoubleLike={() => toggleLike(item.id)}
           onFollow={() => toggleFollow(item.creatorId)}
-          onComment={() => setCommentVideo(item)}
+          onComment={() => {
+            if (!user) {
+              router.push("/auth/register");
+              return;
+            }
+            setCommentVideo(item);
+          }}
           onShare={() => handleShare(item)}
           onSave={() => toggleSave(item.id)}
           onDelete={() => handleDelete(item)}
-          onAvatarPress={() => router.push(`/user-profile?userId=${item.creatorId}`)}
+          onAvatarPress={() => {
+            if (!user) {
+              router.push("/auth/register");
+              return;
+            }
+            router.push(`/user-profile?userId=${item.creatorId}`);
+          }}
         />
       );
     },
