@@ -28,6 +28,12 @@ function avatarPlaceholder(user: any, profile: any): string {
 
 export default function EditProfileScreen() {
   const { user, profile, refreshProfile } = useAuth();
+
+  useEffect(() => {
+    if (!user) router.replace("/auth/register");
+  }, [user]);
+
+  if (!user) return null;
   const insets = useSafeAreaInsets();
 
   const [username, setUsername] = useState(profile?.username ?? "");
