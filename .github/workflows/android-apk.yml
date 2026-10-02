@@ -18,6 +18,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Verify Supabase configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${EXPO_PUBLIC_SUPABASE_URL:-}" ]; then echo "EXPO_PUBLIC_SUPABASE_URL: EMPTY"; else echo "EXPO_PUBLIC_SUPABASE_URL: SET"; fi
+          if [ -z "${EXPO_PUBLIC_SUPABASE_ANON_KEY:-}" ]; then echo "EXPO_PUBLIC_SUPABASE_ANON_KEY: EMPTY"; else echo "EXPO_PUBLIC_SUPABASE_ANON_KEY: SET"; fi
+          test -n "${EXPO_PUBLIC_SUPABASE_URL:-}" || { echo "ERROR: EXPO_PUBLIC_SUPABASE_URL is not available to this job."; exit 1; }
+          test -n "${EXPO_PUBLIC_SUPABASE_ANON_KEY:-}" || { echo "ERROR: EXPO_PUBLIC_SUPABASE_ANON_KEY is not available to this job."; exit 1; }
       - name: Free runner disk space
         run: |
           echo "Disk before cleanup:"
