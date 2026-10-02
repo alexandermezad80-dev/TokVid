@@ -18,7 +18,7 @@ interface FollowContextValue {
 const FollowContext = createContext<FollowContextValue | null>(null);
 
 export function FollowProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, requireAuth } = useAuth();
   const [followedIds, setFollowedIds] = useState<Set<string>>(new Set());
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
 
@@ -30,7 +30,7 @@ export function FollowProvider({ children }: { children: React.ReactNode }) {
     supabase
       .from("follows")
       .select("following_id")
-      .eq("follower_id", user.id)
+      .eq("follower_id", currentUser.id)
       .then(({ data }) => {
         if (data) {
           setFollowedIds(new Set(data.map((r) => r.following_id as string)));
@@ -45,7 +45,8 @@ export function FollowProvider({ children }: { children: React.ReactNode }) {
 
   const toggleFollow = useCallback(
     async (creatorId: string) => {
-      if (!user || creatorId === user.id) return;
+      const currentUser = user ?? await requireAuth();
+      if (!currentUser || creatorId === currentUser.id) return;
 
       const alreadyFollowing = followedIds.has(creatorId);
 
@@ -63,22 +64,22 @@ export function FollowProvider({ children }: { children: React.ReactNode }) {
         ({ error } = await supabase
           .from("follows")
           .delete()
-          .match({ follower_id: user.id, following_id: creatorId }));
+          .match({ follower_id: currentUser.id, following_id: creatorId }));
       } else {
         ({ error } = await supabase
           .from("follows")
-          .insert({ follower_id: user.id, following_id: creatorId }));
+          .insert({ follower_id: currentUser.id, following_id: creatorId }));
       }
 
       if (!error && !alreadyFollowing) {
         await supabase.from("notifications").insert({
           user_id: creatorId,
-          actor_id: user.id,
+          actor_id: currentUser.id,
           actor_name: user.user_metadata?.username ?? user.user_metadata?.display_name ?? null,
           actor_avatar: null,
           type: "follow",
           message: "Comenzó a seguirte",
-          data: { actorId: user.id },
+          data: { actorId: currentUser.id },
         });
       }
 
@@ -96,7 +97,7 @@ export function FollowProvider({ children }: { children: React.ReactNode }) {
         return next;
       });
     },
-    [user, followedIds]
+    [user, followedIds, requireAuth]
   );
 
   return (
