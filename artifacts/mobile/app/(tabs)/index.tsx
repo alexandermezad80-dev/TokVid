@@ -306,39 +306,37 @@ ${item.uri}`,
         />
       )}
 
-      <View style={[styles.storiesOverlay, { top: topPad + 48 }]}>
-        <StoriesStrip />
-      </View>
+      {user ? (
+        <>
+          <View style={[styles.storiesOverlay, { top: topPad + 48 }]}>
+            <StoriesStrip />
+          </View>
 
-      {/* Header overlay */}
-      <View style={[styles.header, { paddingTop: topPad + 10 }]}>
-        <TouchableOpacity onPress={() => handleTabSwitch("following")}>
-          <Text style={[styles.tab, activeTab === "following" && styles.tabActive]}>
-            Following
-          </Text>
-        </TouchableOpacity>
+          {/* Header overlay */}
+          <View style={[styles.header, { paddingTop: topPad + 10 }]}>
+            <TouchableOpacity onPress={() => handleTabSwitch("following")}>
+              <Text style={[styles.tab, activeTab === "following" && styles.tabActive]}>
+                Following
+              </Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => handleTabSwitch("foryou")}>
-          <Text style={[styles.tab, activeTab === "foryou" && styles.tabActive]}>
-            For You
-          </Text>
-        </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleTabSwitch("foryou")}>
+              <Text style={[styles.tab, activeTab === "foryou" && styles.tabActive]}>
+                For You
+              </Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => {
-            if (!user) {
-              router.push("/auth/register");
-              return;
-            }
-            router.push("/story-create");
-          }}
-          accessibilityLabel="Crear historia"
-        >
-          <Feather name="plus-circle" size={24} color="#fff" />
-        </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push("/story-create")}
+              accessibilityLabel="Crear historia"
+            >
+              <Feather name="plus-circle" size={24} color="#fff" />
+            </TouchableOpacity>
 
-        <Feather name="search" size={24} color="#fff" />
-      </View>
+            <Feather name="search" size={24} color="#fff" />
+          </View>
+        </>
+      ) : null;
 
       <CommentsSheet
         visible={!!commentVideo}
