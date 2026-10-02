@@ -1,8 +1,6 @@
 name: Android APK
 
 on:
-  push:
-    branches: [ feature/onboarding-profile-interests ]
   workflow_dispatch:
 
 jobs:
