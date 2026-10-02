@@ -22,6 +22,7 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  requireAuth: () => Promise<User | null>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -92,13 +93,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: null };
   };
 
+  const requireAuth = async () => {
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (currentUser) return currentUser;
+    const { router } = await import("expo-router");
+    router.push("/auth/register");
+    return null;
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setProfile(null);
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, signUp, signIn, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ session, user, profile, loading, signUp, signIn, signOut, refreshProfile, requireAuth }}>
       {children}
     </AuthContext.Provider>
   );
