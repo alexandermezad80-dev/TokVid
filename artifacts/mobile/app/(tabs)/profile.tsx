@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -37,9 +37,15 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const { user, profile, signOut, refreshProfile } = useAuth();
+
+  useEffect(() => {
+    if (!user) router.replace("/auth/register");
+  }, [user]);
   const { savedVideos } = useSavedVideos();
   const { followedIds } = useFollow();
   const { likedVideos } = useVideoFeed(followedIds);
+
+  if (!user) return null;
 
   useFocusEffect(
     useCallback(() => {
