@@ -275,4 +275,5 @@ const styles = StyleSheet.create({
     zIndex: 30,
   },
   errorText: { color: "#fff", fontSize: 13, textAlign: "center" },
+  footer: { paddingVertical: 16, alignItems: "center" },
 });
