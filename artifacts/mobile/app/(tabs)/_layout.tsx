@@ -57,7 +57,7 @@ function GuestTabButton({
   create = false,
 }: {
   label: string;
-  icon: string;
+  icon: React.ComponentProps<typeof SymbolView>["name"];
   create?: boolean;
 }) {
   const isIOS = Platform.OS === "ios";
@@ -77,7 +77,7 @@ function GuestTabButton({
       ) : isIOS ? (
         <SymbolView name={icon} tintColor="#8A8B97" size={24} />
       ) : (
-        <Feather name={icon} size={22} color="#8A8B97" />
+        <Feather name={icon as React.ComponentProps<typeof Feather>["name"]} size={22} color="#8A8B97" />
       )}
       {!create ? <Text style={styles.guestLabel}>{label}</Text> : null}
     </Pressable>
