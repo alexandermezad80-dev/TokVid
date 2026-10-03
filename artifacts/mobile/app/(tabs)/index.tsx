@@ -15,6 +15,7 @@ import {
   ViewToken,
 } from "react-native";
 import { supabase } from "../../lib/supabase";
+import { LinearGradient } from "expo-linear-gradient";
 import CommentsSheet from "../../components/CommentsSheet";
 import Toast from "../../components/Toast";
 import VideoCard from "../../components/VideoCard";
@@ -46,6 +47,7 @@ export default function FeedScreen() {
     hasMore,
     isRefreshing,
     error,
+    isGuest,
   } = useVideoFeed(followedIds);
   const { savedIds, toggleSave } = useSavedVideos();
 
@@ -185,6 +187,7 @@ ${item.uri}`,
           onShare={() => handleShare(item)}
           onSave={() => toggleSave(item.id)}
           onDelete={() => handleDelete(item)}
+          isGuest={isGuest}
           onAvatarPress={() => {
             if (!user) {
               router.push("/auth/register");
@@ -200,6 +203,23 @@ ${item.uri}`,
 
   return (
     <View style={styles.container}>
+      <View style={styles.feedHeader} pointerEvents="box-none">
+        <View style={styles.feedModes}>
+          <Text style={styles.feedModeActive}>Para ti</Text>
+          <Text style={styles.feedModeInactive}>Siguiendo</Text>
+        </View>
+        <View style={styles.searchDecor}>
+          <LinearGradient
+            colors={["#00F2FE", "#FE0979"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.searchDecorGradient}
+          >
+            <Feather name="search" size={18} color="#fff" />
+          </LinearGradient>
+        </View>
+      </View>
+
       <FlatList
           ref={flatListRef}
           data={videos}
@@ -263,6 +283,52 @@ ${item.uri}`,
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000" },
+  feedHeader: {
+    position: "absolute",
+    top: 18,
+    left: 0,
+    right: 0,
+    zIndex: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 18,
+  },
+  feedModes: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 22,
+  },
+  feedModeActive: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "800",
+    textShadowColor: "rgba(0,0,0,0.65)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  feedModeInactive: {
+    color: "rgba(255,255,255,0.68)",
+    fontSize: 15,
+    fontWeight: "600",
+    textShadowColor: "rgba(0,0,0,0.65)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  searchDecor: {
+    position: "absolute",
+    right: 16,
+    top: -4,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    overflow: "hidden",
+  },
+  searchDecorGradient: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   errorBanner: {
     position: "absolute",
     left: 16,
