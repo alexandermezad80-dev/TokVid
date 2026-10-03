@@ -57,7 +57,7 @@ function GuestTabButton({
   create = false,
 }: {
   label: string;
-  icon: React.ComponentProps<typeof SymbolView>["name"];
+  icon: string;
   create?: boolean;
 }) {
   const isIOS = Platform.OS === "ios";
@@ -134,7 +134,7 @@ function ClassicTabLayout() {
         name="friends"
         options={{
           title: "Amigos",
-          tabBarButton: guest ? () => <GuestTabButton label="Amigos" icon="person.2" /> : undefined,
+          tabBarButton: guest ? () => <GuestTabButton label="Amigos" icon="users" /> : undefined,
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="person.2" tintColor={color} size={24} />
@@ -161,7 +161,7 @@ function ClassicTabLayout() {
         name="inbox"
         options={{
           title: "Mensajes",
-          tabBarButton: guest ? () => <GuestTabButton label="Mensajes" icon="message" /> : undefined,
+          tabBarButton: guest ? () => <GuestTabButton label="Mensajes" icon="message-circle" /> : undefined,
           tabBarIcon: ({ color }) => (
             <View>
               {isIOS ? (
@@ -178,7 +178,7 @@ function ClassicTabLayout() {
         name="profile"
         options={{
           title: "Perfil",
-          tabBarButton: guest ? () => <GuestTabButton label="Perfil" icon="person" /> : undefined,
+          tabBarButton: guest ? () => <GuestTabButton label="Perfil" icon="user" /> : undefined,
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="person" tintColor={color} size={24} />
