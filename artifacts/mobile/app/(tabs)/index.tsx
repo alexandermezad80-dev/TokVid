@@ -242,7 +242,6 @@ ${item.uri}`,
           maxToRenderPerBatch={3}
           windowSize={3}
         />
-      )}
 
 
       <CommentsSheet
