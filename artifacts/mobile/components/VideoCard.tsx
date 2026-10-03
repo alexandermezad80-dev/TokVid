@@ -78,14 +78,27 @@ export default function VideoCard({
     }
 
     lastTap.current = now;
-    if (paused) {
-      setPaused(false);
-      player.play();
-    } else {
-      setPaused(true);
+    const nextPaused = !paused;
+    setPaused(nextPaused);
+    if (nextPaused) {
       player.pause();
+    } else {
+      player.play();
     }
+
+    if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
+    setPlayPauseFeedback(nextPaused ? "pause" : "play");
+    feedbackTimer.current = setTimeout(() => {
+      setPlayPauseFeedback(null);
+      feedbackTimer.current = null;
+    }, 450);
   };
+
+  useEffect(() => {
+    return () => {
+      if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
+    };
+  }, []);
 
   return (
     <Pressable onPress={handleTap} style={styles.container}>
@@ -128,7 +141,7 @@ export default function VideoCard({
 
       {showDoubleLike && (
         <View style={styles.doubleLikeOverlay} pointerEvents="none">
-          <Feather name="heart" size={86} color="#FE2C55" />
+          <Feather name="heart" size={86} color="#FE0979" />
         </View>
       )}
       {paused && (
@@ -162,15 +175,19 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     zIndex: 2,
   },
-  pauseOverlay: {
+  playPauseOverlay: {
     ...StyleSheet.absoluteFillObject,
     alignItems: "center",
     justifyContent: "center",
     zIndex: 3,
   },
-  pauseIcon: {
-    flexDirection: "row",
-    opacity: 0.8,
+  playPauseBadge: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.42)",
   },
   doubleLikeOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -178,11 +195,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     zIndex: 4,
     opacity: 0.95,
-  },
-  pauseBar: {
-    width: 8,
-    height: 50,
-    borderRadius: 4,
-    backgroundColor: "#fff",
   },
 });
