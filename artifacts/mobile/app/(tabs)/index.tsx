@@ -15,7 +15,6 @@ import {
   ViewToken,
 } from "react-native";
 import { supabase } from "../../lib/supabase";
-import { LinearGradient } from "expo-linear-gradient";
 import CommentsSheet from "../../components/CommentsSheet";
 import Toast from "../../components/Toast";
 import VideoCard from "../../components/VideoCard";
@@ -205,18 +204,31 @@ ${item.uri}`,
     <View style={styles.container}>
       <View style={styles.feedHeader} pointerEvents="box-none">
         <View style={styles.feedModes}>
-          <Text style={styles.feedModeActive}>Para ti</Text>
-          <Text style={styles.feedModeInactive}>Siguiendo</Text>
-        </View>
-        <View style={styles.searchDecor}>
-          <LinearGradient
-            colors={["#00F2FE", "#FE0979"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.searchDecorGradient}
+          <TouchableOpacity
+            onPress={isGuest ? () => router.push("/auth/register") : undefined}
+            activeOpacity={isGuest ? 0.7 : 1}
+            accessibilityRole="button"
+            accessibilityLabel="Para ti"
           >
-            <Feather name="search" size={18} color="#fff" />
-          </LinearGradient>
+            <Text style={styles.feedModeActive}>Para ti</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={isGuest ? () => router.push("/auth/register") : undefined}
+            activeOpacity={isGuest ? 0.7 : 1}
+            accessibilityRole="button"
+            accessibilityLabel="Siguiendo"
+          >
+            <Text style={styles.feedModeInactive}>Siguiendo</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={isGuest ? () => router.push("/auth/register") : undefined}
+            activeOpacity={isGuest ? 0.7 : 1}
+            accessibilityRole="button"
+            accessibilityLabel="Buscar"
+            style={styles.searchButton}
+          >
+            <Feather name="search" size={19} color="#fff" />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -285,14 +297,14 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000" },
   feedHeader: {
     position: "absolute",
-    top: 18,
+    top: 52,
     left: 0,
     right: 0,
     zIndex: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
   },
   feedModes: {
     flexDirection: "row",
@@ -315,19 +327,12 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
-  searchDecor: {
-    position: "absolute",
-    right: 16,
-    top: -4,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    overflow: "hidden",
-  },
-  searchDecorGradient: {
-    flex: 1,
+  searchButton: {
+    width: 30,
+    height: 30,
     alignItems: "center",
     justifyContent: "center",
+    marginLeft: 2,
   },
   errorBanner: {
     position: "absolute",
