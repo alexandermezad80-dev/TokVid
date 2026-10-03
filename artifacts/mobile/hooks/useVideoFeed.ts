@@ -73,7 +73,7 @@ export async function mapRowsToVideoItems(vids: any[]): Promise<VideoItem[]> {
     const username = prof?.username ?? "usuario";
     const avatarUrl =
       prof?.avatar_url ??
-      `https://api.dicebear.com/9.x/initials/png?seed=${encodeURIComponent(username)}&backgroundColor=FE2C55&textColor=ffffff`;
+      `https://api.dicebear.com/9.x/initials/png?seed=${encodeURIComponent(username)}&backgroundColor=FE0979&textColor=ffffff`;
     const videoUrl = v.url ?? v.video_url ?? "";
     return {
       id: v.id,
