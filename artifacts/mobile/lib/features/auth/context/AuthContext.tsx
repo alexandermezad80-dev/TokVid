@@ -76,14 +76,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     if (error) return { error: error.message };
 
-    if (data.user) {
-      const { error: profileError } = await supabase.from("profiles").upsert({
-        id: data.user.id,
-        username,
-        full_name: username,
-      });
-      if (profileError) return { error: profileError.message };
-    }
     return { error: null };
   };
 
