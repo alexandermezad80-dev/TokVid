@@ -48,7 +48,9 @@ export default function VideoCard({
   const [paused, setPaused] = useState(false);
   const [showThumbnail, setShowThumbnail] = useState(true);
   const [showDoubleLike, setShowDoubleLike] = useState(false);
+  const [playPauseFeedback, setPlayPauseFeedback] = useState<"play" | "pause" | null>(null);
   const lastTap = useRef<number>(0);
+  const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const player = useVideoPlayer(video.uri, (p) => {
     p.loop = true;
@@ -144,11 +146,14 @@ export default function VideoCard({
           <Feather name="heart" size={86} color="#FE0979" />
         </View>
       )}
-      {paused && (
-        <View style={styles.pauseOverlay} pointerEvents="none">
-          <View style={styles.pauseIcon}>
-            <View style={[styles.pauseBar, { marginRight: 6 }]} />
-            <View style={styles.pauseBar} />
+      {playPauseFeedback && (
+        <View style={styles.playPauseOverlay} pointerEvents="none">
+          <View style={styles.playPauseBadge}>
+            <Feather
+              name={playPauseFeedback === "play" ? "play" : "pause"}
+              size={30}
+              color="#fff"
+            />
           </View>
         </View>
       )}
