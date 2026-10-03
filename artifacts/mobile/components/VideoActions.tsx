@@ -1,4 +1,5 @@
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import React, { useEffect, useRef } from "react";
 import {
@@ -69,6 +70,8 @@ export default function VideoActions({
   const shareScale = useRef(new Animated.Value(1)).current;
   const saveScale = useRef(new Animated.Value(1)).current;
 
+  const goToRegister = () => router.push("/auth/register");
+
   const handleLike = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Animated.sequence([
@@ -100,44 +103,44 @@ export default function VideoActions({
 
   return (
     <View style={styles.container}>
-      {isGuest ? (
-        <View style={styles.profileBadge}>
-          <Feather name="user" size={28} color="#fff" />
-        </View>
-      ) : (
-        <SpinningRecord avatar={creatorAvatar} />
-      )}
+      <TouchableOpacity
+        onPress={isGuest ? goToRegister : undefined}
+        style={[styles.action, styles.profileAction]}
+        activeOpacity={isGuest ? 0.75 : 1}
+        accessibilityRole="button"
+        accessibilityLabel="Perfil del creador"
+      >
+        {isGuest ? (
+          <View style={styles.profileBadge}>
+            <MaterialCommunityIcons name="account-plus-outline" size={30} color="#fff" />
+          </View>
+        ) : (
+          <SpinningRecord avatar={creatorAvatar} />
+        )}
+      </TouchableOpacity>
 
-      <TouchableOpacity onPress={isGuest ? undefined : handleLike} style={styles.action} activeOpacity={isGuest ? 1 : 0.7}>
+      <TouchableOpacity onPress={isGuest ? goToRegister : handleLike} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Me gusta">
         <Animated.View style={{ transform: [{ scale: heartScale }] }}>
-          <Feather
-            name="heart"
-            size={34}
-            color={isLiked && !isGuest ? "#FE0979" : "#fff"}
-          />
+          <MaterialCommunityIcons name={isLiked && !isGuest ? "heart" : "heart-outline"} size={34} color={isLiked && !isGuest ? "#FE0979" : "#fff"} />
         </Animated.View>
         <Text style={styles.count}>{likes}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={isGuest ? undefined : onComment} style={styles.action} activeOpacity={isGuest ? 1 : 0.7}>
-        <Feather name="message-circle" size={34} color="#fff" />
+      <TouchableOpacity onPress={isGuest ? goToRegister : onComment} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Comentarios">
+        <MaterialCommunityIcons name="comment-outline" size={34} color="#fff" />
         <Text style={styles.count}>{comments}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={isGuest ? undefined : handleShare} style={styles.action} activeOpacity={isGuest ? 1 : 0.7}>
+      <TouchableOpacity onPress={isGuest ? goToRegister : handleShare} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Compartir">
         <Animated.View style={{ transform: [{ scale: shareScale }] }}>
-          <Feather name="share-2" size={34} color="#fff" />
+          <MaterialCommunityIcons name="share-variant-outline" size={34} color="#fff" />
         </Animated.View>
         <Text style={styles.count}>{shares}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={isGuest ? undefined : handleSave} style={styles.action} activeOpacity={isGuest ? 1 : 0.7}>
+      <TouchableOpacity onPress={isGuest ? goToRegister : handleSave} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Guardar">
         <Animated.View style={{ transform: [{ scale: saveScale }] }}>
-          <Feather
-            name="bookmark"
-            size={34}
-            color={isSaved && !isGuest ? "#FE0979" : "#fff"}
-          />
+          <MaterialCommunityIcons name={isSaved && !isGuest ? "bookmark" : "bookmark-outline"} size={34} color={isSaved && !isGuest ? "#FE0979" : "#fff"} />
         </Animated.View>
       </TouchableOpacity>
 
@@ -169,6 +172,7 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
+  profileAction: { marginBottom: 2 },
   profileBadge: {
     width: 52,
     height: 52,
