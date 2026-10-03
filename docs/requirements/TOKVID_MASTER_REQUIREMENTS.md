@@ -2110,7 +2110,7 @@ Controles:
 - position fixed, bottom 0, width 100vw, height 80 px, z-index 100.
 - En Home Feed: fondo transparente.
 - En pantallas secundarias: bloque negro sólido.
-- Cinco columnas iguales, 20% cada una: Inicio, Descubrir, +, Inbox, Perfil.
+- Cinco columnas iguales, 20% cada una: Home, Amigos, +, Mensajes, Perfil.
 - Pestaña activa: Cian; pasivas: blanco atenuado.
 
 Botón central +:
@@ -2120,6 +2120,85 @@ Botón central +:
 - Capa frontal central blanca sobre Home oscuro o negra en Perfil/Inbox.
 - Símbolo + centrado.
 - Al pulsar: scale(0.95) y apertura de Studio.
+
+
+
+### 43.4.9.1 Guest Feed — comportamiento de invitado y barra Android
+
+Esta subsección fija el comportamiento acordado para el **Feed de invitado** y tiene prioridad sobre cualquier descripción anterior de navegación que la contradiga.
+
+#### Feed de invitado
+
+- El invitado puede entrar al Home Feed y consumir contenido para probar la experiencia vertical.
+- El contenido de muestra/mock que exista en el proyecto es **exclusivamente para desarrollo y pruebas internas** de reproducción, scroll vertical, avance entre videos, precarga y comportamiento de carga.
+- Los datos mock/demo **no representan contenido real de usuarios y no deben tratarse como contenido de producción**.
+- El Feed de producción se alimentará con **videos reales** una vez que exista contenido real disponible.
+- El objetivo del mock/demo es permitir probar el scroll y la experiencia del Feed antes de cargar videos reales.
+
+#### Barra inferior Android del invitado
+
+La barra inferior del invitado tendrá exactamente cinco posiciones:
+
+1. **Home** — icono Android válido de Home.
+2. **Amigos** — icono Android válido de usuarios.
+3. **+** — botón central de Crear.
+4. **Mensajes** — icono Android válido de mensajes.
+5. **Perfil** — icono Android válido de usuario/perfil.
+
+Para la implementación Android se deben utilizar identificadores de iconos válidos y existentes en la librería de iconos utilizada por la aplicación, evitando cualquier fallback que renderice un signo de interrogación. La referencia actual de iconos es:
+
+- Home: `home`
+- Amigos: `users`
+- Crear: `plus`
+- Mensajes: `message-circle`
+- Perfil: `user`
+
+No debe aparecer **Discover/Descubrir** en esta barra de invitado ni como un elemento adicional de la barra.
+
+#### Navegación del invitado
+
+Mientras el usuario no esté autenticado:
+
+- **Home → Registro**
+- **Amigos → Registro**
+- **+ → Registro**
+- **Mensajes → Registro**
+- **Perfil → Registro**
+
+Esto significa que incluso Home, al pulsarse desde el estado de invitado, dirige al flujo de Registro. El invitado puede consumir el Feed antes de pulsar estas acciones, pero no obtiene acceso a las funciones autenticadas mediante la barra.
+
+#### Botón Crear (+) del invitado
+
+El botón central **+** debe conservar la identidad visual TOKVID:
+
+- capa/base izquierda: **Cian Eléctrico #00F2FE**;
+- capa/base derecha: **Magenta Vibrante #FE0979**;
+- símbolo **+** centrado;
+- no utilizar el rojo legado **#FE2C55** ni otro color de identidad no definido.
+
+En el estado de invitado, pulsar el + lleva a Registro. La apertura de Studio corresponde al comportamiento autenticado definido para el botón Crear.
+
+#### Barra inferior del usuario autenticado
+
+Una vez autenticado, los mismos cinco espacios recuperan sus funciones correspondientes:
+
+- **Home** → Home Feed.
+- **Amigos** → Amigos.
+- **+** → Crear/Studio.
+- **Mensajes** → Mensajes.
+- **Perfil** → Perfil.
+
+El Feed autenticado conserva las interacciones funcionales definidas en este Documento Maestro, incluyendo cuando correspondan:
+
+- Seguir desde el avatar/perfil del creador.
+- Me gusta.
+- Comentarios.
+- Favoritos/Guardar.
+- Compartir.
+- Acceso al perfil del creador.
+- Hashtags y menciones.
+
+La lógica de invitado no debe deshabilitar ni sustituir estas funciones cuando exista una sesión autenticada.
 
 ### 43.4.10 Regla de precedencia y eliminación de duplicados
 Para la **implementación actual de LIVE**, esta sección es la única referencia visual y de interacción de este Documento Maestro.
