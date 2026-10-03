@@ -28,6 +28,7 @@ interface Props {
   onSave: () => void;
   onDelete: () => void;
   onAvatarPress?: () => void;
+  isGuest: boolean;
 }
 
 export default function VideoCard({
@@ -44,6 +45,7 @@ export default function VideoCard({
   onSave,
   onDelete,
   onAvatarPress,
+  isGuest,
 }: Props) {
   const [paused, setPaused] = useState(false);
   const [showThumbnail, setShowThumbnail] = useState(true);
@@ -138,6 +140,7 @@ export default function VideoCard({
           onSave={onSave}
           onDelete={onDelete}
           creatorAvatar={video.creatorAvatar}
+          isGuest={isGuest}
         />
       </View>
 
