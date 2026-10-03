@@ -352,7 +352,12 @@ export function useVideoFeed(followedIds: Set<string>) {
   const rankedReal = interests.length > 0
     ? [...realVideos]
     : [...realVideos].sort((a, b) => rankScore(b) - rankScore(a));
-  const combined: VideoItem[] = rankedReal.filter(
+  // Guest/demo fallback: keep the existing six project demo videos available
+  // while Supabase has no published videos, so the guest Feed can be tested
+  // without inventing database content.
+  const realIds = new Set(realVideos.map((v) => v.id));
+  const mockFallback = BASE_VIDEOS.filter((v) => !realIds.has(v.id));
+  const combined: VideoItem[] = [...rankedReal, ...mockFallback].filter(
     (v) => !removedIds.has(v.id)
   );
 
