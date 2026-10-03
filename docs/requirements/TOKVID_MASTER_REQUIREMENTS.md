@@ -2200,6 +2200,20 @@ El Feed autenticado conserva las interacciones funcionales definidas en este Doc
 
 La lógica de invitado no debe deshabilitar ni sustituir estas funciones cuando exista una sesión autenticada.
 
+
+
+### 43.4.9.2 Video Feed — control Play/Pause
+
+En cada video del Feed vertical debe existir un control **Play/Pause** superpuesto de forma **semi-transparente**, discreto y sin obstaculizar la visualización del contenido.
+
+- El control debe permanecer visualmente integrado con el video y no cubrir innecesariamente el contenido.
+- Al pulsar **Play**, el video debe comenzar/reanudar su reproducción.
+- Al pulsar **Pause**, el video debe detener su reproducción.
+- La indicación/control de Play/Pause debe **desaparecer inmediatamente después de la acción**, para dejar nuevamente limpia la visualización.
+- El control no debe permanecer permanentemente visible sobre el video.
+- La interacción debe funcionar independientemente de las demás acciones del Feed (Like, Comentarios, Favoritos, Compartir y Seguir).
+- El comportamiento debe aplicarse al video que esté actualmente visible en el scroll.
+
 ### 43.4.10 Regla de precedencia y eliminación de duplicados
 Para la **implementación actual de LIVE**, esta sección es la única referencia visual y de interacción de este Documento Maestro.
 
