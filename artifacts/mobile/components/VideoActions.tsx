@@ -23,6 +23,7 @@ interface Props {
   onSave: () => void;
   onDelete: () => void;
   creatorAvatar: string;
+  isGuest: boolean;
 }
 
 function SpinningRecord({ avatar }: { avatar: string }) {
@@ -62,6 +63,7 @@ export default function VideoActions({
   onSave,
   onDelete,
   creatorAvatar,
+  isGuest,
 }: Props) {
   const heartScale = useRef(new Animated.Value(1)).current;
   const shareScale = useRef(new Animated.Value(1)).current;
@@ -98,37 +100,43 @@ export default function VideoActions({
 
   return (
     <View style={styles.container}>
-      <SpinningRecord avatar={creatorAvatar} />
+      {isGuest ? (
+        <View style={styles.profileBadge}>
+          <Feather name="user" size={28} color="#fff" />
+        </View>
+      ) : (
+        <SpinningRecord avatar={creatorAvatar} />
+      )}
 
-      <TouchableOpacity onPress={handleLike} style={styles.action}>
+      <TouchableOpacity onPress={isGuest ? undefined : handleLike} style={styles.action} activeOpacity={isGuest ? 1 : 0.7}>
         <Animated.View style={{ transform: [{ scale: heartScale }] }}>
           <Feather
             name="heart"
             size={34}
-            color={isLiked ? "#FE2C55" : "#fff"}
+            color={isLiked && !isGuest ? "#FE0979" : "#fff"}
           />
         </Animated.View>
         <Text style={styles.count}>{likes}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={onComment} style={styles.action}>
+      <TouchableOpacity onPress={isGuest ? undefined : onComment} style={styles.action} activeOpacity={isGuest ? 1 : 0.7}>
         <Feather name="message-circle" size={34} color="#fff" />
         <Text style={styles.count}>{comments}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={handleShare} style={styles.action}>
+      <TouchableOpacity onPress={isGuest ? undefined : handleShare} style={styles.action} activeOpacity={isGuest ? 1 : 0.7}>
         <Animated.View style={{ transform: [{ scale: shareScale }] }}>
           <Feather name="share-2" size={34} color="#fff" />
         </Animated.View>
         <Text style={styles.count}>{shares}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={handleSave} style={styles.action}>
+      <TouchableOpacity onPress={isGuest ? undefined : handleSave} style={styles.action} activeOpacity={isGuest ? 1 : 0.7}>
         <Animated.View style={{ transform: [{ scale: saveScale }] }}>
           <Feather
             name="bookmark"
             size={34}
-            color={isSaved ? "#FFD60A" : "#fff"}
+            color={isSaved && !isGuest ? "#FE0979" : "#fff"}
           />
         </Animated.View>
       </TouchableOpacity>
@@ -160,6 +168,17 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(0,0,0,0.6)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
+  },
+  profileBadge: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 2,
+    borderColor: "#fff",
+    backgroundColor: "rgba(0,0,0,0.34)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
   },
   recordOuter: {
     width: 52,
