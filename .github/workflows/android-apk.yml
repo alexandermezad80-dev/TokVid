@@ -5,8 +5,13 @@ on:
     branches: [ feature/onboarding-profile-interests ]
   workflow_dispatch:
 
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-android:
+    if: github.ref == 'refs/heads/feature/onboarding-profile-interests'
     environment: production
     runs-on: ubuntu-latest
     env:
