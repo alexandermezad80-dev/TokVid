@@ -30,8 +30,98 @@ export const MOCK_CREATOR_IDS: Record<string, string> = {
   "@flexnation": "66666666-6666-6666-6666-666666666666",
 };
 
-// Kept as an explicit export for saved-video consumers; the production feed uses persisted videos only.
-export const BASE_VIDEOS: VideoItem[] = [];
+const MOCK_VIDEOS_RAW: Omit<VideoItem, "isFollowing" | "isReal">[] = [
+  {
+    id: "1",
+    uri: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    thumbnail: require("../assets/images/thumb1.png"),
+    creator: "Luna Reyes",
+    creatorHandle: "@lunareyes",
+    creatorAvatar: "https://i.pravatar.cc/150?img=47",
+    creatorId: MOCK_CREATOR_IDS["@lunareyes"],
+    caption: "Morning dance routine hits different when the sun is just right ✨ #dance #morning #viral",
+    song: "♫ Flowers - Miley Cyrus",
+    likes: 284700,
+    comments: 3421,
+    shares: 8902,
+  },
+  {
+    id: "2",
+    uri: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+    thumbnail: require("../assets/images/thumb2.png"),
+    creator: "Jake Rivera",
+    creatorHandle: "@jakerides",
+    creatorAvatar: "https://i.pravatar.cc/150?img=13",
+    creatorId: MOCK_CREATOR_IDS["@jakerides"],
+    caption: "New skate park just opened downtown and it is INSANE 🛹🔥 #skateboarding #tricks #fyp",
+    song: "♫ Bad Habit - Steve Lacy",
+    likes: 192300,
+    comments: 2109,
+    shares: 5670,
+  },
+  {
+    id: "3",
+    uri: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+    thumbnail: require("../assets/images/thumb3.png"),
+    creator: "Chef Marco",
+    creatorHandle: "@chefmarco",
+    creatorAvatar: "https://i.pravatar.cc/150?img=59",
+    creatorId: MOCK_CREATOR_IDS["@chefmarco"],
+    caption: "Secret ramen recipe my grandmother taught me. Takes 6 hours but worth every second 🍜 #cooking #ramen #foodie",
+    song: "♫ Lofi Chill Beats",
+    likes: 521000,
+    comments: 12430,
+    shares: 34100,
+  },
+  {
+    id: "4",
+    uri: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+    thumbnail: require("../assets/images/thumb4.png"),
+    creator: "Mia Strings",
+    creatorHandle: "@miastrings",
+    creatorAvatar: "https://i.pravatar.cc/150?img=32",
+    creatorId: MOCK_CREATOR_IDS["@miastrings"],
+    caption: "Wrote this song last night, couldn't sleep. Hope it hits you the same way it hit me 🎸💫 #originalmusic #singer",
+    song: "♫ Original - Mia Strings",
+    likes: 389200,
+    comments: 7854,
+    shares: 19200,
+  },
+  {
+    id: "5",
+    uri: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
+    thumbnail: require("../assets/images/thumb5.png"),
+    creator: "ArtByKai",
+    creatorHandle: "@artbykai",
+    creatorAvatar: "https://i.pravatar.cc/150?img=24",
+    creatorId: MOCK_CREATOR_IDS["@artbykai"],
+    caption: "4 hours of work in 45 seconds. Started with a blank wall, ended with a story 🎨 #streetart #mural #art",
+    song: "♫ Midnight Rain - Taylor Swift",
+    likes: 743100,
+    comments: 9203,
+    shares: 51400,
+  },
+  {
+    id: "6",
+    uri: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+    thumbnail: require("../assets/images/thumb6.png"),
+    creator: "Flex Nation",
+    creatorHandle: "@flexnation",
+    creatorAvatar: "https://i.pravatar.cc/150?img=68",
+    creatorId: MOCK_CREATOR_IDS["@flexnation"],
+    caption: "First time hitting this rooftop gap. My heart was pounding the entire time 🤸 #parkour #extreme #freerunning",
+    song: "♫ Power - Kanye West",
+    likes: 1200000,
+    comments: 23100,
+    shares: 87600,
+  },
+];
+
+export const BASE_VIDEOS: VideoItem[] = MOCK_VIDEOS_RAW.map((v) => ({
+  ...v,
+  isFollowing: false,
+  isReal: false,
+}));
 
 /**
  * The feed uses only videos persisted in Supabase. Demo videos are kept out of
@@ -163,6 +253,7 @@ export function useVideoFeed(followedIds: Set<string>) {
   const [error, setError] = useState<string | null>(null);
   const [likedLoading, setLikedLoading] = useState(true);
   const [interests, setInterests] = useState<string[]>([]);
+  const [isGuest, setIsGuest] = useState(true);
   const pageRef = useRef(0);
 
   const removeVideo = useCallback((id: string) => {
@@ -192,6 +283,20 @@ export function useVideoFeed(followedIds: Set<string>) {
     } finally {
       setLikedLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (mounted) setIsGuest(!user);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (mounted) setIsGuest(!session?.user);
+    });
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -352,11 +457,12 @@ export function useVideoFeed(followedIds: Set<string>) {
   const rankedReal = interests.length > 0
     ? [...realVideos]
     : [...realVideos].sort((a, b) => rankScore(b) - rankScore(a));
-  // Guest/demo fallback: keep the existing six project demo videos available
-  // while Supabase has no published videos, so the guest Feed can be tested
-  // without inventing database content.
+  // Guest-only development fallback: real Supabase videos remain the source of
+  // production content; internal demo videos appear only for an unauthenticated guest.
   const realIds = new Set(realVideos.map((v) => v.id));
-  const mockFallback = BASE_VIDEOS.filter((v) => !realIds.has(v.id));
+  const mockFallback = isGuest
+    ? BASE_VIDEOS.filter((v) => !realIds.has(v.id))
+    : [];
   const combined: VideoItem[] = [...rankedReal, ...mockFallback].filter(
     (v) => !removedIds.has(v.id)
   );
@@ -386,5 +492,6 @@ export function useVideoFeed(followedIds: Set<string>) {
     isRefreshing,
     error,
     likedLoading,
+    isGuest,
   };
 }
