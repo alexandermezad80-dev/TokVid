@@ -2,6 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Dimensions,
   FlatList,
@@ -211,7 +212,7 @@ ${item.uri}`,
           decelerationRate="fast"
           onViewableItemsChanged={onViewableItemsChanged}
           viewabilityConfig={viewabilityConfig}
-          scrollEnabled={currentFeed.length > 0}
+          scrollEnabled={videos.length > 0}
           getItemLayout={(_, index) => ({
             length: SCREEN_HEIGHT,
             offset: SCREEN_HEIGHT * index,
@@ -233,7 +234,7 @@ ${item.uri}`,
           ListFooterComponent={
             hasMore ? (
               <View style={styles.footer}>
-                <ActivityIndicator size="small" color="#FE2C55" />
+                <ActivityIndicator size="small" color="#FE0979" />
               </View>
             ) : null
           }
