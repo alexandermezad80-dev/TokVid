@@ -1,4 +1,4 @@
-import { BlurView } from "expo-blur";
+import { BlurView } from "expo-blur";\nimport { LinearGradient } from "expo-linear-gradient";
 import { isLiquidGlassAvailable } from "expo-glass-effect";
 import { Tabs } from "expo-router";
 import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
@@ -70,9 +70,14 @@ function GuestTabButton({
     >
       {create ? (
         <View style={styles.createBtn}>
-          <View style={styles.createBtnInner}>
+          <LinearGradient
+            colors={[CYAN, PRIMARY]}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={styles.createBtnInner}
+          >
             <Feather name="plus" size={24} color="#fff" />
-          </View>
+          </LinearGradient>
         </View>
       ) : isIOS ? (
         <SymbolView name={icon} tintColor="#8A8B97" size={24} />
@@ -219,7 +224,6 @@ const styles = StyleSheet.create({
   },
   createBtnInner: {
     flex: 1,
-    backgroundColor: PRIMARY,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 10,
