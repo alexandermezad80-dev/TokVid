@@ -80,8 +80,6 @@ function GuestTabButton({
             <Feather name="plus" size={24} color="#fff" />
           </LinearGradient>
         </View>
-      ) : isIOS ? (
-        <SymbolView name={icon} tintColor="#8A8B97" size={24} />
       ) : (
         <Feather name={icon as React.ComponentProps<typeof Feather>["name"]} size={22} color="#8A8B97" />
       )}
