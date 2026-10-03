@@ -5,7 +5,6 @@ import {
   Alert,
   Dimensions,
   FlatList,
-  Platform,
   RefreshControl,
   Share,
   StyleSheet,
@@ -15,7 +14,6 @@ import {
   ViewToken,
 } from "react-native";
 import { supabase } from "../../lib/supabase";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import CommentsSheet from "../../components/CommentsSheet";
 import Toast from "../../components/Toast";
 import VideoCard from "../../components/VideoCard";
@@ -39,14 +37,12 @@ export default function FeedScreen() {
   const { followedIds, toggleFollow } = useFollow();
   const {
     videos,
-    followingVideos,
     likedIds,
     toggleLike,
     removeVideo,
     loadMore,
     refreshFeed,
     hasMore,
-    isLoading,
     isRefreshing,
     error,
   } = useVideoFeed(followedIds);
@@ -225,9 +221,9 @@ ${item.uri}`,
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={refreshFeed}
-              tintColor="#FE2C55"
+              tintColor="#FE0979"
               title="Actualizando"
-              titleColor="#FE2C55"
+              titleColor="#FE0979"
             />
           }
           onEndReached={() => {
