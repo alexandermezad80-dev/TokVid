@@ -125,7 +125,7 @@ function ClassicTabLayout() {
         name="index"
         options={{
           title: "Inicio",
-          tabBarButton: guest ? () => <GuestTabButton label="Inicio" icon="house" /> : undefined,
+          tabBarButton: guest ? () => <GuestTabButton label="Inicio" icon="home" /> : undefined,
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="house" tintColor={color} size={24} />
