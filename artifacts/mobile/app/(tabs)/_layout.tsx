@@ -179,6 +179,10 @@ function ClassicTabLayout() {
         }}
       />
       <Tabs.Screen
+        name="discover"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: "Perfil",
