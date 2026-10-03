@@ -1,4 +1,5 @@
-import { BlurView } from "expo-blur";\nimport { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
 import { isLiquidGlassAvailable } from "expo-glass-effect";
 import { Tabs } from "expo-router";
 import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
