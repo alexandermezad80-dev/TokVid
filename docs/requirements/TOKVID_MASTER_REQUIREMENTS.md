@@ -2274,3 +2274,102 @@ El cierre comprende:
 
 **Regla de alcance:** a partir de este cierre, el siguiente bloque de trabajo es **Registro/Login**. No se debe modificar el Guest Feed ni el branding para avanzar ese bloque, salvo que durante la implementación aparezca una dependencia real y se informe antes de actuar.
 
+### 43.4.15 Auditoría funcional del Guest Feed — referencia para integración posterior
+
+**Estado:** 🟢 **AUDITADO.** Esta sección documenta las funciones encontradas en el Feed actual. **No autoriza cambios de código.**
+
+#### A. Zona superior del Feed
+
+- **Para ti:** modo del Feed. En estado invitado, la pulsación conduce a Registro.
+- **Siguiendo:** modo destinado al contenido de creadores seguidos. En estado invitado, la pulsación conduce a Registro.
+- **Buscar:** icono superior de búsqueda. En estado invitado, la pulsación conduce a Registro.
+- Estos tres controles forman parte de la interfaz del Feed y deberán conservarse como puntos de integración del usuario autenticado. **El comportamiento autenticado concreto deberá auditarse/implementarse cuando corresponda; no se inventa aquí.**
+
+#### B. Video y navegación vertical
+
+- El Feed presenta videos en pantalla completa con scroll vertical por páginas.
+- El video visible es el video activo.
+- El video se reproduce automáticamente cuando está activo.
+- El video entra en pausa cuando deja de estar activo.
+- El usuario puede tocar el video para alternar **Play/Pause**.
+- Después de la acción aparece temporalmente el indicador visual Play/Pause y desaparece.
+- El doble toque sobre el video activa **Me gusta** y muestra temporalmente la animación de corazón.
+- El Feed permite actualizar mediante gesto de refresh.
+- El Feed carga más contenido al acercarse al final cuando existe más contenido disponible.
+- El Feed muestra estado de carga y puede mostrar un mensaje de error si la carga falla.
+
+#### C. Columna lateral de acciones del video
+
+Cada acción es un punto funcional del Feed:
+
+1. **Perfil/avatar del creador**
+   - Invitado → Registro.
+   - Usuario autenticado → acceso al perfil del creador.
+2. **Seguir / + debajo del avatar**
+   - Invitado → Registro.
+   - Usuario autenticado → Follow/Unfollow del creador.
+3. **Me gusta**
+   - Invitado → Registro.
+   - Usuario autenticado → Like/Unlike.
+   - El estado se refleja visualmente.
+4. **Comentarios**
+   - Invitado → Registro.
+   - Usuario autenticado → apertura del panel de comentarios del video.
+5. **Compartir**
+   - Invitado → Registro.
+   - Usuario autenticado → hoja de compartir del sistema y registro del share cuando corresponde.
+6. **Guardar/Favoritos**
+   - Invitado → Registro.
+   - Usuario autenticado → Guardar/Quitar de guardados.
+   - El estado se refleja visualmente.
+7. **Menú de propietario**
+   - Solo aparece para el propietario autenticado del video.
+   - Permite la acción de eliminación del video mediante confirmación.
+   - La eliminación debe comprobar que Supabase realmente eliminó el registro antes de retirar el video de la interfaz.
+
+#### D. Información inferior del video
+
+- Avatar del creador: acceso al perfil/destino de autenticación según estado.
+- Nombre/handle del creador: acceso al mismo destino del creador.
+- Botón **Follow** junto al creador: Follow/Unfollow en usuario autenticado; en invitado, el flujo existente conduce a Registro.
+- Caption/descripción: texto del video.
+- **Hashtags:** son interactivos y llevan a la pantalla de hashtag correspondiente.
+- **@Menciones:** son interactivas; buscan el usuario por username y llevan a su perfil cuando existe.
+- **Sonido/canción:** se muestra como información del contenido y actualmente tiene animación horizontal del texto; no se debe inventar una navegación o acción adicional no existente en el código auditado.
+
+#### E. Barra inferior
+
+La barra del Guest Feed conserva exactamente cinco posiciones:
+
+1. **Inicio/Home** → Invitado: Registro; autenticado: Home Feed.
+2. **Amigos** → Invitado: Registro; autenticado: pantalla Amigos.
+3. **Crear (+)** → Invitado: Registro; autenticado: Crear/Studio.
+4. **Mensajes** → Invitado: Registro; autenticado: Mensajes.
+5. **Perfil** → Invitado: Registro; autenticado: Perfil.
+
+**Discover/Descubrir no forma parte de la barra.**
+
+El botón central Crear conserva el gradiente TOKVID **#00F2FE → #FE0979** y el símbolo +.
+
+#### F. Reglas de integración posterior
+
+Cuando se complete Registro/Login y el usuario quede autenticado, estas funciones del Feed deberán integrarse con el usuario real y sus datos de Supabase sin cambiar la experiencia visual aprobada:
+
+- identidad/perfil del creador;
+- Follow/Unfollow;
+- Like/Unlike;
+- Comentarios;
+- Compartir;
+- Guardar/Favoritos;
+- eliminación para propietario;
+- hashtags;
+- menciones;
+- modos **Para ti / Siguiendo**;
+- búsqueda;
+- navegación de la barra inferior;
+- navegación vertical y reproducción;
+- Play/Pause y doble toque para Like.
+
+**Importante:** esta auditoría describe el comportamiento encontrado actualmente. No declara como terminado aquello que el código todavía no implementa para usuario autenticado, y no convierte una intención futura en una función ya existente.
+
+
