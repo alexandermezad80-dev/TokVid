@@ -1,13 +1,20 @@
 import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
 import { isLiquidGlassAvailable } from "expo-glass-effect";
 import { Tabs } from "expo-router";
 import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
 import { SymbolView } from "expo-symbols";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Platform, StyleSheet, Text, View, useColorScheme } from "react-native";
-import { useColors } from "@/hooks/useColors";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useNotifications } from "../../context/NotificationsContext";
+import { useAuth } from "../../context/AuthContext";
+import { router } from "expo-router";
+
+const PRIMARY = "#FE0979";
+const CYAN = "#00F2FE";
+const DARK = "#000000";
+const BORDER = "#2C2C2E";
 
 function UnreadBadge({ count }: { count: number }) {
   if (count <= 0) return null;
@@ -23,47 +30,82 @@ function NativeTabLayout() {
     <NativeTabs>
       <NativeTabs.Trigger name="index">
         <Icon sf={{ default: "house", selected: "house.fill" }} />
-        <Label>Home</Label>
+        <Label>Inicio</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="discover">
-        <Icon sf={{ default: "magnifyingglass", selected: "magnifyingglass" }} />
-        <Label>Discover</Label>
+      <NativeTabs.Trigger name="friends">
+        <Icon sf={{ default: "person.2", selected: "person.2.fill" }} />
+        <Label>Amigos</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="create">
         <Icon sf={{ default: "plus.circle", selected: "plus.circle.fill" }} />
-        <Label>Create</Label>
+        <Label>Crear</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="inbox">
-        <Icon sf={{ default: "bell", selected: "bell.fill" }} />
-        <Label>Inbox</Label>
+        <Icon sf={{ default: "message", selected: "message.fill" }} />
+        <Label>Mensajes</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
         <Icon sf={{ default: "person", selected: "person.fill" }} />
-        <Label>Profile</Label>
+        <Label>Perfil</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
 
+function GuestTabButton({
+  label,
+  icon,
+  create = false,
+}: {
+  label: string;
+  icon: string;
+  create?: boolean;
+}) {
+  const isIOS = Platform.OS === "ios";
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={() => router.push("/auth/register")}
+      style={styles.guestButton}
+    >
+      {create ? (
+        <View style={styles.createBtn}>
+          <LinearGradient
+            colors={[CYAN, PRIMARY]}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={styles.createBtnInner}
+          >
+            <Feather name="plus" size={24} color="#fff" />
+          </LinearGradient>
+        </View>
+      ) : (
+        <Feather name={icon as React.ComponentProps<typeof Feather>["name"]} size={22} color="#8A8B97" />
+      )}
+      {!create ? <Text style={styles.guestLabel}>{label}</Text> : null}
+    </Pressable>
+  );
+}
+
 function ClassicTabLayout() {
-  const colors = useColors();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
   const { unreadCount } = useNotifications();
+  const { user } = useAuth();
+  const guest = !user;
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#FE2C55",
-        tabBarInactiveTintColor: "#555",
+        tabBarActiveTintColor: PRIMARY,
+        tabBarInactiveTintColor: "#8A8B97",
         headerShown: false,
         tabBarStyle: {
           position: "absolute",
-          backgroundColor: isIOS ? "transparent" : "#000",
+          backgroundColor: isIOS ? "transparent" : DARK,
           borderTopWidth: 1,
-          borderTopColor: "#1C1C1E",
+          borderTopColor: BORDER,
           elevation: 0,
           ...(isWeb ? { height: 84 } : {}),
         },
@@ -73,20 +115,17 @@ function ClassicTabLayout() {
         },
         tabBarBackground: () =>
           isIOS ? (
-            <BlurView
-              intensity={100}
-              tint="dark"
-              style={StyleSheet.absoluteFill}
-            />
+            <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
           ) : isWeb ? (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: "#000" }]} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: DARK }]} />
           ) : null,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: "Inicio",
+          tabBarButton: guest ? () => <GuestTabButton label="Inicio" icon="home" /> : undefined,
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="house" tintColor={color} size={24} />
@@ -96,14 +135,15 @@ function ClassicTabLayout() {
         }}
       />
       <Tabs.Screen
-        name="discover"
+        name="friends"
         options={{
-          title: "Discover",
+          title: "Amigos",
+          tabBarButton: guest ? () => <GuestTabButton label="Amigos" icon="users" /> : undefined,
           tabBarIcon: ({ color }) =>
             isIOS ? (
-              <SymbolView name="magnifyingglass" tintColor={color} size={24} />
+              <SymbolView name="person.2" tintColor={color} size={24} />
             ) : (
-              <Feather name="search" size={22} color={color} />
+              <Feather name="users" size={22} color={color} />
             ),
         }}
       />
@@ -111,7 +151,8 @@ function ClassicTabLayout() {
         name="create"
         options={{
           title: "",
-          tabBarIcon: ({ focused }) => (
+          tabBarButton: guest ? () => <GuestTabButton label="Crear" icon="plus" create /> : undefined,
+          tabBarIcon: () => (
             <View style={styles.createBtn}>
               <View style={styles.createBtnInner}>
                 <Feather name="plus" size={24} color="#fff" />
@@ -123,13 +164,14 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="inbox"
         options={{
-          title: "Inbox",
+          title: "Mensajes",
+          tabBarButton: guest ? () => <GuestTabButton label="Mensajes" icon="message-circle" /> : undefined,
           tabBarIcon: ({ color }) => (
             <View>
               {isIOS ? (
-                <SymbolView name="bell" tintColor={color} size={24} />
+                <SymbolView name="message" tintColor={color} size={24} />
               ) : (
-                <Feather name="bell" size={22} color={color} />
+                <Feather name="message-circle" size={22} color={color} />
               )}
               <UnreadBadge count={unreadCount} />
             </View>
@@ -137,9 +179,14 @@ function ClassicTabLayout() {
         }}
       />
       <Tabs.Screen
+        name="discover"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          title: "Perfil",
+          tabBarButton: guest ? () => <GuestTabButton label="Perfil" icon="user" /> : undefined,
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="person" tintColor={color} size={24} />
@@ -153,13 +200,24 @@ function ClassicTabLayout() {
 }
 
 export default function TabLayout() {
-  if (isLiquidGlassAvailable()) {
-    return <NativeTabLayout />;
-  }
+  const { user } = useAuth();
+  // Guests use the classic bar so every bottom action can intentionally
+  // intercept the tap and open registration. Authenticated users keep the
+  // native iOS tab bar when available.
+  if (!user) return <ClassicTabLayout />;
+  if (isLiquidGlassAvailable()) return <NativeTabLayout />;
   return <ClassicTabLayout />;
 }
 
 const styles = StyleSheet.create({
+  guestButton: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 58,
+    gap: 2,
+  },
+  guestLabel: { color: "#8A8B97", fontSize: 10, fontWeight: "600" },
   createBtn: {
     width: 52,
     height: 32,
@@ -169,7 +227,6 @@ const styles = StyleSheet.create({
   },
   createBtnInner: {
     flex: 1,
-    backgroundColor: "#FE2C55",
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 10,
@@ -178,14 +235,14 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -4,
     right: -8,
-    backgroundColor: "#FE2C55",
+    backgroundColor: PRIMARY,
     borderRadius: 8,
     paddingHorizontal: 4,
     paddingVertical: 1,
     minWidth: 16,
     alignItems: "center",
     borderWidth: 1.5,
-    borderColor: "#000",
+    borderColor: DARK,
   },
   badgeText: { color: "#fff", fontSize: 9, fontWeight: "800" },
 });

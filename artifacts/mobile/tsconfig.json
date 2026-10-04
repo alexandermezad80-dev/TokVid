@@ -3,7 +3,7 @@
   "compilerOptions": {
     "incremental": true,
     "tsBuildInfoFile": ".tsbuildinfo",
-    "baseUrl": "./src",
+    "baseUrl": ".",
     "strict": true,
     "paths": {
       "@/*": [
@@ -12,9 +12,8 @@
     }
   },
   "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/expo-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
   ],

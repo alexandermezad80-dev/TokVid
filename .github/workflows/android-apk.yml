@@ -1,0 +1,150 @@
+name: Android APK
+
+on:
+  push:
+    branches: [ feature/onboarding-profile-interests ]
+  workflow_dispatch:
+
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-android:
+    if: github.ref == 'refs/heads/feature/onboarding-profile-interests'
+    environment: production
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+      CI: 1
+      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL || vars.EXPO_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY || vars.EXPO_PUBLIC_SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Verify Supabase configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${EXPO_PUBLIC_SUPABASE_URL:-}" ]; then echo "EXPO_PUBLIC_SUPABASE_URL: EMPTY"; else echo "EXPO_PUBLIC_SUPABASE_URL: SET"; fi
+          if [ -z "${EXPO_PUBLIC_SUPABASE_ANON_KEY:-}" ]; then echo "EXPO_PUBLIC_SUPABASE_ANON_KEY: EMPTY"; else echo "EXPO_PUBLIC_SUPABASE_ANON_KEY: SET"; fi
+          test -n "${EXPO_PUBLIC_SUPABASE_URL:-}" || { echo "ERROR: EXPO_PUBLIC_SUPABASE_URL is not available to this job."; exit 1; }
+          test -n "${EXPO_PUBLIC_SUPABASE_ANON_KEY:-}" || { echo "ERROR: EXPO_PUBLIC_SUPABASE_ANON_KEY is not available to this job."; exit 1; }
+      - name: Free runner disk space
+        run: |
+          echo "Disk before cleanup:"
+          df -h /
+          sudo rm -rf /usr/local/lib/android/sdk/ndk/* || true
+          sudo rm -rf /usr/share/dotnet || true
+          sudo rm -rf /opt/ghc || true
+          sudo rm -rf /usr/local/share/powershell || true
+          sudo apt-get clean || true
+          echo "Disk after cleanup:"
+          df -h /
+      - name: Use Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+      - name: Install pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.15.1 --activate
+          pnpm --version
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Accept Android SDK licenses
+        run: |
+          SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | sort -V | tail -n 1)
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Check for database migrations
+        id: migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          if find artifacts/mobile/supabase/migrations -maxdepth 1 -type f -name '*.sql' -print -quit 2>/dev/null | grep -q .; then
+            echo "has_migrations=true" >> "$GITHUB_OUTPUT"
+            echo "Database migrations found."
+          else
+            echo "has_migrations=false" >> "$GITHUB_OUTPUT"
+            echo "No database migrations found; migration step will be skipped."
+          fi
+
+      - name: Set up Supabase CLI
+        if: steps.migrations.outputs.has_migrations == 'true'
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Apply database migrations
+        if: steps.migrations.outputs.has_migrations == 'true'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${SUPABASE_ACCESS_TOKEN:-}" || { echo "ERROR: SUPABASE_ACCESS_TOKEN is required when migrations are present."; exit 1; }
+          test -n "${SUPABASE_DB_PASSWORD:-}" || { echo "ERROR: SUPABASE_DB_PASSWORD is required when migrations are present."; exit 1; }
+          supabase db push \
+            --project-ref kvbppgofblldwnkkoscb \
+            --password "$SUPABASE_DB_PASSWORD"
+
+      - name: Normalize Expo PNG assets
+        working-directory: artifacts/mobile
+        run: |
+          python3 -m pip install --user --break-system-packages pillow
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          for filename in ("icon.png", "splash.png"):
+              p = Path("assets/images") / filename
+              with Image.open(p) as im:
+                  im.convert("RGBA").save(p, format="PNG", optimize=True)
+                  print(f"{filename}: {im.size} -> valid RGBA PNG")
+          PY
+      - name: Generate Android project
+        working-directory: artifacts/mobile
+        run: pnpm exec expo prebuild --platform android --clean --no-install
+      - name: Restore Android splash resource
+        working-directory: artifacts/mobile
+        run: |
+          mkdir -p android/app/src/main/res/drawable
+          cp assets/images/icon.png android/app/src/main/res/drawable/splashscreen_logo.png
+          test -s android/app/src/main/res/drawable/splashscreen_logo.png
+          echo "Verified: android/app/src/main/res/drawable/splashscreen_logo.png"
+      - name: Configure Gradle memory
+        working-directory: artifacts/mobile/android
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path("gradle.properties")
+          raw = p.read_text()
+          raw = re.sub(r"(\d)(org\.gradle\.)", r"\1\n\2", raw)
+          lines = raw.splitlines()
+          lines = [line for line in lines if not line.startswith("org.gradle.jvmargs=")]
+          lines = [line for line in lines if not line.startswith("org.gradle.workers.max=")]
+          lines = [line for line in lines if not line.startswith("org.gradle.daemon=")]
+          lines += [
+              "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8",
+              "org.gradle.workers.max=2",
+              "org.gradle.daemon=false",
+          ]
+          p.write_text("\n".join(lines) + "\n")
+          PY
+      - name: Build standalone release APK
+        working-directory: artifacts/mobile/android
+        run: ./gradlew assembleRelease --no-daemon
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tokvid-android-release
+          path: artifacts/mobile/android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error

@@ -25,18 +25,13 @@ export default function RegisterScreen() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const handleRegister = async () => {
-    if (!username.trim() || !email.trim() || !password || !confirmPassword) {
-      setError("Completá todos los campos.");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden.");
+    if (!username.trim() || !email.trim() || !password) {
+      setError("Completá usuario, email y contraseña.");
       return;
     }
     if (password.length < 6) {
@@ -86,7 +81,7 @@ export default function RegisterScreen() {
 
         {error && (
           <View style={styles.errorBox}>
-            <Feather name="alert-circle" size={14} color="#FE2C55" />
+            <Feather name="alert-circle" size={14} color="#00F2EA" />
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
@@ -149,19 +144,6 @@ export default function RegisterScreen() {
           </View>
         </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Confirmar contraseña</Text>
-          <TextInput
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            placeholder="Repetí tu contraseña"
-            placeholderTextColor="#555"
-            secureTextEntry={!showPass}
-            autoCapitalize="none"
-            style={styles.input}
-          />
-        </View>
-
         <TouchableOpacity
           style={[styles.btn, loading && styles.btnDisabled]}
           onPress={handleRegister}
@@ -193,7 +175,7 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: 38,
     fontWeight: "900",
-    color: "#FE2C55",
+    color: "#FE0979",
     textAlign: "center",
     letterSpacing: -1,
     marginBottom: 32,
@@ -204,14 +186,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "rgba(254,44,85,0.1)",
+    backgroundColor: "rgba(254,9,121,0.1)",
     borderWidth: 1,
-    borderColor: "rgba(254,44,85,0.3)",
+    borderColor: "rgba(254,9,121,0.3)",
     borderRadius: 10,
     padding: 12,
     marginBottom: 20,
   },
-  errorText: { color: "#FE2C55", fontSize: 13, flex: 1 },
+  errorText: { color: "#00F2EA", fontSize: 13, flex: 1 },
   divider: {
     flexDirection: "row",
     alignItems: "center",
@@ -244,7 +226,7 @@ const styles = StyleSheet.create({
   },
   eyeBtn: { padding: 4 },
   btn: {
-    backgroundColor: "#FE2C55",
+    backgroundColor: "#FE0979",
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: "center",
@@ -259,5 +241,5 @@ const styles = StyleSheet.create({
     marginTop: 28,
   },
   footerText: { color: "#888", fontSize: 14 },
-  footerLink: { color: "#FE2C55", fontSize: 14, fontWeight: "700" },
+  footerLink: { color: "#FE0979", fontSize: 14, fontWeight: "700" },
 });

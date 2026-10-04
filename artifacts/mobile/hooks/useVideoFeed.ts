@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { router } from "expo-router";
 
 export interface VideoItem {
   id: string;
@@ -21,12 +22,12 @@ export interface VideoItem {
 
 // Stable fake UUIDs for mock creators so follows persist in Supabase
 export const MOCK_CREATOR_IDS: Record<string, string> = {
-  "@lunareyes":   "11111111-1111-1111-1111-111111111111",
-  "@jakerides":   "22222222-2222-2222-2222-222222222222",
-  "@chefmarco":   "33333333-3333-3333-3333-333333333333",
-  "@miastrings":  "44444444-4444-4444-4444-444444444444",
-  "@artbykai":    "55555555-5555-5555-5555-555555555555",
-  "@flexnation":  "66666666-6666-6666-6666-666666666666",
+  "@lunareyes": "11111111-1111-1111-1111-111111111111",
+  "@chefmarco": "22222222-2222-2222-2222-222222222222",
+  "@miastrings": "33333333-3333-3333-3333-333333333333",
+  "@jakerides": "44444444-4444-4444-4444-444444444444",
+  "@artbykai": "55555555-5555-5555-5555-555555555555",
+  "@flexnation": "66666666-6666-6666-6666-666666666666",
 };
 
 const MOCK_VIDEOS_RAW: Omit<VideoItem, "isFollowing" | "isReal">[] = [
@@ -122,6 +123,10 @@ export const BASE_VIDEOS: VideoItem[] = MOCK_VIDEOS_RAW.map((v) => ({
   isReal: false,
 }));
 
+/**
+ * The feed uses only videos persisted in Supabase. Demo videos are kept out of
+ * the production feed so an empty database is represented by a real empty state.
+ */
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
@@ -158,7 +163,7 @@ export async function mapRowsToVideoItems(vids: any[]): Promise<VideoItem[]> {
     const username = prof?.username ?? "usuario";
     const avatarUrl =
       prof?.avatar_url ??
-      `https://api.dicebear.com/9.x/initials/png?seed=${encodeURIComponent(username)}&backgroundColor=FE2C55&textColor=ffffff`;
+      `https://api.dicebear.com/9.x/initials/png?seed=${encodeURIComponent(username)}&backgroundColor=FE0979&textColor=ffffff`;
     const videoUrl = v.url ?? v.video_url ?? "";
     return {
       id: v.id,
@@ -181,20 +186,55 @@ export async function mapRowsToVideoItems(vids: any[]): Promise<VideoItem[]> {
 
 const PAGE_SIZE = 12;
 
-async function fetchRealVideos(page = 0): Promise<VideoItem[]> {
+function normalizeInterest(value: string): string {
+  return value
+    .toLocaleLowerCase("es")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+function interestScore(video: VideoItem, interests: string[], tags: string[] = []): number {
+  if (interests.length === 0) return 0;
+  const haystack = normalizeInterest(
+    [video.caption, ...tags].join(" ")
+  );
+  return interests.reduce((score, interest) => {
+    const normalized = normalizeInterest(interest);
+    return normalized && haystack.includes(normalized) ? score + 1 : score;
+  }, 0);
+}
+
+async function fetchRealVideos(page = 0, interests: string[] = []): Promise<VideoItem[]> {
   try {
     // select("*") avoids 400s caused by explicitly naming missing columns
     const from = page * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
     const { data: vids, error } = await supabase
       .from("videos")
-      .select("*")
+      .select("*, video_hashtags(hashtag:hashtags(tag))")
       .order("created_at", { ascending: false })
       .range(from, to);
 
     if (error || !vids || vids.length === 0) return [];
 
-    return mapRowsToVideoItems(vids);
+    const mapped = await mapRowsToVideoItems(vids);
+    if (interests.length === 0) return mapped;
+
+    const tagMap = new Map<string, string[]>();
+    for (const row of vids as any[]) {
+      const tags = (row.video_hashtags ?? [])
+        .map((relation: any) => relation?.hashtag?.tag)
+        .filter((tag: any): tag is string => typeof tag === "string");
+      tagMap.set(row.id, tags);
+    }
+
+    return mapped.sort(
+      (a, b) =>
+        interestScore(b, interests, tagMap.get(b.id) ?? []) -
+        interestScore(a, interests, tagMap.get(a.id) ?? []) ||
+        rankScore(b) - rankScore(a)
+    );
   } catch {
     return [];
   }
@@ -212,6 +252,8 @@ export function useVideoFeed(followedIds: Set<string>) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [likedLoading, setLikedLoading] = useState(true);
+  const [interests, setInterests] = useState<string[]>([]);
+  const [isGuest, setIsGuest] = useState(true);
   const pageRef = useRef(0);
 
   const removeVideo = useCallback((id: string) => {
@@ -244,6 +286,20 @@ export function useVideoFeed(followedIds: Set<string>) {
   }, []);
 
   useEffect(() => {
+    let mounted = true;
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (mounted) setIsGuest(!user);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (mounted) setIsGuest(!session?.user);
+    });
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
     loadLikedIds();
     const { data: sub } = supabase.auth.onAuthStateChange(() => {
       loadLikedIds();
@@ -260,7 +316,7 @@ export function useVideoFeed(followedIds: Set<string>) {
     }
 
     try {
-      const items = await fetchRealVideos(nextPage);
+      const items = await fetchRealVideos(nextPage, interests);
       if (nextPage === 0) {
         setRealVideos(items);
       } else {
@@ -275,11 +331,55 @@ export function useVideoFeed(followedIds: Set<string>) {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [interests]);
 
   useEffect(() => {
-    loadPage(0);
-  }, [loadPage]);
+    let cancelled = false;
+
+    const loadInterestsAndFeed = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      let userInterests: string[] = [];
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("interests")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        userInterests = Array.isArray(profile?.interests)
+          ? profile.interests.filter((value: any): value is string => typeof value === "string")
+          : [];
+      }
+
+      if (cancelled) return;
+      setInterests(userInterests);
+
+      setError(null);
+      setIsRefreshing(true);
+      try {
+        const items = await fetchRealVideos(0, userInterests);
+        if (!cancelled) {
+          setRealVideos(items);
+          setPage(0);
+          pageRef.current = 0;
+          setHasMore(items.length === PAGE_SIZE);
+        }
+      } catch {
+        if (!cancelled) setError("No se pudo cargar el feed");
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+          setIsRefreshing(false);
+        }
+      }
+    };
+
+    loadInterestsAndFeed();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const loadMore = useCallback(() => {
     if (isLoading || !hasMore) return;
@@ -293,6 +393,10 @@ export function useVideoFeed(followedIds: Set<string>) {
 
   const toggleLike = useCallback(async (id: string) => {
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push("/auth/register");
+      return;
+    }
     let alreadyLiked = false;
 
     setLikedIds((prev) => {
@@ -301,13 +405,6 @@ export function useVideoFeed(followedIds: Set<string>) {
       alreadyLiked ? next.delete(id) : next.add(id);
       return next;
     });
-
-    if (!user) {
-      const next = new Set(likedIds);
-      alreadyLiked ? next.delete(id) : next.add(id);
-      AsyncStorage.setItem(LIKED_KEY, JSON.stringify([...next])).catch(() => {});
-      return;
-    }
 
     if (alreadyLiked) {
       const { error } = await supabase
@@ -334,22 +431,43 @@ export function useVideoFeed(followedIds: Set<string>) {
         next.delete(id);
         return next;
       });
+      return;
+    }
+
+    const { data: video } = await supabase
+      .from("videos")
+      .select("user_id")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (video?.user_id && video.user_id !== user.id) {
+      await supabase.from("notifications").insert({
+        user_id: video.user_id,
+        actor_id: user.id,
+        actor_name: user.user_metadata?.username ?? user.user_metadata?.display_name ?? null,
+        actor_avatar: null,
+        type: "like",
+        message: "Le dio me gusta a tu video",
+        data: { video_id: id },
+      });
     }
   }, [likedIds]);
 
-  // Ranked real videos (newest real content first in the feed)
-  const rankedReal = [...realVideos].sort((a, b) => rankScore(b) - rankScore(a));
-
-  // Mock IDs that don't overlap with real video IDs
+  // Only persisted videos belong in the feed. Keep the interest-ranked order when interests are active; otherwise use activity ranking.
+  const rankedReal = interests.length > 0
+    ? [...realVideos]
+    : [...realVideos].sort((a, b) => rankScore(b) - rankScore(a));
+  // Guest-only development fallback: real Supabase videos remain the source of
+  // production content; internal demo videos appear only for an unauthenticated guest.
   const realIds = new Set(realVideos.map((v) => v.id));
-  const mockFallback = BASE_VIDEOS.filter((v) => !realIds.has(v.id));
-
-  // Combined feed: real videos first, then mock — minus any deleted ones
+  const mockFallback = isGuest
+    ? BASE_VIDEOS.filter((v) => !realIds.has(v.id))
+    : [];
   const combined: VideoItem[] = [...rankedReal, ...mockFallback].filter(
     (v) => !removedIds.has(v.id)
   );
 
-  // Merge follow state
+  // Merge follow state.
   const videos: VideoItem[] = combined.map((v) => ({
     ...v,
     isFollowing: followedIds.has(v.creatorId),
@@ -357,7 +475,7 @@ export function useVideoFeed(followedIds: Set<string>) {
 
   const followingVideos = videos.filter((v) => followedIds.has(v.creatorId));
 
-  // Liked videos (for the liked tab)
+  // Liked videos (for the liked tab).
   const likedVideos = videos.filter((v) => likedIds.has(v.id));
 
   return {
@@ -374,5 +492,6 @@ export function useVideoFeed(followedIds: Set<string>) {
     isRefreshing,
     error,
     likedLoading,
+    isGuest,
   };
 }
