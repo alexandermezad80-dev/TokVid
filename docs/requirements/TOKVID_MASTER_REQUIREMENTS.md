@@ -2392,3 +2392,20 @@ La regla queda establecida de forma explícita:
 **Regla de cierre:** primero se valida Registro/Login + usuario real + carga/publicación de video real + aparición correcta en Feed. **Después se eliminan los placeholders.** No se invierte este orden ni se omite la validación.
 
 **Alcance:** esta consolidación documenta una regla de transición de pruebas. No modifica en este momento el código del Guest Feed, no elimina videos placeholder y no autoriza cambios de branding.
+
+
+### Autorización expresa de conservación del Guest Feed y branding
+
+**Autorización consolidada:** el **diseño aprobado del Guest Feed y el branding vigente quedan fuera de cualquier modificación en los siguientes bloques**, salvo autorización expresa posterior del usuario.
+
+Esta autorización se basa además en la prueba directa realizada en un teléfono físico con la aplicación instalada: el Guest Feed fue probado y **cumple correctamente con la función esperada, sin una mala función detectada que justifique cambios**.
+
+Por tanto:
+
+- **NO tocar el diseño visual aprobado del Feed.**
+- **NO cambiar la distribución, tamaños, posiciones, iconos, acciones ni comportamiento ya aprobado del Feed.**
+- **NO tocar el branding ni la identidad visual aprobada de TOKVID.**
+- La próxima etapa debe concentrarse en **Registro/Login** y posteriormente en la integración del contenido real, sin rediseñar ni alterar lo que ya fue probado y aprobado.
+- Si durante una etapa futura se detecta una falla real que obligue a modificar algo del Feed o branding, se debe **informar y consultar antes de realizar cualquier cambio**.
+
+**Regla:** que el trabajo continúe hacia Registro/Login **no significa que el Feed quede abierto a rediseño**. El Feed aprobado se conserva tal como fue probado.
