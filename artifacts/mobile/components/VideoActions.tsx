@@ -1,5 +1,6 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import React, { useEffect, useRef } from "react";
 import {
@@ -103,21 +104,39 @@ export default function VideoActions({
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        onPress={isGuest ? goToRegister : undefined}
-        style={[styles.action, styles.profileAction]}
-        activeOpacity={isGuest ? 0.75 : 1}
-        accessibilityRole="button"
-        accessibilityLabel="Perfil del creador"
-      >
+      <View style={[styles.action, styles.profileAction]}>
+        <TouchableOpacity
+          onPress={isGuest ? goToRegister : undefined}
+          activeOpacity={isGuest ? 0.75 : 1}
+          accessibilityRole="button"
+          accessibilityLabel="Perfil del creador"
+        >
+          {isGuest ? (
+            <View style={styles.profileBadge}>
+              <MaterialCommunityIcons name="account-outline" size={30} color="#fff" />
+            </View>
+          ) : (
+            <SpinningRecord avatar={creatorAvatar} />
+          )}
+        </TouchableOpacity>
         {isGuest ? (
-          <View style={styles.profileBadge}>
-            <MaterialCommunityIcons name="account-plus-outline" size={30} color="#fff" />
-          </View>
-        ) : (
-          <SpinningRecord avatar={creatorAvatar} />
-        )}
-      </TouchableOpacity>
+          <TouchableOpacity
+            onPress={goToRegister}
+            activeOpacity={0.75}
+            accessibilityRole="button"
+            accessibilityLabel="Seguir creador"
+          >
+            <LinearGradient
+              colors={["#00F2FE", "#FE0979"]}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={styles.followPlus}
+            >
+              <MaterialCommunityIcons name="plus" size={16} color="#fff" />
+            </LinearGradient>
+          </TouchableOpacity>
+        ) : null}
+      </View>
 
       <TouchableOpacity onPress={isGuest ? goToRegister : handleLike} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Me gusta">
         <Animated.View style={{ transform: [{ scale: heartScale }] }}>
@@ -173,6 +192,14 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   profileAction: { marginBottom: 2 },
+  followPlus: {
+    width: 26,
+    height: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: -2,
+  },
   profileBadge: {
     width: 52,
     height: 52,
