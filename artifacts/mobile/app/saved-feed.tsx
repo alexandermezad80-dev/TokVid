@@ -78,6 +78,7 @@ export default function SavedFeedScreen() {
           isLiked={likedIds.has(item.id)}
           isSaved={savedIds.has(item.id)}
           isOwner={false}
+          isGuest={false}
           onLike={() => toggleLike(item.id)}
           onDoubleLike={() => toggleLike(item.id)}
           onFollow={() => toggleFollow(item.creatorId)}
