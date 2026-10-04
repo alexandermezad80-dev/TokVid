@@ -2371,5 +2371,24 @@ Cuando se complete Registro/Login y el usuario quede autenticado, estas funcione
 - Play/Pause y doble toque para Like.
 
 **Importante:** esta auditoría describe el comportamiento encontrado actualmente. No declara como terminado aquello que el código todavía no implementa para usuario autenticado, y no convierte una intención futura en una función ya existente.
+### 43.4.16 Consolidación de placeholders del Guest Feed y sustitución por contenido real
 
+**Fecha de consolidación:** 2026-10-03  
+**Estado:** 🟢 **CONSOLIDADO Y VIGENTE.**
 
+Los videos utilizados actualmente como **placeholder/mock/demo** en el Guest Feed son **temporales y exclusivamente de prueba**. No representan contenido real de usuarios y no forman parte del contenido definitivo de TOKVID.
+
+La regla queda establecida de forma explícita:
+
+- Los placeholders se mantienen durante la etapa actual únicamente para permitir probar y validar el Guest Feed mientras el flujo de autenticación todavía no está completo.
+- **No se deben considerar contenido real de producción.**
+- En el siguiente bloque, **Registro/Login**, se completará la autenticación de un usuario real.
+- Una vez que exista un usuario real autenticado, se realizará la prueba de **carga/publicación de un video real asociado a ese usuario**.
+- La validación deberá comprobar que el video real puede incorporarse al sistema y aparecer correctamente en el Feed con la identidad del usuario correspondiente.
+- **Después de validar satisfactoriamente ese flujo real, los videos placeholder/mock serán retirados del Feed de prueba.**
+- Los placeholders **no deben eliminarse antes de esa validación**, porque continúan siendo necesarios para las pruebas del Feed mientras se completa Registro/Login.
+- La eliminación de los placeholders forma parte de la transición de prueba hacia contenido real y **no autoriza cambios adicionales al Feed visual aprobado**.
+
+**Regla de cierre:** primero se valida Registro/Login + usuario real + carga/publicación de video real + aparición correcta en Feed. **Después se eliminan los placeholders.** No se invierte este orden ni se omite la validación.
+
+**Alcance:** esta consolidación documenta una regla de transición de pruebas. No modifica en este momento el código del Guest Feed, no elimina videos placeholder y no autoriza cambios de branding.
