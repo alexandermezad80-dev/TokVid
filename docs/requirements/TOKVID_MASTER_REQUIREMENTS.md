@@ -2254,3 +2254,23 @@ La compilación de la app, prueba de login y APK quedan para después de complet
 **Fuente visual canónica:** el mapa técnico/visual definitivo proporcionado para TOKVID.  
 **Regla:** no inventar, no ocultar, no duplicar y no avanzar al siguiente bloque sin comprobar el bloque actual.
 
+### 43.4.14 Cierre del Guest Feed y del branding vigente
+
+**Estado:** 🟢 **CERRADO Y APROBADO PARA LA IMPLEMENTACIÓN ACTUAL.**
+
+El **Guest Feed queda establecido como referencia funcional y visual vigente** en el estado comprobado de la rama feature/onboarding-profile-interests.
+
+El cierre comprende:
+
+- La experiencia visual actual del Guest Feed se conserva como está y **no se rediseña ni se modifica como parte del trabajo de Registro/Login**.
+- El branding y la identidad visual TOKVID actualmente aprobados **no se tocan**.
+- Los elementos interactivos visibles del Guest Feed deben comunicar una acción real y no funcionar como decoración sin destino.
+- En estado de invitado, las acciones que requieren autenticación conducen al flujo de **Registro**.
+- La barra inferior del invitado mantiene sus cinco posiciones: **Home, Amigos, +, Mensajes y Perfil**.
+- Una vez autenticado, cada una de esas posiciones recupera su función correspondiente dentro de la aplicación: **Home → Feed, Amigos → Amigos, + → Crear/Studio, Mensajes → Mensajes y Perfil → Perfil**.
+- Las acciones del Feed autenticado (Seguir, Me gusta, Comentarios, Favoritos/Guardar, Compartir, Perfil del creador y las demás que correspondan) deben conservar su destino y comportamiento funcional real.
+- Los iconos y botones no deben quedar como elementos visuales sin función cuando exista una acción definida para ellos.
+- El estado cerrado del Guest Feed no impide futuras mejoras o correcciones, pero cualquier modificación posterior deberá tratarse como un cambio nuevo, auditarse y consultarse antes de alterar el estado aprobado.
+
+**Regla de alcance:** a partir de este cierre, el siguiente bloque de trabajo es **Registro/Login**. No se debe modificar el Guest Feed ni el branding para avanzar ese bloque, salvo que durante la implementación aparezca una dependencia real y se informe antes de actuar.
+
