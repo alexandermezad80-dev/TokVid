@@ -237,7 +237,7 @@ ${item.uri}`,
       <View style={styles.feedHeader} pointerEvents="box-none">
         <View style={styles.feedModes}>
           <TouchableOpacity
-            onPress={isGuest ? () => router.push("/auth/register") : undefined}
+            onPress={isGuest ? () => openSeamlessAuth("generic") : undefined}
             activeOpacity={isGuest ? 0.7 : 1}
             accessibilityRole="button"
             accessibilityLabel="Para ti"
