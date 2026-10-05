@@ -6,7 +6,7 @@ import {
   useFonts,
 } from "@expo-google-fonts/inter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Stack, router } from "expo-router";
+import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
@@ -20,6 +20,7 @@ import { FollowProvider } from "../context/FollowContext";
 import { NotificationsProvider } from "../context/NotificationsContext";
 import { usePushNotifications } from "../hooks/usePushNotifications";
 import { IncomingCallListener } from "../components/IncomingCallListener";
+import { SeamlessAuthProvider } from "../context/SeamlessAuthContext";
 
 const queryClient = new QueryClient();
 
@@ -30,14 +31,7 @@ function PushNotificationSetup() {
 }
 
 function RootLayoutNav() {
-  const { session, loading } = useAuth();
-  const onboardingCompleted = session?.user?.user_metadata?.onboarding_completed === true;
-
-  useEffect(() => {
-    if (!loading && session && !onboardingCompleted) {
-      router.replace("/auth/onboarding-profile");
-    }
-  }, [loading, onboardingCompleted, session]);
+  const { loading } = useAuth();
 
   if (loading) {
     return (
@@ -49,21 +43,16 @@ function RootLayoutNav() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {!session || onboardingCompleted ? (
-        <>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="story-viewer" options={{ presentation: "fullScreenModal", animation: "fade" }} />
-          <Stack.Screen name="story-create" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
-          <Stack.Screen name="edit-profile" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
-          <Stack.Screen name="user-profile" options={{ animation: "slide_from_right" }} />
-          <Stack.Screen name="call" options={{ presentation: "fullScreenModal", animation: "fade" }} />
-          <Stack.Screen name="live-room" options={{ presentation: "fullScreenModal", animation: "fade" }} />
-          <Stack.Screen name="chat" options={{ animation: "slide_from_right" }} />
-          <Stack.Screen name="tag" options={{ animation: "slide_from_right" }} />
-        </>
-      ) : (
-        <Stack.Screen name="auth" />
-      )}
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="story-viewer" options={{ presentation: "fullScreenModal", animation: "fade" }} />
+      <Stack.Screen name="story-create" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+      <Stack.Screen name="edit-profile" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+      <Stack.Screen name="user-profile" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="call" options={{ presentation: "fullScreenModal", animation: "fade" }} />
+      <Stack.Screen name="live-room" options={{ presentation: "fullScreenModal", animation: "fade" }} />
+      <Stack.Screen name="chat" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="tag" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="auth" />
     </Stack>
   );
 }
@@ -83,14 +72,16 @@ export default function RootLayout() {
           <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#000" }}>
             <KeyboardProvider>
               <AuthProvider>
-                <FollowProvider>
-                  <NotificationsProvider>
+                <SeamlessAuthProvider>
+                  <FollowProvider>
+                    <NotificationsProvider>
                     <PushNotificationSetup />
                     <IncomingCallListener />
                     <StatusBar style="light" />
                     <RootLayoutNav />
-                  </NotificationsProvider>
-                </FollowProvider>
+                    </NotificationsProvider>
+                  </FollowProvider>
+                </SeamlessAuthProvider>
               </AuthProvider>
             </KeyboardProvider>
           </GestureHandlerRootView>
