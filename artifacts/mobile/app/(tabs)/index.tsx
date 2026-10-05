@@ -109,10 +109,6 @@ export default function FeedScreen() {
   );
 
   const handleShare = useCallback(async (item: VideoItem) => {
-    if (!user) {
-      router.push("/auth/register");
-      return;
-    }
     // Optimistic UI update
     setShareOverrides((prev) => ({
       ...prev,
@@ -148,7 +144,7 @@ ${item.uri}`,
         [item.id]: Math.max(0, (prev[item.id] ?? 1) - 1),
       }));
     }
-  }, []);
+  }, [user]);
 
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
