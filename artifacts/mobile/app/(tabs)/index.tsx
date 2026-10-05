@@ -22,6 +22,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useFollow } from "../../context/FollowContext";
 import { VideoItem, formatCount, useVideoFeed } from "../../hooks/useVideoFeed";
 import { useSavedVideos } from "../../hooks/useSavedVideos";
+import { useSeamlessAuth } from "../../context/SeamlessAuthContext";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -35,6 +36,7 @@ export default function FeedScreen() {
   const flatListRef = useRef<FlatList>(null);
 
   const { user } = useAuth();
+  const { openSeamlessAuth } = useSeamlessAuth();
   const { followedIds, toggleFollow } = useFollow();
   const {
     videos,
@@ -173,23 +175,53 @@ ${item.uri}`,
           isLiked={likedIds.has(item.id)}
           isSaved={savedIds.has(item.id)}
           isOwner={isOwner}
-          onLike={() => toggleLike(item.id)}
-          onDoubleLike={() => toggleLike(item.id)}
-          onFollow={() => toggleFollow(item.creatorId)}
+          onLike={() => {
+            if (!user) {
+              openSeamlessAuth("like", () => toggleLike(item.id));
+              return;
+            }
+            toggleLike(item.id);
+          }}
+          onDoubleLike={() => {
+            if (!user) {
+              openSeamlessAuth("like", () => toggleLike(item.id));
+              return;
+            }
+            toggleLike(item.id);
+          }}
+          onFollow={() => {
+            if (!user) {
+              openSeamlessAuth("follow", () => toggleFollow(item.creatorId));
+              return;
+            }
+            toggleFollow(item.creatorId);
+          }}
           onComment={() => {
             if (!user) {
-              router.push("/auth/register");
+              openSeamlessAuth("comment", () => showToast("Comentario habilitado"));
               return;
             }
             setCommentVideo(item);
           }}
-          onShare={() => handleShare(item)}
-          onSave={() => toggleSave(item.id)}
+          onShare={() => {
+            if (!user) {
+              openSeamlessAuth("generic", () => handleShare(item));
+              return;
+            }
+            handleShare(item);
+          }}
+          onSave={() => {
+            if (!user) {
+              openSeamlessAuth("favorite", () => toggleSave(item.id));
+              return;
+            }
+            toggleSave(item.id);
+          }}
           onDelete={() => handleDelete(item)}
           isGuest={isGuest}
           onAvatarPress={() => {
             if (!user) {
-              router.push("/auth/register");
+              openSeamlessAuth("generic", () => router.push(`/user-profile?userId=${item.creatorId}`));
               return;
             }
             router.push(`/user-profile?userId=${item.creatorId}`);
@@ -197,7 +229,7 @@ ${item.uri}`,
         />
       );
     },
-    [activeIndex, likedIds, savedIds, shareOverrides, user, toggleLike, toggleFollow, toggleSave, handleShare, handleDelete]
+    [activeIndex, likedIds, savedIds, shareOverrides, user, toggleLike, toggleFollow, toggleSave, handleShare, handleDelete, openSeamlessAuth, showToast]
   );
 
   return (
