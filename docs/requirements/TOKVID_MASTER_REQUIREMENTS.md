@@ -2409,3 +2409,54 @@ Por tanto:
 - Si durante una etapa futura se detecta una falla real que obligue a modificar algo del Feed o branding, se debe **informar y consultar antes de realizar cualquier cambio**.
 
 **Regla:** que el trabajo continúe hacia Registro/Login **no significa que el Feed quede abierto a rediseño**. El Feed aprobado se conserva tal como fue probado.
+
+---
+
+## 12. CLARIFICACIÓN ABSOLUTA SOBRE LA ELIMINACIÓN DEL ONBOARDING TRADICIONAL
+
+Esta sección es una **regla de precedencia obligatoria** para el flujo de registro inicial de TokVid. Cualquier requisito anterior del Documento Maestro que contradiga estas reglas queda sustituido por esta especificación y no debe implementarse.
+
+### Pantallas estrictamente prohibidas durante el registro inicial
+
+- ❌ **NO implementar pantalla de “Selección de Intereses / Categorías”.** El usuario no debe ver burbujas de texto para elegir gustos durante el registro. El algoritmo deducirá sus preferencias en segundo plano analizando los videos consumidos durante su sesión de invitado. La bandera \`onboarding_completed = true\` se activa automáticamente en el Backend al procesar el Auth.
+- ❌ **NO implementar formulario de “Carga de Avatar” en el registro.** No se solicita una foto para crear la cuenta. El avatar se obtiene de Google OAuth cuando esté disponible o se asigna un placeholder gris por defecto.
+- ❌ **NO implementar formulario de “Escribir Nombre de Usuario” en el registro.** No se solicita un username al registrarse. Se obtiene de los metadatos de Google o el Trigger de Supabase genera uno aleatorio, por ejemplo \`Usuario_TokVid_a1b2c3\`.
+
+### Comportamiento de la pestaña “Perfil” en la Tab Bar inferior
+
+El botón de **Perfil** actúa como un enrutador inteligente basado en el estado de autenticación (\`supabase.auth.getSession()\`).
+
+1. **Estado — UNAUTHENTICATED (Invitado):**
+   - Al hacer clic, se almacena la intención en memoria.
+   - Se despliega el **Bottom Sheet Modal** de registro dinámico.
+   - Después del registro, debe poder retomarse la intención correspondiente sin introducir una pantalla de onboarding tradicional.
+
+2. **Estado — AUTHENTICATED (Identificado):**
+   - Al hacer clic, la app abandona/destruye la vista del Feed correspondiente a esa navegación y renderiza una **UI completamente nueva: Pantalla de Perfil Protegida**.
+   - El usuario aparece identificado con los datos automáticos provistos por Auth/Trigger de Supabase.
+   - Se expone un botón central **“Editar Perfil”**.
+   - La edición de \`username\` y \`avatar_url\` es **voluntaria y diferida**; no forma parte del registro inicial.
+
+### Flujo obligatorio
+
+\`Invitado → consume Feed → Perfil → registro dinámico → Auth → Trigger/Backend crea identidad → onboarding_completed = true → Perfil protegido\`
+
+Posteriormente:
+
+\`Perfil protegido → Editar Perfil → cambio voluntario de username/avatar\`
+
+### Regla de integración Frontend/Backend
+
+Frontend y Backend deben respetar exactamente esta eliminación del onboarding tradicional. No se permite reintroducir posteriormente, con otro nombre o mediante otra pantalla, ninguna de las tres etapas prohibidas:
+
+1. Selección de intereses/categorías durante el registro.
+2. Carga de avatar durante el registro.
+3. Escritura de username durante el registro.
+
+La lógica de preferencias puede ejecutarse en segundo plano a partir del comportamiento del invitado, sin convertir ese procesamiento en una pantalla de onboarding.
+
+### Regla de precedencia
+
+Si alguna sección anterior o posterior del Documento Maestro describe un flujo de registro que exige intereses, avatar o username antes de completar Auth, **esta Sección 12 prevalece para implementación** y dicha descripción debe interpretarse como obsoleta en ese punto.
+
+Esta regla aplica al **Documento Maestro, Frontend y Backend** y no autoriza cambios funcionales fuera del flujo de Registro/Login.
