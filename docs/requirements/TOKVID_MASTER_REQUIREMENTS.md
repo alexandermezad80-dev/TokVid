@@ -919,6 +919,90 @@ La siguiente etapa será comparar cada requisito con el TokVid real para determi
 
 ---
 
+
+# REGISTRO SEAMLESS — ESPECIFICACIÓN VIGENTE
+
+Esta especificación define el flujo vigente de registro de TokVid y complementa la Clarificación Absoluta sobre la eliminación del onboarding tradicional. Si una lógica anterior contradice estas reglas, queda funcionalmente obsoleta para implementación.
+
+### 1. Acceso como invitado
+
+- El usuario puede consumir el Feed como invitado.
+- El scroll vertical y Play/Pause central son interacciones libres.
+- Las acciones restringidas que requieren identidad disparan el registro Seamless sin sacar al usuario innecesariamente de su contexto.
+
+### 2. Acciones pendientes significativas
+
+Cuando una acción restringida dispara el registro, puede conservarse una única intención significativa para ejecutarla después de completar Auth:
+
+- **Like:** completar automáticamente.
+- **Comentario:** confirmar la intención, sin abrir automáticamente la pantalla de comentarios.
+- **Follow:** seguir automáticamente.
+- **Favorito:** guardar automáticamente.
+
+No se debe memorizar indiscriminadamente cada toque del usuario.
+
+### 3. Registro dinámico
+
+El registro se presenta mediante un **Bottom Sheet Modal** con:
+
+- Google OAuth.
+- Correo electrónico o teléfono mediante código de 6 dígitos.
+- **Sin contraseña.**
+- **Sin intereses/categorías.**
+- **Sin formulario de avatar.**
+- **Sin formulario de username.**
+
+Al completar Auth:
+
+- se crea/identifica automáticamente el perfil;
+- `onboarding_completed = true` se activa automáticamente en Backend;
+- el avatar procede de Google OAuth o usa placeholder gris;
+- el username procede de metadatos de Google o del Trigger de Supabase;
+- no existe una etapa manual posterior obligatoria antes de entrar al Feed.
+
+### 4. Retorno exacto al contexto anterior
+
+Después de Auth, la aplicación debe regresar al mismo video y posición/contexto donde se inició la intención. La acción pendiente significativa se ejecuta automáticamente cuando corresponda.
+
+- Like permanece activo.
+- Follow cambia a **Siguiendo** con el acento de TokVid.
+- Favorito permanece activo con el acento de TokVid.
+- Comentario no abre automáticamente los comentarios; puede mostrar una microanimación sutil.
+- Cualquier efecto visual opcional debe ser breve, sin sonido y sin detener el video.
+
+Si el usuario cancela el registro:
+
+- conserva el mismo video/contexto;
+- se elimina la intención pendiente;
+- el Feed continúa normalmente.
+
+### 5. Perfil según autenticación
+
+**Invitado / UNAUTHENTICATED:**
+- Al pulsar Perfil, se almacena la intención en memoria.
+- Se muestra el Bottom Sheet de registro Seamless.
+
+**Usuario identificado / AUTHENTICATED:**
+- Al pulsar Perfil, se abandona/desmonta la vista del Feed correspondiente a esa navegación.
+- Se renderiza la **Pantalla de Perfil Protegida**.
+- La identidad procede de Auth/Trigger de Supabase.
+- El botón central **Editar Perfil** permite modificar voluntariamente y de forma diferida username y avatar.
+
+Esta transición no autoriza borrar el código del Feed ni realizar limpieza general.
+
+### 6. Regla de implementación y auditoría
+
+Antes de modificar código, Auth, Supabase, triggers, RLS o navegación se debe auditar el estado existente. La implementación debe ser quirúrgica, conservar lo funcional y modificar únicamente lo autorizado para este flujo.
+
+No se autoriza por esta especificación:
+
+- borrar código funcional no relacionado;
+- modificar `main`;
+- hacer limpieza general;
+- alterar el Feed o branding ya aprobados;
+- crear pantallas de intereses, avatar o username como parte del registro.
+
+
 # 39. ESTADO ACTUAL CONSOLIDADO — CONCILIACIÓN CON AUDITORÍA 30
 
 **Fuente de conciliación:** `docs/TOKVID_AUDIT_30_RESULTS.md`  
@@ -989,7 +1073,7 @@ Estos hallazgos son **estado/documentación**, no autorización para corregirlos
 ## 39.3 Dependencias consolidadas
 
 - **CI:** lockfile → instalación → typecheck/build → pruebas → PR.
-- **Onboarding:** Auth → callback → profiles → avatars → interests → `onboarding_completed` → app.
+- **Registro / onboarding:** Guest Feed → interacción restringida → Registro Seamless → Auth → callback → profiles → `onboarding_completed = true` → retorno al contexto exacto del Feed → ejecución de la acción pendiente significativa. No existe pantalla de intereses/categorías, formulario de avatar ni formulario de username durante el registro. Las preferencias se deducen en segundo plano a partir del consumo de videos durante la sesión de invitado.
 - **Publicación:** Storage de video → `video_url` → feed → likes/comments/shares → contadores → hashtags/mentions.
 - **Social:** Auth → profiles → follows → contadores → perfil público → notifications.
 - **Mensajería:** conversations → messages → RLS → notification → push → chat.
