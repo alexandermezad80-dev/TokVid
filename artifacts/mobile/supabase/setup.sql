@@ -65,6 +65,13 @@ begin
 
   v_username := left(v_base, 50);
 
+  if exists (select 1 from public.profiles where username = v_username) then
+    v_username := 'Usuario_TokVid_' || substr(md5(new.id::text || clock_timestamp()::text), 1, 6);
+    while exists (select 1 from public.profiles where username = v_username) loop
+      v_username := 'Usuario_TokVid_' || substr(md5(new.id::text || clock_timestamp()::text), 1, 6);
+    end loop;
+  end if;
+
   insert into public.profiles (id, username, full_name, avatar_url)
   values (new.id, v_username, v_full_name, v_avatar)
   on conflict (id) do update
