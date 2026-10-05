@@ -2418,13 +2418,13 @@ Esta sección es una **regla de precedencia obligatoria** para el flujo de regis
 
 ### Pantallas estrictamente prohibidas durante el registro inicial
 
-- ❌ **NO implementar pantalla de “Selección de Intereses / Categorías”.** El usuario no debe ver burbujas de texto para elegir gustos durante el registro. El algoritmo deducirá sus preferencias en segundo plano analizando los videos consumidos durante su sesión de invitado. La bandera \`onboarding_completed = true\` se activa automáticamente en el Backend al procesar el Auth.
+- ❌ **NO implementar pantalla de “Selección de Intereses / Categorías”.** El usuario no debe ver burbujas de texto para elegir gustos durante el registro. El algoritmo deducirá sus preferencias en segundo plano analizando los videos consumidos durante su sesión de invitado. La bandera `onboarding_completed = true` se activa automáticamente en el Backend al procesar el Auth.
 - ❌ **NO implementar formulario de “Carga de Avatar” en el registro.** No se solicita una foto para crear la cuenta. El avatar se obtiene de Google OAuth cuando esté disponible o se asigna un placeholder gris por defecto.
-- ❌ **NO implementar formulario de “Escribir Nombre de Usuario” en el registro.** No se solicita un username al registrarse. Se obtiene de los metadatos de Google o el Trigger de Supabase genera uno aleatorio, por ejemplo \`Usuario_TokVid_a1b2c3\`.
+- ❌ **NO implementar formulario de “Escribir Nombre de Usuario” en el registro.** No se solicita un username al registrarse. Se obtiene de los metadatos de Google o el Trigger de Supabase genera uno aleatorio, por ejemplo `Usuario_TokVid_a1b2c3`.
 
 ### Comportamiento de la pestaña “Perfil” en la Tab Bar inferior
 
-El botón de **Perfil** actúa como un enrutador inteligente basado en el estado de autenticación (\`supabase.auth.getSession()\`).
+El botón de **Perfil** actúa como un enrutador inteligente basado en el estado de autenticación (`supabase.auth.getSession()`).
 
 1. **Estado — UNAUTHENTICATED (Invitado):**
    - Al hacer clic, se almacena la intención en memoria.
@@ -2435,15 +2435,15 @@ El botón de **Perfil** actúa como un enrutador inteligente basado en el estado
    - Al hacer clic, la app abandona/destruye la vista del Feed correspondiente a esa navegación y renderiza una **UI completamente nueva: Pantalla de Perfil Protegida**.
    - El usuario aparece identificado con los datos automáticos provistos por Auth/Trigger de Supabase.
    - Se expone un botón central **“Editar Perfil”**.
-   - La edición de \`username\` y \`avatar_url\` es **voluntaria y diferida**; no forma parte del registro inicial.
+   - La edición de `username` y `avatar_url` es **voluntaria y diferida**; no forma parte del registro inicial.
 
 ### Flujo obligatorio
 
-\`Invitado → consume Feed → Perfil → registro dinámico → Auth → Trigger/Backend crea identidad → onboarding_completed = true → Perfil protegido\`
+`Invitado → consume Feed → Perfil → registro dinámico → Auth → Trigger/Backend crea identidad → onboarding_completed = true → Perfil protegido`
 
 Posteriormente:
 
-\`Perfil protegido → Editar Perfil → cambio voluntario de username/avatar\`
+`Perfil protegido → Editar Perfil → cambio voluntario de username/avatar`
 
 ### Regla de integración Frontend/Backend
 
