@@ -22,7 +22,6 @@ import { useAuth } from "../../context/AuthContext";
 import { useFollow } from "../../context/FollowContext";
 import { VideoItem, formatCount, useVideoFeed } from "../../hooks/useVideoFeed";
 import { useSavedVideos } from "../../hooks/useSavedVideos";
-import { useSeamlessAuth } from "../../context/SeamlessAuthContext";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -36,7 +35,6 @@ export default function FeedScreen() {
   const flatListRef = useRef<FlatList>(null);
 
   const { user } = useAuth();
-  const { openSeamlessAuth } = useSeamlessAuth();
   const { followedIds, toggleFollow } = useFollow();
   const {
     videos,
@@ -109,6 +107,10 @@ export default function FeedScreen() {
   );
 
   const handleShare = useCallback(async (item: VideoItem) => {
+    if (!user) {
+      router.push("/auth/register");
+      return;
+    }
     // Optimistic UI update
     setShareOverrides((prev) => ({
       ...prev,
@@ -144,7 +146,7 @@ ${item.uri}`,
         [item.id]: Math.max(0, (prev[item.id] ?? 1) - 1),
       }));
     }
-  }, [user]);
+  }, []);
 
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -171,53 +173,23 @@ ${item.uri}`,
           isLiked={likedIds.has(item.id)}
           isSaved={savedIds.has(item.id)}
           isOwner={isOwner}
-          onLike={() => {
-            if (!user) {
-              openSeamlessAuth("like", () => toggleLike(item.id));
-              return;
-            }
-            toggleLike(item.id);
-          }}
-          onDoubleLike={() => {
-            if (!user) {
-              openSeamlessAuth("like", () => toggleLike(item.id));
-              return;
-            }
-            toggleLike(item.id);
-          }}
-          onFollow={() => {
-            if (!user) {
-              openSeamlessAuth("follow", () => toggleFollow(item.creatorId));
-              return;
-            }
-            toggleFollow(item.creatorId);
-          }}
+          onLike={() => toggleLike(item.id)}
+          onDoubleLike={() => toggleLike(item.id)}
+          onFollow={() => toggleFollow(item.creatorId)}
           onComment={() => {
             if (!user) {
-              openSeamlessAuth("comment", () => showToast("Comentario habilitado"));
+              router.push("/auth/register");
               return;
             }
             setCommentVideo(item);
           }}
-          onShare={() => {
-            if (!user) {
-              openSeamlessAuth("generic", () => handleShare(item));
-              return;
-            }
-            handleShare(item);
-          }}
-          onSave={() => {
-            if (!user) {
-              openSeamlessAuth("favorite", () => toggleSave(item.id));
-              return;
-            }
-            toggleSave(item.id);
-          }}
+          onShare={() => handleShare(item)}
+          onSave={() => toggleSave(item.id)}
           onDelete={() => handleDelete(item)}
           isGuest={isGuest}
           onAvatarPress={() => {
             if (!user) {
-              openSeamlessAuth("generic", () => router.push(`/user-profile?userId=${item.creatorId}`));
+              router.push("/auth/register");
               return;
             }
             router.push(`/user-profile?userId=${item.creatorId}`);
@@ -225,7 +197,7 @@ ${item.uri}`,
         />
       );
     },
-    [activeIndex, likedIds, savedIds, shareOverrides, user, toggleLike, toggleFollow, toggleSave, handleShare, handleDelete, openSeamlessAuth, showToast]
+    [activeIndex, likedIds, savedIds, shareOverrides, user, toggleLike, toggleFollow, toggleSave, handleShare, handleDelete]
   );
 
   return (
@@ -233,7 +205,7 @@ ${item.uri}`,
       <View style={styles.feedHeader} pointerEvents="box-none">
         <View style={styles.feedModes}>
           <TouchableOpacity
-            onPress={isGuest ? () => openSeamlessAuth("generic") : undefined}
+            onPress={isGuest ? () => router.push("/auth/register") : undefined}
             activeOpacity={isGuest ? 0.7 : 1}
             accessibilityRole="button"
             accessibilityLabel="Para ti"
