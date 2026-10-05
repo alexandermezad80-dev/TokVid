@@ -9,7 +9,7 @@ import React from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useNotifications } from "../../context/NotificationsContext";
 import { useAuth } from "../../context/AuthContext";
-import { router } from "expo-router";
+import { useSeamlessAuth } from "../../context/SeamlessAuthContext";
 
 const PRIMARY = "#FE0979";
 const CYAN = "#00F2FE";
@@ -56,17 +56,20 @@ function GuestTabButton({
   label,
   icon,
   create = false,
+  action = "generic" as const,
 }: {
   label: string;
   icon: string;
   create?: boolean;
+  action?: "profile" | "generic";
 }) {
   const isIOS = Platform.OS === "ios";
+  const { openSeamlessAuth } = useSeamlessAuth();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
-      onPress={() => router.push("/auth/register")}
+      onPress={() => openSeamlessAuth(action)}
       style={styles.guestButton}
     >
       {create ? (
@@ -186,7 +189,7 @@ function ClassicTabLayout() {
         name="profile"
         options={{
           title: "Perfil",
-          tabBarButton: guest ? () => <GuestTabButton label="Perfil" icon="user" /> : undefined,
+          tabBarButton: guest ? () => <GuestTabButton label="Perfil" icon="user" action="profile" /> : undefined,
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="person" tintColor={color} size={24} />
