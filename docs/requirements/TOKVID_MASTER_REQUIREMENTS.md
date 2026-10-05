@@ -949,14 +949,14 @@ El registro se presenta mediante un **Bottom Sheet Modal** con:
 - Correo electrónico o teléfono mediante código de 6 dígitos.
 - **Sin contraseña.**
 - **Sin intereses/categorías.**
-- **Sin formulario de avatar.**
+- **Sin formulario de carga de avatar durante el registro.** El perfil sí mantiene el campo/avatar de perfil; durante el registro no se solicita una foto.
 - **Sin formulario de username.**
 
 Al completar Auth:
 
 - se crea/identifica automáticamente el perfil;
 - `onboarding_completed = true` se activa automáticamente en Backend;
-- el avatar procede de Google OAuth o usa placeholder gris;
+- el avatar de perfil procede de Google OAuth cuando esté disponible o usa placeholder gris;
 - el username procede de metadatos de Google o del Trigger de Supabase;
 - no existe una etapa manual posterior obligatoria antes de entrar al Feed.
 
@@ -1000,7 +1000,7 @@ No se autoriza por esta especificación:
 - modificar `main`;
 - hacer limpieza general;
 - alterar el Feed o branding ya aprobados;
-- crear pantallas de intereses, avatar o username como parte del registro.
+- crear pantallas de intereses, carga de avatar o username como parte del registro. El perfil sí conserva avatar y username como datos editables posteriormente.
 
 
 # 39. ESTADO ACTUAL CONSOLIDADO — CONCILIACIÓN CON AUDITORÍA 30
@@ -1073,7 +1073,7 @@ Estos hallazgos son **estado/documentación**, no autorización para corregirlos
 ## 39.3 Dependencias consolidadas
 
 - **CI:** lockfile → instalación → typecheck/build → pruebas → PR.
-- **Registro / onboarding:** Guest Feed → interacción restringida → Registro Seamless → Auth → callback → profiles → `onboarding_completed = true` → retorno al contexto exacto del Feed → ejecución de la acción pendiente significativa. No existe pantalla de intereses/categorías, formulario de avatar ni formulario de username durante el registro. Las preferencias se deducen en segundo plano a partir del consumo de videos durante la sesión de invitado.
+- **Registro / onboarding:** Guest Feed → interacción restringida → Registro Seamless → Auth → callback → profiles → `onboarding_completed = true` → retorno al contexto exacto del Feed → ejecución de la acción pendiente significativa. No existe pantalla de intereses/categorías, formulario de carga de avatar ni formulario de username durante el registro. El perfil sí contempla avatar y username como datos de perfil. Las preferencias se deducen en segundo plano a partir del consumo de videos durante la sesión de invitado.
 - **Publicación:** Storage de video → `video_url` → feed → likes/comments/shares → contadores → hashtags/mentions.
 - **Social:** Auth → profiles → follows → contadores → perfil público → notifications.
 - **Mensajería:** conversations → messages → RLS → notification → push → chat.
@@ -2503,7 +2503,7 @@ Esta sección es una **regla de precedencia obligatoria** para el flujo de regis
 ### Pantallas estrictamente prohibidas durante el registro inicial
 
 - ❌ **NO implementar pantalla de “Selección de Intereses / Categorías”.** El usuario no debe ver burbujas de texto para elegir gustos durante el registro. El algoritmo deducirá sus preferencias en segundo plano analizando los videos consumidos durante su sesión de invitado. La bandera `onboarding_completed = true` se activa automáticamente en el Backend al procesar el Auth.
-- ❌ **NO implementar formulario de “Carga de Avatar” en el registro.** No se solicita una foto para crear la cuenta. El avatar se obtiene de Google OAuth cuando esté disponible o se asigna un placeholder gris por defecto.
+- ❌ **NO implementar formulario de “Carga de Avatar” en el registro.** No se solicita una foto para crear la cuenta. El perfil sí contempla avatar; durante el registro, el avatar se obtiene de Google OAuth cuando esté disponible o se asigna un placeholder gris por defecto.
 - ❌ **NO implementar formulario de “Escribir Nombre de Usuario” en el registro.** No se solicita un username al registrarse. Se obtiene de los metadatos de Google o el Trigger de Supabase genera uno aleatorio, por ejemplo `Usuario_TokVid_a1b2c3`.
 
 ### Comportamiento de la pestaña “Perfil” en la Tab Bar inferior
@@ -2541,6 +2541,6 @@ La lógica de preferencias puede ejecutarse en segundo plano a partir del compor
 
 ### Regla de precedencia
 
-Si alguna sección anterior o posterior del Documento Maestro describe un flujo de registro que exige intereses, avatar o username antes de completar Auth, **esta Sección 12 prevalece para implementación** y dicha descripción debe interpretarse como obsoleta en ese punto.
+Si alguna sección anterior o posterior del Documento Maestro describe un flujo de registro que exige intereses, carga de avatar o username antes de completar Auth, **esta Sección 12 prevalece para implementación** y dicha descripción debe interpretarse como obsoleta en ese punto. El avatar y el username siguen siendo datos del perfil y pueden editarse voluntariamente después del registro.
 
 Esta regla aplica al **Documento Maestro, Frontend y Backend** y no autoriza cambios funcionales fuera del flujo de Registro/Login.
