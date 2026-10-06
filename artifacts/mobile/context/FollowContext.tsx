@@ -6,6 +6,7 @@ import React, {
   useContext,
   useEffect,
   useState,
+  useRef,
 } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "./AuthContext";
@@ -22,10 +23,12 @@ const FollowContext = createContext<FollowContextValue | null>(null);
 export function FollowProvider({ children }: { children: React.ReactNode }) {
   const { user, requireAuth } = useAuth();
   const { completed } = useRegistration();
+  const loadSequence = useRef(0);
   const [followedIds, setFollowedIds] = useState<Set<string>>(new Set());
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    const request = ++loadSequence.current;
     if (!user) {
       setFollowedIds(new Set());
       return;
@@ -36,7 +39,8 @@ export function FollowProvider({ children }: { children: React.ReactNode }) {
       .eq("follower_id", user.id)
       .then(async ({ data }) => {
         if (data) {
-          setFollowedIds(new Set([...data.map((r) => r.following_id as string), ...await readDemoFollows(user.id)]));
+          const ids = new Set([...data.map((r) => r.following_id as string), ...await readDemoFollows(user.id)]);
+          if (request === loadSequence.current) setFollowedIds(ids);
         }
       });
   }, [user, completed]);

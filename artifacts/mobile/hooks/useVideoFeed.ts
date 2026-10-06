@@ -257,6 +257,7 @@ export function useVideoFeed(followedIds: Set<string>) {
   const [likedLoading, setLikedLoading] = useState(true);
   const [interests, setInterests] = useState<string[]>([]);
   const [isGuest, setIsGuest] = useState(true);
+  const likedRequest = useRef(0);
   const pageRef = useRef(0);
 
   const removeVideo = useCallback((id: string) => {
@@ -264,27 +265,28 @@ export function useVideoFeed(followedIds: Set<string>) {
   }, []);
 
   const loadLikedIds = useCallback(async () => {
+    const request = ++likedRequest.current;
     setLikedLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         const raw = await AsyncStorage.getItem(LIKED_KEY);
-        if (raw) setLikedIds(new Set(JSON.parse(raw)));
+        if (request === likedRequest.current && raw) setLikedIds(new Set(JSON.parse(raw)));
       } else {
         const { data, error } = await supabase
           .from("video_likes")
           .select("video_id")
           .eq("user_id", user.id);
-        if (!error && data) {
+        if (request === likedRequest.current && !error && data) {
           setLikedIds(new Set((data as { video_id: string }[]).map((row) => row.video_id)));
         }
       }
     } catch {
       // fallback to cached likes
       const raw = await AsyncStorage.getItem(LIKED_KEY);
-      if (raw) setLikedIds(new Set(JSON.parse(raw)));
+      if (request === likedRequest.current && raw) setLikedIds(new Set(JSON.parse(raw)));
     } finally {
-      setLikedLoading(false);
+      if (request === likedRequest.current) setLikedLoading(false);
     }
   }, []);
 

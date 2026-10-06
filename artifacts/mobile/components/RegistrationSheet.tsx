@@ -43,8 +43,8 @@ export default function RegistrationSheet({ visible, onClose, tabBarHeight, befo
     <KeyboardAvoidingView style={styles.backdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <View style={{ marginHorizontal: 16, marginBottom: tabBarHeight + 12, maxHeight: height - tabBarHeight - 70 }}>
         <LinearGradient colors={["#00F2FE", "#FE0979"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.border}>
-          <ScrollView style={styles.sheet} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
             <Pressable onPress={onClose} style={styles.close} accessibilityLabel="Cerrar registro" accessibilityRole="button"><Feather name="x" size={22} color="#fff" /></Pressable>
+          <ScrollView style={styles.sheet} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
             <View style={styles.handle} />
             <Text style={styles.title}>Únete a TokVid</Text>
             <Text style={styles.subtitle}>Conecta y descubre más.</Text>

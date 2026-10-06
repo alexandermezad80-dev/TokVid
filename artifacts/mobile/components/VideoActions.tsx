@@ -74,6 +74,13 @@ export default function VideoActions({
   const saveScale = useRef(new Animated.Value(1)).current;
 
 
+  useEffect(() => {
+    if (isGuest) return;
+    const value = isLiked ? heartScale : isSaved ? saveScale : null;
+    if (!value) return;
+    Animated.sequence([Animated.timing(value, { toValue: 1.12, duration: 140, useNativeDriver: true }), Animated.timing(value, { toValue: 1, duration: 180, useNativeDriver: true })]).start();
+  }, [isLiked, isSaved, isGuest]);
+
   const handleLike = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Animated.sequence([
