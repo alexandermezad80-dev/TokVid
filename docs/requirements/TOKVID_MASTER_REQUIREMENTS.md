@@ -946,7 +946,8 @@ No se debe memorizar indiscriminadamente cada toque del usuario.
 El registro se presenta mediante un **Bottom Sheet Modal** con:
 
 - Google OAuth.
-- Correo electrónico o teléfono mediante código de 6 dígitos.
+- Correo electrónico mediante código de **8 dígitos**, según decisión del usuario del 5 de octubre de 2026 y configuración de Email comprobada en Supabase.
+- Teléfono mediante código SMS; la especificación previa de 6 dígitos queda pendiente de comprobar contra la configuración real del proveedor Phone, actualmente deshabilitado. La aprobación de 8 dígitos para Email no confirma la longitud de SMS.
 - **Sin contraseña.**
 - **Sin intereses/categorías.**
 - **Sin formulario de carga de avatar durante el registro.** El perfil sí mantiene el campo/avatar de perfil; durante el registro no se solicita una foto.
@@ -1013,7 +1014,8 @@ No se autoriza por esta especificación:
 
 - Mantener un único Bottom Sheet Modal para todos los controles restringidos del invitado.
 - Conservar la propuesta visual presentada: superficie oscura, separación limpia, botón principal claro con símbolo de Google y texto **«Continuar con Google»**, y alternativas compactas **Correo** y **Teléfono** con iconos.
-- Google inicia OAuth; correo y teléfono conducen a código de seis dígitos. No introducir contraseña, selección de intereses, formulario de username ni carga de avatar.
+- Google inicia OAuth; correo conduce a código de **8 dígitos**. El modal debe permitir introducir y validar los ocho dígitos completos, sin truncarlos a seis. Para teléfono, comprobar la longitud real del código SMS antes de implementar su verificación. No introducir contraseña, selección de intereses, formulario de username ni carga de avatar.
+- **Decisión de longitud OTP:** conservar Email OTP length en 8 en Supabase. Esta decisión sustituye las referencias anteriores a seis dígitos para correo; no modifica la caducidad ni autoriza habilitar Phone.
 - El modal solo presenta el acceso/registro y sus estados de autenticación. **No muestra la memoria interna ni anuncia resultados de acciones**: no mostrar «Like activo», «intención guardada», «Follow completado» ni subtítulos según la acción que abrió el registro.
 - La **X cierra todo el modal**, elimina la intención pendiente y conserva el mismo video y contexto como invitado. Una cancelación no aplica Like, Follow ni Favorito.
 - No trasladar a la app controles propios de la demostración como «Ver el modal», mensajes de simulación ni una barra de gesto del sistema dibujada dentro de la tarjeta.
