@@ -20,5 +20,5 @@ export async function applyPendingAction(userId: string, intent: RegistrationInt
     }, { onConflict: "follower_id,following_id", ignoreDuplicates: true });
     if (error) throw error;
   }
-  // Comment is only a cue. Other controls only register; Profile navigates later.
+  // Comment is only a cue. Other controls, including Profile, only register.
 }

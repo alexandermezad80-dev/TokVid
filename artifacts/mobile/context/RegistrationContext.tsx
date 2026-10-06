@@ -1,5 +1,4 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useAuth } from "./AuthContext";
 import RegistrationSheet from "../components/RegistrationSheet";
@@ -15,7 +14,7 @@ const Context = createContext<{
   setFeedContext: (videoId: string, position: number, wasPaused: boolean) => void;
   registerPlayback: (videoId: string, read: () => { position: number; wasPaused: boolean }) => void;
   acknowledge: () => void;
-  getAuthDestination: () => "/(tabs)" | "/(tabs)/profile";
+  getAuthDestination: () => "/(tabs)";
 } | null>(null);
 
 export function RegistrationProvider({ children }: { children: React.ReactNode }) {
@@ -28,7 +27,6 @@ export function RegistrationProvider({ children }: { children: React.ReactNode }
   const feedContext = useRef<{ videoId: string; position: number; wasPaused: boolean } | null>(null);
   const playback = useRef<{ videoId: string; read: () => { position: number; wasPaused: boolean } } | null>(null);
   const activeRequest = useRef<string | null>(null);
-  const destination = useRef<"/(tabs)" | "/(tabs)/profile">("/(tabs)");
   const processing = useRef(false);
   const storageWrite = useRef<Promise<unknown>>(Promise.resolve());
 
@@ -40,7 +38,6 @@ export function RegistrationProvider({ children }: { children: React.ReactNode }
         try {
           const intent = JSON.parse(raw) as RegistrationIntent;
           if (["register", "like", "follow", "favorite", "comment", "profile"].includes(intent.kind)) {
-            destination.current = intent.kind === "profile" ? "/(tabs)/profile" : "/(tabs)";
             activeRequest.current = intent.requestId ?? null;
             setPending(intent);
             setVisible(true);
@@ -57,7 +54,6 @@ export function RegistrationProvider({ children }: { children: React.ReactNode }
       if (user) return;
       const snapshot = playback.current ? { videoId: playback.current.videoId, ...playback.current.read() } : feedContext.current;
       const next = { ...snapshot, ...intent, requestId: `${Date.now()}-${Math.random()}` };
-      destination.current = intent.kind === "profile" ? "/(tabs)/profile" : "/(tabs)";
       activeRequest.current = next.requestId;
       setPending(next);
       setVisible(true);
@@ -68,7 +64,6 @@ export function RegistrationProvider({ children }: { children: React.ReactNode }
 
   const cancel = useCallback(() => {
     activeRequest.current = null;
-    destination.current = "/(tabs)";
     setVisible(false);
     setPending(null);
     storageWrite.current = storageWrite.current.catch(() => {}).then(() => AsyncStorage.removeItem(KEY));
@@ -93,7 +88,8 @@ export function RegistrationProvider({ children }: { children: React.ReactNode }
         setPending(null);
         activeRequest.current = null;
         storageWrite.current = storageWrite.current.catch(() => {}).then(() => AsyncStorage.removeItem(KEY));
-        if (pending.kind === "profile") router.replace("/(tabs)/profile");
+        // All guest entries, including Profile, resume the captured Feed context.
+        // Profile opens only on a new tap after authentication.
       } catch {
         // Restore the feed without claiming success; discard a failed action.
         if (activeRequest.current === requestId) {
@@ -111,7 +107,7 @@ export function RegistrationProvider({ children }: { children: React.ReactNode }
     feedContext.current = { videoId, position, wasPaused };
   }, []);
   const registerPlayback = useCallback((videoId: string, read: () => { position: number; wasPaused: boolean }) => { playback.current = { videoId, read }; }, []);
-  const getAuthDestination = useCallback(() => destination.current, []);
+  const getAuthDestination = useCallback((): "/(tabs)" => "/(tabs)", []);
   const acknowledge = useCallback(() => setCompleted(null), []);
   return (
     <Context.Provider value={{ visible, completed, tabBarHeight, setTabBarHeight, setFeedContext, acknowledge, getAuthDestination, registerPlayback }}>

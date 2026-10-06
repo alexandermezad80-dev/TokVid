@@ -982,6 +982,7 @@ Si el usuario cancela el registro:
 **Invitado / UNAUTHENTICATED:**
 - Al pulsar Perfil, se almacena la intención en memoria.
 - Se muestra el Bottom Sheet de registro Seamless.
+- Al completar Auth, se regresa al mismo video, posición y estado Play/Pause del Feed. La entrada por Perfil no abre automáticamente el perfil propio; esta regla es común a Google y correo.
 
 **Usuario identificado / AUTHENTICATED:**
 - Al pulsar Perfil, se abandona/desmonta la vista del Feed correspondiente a esa navegación.
@@ -1077,7 +1078,7 @@ Esta aclaración complementa los apartados 2, 4 y 5 de Registro Seamless:
 | Follow | Regresar al contexto del video con el creador seguido, estado **Siguiendo** y señal sutil con acento TOKVID. |
 | Favorito | Regresar al mismo video con guardado activo, marcado y señal sutil con acento TOKVID. |
 | Comentario | Regresar al mismo video y mostrar señal sutil, sin abrir automáticamente los comentarios. |
-| Perfil de la tab bar | Excepción de navegación ya definida: retomar la intención hacia el perfil propio protegido, con **Editar perfil**. |
+| Perfil de la tab bar | Regresar al mismo video, posición y estado Play/Pause del Feed. No abrir Perfil automáticamente; el perfil propio se abre con una nueva pulsación después de Auth. |
 | Otros controles restringidos | Abrir el mismo registro sin inventar una acción automática adicional. |
 
 Conservar una sola intención significativa junto con la identidad del video o creador necesario y el contexto de retorno. Consumirla una vez al completar el flujo, o eliminarla al cancelar. No ejecutar un toggle ciegamente que pueda deshacer una acción ya activa.
@@ -2605,7 +2606,7 @@ El botón de **Perfil** actúa como un enrutador inteligente basado en el estado
 1. **Estado — UNAUTHENTICATED (Invitado):**
    - Al hacer clic, se almacena la intención en memoria.
    - Se despliega el **Bottom Sheet Modal** de registro dinámico.
-   - Después del registro, debe poder retomarse la intención correspondiente sin introducir una pantalla de onboarding tradicional.
+   - Después del registro, se retorna exactamente al video, posición y estado Play/Pause del Feed anterior, también cuando la entrada fue Perfil. No se abre automáticamente el perfil propio ni se introduce una pantalla de onboarding tradicional.
 
 2. **Estado — AUTHENTICATED (Identificado):**
    - Al hacer clic, la app abandona/destruye la vista del Feed correspondiente a esa navegación y renderiza una **UI completamente nueva: Pantalla de Perfil Protegida**.
@@ -2615,11 +2616,11 @@ El botón de **Perfil** actúa como un enrutador inteligente basado en el estado
 
 ### Flujo obligatorio
 
-`Invitado → consume Feed → Perfil → registro dinámico → Auth → Trigger/Backend crea identidad → onboarding_completed = true → Perfil protegido`
+`Invitado → consume Feed → cualquier control restringido, incluido Perfil → registro dinámico → Auth → Trigger/Backend crea identidad → onboarding_completed = true → mismo video y contexto del Feed`
 
 Posteriormente:
 
-`Perfil protegido → Editar Perfil → cambio voluntario de username/avatar`
+`Feed autenticado → nueva pulsación en Perfil → Perfil protegido → Editar Perfil → cambio voluntario de username/avatar`
 
 ### Regla de integración Frontend/Backend
 
@@ -2660,14 +2661,14 @@ Esta implementación sustituye las pantallas antiguas descritas como pendientes 
 - Google conserva símbolo multicolor y botón blanco. Correo usa OTP de ocho dígitos; teléfono usa SMS de seis dígitos. No hay contraseña, captura de username, selección de intereses ni avatar durante el registro.
 - La tarjeta usa fondo oscuro, borde cian #00F2FE → magenta #FE0979, lados 16 dp, radio 28 dp y separación inferior de 12 dp sobre la altura medida de la tab bar existente. El fondo/barra permanecen visibles atenuados e inertes. Estas medidas siguen pendientes de validación en Android físico.
 - Una sola intención se conserva discretamente en AsyncStorage antes de salir a Google. La X cierra todo el modal y borra esa intención. El video se pausa y conserva posición y estado previo Play/Pause; al cerrar o completar Auth se restaura el contexto.
-- Like/favorito/follow se aplican de forma idempotente, sin alternar el resultado al repetir un callback. El corazón queda rojo; favorito marcado; follow en Siguiendo con acento TokVid. Comentario muestra una señal breve y no abre el panel. El modal no anuncia acciones guardadas ni resultados. Perfil de la tab bar retoma el perfil propio protegido.
+- Like/favorito/follow se aplican de forma idempotente, sin alternar el resultado al repetir un callback. El corazón queda rojo; favorito marcado; follow en Siguiendo con acento TokVid. Comentario muestra una señal breve y no abre el panel. El modal no anuncia acciones guardadas ni resultados. **Actualización autorizada del retorno:** la entrada por Perfil de la tab bar vuelve al mismo video y contexto del Feed; Perfil se abre con una nueva pulsación después de Auth.
 - Los creadores demo no son usuarios reales: Follow de demo se guarda únicamente como estado de prueba en el dispositivo por usuario, sin crear relaciones ficticias en Supabase. Follow de creador real se guarda con RLS. Los demos siguen disponibles después del registro hasta validar carga/publicación real y autorizar su retirada.
 - La identidad continúa creándose en el trigger ya verificado: onboarding_completed true, username automático y avatar Google o placeholder gris. Editar Perfil es posterior y voluntario.
 - El script versionado configure-seamless-auth.mjs modifica únicamente TokVid desde GitHub Actions: conserva redirects existentes, añade mobile:///auth/callback, establece OTP de correo a ocho dígitos y plantillas con {{ .Token }}; comprueba la configuración después. No cambia credenciales Google, SMTP ni SMS.
 - Teléfono requiere que el proveedor SMS esté habilitado y configurado. Correo para usuarios externos requiere una entrega SMTP operativa; el servicio predeterminado puede tener restricciones. Estos requisitos no se dan por resueltos por la interfaz.
 - Validación local: typecheck móvil y once pruebas de callback, intención, idempotencia, fallos y ausencia del onboarding antiguo. La compilación nueva y el recorrido físico se documentarán con sus resultados reales. No se hace merge a main.
 
-**Verificación del reemplazo:** el commit `dda3febc764861bfbf9ed02188174a2c2db450eb` pasó CI (runs `37422606942` y `37422611686`). El export Android local generó el bundle correctamente. Una prueba adicional del componente real y coordinador con servicios simulados confirmó cierre/cancelación, snapshot de playback, OTP correo de ocho dígitos, favorito idempotente, comentario sin apertura del panel y navegación a Perfil protegido. No equivale a ejecutar Google/SMS en un Android físico.
+**Verificación del reemplazo:** el commit `dda3febc764861bfbf9ed02188174a2c2db450eb` pasó CI (runs `37422606942` y `37422611686`). El export Android local generó el bundle correctamente. Una prueba adicional del componente real y coordinador con servicios simulados confirmó cierre/cancelación, snapshot de playback, OTP correo de ocho dígitos, favorito idempotente, comentario sin apertura del panel y navegación a Perfil protegido. Esa navegación automática a Perfil es un resultado histórico, sustituido por la corrección de retorno al Feed autorizada posteriormente. No equivale a ejecutar Google/SMS en un Android físico.
 
 **Bloqueo externo confirmado:** Supabase migrations `37422606978` verificó migraciones, pero el paso de configuración Auth falló en GET `/config/auth` con HTTP 403. No se ejecutó PATCH. El token del workflow necesita acceso a la configuración Auth de TokVid antes de ejecutar de nuevo el script; el redirect y las plantillas OTP no se declaran aplicados. Las credenciales no se imprimen en logs. Teléfono/SMTP tampoco se declaran habilitados. La retirada del registro viejo no resuelve estos permisos de la cuenta.
 
@@ -2675,3 +2676,16 @@ Esta implementación sustituye las pantallas antiguas descritas como pendientes 
 
 
 **APK nueva publicada:** código `a1103b07777c04620681c0cb2753179a44591533`, versión 1.0.1 / versionCode 2. CI final pasó (`37423052677`, `37423058281`). Android APK `37423052680`, job `112136567606`, terminó en success y Gradle reportó `BUILD SUCCESSFUL in 25m 45s`. Se subió un archivo `app-release.apk` en `tokvid-android-release`, artifact `11394822505` (ZIP 213883677 bytes, sha256 `07353a908cd942490a13b25fb0f1ee32c6540ddbb3e56a005494915bb48d360c`). Descarga: https://github.com/alexandermezad80-dev/TokVid/actions/runs/37423052680/artifacts/11394822505. Esta APK contiene el reemplazo del registro viejo por el modal; sustituye la entrega de la base Auth anterior. `main` conserva `acdb98ffff206553318d3c40b4622367f9d97fda`. Quedan pendientes el recorrido físico y la configuración Auth bloqueada por 403; no se declara probado Google/correo/SMS en producción.
+
+## Registro Seamless — retorno al video desde todas las entradas (6 octubre 2026 UTC)
+
+**Autorización expresa del usuario:** quitar el desvío automático a Perfil después de Registro/Login y actualizar la excepción del maestro. Esta regla sustituye las descripciones anteriores de retorno automático a Perfil; no cambia la navegación voluntaria a Perfil cuando el usuario ya está autenticado.
+
+- Todos los controles restringidos del Guest Feed, incluido Perfil de la barra inferior, completan Registro/Login y retornan al mismo video, posición y estado Play/Pause. Google y correo comparten ese destino.
+- El coordinador conserva el contexto ya capturado y lo entrega a la restauración existente del Feed, sin ejecutar una navegación automática al perfil propio. El callback de Google vuelve a Home/Feed. Las intenciones `profile` guardadas por la APK anterior también respetan esta regla.
+- Like, Follow y Favorito conservan su aplicación idempotente; Comentario no abre automáticamente el panel. El cierre/cancelación descarta la intención como antes.
+- El perfil se crea automáticamente en Backend y puede consultarse con una nueva pulsación en Perfil después de Auth.
+- Alcance del cambio: coordinador de Registro/Login, aclaración de su servicio de acciones pendientes, pruebas de regresión y este documento. No se modifican el diseño, los controles, los componentes, los datos demo ni el branding del Feed. No requiere una migración de base de datos.
+- Comprobación local: nueve pruebas con los efectos reales del coordinador y callback, usando eventos Auth y almacenamiento simulados. Tres reproducían el desvío anterior; las nueve pasan con la corrección. Cubren contexto de playback, seis entradas, intención antigua persistida, cancelación y consumo único. Se ejecutan con Node 24 y `--test-isolation=none` por la limitación del entorno para procesos de prueba separados. No sustituyen el typecheck/CI ni una prueba en teléfono físico.
+- Acceso Git: el proxy del entorno impide la clonación/push por HTTPS. El conector GitHub obtiene los objetos Git; la base y el árbol completo se comprueban por sus SHA. La publicación se realiza por el conector sobre la rama existente, conservando el historial y sin force-push. Los resultados remotos se verificarán después de publicar.
+- Pendiente de cierre físico: probar correo y Google desde Perfil y otra acción sobre un video avanzado, comprobar el mismo video/posición al completar Auth y confirmar que una nueva pulsación en Perfil abre el perfil propio.
