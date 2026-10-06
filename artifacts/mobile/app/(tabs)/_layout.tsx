@@ -1,3 +1,5 @@
+import { useRegistration } from "../../context/RegistrationContext";
+import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { isLiquidGlassAvailable } from "expo-glass-effect";
@@ -66,7 +68,7 @@ function GuestTabButton({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
-      onPress={() => router.push("/auth/register")}
+      onPress={() => requestRegistration({ kind: label === "Perfil" ? "profile" : "register" })}
       style={styles.guestButton}
     >
       {create ? (
@@ -94,6 +96,7 @@ function ClassicTabLayout() {
   const { unreadCount } = useNotifications();
   const { user } = useAuth();
   const guest = !user;
+  const { setTabBarHeight } = useRegistration();
 
   return (
     <Tabs
@@ -117,8 +120,8 @@ function ClassicTabLayout() {
           isIOS ? (
             <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
           ) : isWeb ? (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: DARK }]} />
-          ) : null,
+            <View onLayout={event => setTabBarHeight(event.nativeEvent.layout.height)} style={[StyleSheet.absoluteFill, { backgroundColor: DARK }]} />
+          ) : <View style={StyleSheet.absoluteFill} onLayout={event => setTabBarHeight(event.nativeEvent.layout.height)} />,
       }}
     >
       <Tabs.Screen

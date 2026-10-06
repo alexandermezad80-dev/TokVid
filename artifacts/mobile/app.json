@@ -2,7 +2,7 @@
   "expo": {
     "name": "TokVid",
     "slug": "mobile",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/branding/icon_glass_full.png",
     "scheme": "mobile",
@@ -21,6 +21,7 @@
       }
     },
     "android": {
+      "versionCode": 2,
       "permissions": ["android.permission.CAMERA","android.permission.RECORD_AUDIO","android.permission.MODIFY_AUDIO_SETTINGS","android.permission.ACCESS_WIFI_STATE","android.permission.ACCESS_NETWORK_STATE","android.permission.BLUETOOTH","android.permission.FOREGROUND_SERVICE"],
       "allowBackup": false,
       "adaptiveIcon": {

@@ -1,6 +1,9 @@
+import { useRegistration } from "../../context/RegistrationContext";
+import type { RegistrationKind } from "../../lib/features/auth/services/registrationBridge";
+import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -35,6 +38,11 @@ export default function FeedScreen() {
   const flatListRef = useRef<FlatList>(null);
 
   const { user } = useAuth();
+  const registration = useRegistration();
+  const [applied, setApplied] = useState<Record<string, Set<string>>>({});
+  const [restored, setRestored] = useState<{ id: string; position: number; paused: boolean; requestId?: string } | null>(null);
+  const [commentCue, setCommentCue] = useState<string | null>(null);
+  useEffect(() => { setApplied({}); }, [user?.id]);
   const { followedIds, toggleFollow } = useFollow();
   const {
     videos,
@@ -50,6 +58,21 @@ export default function FeedScreen() {
   } = useVideoFeed(followedIds);
   const { savedIds, toggleSave } = useSavedVideos();
 
+
+  useEffect(() => {
+    const intent = registration.completed;
+    if (!intent?.videoId) return;
+    const index = videos.findIndex(video => video.id === intent.videoId);
+    if (index < 0) return;
+    setActiveIndex(index); flatListRef.current?.scrollToIndex({ index, animated: false });
+    setRestored({ id: intent.videoId, position: intent.position ?? 0, paused: !!intent.wasPaused, requestId: intent.requestId });
+    if (["like", "follow", "favorite"].includes(intent.kind)) setApplied(prev => ({ ...prev, [intent.kind]: new Set([...(prev[intent.kind] ?? []), intent.kind === "follow" ? intent.creatorId! : intent.videoId!]) }));
+    if (intent.kind === "comment") setCommentCue(intent.videoId);
+    registration.acknowledge();
+  }, [registration.completed, videos, registration.acknowledge]);
+  useEffect(() => { if (!commentCue) return; const timer = setTimeout(() => setCommentCue(null), 2500); return () => clearTimeout(timer); }, [commentCue]);
+  const clearApplied = (kind: string, id: string) => setApplied(prev => { const next = new Set(prev[kind]); next.delete(id); return { ...prev, [kind]: next }; });
+  const registerFor = useCallback((kind: RegistrationKind, item: VideoItem) => requestRegistration({ kind, videoId: item.id, creatorId: item.creatorId, isDemo: !item.isReal }), []);
 
   const showToast = useCallback((msg: string) => {
     setToastMsg(msg);
@@ -108,7 +131,7 @@ export default function FeedScreen() {
 
   const handleShare = useCallback(async (item: VideoItem) => {
     if (!user) {
-      router.push("/auth/register");
+      requestRegistration();
       return;
     }
     // Optimistic UI update
@@ -146,7 +169,7 @@ ${item.uri}`,
         [item.id]: Math.max(0, (prev[item.id] ?? 1) - 1),
       }));
     }
-  }, []);
+  }, [user]);
 
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -168,28 +191,35 @@ ${item.uri}`,
       const isOwner = !!user && user.id === item.creatorId;
       return (
         <VideoCard
-          video={videoWithShares}
+          video={{ ...videoWithShares, isFollowing: videoWithShares.isFollowing || !!applied.follow?.has(item.creatorId) }}
+          suspended={registration.visible}
+          commentCue={commentCue === item.id}
+          onPosition={(position, paused) => registration.setFeedContext(item.id, position, paused)}
+          registerPlayback={read => registration.registerPlayback(item.id, read)}
+          restorePosition={restored?.id === item.id ? restored.position : undefined}
+          restorePaused={restored?.id === item.id ? restored.paused : undefined}
+          restoreRequest={restored?.id === item.id ? restored.requestId : undefined}
           isActive={index === activeIndex}
-          isLiked={likedIds.has(item.id)}
-          isSaved={savedIds.has(item.id)}
+          isLiked={likedIds.has(item.id) || !!applied.like?.has(item.id)}
+          isSaved={savedIds.has(item.id) || !!applied.favorite?.has(item.id)}
           isOwner={isOwner}
-          onLike={() => toggleLike(item.id)}
-          onDoubleLike={() => toggleLike(item.id)}
-          onFollow={() => toggleFollow(item.creatorId)}
+          onLike={() => !user ? registerFor("like", item) : (clearApplied("like", item.id), toggleLike(item.id))}
+          onDoubleLike={() => !user ? registerFor("like", item) : !likedIds.has(item.id) && toggleLike(item.id)}
+          onFollow={() => !user ? registerFor("follow", item) : (clearApplied("follow", item.creatorId), toggleFollow(item.creatorId))}
           onComment={() => {
             if (!user) {
-              router.push("/auth/register");
+              registerFor("comment", item);
               return;
             }
             setCommentVideo(item);
           }}
           onShare={() => handleShare(item)}
-          onSave={() => toggleSave(item.id)}
+          onSave={() => !user ? registerFor("favorite", item) : (clearApplied("favorite", item.id), toggleSave(item.id))}
           onDelete={() => handleDelete(item)}
           isGuest={isGuest}
           onAvatarPress={() => {
             if (!user) {
-              router.push("/auth/register");
+              requestRegistration();
               return;
             }
             router.push(`/user-profile?userId=${item.creatorId}`);
@@ -197,7 +227,7 @@ ${item.uri}`,
         />
       );
     },
-    [activeIndex, likedIds, savedIds, shareOverrides, user, toggleLike, toggleFollow, toggleSave, handleShare, handleDelete]
+    [activeIndex, likedIds, savedIds, shareOverrides, user, toggleLike, toggleFollow, toggleSave, handleShare, handleDelete, registration.visible, registration.setFeedContext, registerFor, applied, restored, commentCue]
   );
 
   return (
@@ -205,7 +235,7 @@ ${item.uri}`,
       <View style={styles.feedHeader} pointerEvents="box-none">
         <View style={styles.feedModes}>
           <TouchableOpacity
-            onPress={isGuest ? () => router.push("/auth/register") : undefined}
+            onPress={isGuest ? () => requestRegistration() : undefined}
             activeOpacity={isGuest ? 0.7 : 1}
             accessibilityRole="button"
             accessibilityLabel="Para ti"
@@ -213,7 +243,7 @@ ${item.uri}`,
             <Text style={styles.feedModeActive}>Para ti</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={isGuest ? () => router.push("/auth/register") : undefined}
+            onPress={isGuest ? () => requestRegistration() : undefined}
             activeOpacity={isGuest ? 0.7 : 1}
             accessibilityRole="button"
             accessibilityLabel="Siguiendo"
@@ -221,7 +251,7 @@ ${item.uri}`,
             <Text style={styles.feedModeInactive}>Siguiendo</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={isGuest ? () => router.push("/auth/register") : undefined}
+            onPress={isGuest ? () => requestRegistration() : undefined}
             activeOpacity={isGuest ? 0.7 : 1}
             accessibilityRole="button"
             accessibilityLabel="Buscar"

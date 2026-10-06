@@ -1,3 +1,4 @@
+import { requestRegistration } from "../services/registrationBridge";
 import { Session, User } from "@supabase/supabase-js";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../../../supabase";
@@ -18,8 +19,6 @@ interface AuthContextValue {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
-  signUp: (email: string, password: string, username: string) => Promise<{ error: string | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   requireAuth: () => Promise<User | null>;
@@ -68,28 +67,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user) await fetchProfile(user.id);
   };
 
-  const signUp = async (email: string, password: string, username: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { username, display_name: username } },
-    });
-    if (error) return { error: error.message };
-
-    return { error: null };
-  };
-
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { error: error.message };
-    return { error: null };
-  };
-
   const requireAuth = async () => {
     const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (currentUser) return currentUser;
-    const { router } = await import("expo-router");
-    router.push("/auth/register");
+    requestRegistration();
     return null;
   };
 
@@ -99,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, signUp, signIn, signOut, refreshProfile, requireAuth }}>
+    <AuthContext.Provider value={{ session, user, profile, loading, signOut, refreshProfile, requireAuth }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,3 +1,5 @@
+import { useAuth } from "../context/AuthContext";
+import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect, useRef } from "react";
@@ -22,6 +24,7 @@ async function goToMention(username: string) {
 
 /** Renders a caption with clickable blue #hashtags and @mentions. */
 function CaptionText({ caption }: { caption: string }) {
+  const { user } = useAuth();
   if (!caption) return null;
   const parts = caption.split(/([#@]\w+)/g);
   return (
@@ -33,7 +36,7 @@ function CaptionText({ caption }: { caption: string }) {
             <Text
               key={i}
               style={styles.tag}
-              onPress={() => router.push(`/tag?tag=${encodeURIComponent(tag)}`)}
+              onPress={() => user ? router.push(`/tag?tag=${encodeURIComponent(tag)}`) : requestRegistration()}
             >
               {part}
             </Text>
@@ -42,7 +45,7 @@ function CaptionText({ caption }: { caption: string }) {
         if (/^@\w+$/.test(part)) {
           const username = part.slice(1);
           return (
-            <Text key={i} style={styles.tag} onPress={() => goToMention(username)}>
+            <Text key={i} style={styles.tag} onPress={() => user ? goToMention(username) : requestRegistration()}>
               {part}
             </Text>
           );
@@ -108,9 +111,9 @@ export default function VideoInfo({
         <TouchableOpacity onPress={onAvatarPress} activeOpacity={0.85}>
           <Text style={styles.creatorName}>{creatorHandle}</Text>
         </TouchableOpacity>
-        {!isFollowing && (
+        {(
           <TouchableOpacity onPress={onFollow} style={styles.followBtn}>
-            <Text style={styles.followText}>Follow</Text>
+            <Text style={[styles.followText, isFollowing && { color: "#00F2FE" }]}>{isFollowing ? "Siguiendo" : "Follow"}</Text>
           </TouchableOpacity>
         )}
       </View>

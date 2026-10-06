@@ -1,3 +1,4 @@
+import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
@@ -30,7 +31,7 @@ export default function EditProfileScreen() {
   const { user, profile, refreshProfile } = useAuth();
 
   useEffect(() => {
-    if (!user) router.replace("/auth/register");
+    if (!user) requestRegistration();
   }, [user]);
 
   if (!user) return null;

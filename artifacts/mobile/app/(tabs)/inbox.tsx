@@ -1,3 +1,4 @@
+import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { formatDistanceToNowStrict } from "date-fns";
 import { es } from "date-fns/locale";
@@ -129,7 +130,7 @@ export default function InboxScreen() {
   const { user } = useAuth();
 
   useEffect(() => {
-    if (!user) router.replace("/auth/register");
+    if (!user) requestRegistration();
   }, [user]);
 
   if (!user) return null;

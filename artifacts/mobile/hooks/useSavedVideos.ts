@@ -1,3 +1,5 @@
+import { useRegistration } from "../context/RegistrationContext";
+import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { router } from "expo-router";
@@ -28,6 +30,7 @@ async function resolveSavedVideos(ids: Set<string>): Promise<VideoItem[]> {
 }
 
 export function useSavedVideos() {
+  const { completed } = useRegistration();
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [savedVideos, setSavedVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,12 +59,12 @@ export function useSavedVideos() {
     loadSaved();
     const { data: sub } = supabase.auth.onAuthStateChange(() => { loadSaved(); });
     return () => sub.subscription.unsubscribe();
-  }, [loadSaved]);
+  }, [loadSaved, completed]);
 
   const toggleSave = useCallback(async (videoId: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      router.push("/auth/register");
+      requestRegistration();
       return;
     }
 

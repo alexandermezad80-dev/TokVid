@@ -1,3 +1,5 @@
+import { readDemoFollows, setDemoFollow } from "../lib/features/auth/services/demoFollows";
+import { useRegistration } from "./RegistrationContext";
 import React, {
   createContext,
   useCallback,
@@ -19,6 +21,7 @@ const FollowContext = createContext<FollowContextValue | null>(null);
 
 export function FollowProvider({ children }: { children: React.ReactNode }) {
   const { user, requireAuth } = useAuth();
+  const { completed } = useRegistration();
   const [followedIds, setFollowedIds] = useState<Set<string>>(new Set());
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
 
@@ -31,12 +34,12 @@ export function FollowProvider({ children }: { children: React.ReactNode }) {
       .from("follows")
       .select("following_id")
       .eq("follower_id", user.id)
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         if (data) {
-          setFollowedIds(new Set(data.map((r) => r.following_id as string)));
+          setFollowedIds(new Set([...data.map((r) => r.following_id as string), ...await readDemoFollows(user.id)]));
         }
       });
-  }, [user]);
+  }, [user, completed]);
 
   const isFollowing = useCallback(
     (creatorId: string) => followedIds.has(creatorId),
@@ -58,6 +61,12 @@ export function FollowProvider({ children }: { children: React.ReactNode }) {
       });
       setLoadingIds((prev) => new Set(prev).add(creatorId));
 
+      if (/^([1-6])\1{7}-/.test(creatorId)) {
+        try { await setDemoFollow(currentUser.id, creatorId, !alreadyFollowing); }
+        catch { setFollowedIds(prev => { const next = new Set(prev); alreadyFollowing ? next.add(creatorId) : next.delete(creatorId); return next; }); }
+        setLoadingIds(prev => { const next = new Set(prev); next.delete(creatorId); return next; });
+        return;
+      }
       let error = null;
 
       if (alreadyFollowing) {

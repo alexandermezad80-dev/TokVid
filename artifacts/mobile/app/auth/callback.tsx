@@ -1,3 +1,4 @@
+import { useRegistration } from "../../context/RegistrationContext";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Linking from "expo-linking";
 import React, { useEffect, useState } from "react";
@@ -5,6 +6,7 @@ import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-nativ
 import { completeAuthCallback } from "../../lib/features/auth/services/authCallback";
 
 export default function AuthCallback() {
+  const { getAuthDestination } = useRegistration();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const linkingUrl = Linking.useURL();
   const query = new URLSearchParams();
@@ -19,7 +21,7 @@ export default function AuthCallback() {
   useEffect(() => {
     let active = true;
     completeAuthCallback(url).then(() => {
-      if (active) router.replace("/(tabs)");
+      if (active) router.replace(getAuthDestination());
     }).catch(() => {
       if (active) setStatus("No se pudo completar la autenticación. Volvé a intentar desde el registro.");
     });

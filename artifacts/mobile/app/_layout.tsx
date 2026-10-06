@@ -16,6 +16,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { AuthProvider, useAuth } from "../context/AuthContext";
+import { RegistrationProvider } from "../context/RegistrationContext";
 import { FollowProvider } from "../context/FollowContext";
 import { NotificationsProvider } from "../context/NotificationsContext";
 import { usePushNotifications } from "../hooks/usePushNotifications";
@@ -72,14 +73,14 @@ export default function RootLayout() {
           <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#000" }}>
             <KeyboardProvider>
               <AuthProvider>
-                <FollowProvider>
+                <RegistrationProvider><FollowProvider>
                   <NotificationsProvider>
                     <PushNotificationSetup />
                     <IncomingCallListener />
                     <StatusBar style="light" />
                     <RootLayoutNav />
                   </NotificationsProvider>
-                </FollowProvider>
+                </FollowProvider></RegistrationProvider>
               </AuthProvider>
             </KeyboardProvider>
           </GestureHandlerRootView>

@@ -29,6 +29,13 @@ interface Props {
   onDelete: () => void;
   onAvatarPress?: () => void;
   isGuest: boolean;
+  suspended?: boolean;
+  commentCue?: boolean;
+  onPosition?: (position: number, paused: boolean) => void;
+  registerPlayback?: (read: () => { position: number; wasPaused: boolean }) => void;
+  restorePosition?: number;
+  restorePaused?: boolean;
+  restoreRequest?: string;
 }
 
 export default function VideoCard({
@@ -45,13 +52,15 @@ export default function VideoCard({
   onSave,
   onDelete,
   onAvatarPress,
-  isGuest,
+  isGuest, suspended, commentCue, onPosition, registerPlayback, restorePosition, restorePaused, restoreRequest,
 }: Props) {
   const [paused, setPaused] = useState(false);
   const [showThumbnail, setShowThumbnail] = useState(true);
   const [showDoubleLike, setShowDoubleLike] = useState(false);
   const [playPauseFeedback, setPlayPauseFeedback] = useState<"play" | "pause" | null>(null);
+  const restoredRequest = useRef<string | undefined>(undefined);
   const lastTap = useRef<number>(0);
+  const singleTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const player = useVideoPlayer(video.uri, (p) => {
@@ -60,6 +69,7 @@ export default function VideoCard({
   });
 
   useEffect(() => {
+    if (suspended) { player.pause(); return; }
     if (isActive && !paused) {
       player.play();
       const t = setTimeout(() => setShowThumbnail(false), 300);
@@ -68,13 +78,22 @@ export default function VideoCard({
       player.pause();
       setShowThumbnail(true);
     }
-  }, [isActive, paused]);
+  }, [isActive, paused, suspended]);
+
+  useEffect(() => { if (isActive) registerPlayback?.(() => ({ position: player.currentTime, wasPaused: paused })); }, [isActive, registerPlayback, player, paused]);
+  useEffect(() => {
+    if (!isActive) return;
+    const timer = setInterval(() => onPosition?.(player.currentTime, paused), 250);
+    return () => clearInterval(timer);
+  }, [isActive, player, onPosition, paused]);
+  useEffect(() => { if (restorePosition !== undefined && isActive && restoreRequest !== restoredRequest.current) { restoredRequest.current = restoreRequest; player.currentTime = restorePosition; setPaused(!!restorePaused); } }, [restorePosition, isActive, restoreRequest]);
 
   const handleTap = () => {
-    if (!isActive) return;
+    if (!isActive || suspended) return;
     const now = Date.now();
     if (now - lastTap.current < 300) {
-      setShowDoubleLike(true);
+      if (singleTapTimer.current) clearTimeout(singleTapTimer.current);
+      if (!isGuest) setShowDoubleLike(true);
       onDoubleLike?.();
       setTimeout(() => setShowDoubleLike(false), 450);
       lastTap.current = 0;
@@ -82,6 +101,7 @@ export default function VideoCard({
     }
 
     lastTap.current = now;
+    singleTapTimer.current = setTimeout(() => {
     const nextPaused = !paused;
     setPaused(nextPaused);
     if (nextPaused) {
@@ -96,10 +116,12 @@ export default function VideoCard({
       setPlayPauseFeedback(null);
       feedbackTimer.current = null;
     }, 450);
+    }, 300);
   };
 
   useEffect(() => {
     return () => {
+      if (singleTapTimer.current) clearTimeout(singleTapTimer.current);
       if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
     };
   }, []);
@@ -141,6 +163,9 @@ export default function VideoCard({
           onDelete={onDelete}
           creatorAvatar={video.creatorAvatar}
           isGuest={isGuest}
+          onFollow={onFollow}
+          onAvatarPress={onAvatarPress}
+          commentCue={commentCue}
         />
       </View>
 

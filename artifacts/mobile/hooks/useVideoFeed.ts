@@ -1,3 +1,5 @@
+import { useRegistration } from "../context/RegistrationContext";
+import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
@@ -243,6 +245,7 @@ async function fetchRealVideos(page = 0, interests: string[] = []): Promise<Vide
 const LIKED_KEY = "tokvid_liked";
 
 export function useVideoFeed(followedIds: Set<string>) {
+  const { completed } = useRegistration();
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [realVideos, setRealVideos] = useState<VideoItem[]>([]);
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
@@ -305,7 +308,7 @@ export function useVideoFeed(followedIds: Set<string>) {
       loadLikedIds();
     });
     return () => sub.subscription.unsubscribe();
-  }, [loadLikedIds]);
+  }, [loadLikedIds, completed]);
 
   const loadPage = useCallback(async (nextPage = 0) => {
     setError(null);
@@ -394,13 +397,12 @@ export function useVideoFeed(followedIds: Set<string>) {
   const toggleLike = useCallback(async (id: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      router.push("/auth/register");
+      requestRegistration();
       return;
     }
-    let alreadyLiked = false;
+    const alreadyLiked = likedIds.has(id);
 
     setLikedIds((prev) => {
-      alreadyLiked = prev.has(id);
       const next = new Set(prev);
       alreadyLiked ? next.delete(id) : next.add(id);
       return next;
@@ -457,12 +459,9 @@ export function useVideoFeed(followedIds: Set<string>) {
   const rankedReal = interests.length > 0
     ? [...realVideos]
     : [...realVideos].sort((a, b) => rankScore(b) - rankScore(a));
-  // Guest-only development fallback: real Supabase videos remain the source of
-  // production content; internal demo videos appear only for an unauthenticated guest.
+  // Keep demos until a real upload is verified and their removal is approved.
   const realIds = new Set(realVideos.map((v) => v.id));
-  const mockFallback = isGuest
-    ? BASE_VIDEOS.filter((v) => !realIds.has(v.id))
-    : [];
+  const mockFallback = BASE_VIDEOS.filter((v) => !realIds.has(v.id));
   const combined: VideoItem[] = [...rankedReal, ...mockFallback].filter(
     (v) => !removedIds.has(v.id)
   );

@@ -1,3 +1,4 @@
+import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -28,8 +29,7 @@ const MY_VIDEOS = [
 
 function avatarUrl(user: any, profile: any): string {
   if (profile?.avatar_url) return profile.avatar_url;
-  const seed = encodeURIComponent(user?.email ?? user?.id ?? "user");
-  return `https://api.dicebear.com/9.x/initials/png?seed=${seed}&backgroundColor=FE2C55&textColor=ffffff&fontSize=38&size=128`;
+  return user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? "";
 }
 
 export default function ProfileScreen() {
@@ -39,19 +39,19 @@ export default function ProfileScreen() {
   const { user, profile, signOut, refreshProfile } = useAuth();
 
   useEffect(() => {
-    if (!user) router.replace("/auth/register");
+    if (!user) requestRegistration();
   }, [user]);
   const { savedVideos } = useSavedVideos();
   const { followedIds } = useFollow();
   const { likedVideos } = useVideoFeed(followedIds);
-
-  if (!user) return null;
 
   useFocusEffect(
     useCallback(() => {
       refreshProfile();
     }, [])
   );
+
+  if (!user) return null;
 
   const handleSignOut = () => {
     Alert.alert("Cerrar sesión", "¿Seguro que querés salir?", [
@@ -61,7 +61,7 @@ export default function ProfileScreen() {
         style: "destructive",
         onPress: async () => {
           await signOut();
-          router.replace("/auth/login");
+          router.replace("/(tabs)");
         },
       },
     ]);
@@ -97,10 +97,7 @@ export default function ProfileScreen() {
 
       <View style={styles.profileSection}>
         <View style={styles.avatarWrap}>
-          <Image
-            source={{ uri: avatarUrl(user, profile) }}
-            style={styles.avatar}
-          />
+          {avatarUrl(user, profile) ? <Image source={{ uri: avatarUrl(user, profile) }} style={styles.avatar} /> : <View style={[styles.avatar, { backgroundColor: "#555", alignItems: "center", justifyContent: "center" }]}><Feather name="user" size={46} color="#bbb" /></View>}
           <View style={styles.editBadge}>
             <Feather name="edit-2" size={12} color="#fff" />
           </View>

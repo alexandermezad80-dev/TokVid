@@ -1,3 +1,4 @@
+import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -44,7 +45,7 @@ export default function TagScreen() {
   const { user } = useAuth();
 
   useEffect(() => {
-    if (!user) router.replace("/auth/register");
+    if (!user) requestRegistration();
   }, [user]);
 
   if (!user) return null;

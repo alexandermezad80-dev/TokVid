@@ -1,3 +1,4 @@
+import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -244,7 +245,7 @@ export default function FriendsScreen() {
 
   useEffect(() => {
     if (!user) {
-      router.replace("/auth/register");
+      requestRegistration();
       return;
     }
     loadPeople();

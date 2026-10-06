@@ -1,5 +1,4 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import React, { useEffect, useRef } from "react";
@@ -26,6 +25,9 @@ interface Props {
   onDelete: () => void;
   creatorAvatar: string;
   isGuest: boolean;
+  onFollow?: () => void;
+  onAvatarPress?: () => void;
+  commentCue?: boolean;
 }
 
 function SpinningRecord({ avatar }: { avatar: string }) {
@@ -65,13 +67,12 @@ export default function VideoActions({
   onSave,
   onDelete,
   creatorAvatar,
-  isGuest,
+  isGuest, onFollow, onAvatarPress, commentCue,
 }: Props) {
   const heartScale = useRef(new Animated.Value(1)).current;
   const shareScale = useRef(new Animated.Value(1)).current;
   const saveScale = useRef(new Animated.Value(1)).current;
 
-  const goToRegister = () => router.push("/auth/register");
 
   const handleLike = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -106,7 +107,7 @@ export default function VideoActions({
     <View style={styles.container}>
       <View style={[styles.action, styles.profileAction]}>
         <TouchableOpacity
-          onPress={isGuest ? goToRegister : undefined}
+          onPress={onAvatarPress}
           activeOpacity={isGuest ? 0.75 : 1}
           accessibilityRole="button"
           accessibilityLabel="Perfil del creador"
@@ -121,7 +122,7 @@ export default function VideoActions({
         </TouchableOpacity>
         {isGuest ? (
           <TouchableOpacity
-            onPress={goToRegister}
+            onPress={onFollow}
             activeOpacity={0.75}
             accessibilityRole="button"
             accessibilityLabel="Seguir creador"
@@ -138,26 +139,26 @@ export default function VideoActions({
         ) : null}
       </View>
 
-      <TouchableOpacity onPress={isGuest ? goToRegister : handleLike} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Me gusta">
+      <TouchableOpacity onPress={isGuest ? onLike : handleLike} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Me gusta">
         <Animated.View style={{ transform: [{ scale: heartScale }] }}>
-          <MaterialCommunityIcons name={isLiked && !isGuest ? "heart" : "heart-outline"} size={34} color={isLiked && !isGuest ? "#FE0979" : "#fff"} />
+          <MaterialCommunityIcons name={isLiked && !isGuest ? "heart" : "heart-outline"} size={34} color={isLiked && !isGuest ? "#FF304F" : "#fff"} />
         </Animated.View>
         <Text style={styles.count}>{likes}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={isGuest ? goToRegister : onComment} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Comentarios">
-        <MaterialCommunityIcons name="comment-outline" size={34} color="#fff" />
+      <TouchableOpacity onPress={onComment} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Comentarios">
+        <MaterialCommunityIcons name="comment-outline" size={34} color={commentCue ? "#00F2FE" : "#fff"} />
         <Text style={styles.count}>{comments}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={isGuest ? goToRegister : handleShare} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Compartir">
+      <TouchableOpacity onPress={isGuest ? onShare : handleShare} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Compartir">
         <Animated.View style={{ transform: [{ scale: shareScale }] }}>
           <MaterialCommunityIcons name="share-variant-outline" size={34} color="#fff" />
         </Animated.View>
         <Text style={styles.count}>{shares}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={isGuest ? goToRegister : handleSave} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Guardar">
+      <TouchableOpacity onPress={isGuest ? onSave : handleSave} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Guardar">
         <Animated.View style={{ transform: [{ scale: saveScale }] }}>
           <MaterialCommunityIcons name={isSaved && !isGuest ? "bookmark" : "bookmark-outline"} size={34} color={isSaved && !isGuest ? "#FE0979" : "#fff"} />
         </Animated.View>

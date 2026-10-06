@@ -1,3 +1,4 @@
+import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -93,7 +94,7 @@ export default function CommentsSheet({ visible, onClose, commentCount, videoId 
     if (!text.trim() || sending) return;
     if (!user) {
       const { router } = await import("expo-router");
-      router.push("/auth/register");
+      requestRegistration();
       return;
     }
     setSending(true);

@@ -29,7 +29,7 @@ jobs:
         run: pnpm install
 
       - name: Test authentication callback
-        run: node --test scripts/tests/auth-callback.test.cjs
+        run: node --test scripts/tests/*.test.cjs
 
       - name: Run typecheck
         run: pnpm run typecheck
