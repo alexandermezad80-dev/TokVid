@@ -17,7 +17,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GoogleButton from "../../components/GoogleButton";
 import { useAuth } from "../../context/AuthContext";
 import { signInWithGoogle } from "../../hooks/useGoogleAuth";
-import { supabase } from "../../lib/supabase";
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
@@ -42,12 +41,7 @@ export default function LoginScreen() {
     if (error) {
       setError(error);
     } else {
-      const { data } = await supabase.auth.getUser();
-      router.replace(
-        data.user?.user_metadata?.onboarding_completed
-          ? "/(tabs)"
-          : "/auth/onboarding-profile"
-      );
+      router.replace("/(tabs)");
     }
   };
 
@@ -58,6 +52,8 @@ export default function LoginScreen() {
     setGoogleLoading(false);
     if (error && error !== "cancel") {
       setError(error);
+    } else if (!error && Platform.OS !== "web") {
+      router.replace("/(tabs)");
     }
   };
 

@@ -2636,3 +2636,15 @@ La lógica de preferencias puede ejecutarse en segundo plano a partir del compor
 Si alguna sección anterior o posterior del Documento Maestro describe un flujo de registro que exige intereses, carga de avatar o username antes de completar Auth, **esta Sección 12 prevalece para implementación** y dicha descripción debe interpretarse como obsoleta en ese punto. El avatar y el username siguen siendo datos del perfil y pueden editarse voluntariamente después del registro.
 
 Esta regla aplica al **Documento Maestro, Frontend y Backend** y no autoriza cambios funcionales fuera del flujo de Registro/Login.
+
+Esta regla aplica al **Documento Maestro, Frontend y Backend** y no autoriza cambios funcionales fuera del flujo de Registro/Login.
+
+## Registro Seamless — corrección de la base de autenticación (6 octubre 2026 UTC)
+
+- Se recuperan en Git las migraciones ya aplicadas `20261005141201`, `20261005141242` y `20261005141914`, sin modificar el historial remoto. La tercera fue una reversión que dejó una referencia inválida a `profiles.email`.
+- La nueva migración `20261006051054_fix_seamless_auth_profile_initialization` reemplaza ese trigger: correo en `profile_private`, nombre/avatar de metadata, username automático con manejo de colisiones y `onboarding_completed = true` al crear la cuenta. No exige intereses, carga de avatar ni captura de username. No modifica usuarios existentes.
+- OAuth usa PKCE explícito y extrae el código del retorno. El callback comparte la finalización con el navegador para no intercambiar dos veces un código de un solo uso; conserva compatibilidad con links de correo y retornos antiguos con tokens.
+- El callback, Google en Android y la navegación raíz ya no desvían al onboarding tradicional. Esto corrige la base de autenticación; no declara terminado el modal Seamless ni la memoria del Feed. Las pantallas antiguas quedan pendientes de sustitución por el modal aprobado.
+- La app mantiene el esquema existente `mobile`. Falta autorizar el retorno de Android en Authentication → URL Configuration de Supabase (el esquema debe coincidir con la URL generada por Expo) y validar el recorrido en un APK físico. El callback Google → Supabase es distinto: `https://kvbppgofblldwnkkoscb.supabase.co/auth/v1/callback`.
+- Validación local: typecheck móvil, cinco pruebas del callback y prueba del trigger en PostgreSQL embebido con casos Google, username duplicado y teléfono sin correo. No sustituye una prueba real de OAuth/SMS ni confirma por sí sola que el workflow haya aplicado la migración.
+- Branding, diseño del Feed y videos demo permanecen sin cambios. No se hace merge a main.

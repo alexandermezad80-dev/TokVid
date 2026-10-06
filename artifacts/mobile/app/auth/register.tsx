@@ -59,6 +59,8 @@ export default function RegisterScreen() {
     setGoogleLoading(false);
     if (error && error !== "cancel") {
       setError(error);
+    } else if (!error && Platform.OS !== "web") {
+      router.replace("/(tabs)");
     }
   };
 

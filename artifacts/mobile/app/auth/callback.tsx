@@ -1,65 +1,30 @@
 import { router, useLocalSearchParams } from "expo-router";
+import * as Linking from "expo-linking";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { supabase } from "../../lib/supabase";
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
+import { completeAuthCallback } from "../../lib/features/auth/services/authCallback";
 
 export default function AuthCallback() {
-  const params = useLocalSearchParams<{
-    code?: string;
-    token_hash?: string;
-    type?: string;
-    error?: string;
-    error_description?: string;
-  }>();
+  const params = useLocalSearchParams<Record<string, string | string[]>>();
+  const linkingUrl = Linking.useURL();
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value === "string") query.set(key, value);
+  }
+  const fallbackUrl = `${Linking.createURL("/auth/callback")}?${query.toString()}`;
+  const hasRouteCredentials = query.has("code") || query.has("token_hash") || query.has("access_token") || query.has("error");
+  const url = Platform.OS === "web" ? window.location.href : hasRouteCredentials ? fallbackUrl : linkingUrl ?? fallbackUrl;
   const [status, setStatus] = useState("Confirmando tu cuenta...");
 
   useEffect(() => {
-    const handle = async () => {
-      if (params.error) {
-        setStatus(`Error: ${params.error_description ?? params.error}`);
-        setTimeout(() => router.replace("/auth/login"), 2500);
-        return;
-      }
-
-      if (params.token_hash && params.type) {
-        const { error } = await supabase.auth.verifyOtp({
-          token_hash: params.token_hash,
-          type: params.type as "signup" | "email",
-        });
-        if (error) {
-          setStatus("No se pudo confirmar tu correo.");
-          setTimeout(() => router.replace("/auth/login"), 2500);
-          return;
-        }
-        const { data } = await supabase.auth.getUser();
-        router.replace(
-          data.user?.user_metadata?.onboarding_completed
-            ? "/(tabs)"
-            : "/auth/onboarding-profile"
-        );
-        return;
-      }
-
-      if (params.code) {
-        const href = typeof window !== "undefined" ? window.location.href : "";
-        const { error } = await supabase.auth.exchangeCodeForSession(href);
-        if (error) {
-          setStatus("No se pudo completar la autenticación.");
-          setTimeout(() => router.replace("/auth/login"), 2500);
-          return;
-        }
-      }
-
-      const { data } = await supabase.auth.getUser();
-      router.replace(
-        data.user?.user_metadata?.onboarding_completed
-          ? "/(tabs)"
-          : "/auth/onboarding-profile"
-      );
-    };
-
-    handle();
-  }, [params.code, params.error, params.error_description, params.token_hash, params.type]);
+    let active = true;
+    completeAuthCallback(url).then(() => {
+      if (active) router.replace("/(tabs)");
+    }).catch(() => {
+      if (active) setStatus("No se pudo completar la autenticación. Volvé a intentar desde el registro.");
+    });
+    return () => { active = false; };
+  }, [url]);
 
   return (
     <View style={styles.container}>

@@ -28,6 +28,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Test authentication callback
+        run: node --test scripts/tests/auth-callback.test.cjs
+
       - name: Run typecheck
         run: pnpm run typecheck
 
