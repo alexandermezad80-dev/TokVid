@@ -1003,6 +1003,96 @@ No se autoriza por esta especificación:
 - crear pantallas de intereses, carga de avatar o username como parte del registro. El perfil sí conserva avatar y username como datos editables posteriormente.
 
 
+### 7. Modal Seamless — referencia visual y adaptación Android
+
+**Consolidación autorizada:** 5 de octubre de 2026. Se incorpora al Master la ficha «TOKVID — Modal Seamless: referencia visual y adaptación Android» y las aclaraciones del usuario. Esta sección es la referencia consolidada; la ficha separada no constituye otra fuente de verdad.
+
+**Alcance:** documentación del nuevo registro. No declara implementado ni probado el modal. No autoriza cambios de código, Supabase, migraciones, Feed, branding o merge a `main`.
+
+#### 7.1 Presentación del modal
+
+- Mantener un único Bottom Sheet Modal para todos los controles restringidos del invitado.
+- Conservar la propuesta visual presentada: superficie oscura, separación limpia, botón principal claro con símbolo de Google y texto **«Continuar con Google»**, y alternativas compactas **Correo** y **Teléfono** con iconos.
+- Google inicia OAuth; correo y teléfono conducen a código de seis dígitos. No introducir contraseña, selección de intereses, formulario de username ni carga de avatar.
+- El modal solo presenta el acceso/registro y sus estados de autenticación. **No muestra la memoria interna ni anuncia resultados de acciones**: no mostrar «Like activo», «intención guardada», «Follow completado» ni subtítulos según la acción que abrió el registro.
+- La **X cierra todo el modal**, elimina la intención pendiente y conserva el mismo video y contexto como invitado. Una cancelación no aplica Like, Follow ni Favorito.
+- No trasladar a la app controles propios de la demostración como «Ver el modal», mensajes de simulación ni una barra de gesto del sistema dibujada dentro de la tarjeta.
+- La barra de arrastre visual de la muestra no constituye una implementación ni una aprobación automática de gestos de arrastre.
+
+#### 7.2 Paleta TOKVID obligatoria
+
+El modal debe utilizar la identidad existente de **TOKVID**, sin crear un branding nuevo:
+
+- **Cian Eléctrico: `#00F2FE`.**
+- **Magenta Vibrante: `#FE0979`.**
+- Fondos oscuros y neutros de soporte coherentes con el diseño aprobado.
+
+Los dos colores principales deben combinarse discretamente en **bordes, contornos o acentos** del modal y sus controles. Puede proponerse un borde o acento degradado **cian → magenta**; su aplicación concreta se comprobará visualmente antes de cerrar el bloque. No dejar toda la identidad del modal en un único acento que se perciba verde ni introducir un verde nuevo como color de marca.
+
+El botón de Google debe conservar su reconocimiento, legibilidad y símbolo propio; la combinación TOKVID se aplica al contenedor y controles de la aplicación sin recolorear el símbolo de Google. Esta regla no autoriza cambiar colores, iconos ni estados del Feed aprobado.
+
+#### 7.3 Medidas de referencia de la muestra
+
+Estos valores pertenecen a la demostración en CSS; **no son mediciones de un APK ni medidas Android ya validadas**.
+
+| Elemento | Referencia de la muestra |
+|---|---:|
+| Ancho máximo del marco | 390 px CSS |
+| Relleno interior lateral | 24 px CSS |
+| Radio superior del modal | 28 px CSS |
+| Altura mínima del botón Google | 56 px CSS |
+| Radio del botón Google | 16 px CSS |
+| Altura mínima de Correo/Teléfono | 84 px CSS |
+| Separación entre Correo/Teléfono | 12 px CSS |
+| Área de cierre X | 44 × 44 px CSS |
+| Indicador de arrastre visual | 36 × 4 px CSS |
+
+La adaptación Android debe usar tamaño disponible y áreas seguras reales, sin copiar píxeles CSS como píxeles físicos ni imponer un tamaño único a todos los teléfonos.
+
+Como referencias iniciales **propuestas**, no verificadas: relleno lateral interior de 24 dp, Google con mínimo de 56 dp de alto, alternativas de 84 dp, separación de 12 dp, radios de botones de 16 dp y tarjeta de 28 dp. Se propone área táctil de cierre de 48 × 48 dp.
+
+#### 7.4 Margen sobre la tab bar — propuesta pendiente
+
+El usuario solicitó estudiar un margen inferior que deje visible la tab bar. Se documenta la siguiente variante **pendiente de aprobación de sus valores y validación física**:
+
+- Tarjeta flotante con margen lateral de **16 dp** por lado.
+- Borde inferior **12 dp por encima del borde superior real de la tab bar**.
+- Esquinas inferiores también redondeadas, con referencia de **28 dp**.
+- Tarjeta opaca y fondo atenuado; tab bar visible detrás y temporalmente sin recibir pulsaciones mientras el modal esté abierto.
+- Altura según contenido y espacio superior visible, sin ocupar obligatoriamente toda la pantalla.
+- Adaptación al teclado y texto ampliado para conservar acceso a campos, cierre y botón de continuar, con desplazamiento interno cuando sea necesario.
+- La visibilidad completa de la tab bar se propone para el estado sin teclado; su comportamiento con teclado requiere validación.
+
+Medir el borde superior real de la tab bar; no sumar dos veces el área segura inferior cuando ya forme parte de la altura medida. **Se adapta el modal a la barra existente; no se modifica la tab bar para acomodar el modal.**
+
+#### 7.5 Memoria oculta y resultado en el Feed
+
+Esta aclaración complementa los apartados 2, 4 y 5 de Registro Seamless:
+
+| Entrada del invitado | Resultado tras completar Auth |
+|---|---|
+| Like | Regresar al mismo video con el corazón rojo, según la aclaración del usuario, y señal sutil. Conservar la identidad visual aprobada al concretar el color. |
+| Follow | Regresar al contexto del video con el creador seguido, estado **Siguiendo** y señal sutil con acento TOKVID. |
+| Favorito | Regresar al mismo video con guardado activo, marcado y señal sutil con acento TOKVID. |
+| Comentario | Regresar al mismo video y mostrar señal sutil, sin abrir automáticamente los comentarios. |
+| Perfil de la tab bar | Excepción de navegación ya definida: retomar la intención hacia el perfil propio protegido, con **Editar perfil**. |
+| Otros controles restringidos | Abrir el mismo registro sin inventar una acción automática adicional. |
+
+Conservar una sola intención significativa junto con la identidad del video o creador necesario y el contexto de retorno. Consumirla una vez al completar el flujo, o eliminarla al cancelar. No ejecutar un toggle ciegamente que pueda deshacer una acción ya activa.
+
+Las señales posteriores ocurren discretamente **sobre el control correspondiente del Feed**, no dentro del modal. Deben ser breves, sin sonido y sin detener el video. No se modifican distribución, tamaños, posiciones, iconos ni branding del Feed aprobado.
+
+#### 7.6 Verificaciones pendientes
+
+- Validar en Android físico ancho lógico, áreas seguras, borde superior de tab bar, escala de texto y teclado; todavía no existen medidas verificadas en el teléfono del usuario.
+- Comprobar la adaptación con navegación del sistema por gestos y por botones.
+- Comprobar cierre con X, cancelación, mismo video/contexto e intención consumida una sola vez.
+- Comprobar Google, correo y teléfono reales; la demostración visual no autentica ni envía códigos.
+- Verificar perfil automático y `onboarding_completed = true` en Backend, sin onboarding tradicional.
+- Respetar la sección **43.4.16**: mantener demos hasta validar usuario real, publicación real y aparición correcta del video en el Feed; retirarlos únicamente después.
+
+
+
 # 39. ESTADO ACTUAL CONSOLIDADO — CONCILIACIÓN CON AUDITORÍA 30
 
 **Fuente de conciliación:** `docs/TOKVID_AUDIT_30_RESULTS.md`  
