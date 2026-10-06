@@ -157,9 +157,14 @@ function ClassicTabLayout() {
           tabBarButton: guest ? () => <GuestTabButton label="Crear" icon="plus" create /> : undefined,
           tabBarIcon: () => (
             <View style={styles.createBtn}>
-              <View style={styles.createBtnInner}>
+              <LinearGradient
+                colors={[CYAN, PRIMARY]}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={styles.createBtnInner}
+              >
                 <Feather name="plus" size={24} color="#fff" />
-              </View>
+              </LinearGradient>
             </View>
           ),
         }}

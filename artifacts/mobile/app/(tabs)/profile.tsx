@@ -89,8 +89,8 @@ export default function ProfileScreen() {
         <TouchableOpacity style={styles.menuBtn}>
           <Feather name="menu" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.handle}>{handle}</Text>
-        <TouchableOpacity style={styles.menuBtn} onPress={handleSignOut}>
+        <Text style={styles.handle} numberOfLines={1} ellipsizeMode="tail">{handle}</Text>
+        <TouchableOpacity style={styles.menuBtn} onPress={handleSignOut} accessibilityRole="button" accessibilityLabel="Cerrar sesión">
           <Feather name="log-out" size={22} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -238,10 +238,11 @@ const styles = StyleSheet.create({
   menuBtn: {
     width: 40,
     height: 40,
+    flexShrink: 0,
     alignItems: "center",
     justifyContent: "center",
   },
-  handle: { color: "#fff", fontSize: 17, fontWeight: "700" },
+  handle: { flex: 1, minWidth: 0, textAlign: "center", color: "#fff", fontSize: 17, fontWeight: "700" },
   profileSection: {
     alignItems: "center",
     paddingVertical: 16,
