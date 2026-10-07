@@ -2,6 +2,7 @@ import { requestRegistration } from "../services/registrationBridge";
 import { Session, User } from "@supabase/supabase-js";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../../../supabase";
+import { recordAuthDiagnostic } from "../../../authDiagnostics";
 
 export interface Profile {
   id: string;
@@ -44,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
+      recordAuthDiagnostic(session?.user ? "auth.initial.session" : "auth.initial.guest");
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) fetchProfile(session.user.id);
@@ -51,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      recordAuthDiagnostic(session?.user ? "auth.session.present" : "auth.session.absent");
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {

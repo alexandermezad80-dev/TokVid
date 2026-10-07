@@ -20,6 +20,7 @@ function loadComponent(relativePath, jsxStart, renderResult, exportsName, mocks)
   source = source.replace(/^import .*;\n/gm, '').replace(/export default function /g, 'function ').replace(/export function /g, 'function ');
   const exports = {};
   vm.runInNewContext(stripTypeScriptTypes(source, { mode: 'transform', sourceUrl: file }) + `\nexports.component = ${exportsName};`, {
+    recordAuthDiagnostic: () => {}, rememberAuthSecrets: () => {}, rememberAuthUrl: () => {},
     ...mocks, exports, setTimeout, URL, URLSearchParams,
   });
   return exports.component;

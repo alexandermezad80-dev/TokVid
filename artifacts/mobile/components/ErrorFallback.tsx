@@ -6,6 +6,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -13,13 +14,15 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "../hooks/useColors";
+import { AUTH_DIAGNOSTICS_ENABLED, formatAuthDiagnostic } from "../lib/authDiagnostics";
 
 export type ErrorFallbackProps = {
   error: Error;
+  componentStack?: string;
   resetError: () => void;
 };
 
-export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
+export function ErrorFallback({ error, resetError, componentStack = "" }: ErrorFallbackProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
 
@@ -35,6 +38,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
   };
 
   const formatErrorDetails = (): string => {
+    if (AUTH_DIAGNOSTICS_ENABLED) return formatAuthDiagnostic(error, componentStack, `${Platform.OS} ${Platform.Version}`);
     let details = `Error: ${error.message}\n\n`;
     if (error.stack) {
       details += `Stack Trace:\n${error.stack}`;
@@ -97,9 +101,14 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
             Try Again
           </Text>
         </Pressable>
+        {AUTH_DIAGNOSTICS_ENABLED && (
+          <Pressable accessibilityRole="button" accessibilityLabel="Ver diagnóstico" onPress={() => setIsModalVisible(true)} style={styles.diagnosticButton}>
+            <Text style={[styles.diagnosticButtonText, { color: colors.foreground }]}>Ver diagnóstico</Text>
+          </Pressable>
+        )}
       </View>
 
-      {__DEV__ ? (
+      {__DEV__ || AUTH_DIAGNOSTICS_ENABLED ? (
         <Modal
           visible={isModalVisible}
           animationType="slide"
@@ -120,7 +129,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
                 ]}
               >
                 <Text style={[styles.modalTitle, { color: colors.foreground }]}>
-                  Error Details
+                  {AUTH_DIAGNOSTICS_ENABLED ? "Diagnóstico de TokVid" : "Error Details"}
                 </Text>
                 <Pressable
                   onPress={() => setIsModalVisible(false)}
@@ -143,6 +152,14 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
                 ]}
                 showsVerticalScrollIndicator
               >
+                {AUTH_DIAGNOSTICS_ENABLED && (
+                  <>
+                    <Text style={[styles.diagnosticHint, { color: colors.mutedForeground }]}>Mantén presionado el informe para copiarlo, o comparte el texto.</Text>
+                    <Pressable accessibilityRole="button" accessibilityLabel="Compartir informe" style={styles.diagnosticButton} onPress={() => { void Share.share({ message: formatErrorDetails(), title: "Diagnóstico de TokVid" }).catch(() => {}); }}>
+                      <Text style={[styles.diagnosticButtonText, { color: colors.foreground }]}>Compartir informe</Text>
+                    </Pressable>
+                  </>
+                )}
                 <View
                   style={[
                     styles.errorContainer,
@@ -275,4 +292,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     width: "100%",
   },
+  diagnosticButton: { minHeight: 44, paddingVertical: 12, paddingHorizontal: 18, borderRadius: 8, borderWidth: 1, borderColor: "#888", alignItems: "center", justifyContent: "center" },
+  diagnosticButtonText: { fontSize: 15, fontWeight: "600" },
+  diagnosticHint: { fontSize: 13, marginBottom: 12, lineHeight: 19 },
 });

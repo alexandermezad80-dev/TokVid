@@ -2,7 +2,7 @@ name: Android APK
 
 on:
   push:
-    branches: [ feature/onboarding-profile-interests ]
+    branches: [ diagnostics/google-return ]
   workflow_dispatch:
 
 concurrency:
@@ -11,13 +11,15 @@ concurrency:
 
 jobs:
   build-android:
-    if: github.ref == 'refs/heads/feature/onboarding-profile-interests'
+    if: github.ref == 'refs/heads/diagnostics/google-return'
     environment: production
     runs-on: ubuntu-latest
     env:
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
       CI: 1
+      EXPO_PUBLIC_AUTH_DIAGNOSTICS: '1'
+      EXPO_PUBLIC_AUTH_DIAGNOSTIC_BUILD: ${{ github.sha }}
       EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL || vars.EXPO_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL }}
       EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY || vars.EXPO_PUBLIC_SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
     steps:
@@ -63,38 +65,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Check for database migrations
-        id: migrations
-        shell: bash
-        run: |
-          set -euo pipefail
-          if find supabase/migrations -maxdepth 1 -type f -name '*.sql' -print -quit 2>/dev/null | grep -q .; then
-            echo "has_migrations=true" >> "$GITHUB_OUTPUT"
-            echo "Database migrations found."
-          else
-            echo "has_migrations=false" >> "$GITHUB_OUTPUT"
-            echo "No database migrations found; migration step will be skipped."
-          fi
-
-      - name: Set up Supabase CLI
-        if: steps.migrations.outputs.has_migrations == 'true'
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
-      - name: Apply database migrations
-        if: steps.migrations.outputs.has_migrations == 'true'
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -n "${SUPABASE_ACCESS_TOKEN:-}" || { echo "ERROR: SUPABASE_ACCESS_TOKEN is required when migrations are present."; exit 1; }
-          test -n "${SUPABASE_DB_PASSWORD:-}" || { echo "ERROR: SUPABASE_DB_PASSWORD is required when migrations are present."; exit 1; }
-          supabase db push \
-            --project-ref kvbppgofblldwnkkoscb \
-            --password "$SUPABASE_DB_PASSWORD"
+      - name: Test app behavior and diagnostic redaction
+        run: node --test scripts/tests/*.test.cjs
+      - name: Typecheck mobile app
+        run: pnpm --filter @workspace/mobile run typecheck
 
       - name: Normalize Expo PNG assets
         working-directory: artifacts/mobile
@@ -142,9 +116,37 @@ jobs:
       - name: Build standalone release APK
         working-directory: artifacts/mobile/android
         run: ./gradlew assembleRelease --no-daemon
+      - name: Verify diagnostic APK and matching source map
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, json, os, zipfile
+          apk = Path("artifacts/mobile/android/app/build/outputs/apk/release/app-release.apk")
+          source_map = Path("artifacts/mobile/android/app/build/generated/sourcemaps/react/release/index.android.bundle.map")
+          with zipfile.ZipFile(apk) as archive:
+              bundle = archive.read("assets/index.android.bundle")
+          for marker in ("TOKVID_AUTH_DIAGNOSTICS_V1", os.environ["GITHUB_SHA"]):
+              if marker.encode() not in bundle:
+                  raise SystemExit("Diagnostic APK verification failed: missing report marker or build SHA")
+          if not source_map.is_file() or source_map.stat().st_size == 0:
+              raise SystemExit("Matching Hermes source map is missing")
+          checksum = hashlib.file_digest(apk.open("rb"), "sha256").hexdigest()
+          manifest = {"commit": os.environ["GITHUB_SHA"], "apk_sha256": checksum, "platform": "android", "diagnostics": True}
+          Path("auth-diagnostic-build.json").write_text(json.dumps(manifest, indent=2) + "\n")
+          print("Diagnostic APK verified; matching source map retained")
+          print("APK SHA256:", checksum)
+          PY
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: tokvid-android-release
+          name: tokvid-android-auth-diagnostic
           path: artifacts/mobile/android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+      - name: Upload matching source map
+        uses: actions/upload-artifact@v4
+        with:
+          name: tokvid-auth-diagnostic-sourcemap
+          path: |
+            artifacts/mobile/android/app/build/generated/sourcemaps/react/release/index.android.bundle.map
+            auth-diagnostic-build.json
           if-no-files-found: error
