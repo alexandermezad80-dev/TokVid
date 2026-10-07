@@ -8,7 +8,11 @@ import { useKeyboardSheetViewport } from "../hooks/useKeyboardSheetViewport";
 import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
 import { COMMENT_LIMIT, FeedComment, commentLength, commentTime } from "../lib/features/comments/model";
 
-interface Props { visible: boolean; onClose: () => void; videoId: string }
+interface Props {
+  visible: boolean; onClose: () => void; videoId: string;
+  /** Legacy callers may pass this label; the panel always reads the real server total. */
+  commentCount?: string;
+}
 type ListRow = { kind: "comment"; comment: FeedComment; nested: boolean } | { kind: "thread"; root: FeedComment } | { kind: "more"; rootId: string };
 const spring = { damping: 15, stiffness: 90, mass: 0.8 };
 
