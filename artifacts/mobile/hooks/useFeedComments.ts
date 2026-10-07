@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
+import { createDatabaseChannel } from "../lib/realtimeSubscriptions";
 import { COMMENT_PAGE_SIZE, FeedComment, REPLY_PAGE_SIZE, commentCapabilities, mergeComments } from "../lib/features/comments/model";
 import { createComment, deleteComment, editComment, hideCommentThread, readComments, readHiddenThreads, readOwnCommentLikes, readPublicationOwner, readReplies, restoreCommentThreads, setCommentLike } from "../lib/features/comments/services";
 
@@ -83,7 +84,7 @@ export function useFeedComments(visible: boolean, videoId: string, onCountChange
     let active = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const invalidate = () => { if (!active) return; clearTimeout(timer); timer = setTimeout(() => { void refresh(); }, 100); };
-    const channel = supabase.channel(`feed-comments:${videoId}:${user?.id ?? "guest"}`)
+    const channel = createDatabaseChannel(`feed-comments:${videoId}:${user?.id ?? "guest"}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "comments", filter: `video_id=eq.${videoId}` }, invalidate)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "comments", filter: `video_id=eq.${videoId}` }, invalidate)
       // DELETE events cannot be filtered reliably under RLS: use them to re-fetch.
@@ -239,3 +240,4 @@ export function useFeedComments(visible: boolean, videoId: string, onCountChange
   return { ...(state.key === key ? state : emptyState(key)), loading, error: operationError || error, sending, pendingLikes, paging, mutating, expanded,
     refresh, loadMore, toggleThread, moreReplies, publish, like, edit, remove, hideThread, restoreThreads };
 }
+

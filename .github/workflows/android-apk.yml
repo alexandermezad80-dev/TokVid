@@ -2,7 +2,7 @@ name: Android APK
 
 on:
   push:
-    branches: [ diagnostics/google-return ]
+    branches: [ feature/feed-mini-video-avatar ]
   workflow_dispatch:
 
 concurrency:
@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   build-android:
-    if: github.ref == 'refs/heads/diagnostics/google-return'
+    if: github.ref == 'refs/heads/feature/feed-mini-video-avatar'
     environment: production
     runs-on: ubuntu-latest
     env:
@@ -139,7 +139,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: tokvid-android-auth-diagnostic
+          name: tokvid-android-feed-avatar
           path: artifacts/mobile/android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
       - name: Upload matching source map
@@ -150,3 +150,4 @@ jobs:
             artifacts/mobile/android/app/build/generated/sourcemaps/react/release/index.android.bundle.map
             auth-diagnostic-build.json
           if-no-files-found: error
+

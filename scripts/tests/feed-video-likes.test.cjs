@@ -7,6 +7,9 @@ const { stripTypeScriptTypes } = require('node:module');
 function load(relative, names, globals = {}) {
   const source = fs.readFileSync(path.join(__dirname, '../../artifacts/mobile', relative), 'utf8').replace(/^import .*;\n/gm, '').replace(/export (?=(?:async )?function |const )/g, '');
   const exports = {};
+  if (relative !== 'lib/realtimeSubscriptions.ts' && globals.supabase) {
+    Object.assign(globals, load('lib/realtimeSubscriptions.ts', ['createDatabaseChannel'], { supabase: globals.supabase }));
+  }
   vm.runInNewContext(stripTypeScriptTypes(source, { mode: 'transform' }) + `\nObject.assign(exports, {${names.join(',')}});`, { exports, Error, setTimeout, clearTimeout, ...globals });
   return exports;
 }
@@ -86,3 +89,4 @@ test('late Like confirmation cannot change another account state', async () => {
   pending.resolve({ video_id: '1', liked: true, total: 1 }); await first; await h.rt.flush();
   assert.equal(h.rt.output.likedIds.has('1'), false); assert.equal(h.rt.output.counts['1'], 0); h.rt.unmount();
 });
+

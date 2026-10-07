@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AppState } from "react-native";
 import { supabase } from "../lib/supabase";
+import { createDatabaseChannel } from "../lib/realtimeSubscriptions";
 import { readCommentCounts } from "../lib/features/comments/services";
 
 // Only replace counter data. Feed geometry, icons, gestures and playback are unchanged.
@@ -25,7 +26,7 @@ export function useFeedCommentCounts(videoIds: string[]) {
     };
     const invalidate = () => { if (!active) return; clearTimeout(timer); timer = setTimeout(() => { void refresh(); }, 100); };
     void refresh();
-    const channel = supabase.channel("feed-comment-counts")
+    const channel = createDatabaseChannel("feed-comment-counts")
       .on("postgres_changes", { event: "*", schema: "public", table: "comments" }, invalidate)
       .subscribe(status => {
         if (!active) return;
@@ -37,3 +38,4 @@ export function useFeedCommentCounts(videoIds: string[]) {
   }, [key]);
   return { counts, error };
 }
+

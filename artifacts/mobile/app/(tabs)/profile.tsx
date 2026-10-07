@@ -48,7 +48,7 @@ export default function ProfileScreen() {
   useFocusEffect(
     useCallback(() => {
       refreshProfile();
-    }, [])
+    }, [user?.id])
   );
 
   if (!user) return null;
@@ -96,12 +96,12 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.profileSection}>
-        <View style={styles.avatarWrap}>
+        <TouchableOpacity style={styles.avatarWrap} onPress={() => router.push("/edit-profile")} accessibilityRole="button" accessibilityLabel="Cambiar foto de perfil">
           {avatarUrl(user, profile) ? <Image source={{ uri: avatarUrl(user, profile) }} style={styles.avatar} /> : <View style={[styles.avatar, { backgroundColor: "#555", alignItems: "center", justifyContent: "center" }]}><Feather name="user" size={46} color="#bbb" /></View>}
           <View style={styles.editBadge}>
             <Feather name="edit-2" size={12} color="#fff" />
           </View>
-        </View>
+        </TouchableOpacity>
 
         <Text style={styles.displayName}>{displayName}</Text>
         <Text style={styles.email}>{user?.email}</Text>
@@ -345,3 +345,4 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
+

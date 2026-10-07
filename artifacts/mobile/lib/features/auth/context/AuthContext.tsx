@@ -21,7 +21,7 @@ interface AuthContextValue {
   profile: Profile | null;
   loading: boolean;
   signOut: () => Promise<void>;
-  refreshProfile: () => Promise<void>;
+  refreshProfile: (confirm?: boolean) => Promise<void>;
   requireAuth: () => Promise<User | null>;
 }
 
@@ -34,12 +34,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string, confirm = false) => {
     const { data, error } = await supabase.from("profiles").select(PROFILE_COLUMNS).eq("id", userId).maybeSingle();
     if (error) {
+      if (confirm) throw error;
       setProfile(null);
       return;
     }
+    if (confirm && !data) throw new Error("No se pudo cargar el perfil guardado. Intenta de nuevo.");
     setProfile(data as Profile | null);
   };
 
@@ -66,8 +68,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const refreshProfile = async () => {
-    if (user) await fetchProfile(user.id);
+  const refreshProfile = async (confirm = false) => {
+    if (user) await fetchProfile(user.id, confirm);
   };
 
   const requireAuth = async () => {
@@ -94,3 +96,4 @@ export function useAuth() {
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 }
+

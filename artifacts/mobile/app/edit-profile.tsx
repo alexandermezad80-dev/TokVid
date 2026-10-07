@@ -2,7 +2,7 @@ import { requestRegistration } from "../lib/features/auth/services/registrationB
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -20,6 +20,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
+import { saveProfileChanges, uploadProfileAvatar } from "../lib/features/profile/avatar";
 
 function avatarPlaceholder(user: any, profile: any): string {
   if (profile?.avatar_url) return profile.avatar_url;
@@ -34,15 +35,16 @@ export default function EditProfileScreen() {
     if (!user) requestRegistration();
   }, [user]);
 
-  if (!user) return null;
   const insets = useSafeAreaInsets();
 
   const [username, setUsername] = useState(profile?.username ?? "");
   const [bio, setBio] = useState(profile?.bio ?? "");
-  const [avatarUri, setAvatarUri] = useState<string | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const savingRef = useRef(false);
+  useEffect(() => { setSelectedPhoto(null); }, [user?.id]);
 
   useEffect(() => {
     if (profile) {
@@ -52,61 +54,34 @@ export default function EditProfileScreen() {
   }, [profile]);
 
   const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permiso requerido", "Necesitamos acceso a tu galería para cambiar la foto.");
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      setAvatarUri(result.assets[0].uri);
-    }
-  };
-
-  const uploadAvatar = async (): Promise<string | null> => {
-    if (!avatarUri || !user) return null;
-
-    setUploadingPhoto(true);
+    if (savingRef.current) return;
+    setError(null);
     try {
-      const ext = avatarUri.split(".").pop()?.toLowerCase() ?? "jpg";
-      const fileName = `${user.id}/avatar.${ext}`;
-      const contentType = ext === "png" ? "image/png" : "image/jpeg";
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permiso requerido", "Necesitamos acceso a tu galería para cambiar la foto.");
+        return;
+      }
 
-      // Fetch the image as blob
-      const response = await fetch(avatarUri);
-      const blob = await response.blob();
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: true,
+      });
 
-      // Upload with supabase-js so the authenticated session is applied to Storage RLS
-      const { data, error } = await supabase.storage
-        .from("avatars")
-        .upload(fileName, blob, {
-          contentType,
-          upsert: true,
-        });
-
-      if (error) throw error;
-
-      const { data: urlData } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(fileName);
-
-      return urlData.publicUrl;
+      if (!result.canceled && result.assets[0]) {
+        if (!result.assets[0].base64) throw new Error("No se pudo leer la foto. Selecciona otra imagen.");
+        setSelectedPhoto(result.assets[0]);
+      }
     } catch (e: any) {
-      console.warn("Avatar upload failed:", e.message);
-      return null;
-    } finally {
-      setUploadingPhoto(false);
+      setError(e.message ?? "No se pudo abrir la galería.");
     }
   };
 
   const handleSave = async () => {
+    if (!user || savingRef.current) return;
     if (!username.trim()) {
       setError("El nombre de usuario no puede estar vacío.");
       return;
@@ -117,46 +92,46 @@ export default function EditProfileScreen() {
     }
 
     setError(null);
+    savingRef.current = true;
     setSaving(true);
 
     try {
       let avatarUrl = profile?.avatar_url ?? null;
 
       // Upload new avatar if selected
-      if (avatarUri) {
-        const uploaded = await uploadAvatar();
-        if (uploaded) avatarUrl = uploaded;
+      if (selectedPhoto?.base64) {
+        setUploadingPhoto(true);
+        avatarUrl = await uploadProfileAvatar(user.id, selectedPhoto.base64);
+        setUploadingPhoto(false);
       }
 
-      const updates: Record<string, string> = {
+      const updates = {
         username: username.trim(),
         bio: bio.trim(),
         full_name: profile?.full_name ?? username.trim(),
+        ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
       };
-      if (avatarUrl) updates.avatar_url = avatarUrl;
+      if (username.trim() !== profile?.username) {
+        const { error: metadataError } = await supabase.auth.updateUser({
+          data: { username: username.trim(), display_name: username.trim() },
+        });
+        if (metadataError) throw metadataError;
+      }
+      await saveProfileChanges(user.id, updates);
 
-      const { error: dbError } = await supabase
-        .from("profiles")
-        .update(updates)
-        .eq("id", user!.id);
-
-      if (dbError) throw dbError;
-
-      // Also update auth metadata
-      await supabase.auth.updateUser({
-        data: { username: username.trim(), display_name: username.trim() },
-      });
-
-      await refreshProfile();
+      await refreshProfile(true);
       router.back();
     } catch (e: any) {
       setError(e.message ?? "No se pudo guardar. Intentá de nuevo.");
     } finally {
+      savingRef.current = false;
+      setUploadingPhoto(false);
       setSaving(false);
     }
   };
 
-  const currentAvatar = avatarUri ?? avatarPlaceholder(user, profile);
+  if (!user) return null;
+  const currentAvatar = selectedPhoto?.uri ?? avatarPlaceholder(user, profile);
 
   return (
     <KeyboardAvoidingView
@@ -165,7 +140,7 @@ export default function EditProfileScreen() {
     >
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn} disabled={saving}>
           <Feather name="x" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Editar perfil</Text>
@@ -173,6 +148,8 @@ export default function EditProfileScreen() {
           onPress={handleSave}
           style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
           disabled={saving}
+          accessibilityRole="button"
+          accessibilityLabel="Guardar perfil"
         >
           {saving ? (
             <ActivityIndicator size="small" color="#fff" />
@@ -189,7 +166,7 @@ export default function EditProfileScreen() {
       >
         {/* Avatar picker */}
         <View style={styles.avatarSection}>
-          <Pressable onPress={pickImage} style={styles.avatarWrap}>
+          <Pressable onPress={pickImage} style={styles.avatarWrap} disabled={saving} accessibilityRole="button" accessibilityLabel="Seleccionar foto de perfil">
             <Image source={{ uri: currentAvatar }} style={styles.avatar} />
             <View style={styles.avatarOverlay}>
               {uploadingPhoto ? (
@@ -220,6 +197,7 @@ export default function EditProfileScreen() {
               <Text style={styles.atSign}>@</Text>
               <TextInput
                 value={username}
+                editable={!saving}
                 onChangeText={(t) => setUsername(t.replace(/\s/g, ""))}
                 placeholder="tunombre"
                 placeholderTextColor="#555"
@@ -236,6 +214,7 @@ export default function EditProfileScreen() {
             <Text style={styles.label}>Biografía</Text>
             <TextInput
               value={bio}
+              editable={!saving}
               onChangeText={setBio}
               placeholder="Contá algo sobre vos..."
               placeholderTextColor="#555"
@@ -348,3 +327,4 @@ const styles = StyleSheet.create({
   disabledInput: { opacity: 0.4 },
   hint: { color: "#555", fontSize: 11 },
 });
+

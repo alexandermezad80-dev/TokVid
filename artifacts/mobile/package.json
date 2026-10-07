@@ -64,9 +64,11 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.107.0",
+    "base64-js": "1.5.1",
     "date-fns": "^3.6.0",
     "expo-device": "^8.0.10",
     "expo-notifications": "^0.32.17",
     "expo-video": "3.0.16"
   }
 }
+

@@ -25,6 +25,8 @@ interface Props {
   onDelete: () => void;
   creatorAvatar: string;
   isGuest: boolean;
+  isFollowing?: boolean;
+  followPending?: boolean;
   onFollow?: () => void;
   onAvatarPress?: () => void;
   commentCue?: boolean;
@@ -67,7 +69,7 @@ export default function VideoActions({
   onSave,
   onDelete,
   creatorAvatar,
-  isGuest, onFollow, onAvatarPress, commentCue,
+  isGuest, isFollowing = false, followPending = false, onFollow, onAvatarPress, commentCue,
 }: Props) {
   const heartScale = useRef(new Animated.Value(1)).current;
   const shareScale = useRef(new Animated.Value(1)).current;
@@ -127,12 +129,15 @@ export default function VideoActions({
             <SpinningRecord avatar={creatorAvatar} />
           )}
         </TouchableOpacity>
-        {isGuest ? (
+        {(isGuest || (!isOwner && !isFollowing)) && onFollow ? (
           <TouchableOpacity
             onPress={onFollow}
+            disabled={followPending}
             activeOpacity={0.75}
             accessibilityRole="button"
             accessibilityLabel="Seguir creador"
+            accessibilityState={{ disabled: followPending }}
+            style={followPending ? { opacity: 0.5 } : undefined}
           >
             <LinearGradient
               colors={["#00F2FE", "#FE0979"]}
@@ -234,3 +239,4 @@ const styles = StyleSheet.create({
     height: "100%",
   },
 });
+

@@ -11,6 +11,8 @@ import {
 import { VideoItem, formatCount } from "../hooks/useVideoFeed";
 import VideoActions from "./VideoActions";
 import VideoInfo from "./VideoInfo";
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import type { VideoPreviewFrame } from "../lib/commentVideoLayout";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -33,6 +35,8 @@ interface Props {
   commentCue?: boolean;
   commentCount?: number | null;
   likeCount?: number | null;
+  previewFrame?: VideoPreviewFrame | null;
+  followPending?: boolean;
   onPosition?: (position: number, paused: boolean) => void;
   registerPlayback?: (read: () => { position: number; wasPaused: boolean }) => void;
   restorePosition?: number;
@@ -54,7 +58,7 @@ export default function VideoCard({
   onSave,
   onDelete,
   onAvatarPress,
-  isGuest, suspended, commentCue, commentCount, likeCount, onPosition, registerPlayback, restorePosition, restorePaused, restoreRequest,
+  isGuest, suspended, commentCue, commentCount, likeCount, previewFrame, followPending, onPosition, registerPlayback, restorePosition, restorePaused, restoreRequest,
 }: Props) {
   const [paused, setPaused] = useState(false);
   const [showThumbnail, setShowThumbnail] = useState(true);
@@ -64,6 +68,22 @@ export default function VideoCard({
   const lastTap = useRef<number>(0);
   const singleTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef = useRef<View>(null);
+  const videoFrame = useSharedValue({ left: 0, top: 0, width: SCREEN_WIDTH, height: SCREEN_HEIGHT, borderRadius: 0 });
+  const videoPresentation = useAnimatedStyle(() => ({ ...videoFrame.value }));
+  useEffect(() => {
+    let active = true;
+    if (previewFrame && isActive) {
+      containerRef.current?.measureInWindow((x, y) => {
+        if (!active) return;
+        videoFrame.value = withSpring({ left: previewFrame.x - x, top: previewFrame.y - y,
+          width: previewFrame.width, height: previewFrame.height, borderRadius: 16 }, { damping: 22, stiffness: 150 });
+      });
+    } else {
+      videoFrame.value = withSpring({ left: 0, top: 0, width: SCREEN_WIDTH, height: SCREEN_HEIGHT, borderRadius: 0 }, { damping: 22, stiffness: 150 });
+    }
+    return () => { active = false; };
+  }, [previewFrame?.x, previewFrame?.y, previewFrame?.width, previewFrame?.height, isActive, videoFrame]);
 
   const player = useVideoPlayer(video.uri, (p) => {
     p.loop = true;
@@ -129,10 +149,8 @@ export default function VideoCard({
   }, []);
 
   return (
-    <Pressable onPress={handleTap} style={styles.container}>
-      {showThumbnail && (
-        <Image source={video.thumbnail} style={styles.thumbnail} resizeMode="cover" />
-      )}
+    <Pressable ref={containerRef} onPress={handleTap} style={styles.container}>
+      <Animated.View style={[styles.videoSurface, videoPresentation]}>
       <VideoView
         player={player}
         style={styles.video}
@@ -140,8 +158,12 @@ export default function VideoCard({
         contentFit="cover"
         nativeControls={false}
       />
+      {showThumbnail && !paused && (
+        <Image source={video.thumbnail} style={styles.thumbnail} resizeMode="cover" />
+      )}
+      </Animated.View>
 
-      <View style={styles.overlay}>
+      {!previewFrame && <View style={styles.overlay}>
         <VideoInfo
           creator={video.creator}
           creatorHandle={video.creatorHandle}
@@ -166,18 +188,20 @@ export default function VideoCard({
           onDelete={onDelete}
           creatorAvatar={video.creatorAvatar}
           isGuest={isGuest}
+          isFollowing={video.isFollowing}
+          followPending={followPending}
           onFollow={onFollow}
           onAvatarPress={onAvatarPress}
           commentCue={commentCue}
         />
-      </View>
+      </View>}
 
-      {showDoubleLike && (
+      {showDoubleLike && !previewFrame && (
         <View style={styles.doubleLikeOverlay} pointerEvents="none">
           <Feather name="heart" size={86} color="#FE0979" />
         </View>
       )}
-      {playPauseFeedback && (
+      {playPauseFeedback && !previewFrame && (
         <View style={styles.playPauseOverlay} pointerEvents="none">
           <View style={styles.playPauseBadge}>
             <Feather
@@ -201,6 +225,7 @@ const styles = StyleSheet.create({
   video: {
     ...StyleSheet.absoluteFillObject,
   },
+  videoSurface: { position: "absolute", overflow: "hidden", backgroundColor: "#000" },
   thumbnail: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 1,
@@ -233,3 +258,4 @@ const styles = StyleSheet.create({
     opacity: 0.95,
   },
 });
+

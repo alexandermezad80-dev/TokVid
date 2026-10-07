@@ -2,8 +2,6 @@ import { useRegistration } from "../../context/RegistrationContext";
 import type { RegistrationKind } from "../../lib/features/auth/services/registrationBridge";
 import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
-import { BlurView } from "expo-blur";
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -11,8 +9,6 @@ import {
   Alert,
   Dimensions,
   FlatList,
-  PixelRatio,
-  Platform,
   RefreshControl,
   Share,
   StyleSheet,
@@ -31,32 +27,28 @@ import { VideoItem, useVideoFeed } from "../../hooks/useVideoFeed";
 import { useSavedVideos } from "../../hooks/useSavedVideos";
 import { useFeedCommentCounts } from "../../hooks/useFeedCommentCounts";
 import { useFeedVideoLikes } from "../../hooks/useFeedVideoLikes";
+import type { VideoPreviewFrame } from "../../lib/commentVideoLayout";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
-// Expo's Android blur radius is in native pixels. Match the 8 dp reference,
-// respecting the pre-Android-12 RenderScript radius limit.
-const FEED_BLUR_INTENSITY = Platform.OS === "android"
-  ? Math.min(Number(Platform.Version) < 31 ? 25 : 100, 8 * PixelRatio.get()) : 8;
 
 export default function FeedScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [commentVideo, setCommentVideo] = useState<VideoItem | null>(null);
-  const commentsPhase = useSharedValue(0);
-  useEffect(() => { commentsPhase.value = withSpring(commentVideo ? 1 : 0, { damping: 15, stiffness: 90, mass: 0.8 }); }, [!!commentVideo, commentsPhase]);
-  const feedPresentation = useAnimatedStyle(() => ({ transform: [{ scale: 1 - 0.05 * Math.max(0, Math.min(1, commentsPhase.value)) }] }));
+  const [previewFrame, setPreviewFrame] = useState<VideoPreviewFrame | null>(null);
+  const closeComments = useCallback(() => { setCommentVideo(null); setPreviewFrame(null); }, []);
   const [shareOverrides, setShareOverrides] = useState<Record<string, number>>({});
   const [toastMsg, setToastMsg] = useState("");
   const [toastVisible, setToastVisible] = useState(false);
   const [toastKey, setToastKey] = useState(0);
   const flatListRef = useRef<FlatList>(null);
 
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const registration = useRegistration();
   const [applied, setApplied] = useState<Record<string, Set<string>>>({});
   const [restored, setRestored] = useState<{ id: string; position: number; paused: boolean; requestId?: string } | null>(null);
   const [commentCue, setCommentCue] = useState<string | null>(null);
   useEffect(() => { setApplied({}); }, [user?.id]);
-  const { followedIds, toggleFollow } = useFollow();
+  const { followedIds, toggleFollow, loadingIds } = useFollow();
   const {
     videos,
     removeVideo,
@@ -204,7 +196,10 @@ ${item.uri}`,
       const isOwner = !!user && user.id === item.creatorId;
       return (
         <VideoCard
-          video={{ ...videoWithShares, isFollowing: videoWithShares.isFollowing || !!applied.follow?.has(item.creatorId) }}
+          video={{ ...videoWithShares, creatorAvatar: isOwner && profile?.avatar_url ? profile.avatar_url : item.creatorAvatar,
+            isFollowing: videoWithShares.isFollowing || !!applied.follow?.has(item.creatorId) }}
+          previewFrame={commentVideo?.id === item.id ? previewFrame : null}
+          followPending={loadingIds.has(item.creatorId)}
           commentCount={commentCounts[item.id] ?? null}
           likeCount={likeCounts[item.id] ?? null}
           suspended={registration.visible}
@@ -242,13 +237,13 @@ ${item.uri}`,
         />
       );
     },
-    [activeIndex, likedIds, savedIds, shareOverrides, commentCounts, likeCounts, user, toggleLike, toggleFollow, toggleSave, handleShare, handleDelete, registration.visible, registration.setFeedContext, registerFor, applied, restored, commentCue]
+    [activeIndex, likedIds, savedIds, shareOverrides, commentCounts, likeCounts, user, profile?.avatar_url, commentVideo?.id, previewFrame, loadingIds, toggleLike, toggleFollow, toggleSave, handleShare, handleDelete, registration.visible, registration.setFeedContext, registerFor, applied, restored, commentCue]
   );
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[StyleSheet.absoluteFill, feedPresentation]}>
-      <View style={styles.feedHeader} pointerEvents="box-none">
+      <View style={StyleSheet.absoluteFill}>
+      {!commentVideo && <View style={styles.feedHeader} pointerEvents="box-none">
         <View style={styles.feedModes}>
           <TouchableOpacity
             onPress={isGuest ? () => requestRegistration() : undefined}
@@ -276,7 +271,7 @@ ${item.uri}`,
             <Feather name="search" size={19} color="#fff" />
           </TouchableOpacity>
         </View>
-      </View>
+      </View>}
 
       <FlatList
           ref={flatListRef}
@@ -290,7 +285,7 @@ ${item.uri}`,
           decelerationRate="fast"
           onViewableItemsChanged={onViewableItemsChanged}
           viewabilityConfig={viewabilityConfig}
-          scrollEnabled={videos.length > 0}
+          scrollEnabled={videos.length > 0 && !commentVideo}
           getItemLayout={(_, index) => ({
             length: SCREEN_HEIGHT,
             offset: SCREEN_HEIGHT * index,
@@ -320,12 +315,13 @@ ${item.uri}`,
           maxToRenderPerBatch={3}
           windowSize={3}
         />
-      </Animated.View>
-      {!!commentVideo && <BlurView pointerEvents="none" intensity={FEED_BLUR_INTENSITY} blurReductionFactor={1} experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />}
+      </View>
       <CommentsSheet
         overTabBar
+        showVideoPreview
+        onPreviewFrame={setPreviewFrame}
         visible={!!commentVideo}
-        onClose={() => setCommentVideo(null)}
+        onClose={closeComments}
         videoId={commentVideo?.id ?? ""}
       />
       {error || commentCountsError || likeCountsError ? (
@@ -394,3 +390,4 @@ const styles = StyleSheet.create({
   errorText: { color: "#fff", fontSize: 13, textAlign: "center" },
   footer: { paddingVertical: 16, alignItems: "center" },
 });
+

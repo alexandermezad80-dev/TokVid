@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useRegistration } from "../context/RegistrationContext";
 import { readVideoLikes, setVideoLike } from "../lib/features/feed/videoLikes";
 import { supabase } from "../lib/supabase";
+import { createDatabaseChannel } from "../lib/realtimeSubscriptions";
 
 export function useFeedVideoLikes(videoIds: string[]) {
   const { user } = useAuth();
@@ -34,7 +35,7 @@ export function useFeedVideoLikes(videoIds: string[]) {
     let active = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const invalidate = () => { if (!active) return; clearTimeout(timer); timer = setTimeout(() => { void reload(); }, 100); };
-    const channel = supabase.channel(`feed-video-likes:${user?.id ?? "guest"}`)
+    const channel = createDatabaseChannel(`feed-video-likes:${user?.id ?? "guest"}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "feed_video_like_counts" }, invalidate)
       .subscribe(status => { if (!active) return; if (status === "SUBSCRIBED") invalidate(); else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") setError("No se pudo actualizar Me gusta en tiempo real. Actualiza el Feed para reintentar."); });
     const appState = AppState.addEventListener("change", next => { if (next === "active") invalidate(); });
@@ -60,3 +61,4 @@ export function useFeedVideoLikes(videoIds: string[]) {
   };
   return { counts: state.key === key ? state.counts : {}, likedIds: state.key === key ? state.liked : new Set<string>(), error: operationError || error, toggleLike, reload };
 }
+

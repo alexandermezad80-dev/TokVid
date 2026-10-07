@@ -12,12 +12,15 @@ import { useFeedComments } from "../hooks/useFeedComments";
 import { useKeyboardSheetViewport } from "../hooks/useKeyboardSheetViewport";
 import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
 import { COMMENT_LIMIT, FeedComment, commentCapabilities, commentLength, commentTime } from "../lib/features/comments/model";
+import { commentVideoLayout, VideoPreviewFrame } from "../lib/commentVideoLayout";
 
 interface Props {
   visible: boolean; onClose: () => void; videoId: string;
   /** Legacy callers may pass this label; the panel always reads the real server total. */
   commentCount?: string;
   overTabBar?: boolean;
+  showVideoPreview?: boolean;
+  onPreviewFrame?: (frame: VideoPreviewFrame | null) => void;
 }
 type ListRow = { kind: "comment"; comment: FeedComment; nested: boolean } | { kind: "thread"; root: FeedComment } | { kind: "more"; rootId: string };
 const spring = { damping: 15, stiffness: 90, mass: 0.8 };
@@ -29,7 +32,7 @@ function Avatar({ uri, username }: { uri?: string | null; username?: string | nu
     <View style={[styles.avatar, styles.initialAvatar]}>{username ? <Text style={styles.initial}>{Array.from(username)[0]?.toUpperCase()}</Text> : <Feather name="user" size={18} color="#aaa" />}</View>;
 }
 
-export default function CommentsSheet({ visible, onClose, videoId, overTabBar = false }: Props) {
+export default function CommentsSheet({ visible, onClose, videoId, overTabBar = false, showVideoPreview = false, onPreviewFrame }: Props) {
   const { user, profile } = useAuth();
   const { tabBarHeight } = useRegistration();
   const { width, fontScale } = useWindowDimensions();
@@ -136,7 +139,17 @@ export default function CommentsSheet({ visible, onClose, videoId, overTabBar = 
     menuHeight: Math.max(actionMenuHeight, actions.length * 48 * Math.max(1, fontScale) + 8),
   }) : null;
   const navigationHeight = overTabBar && !viewport.keyboardVisible ? Math.max(tabBarHeight, viewport.insets.bottom + 52) : 0;
-  const sheetHeight = Math.min(viewport.commentsHeight + navigationHeight, Math.max(0, viewport.availableHeight - Math.max(0, viewport.insets.top - viewport.viewportTop) - 12));
+  const bottomPadding = viewport.keyboardVisible ? 8 : navigationHeight ? 0 : viewport.insets.bottom;
+  const desiredSheetHeight = Math.min(viewport.commentsHeight + navigationHeight, Math.max(0, viewport.availableHeight - Math.max(0, viewport.insets.top - viewport.viewportTop) - 12));
+  const previewLayout = commentVideoLayout({ width, availableHeight: viewport.availableHeight,
+    safeTop: Math.max(0, viewport.insets.top - viewport.viewportTop), safeLeft: viewport.insets.left, safeRight: viewport.insets.right,
+    bottomPadding, desiredSheetHeight, keyboardVisible: viewport.keyboardVisible });
+  const sheetHeight = showVideoPreview ? previewLayout.sheetHeight : desiredSheetHeight;
+  const preview = previewLayout.preview;
+  useEffect(() => {
+    onPreviewFrame?.(visible && showVideoPreview ? { ...preview, y: preview.y + viewport.viewportTop } : null);
+  }, [visible, showVideoPreview, preview.x, preview.y, preview.width, preview.height, viewport.viewportTop, onPreviewFrame]);
+  useEffect(() => () => onPreviewFrame?.(null), [onPreviewFrame]);
   const send = async () => {
     if (!text.trim() || busy || !requireUser()) return;
     const sentText = text;
@@ -168,8 +181,12 @@ export default function CommentsSheet({ visible, onClose, videoId, overTabBar = 
     </View>;
   };
   return <Modal visible={visible} transparent statusBarTranslucent navigationBarTranslucent animationType="slide" onRequestClose={() => actionComment ? dismissActions() : close()} onShow={viewport.measure}>
-    <View ref={viewport.viewportRef} collapsable={false} onLayout={viewport.onLayout} style={[styles.viewport, { paddingBottom: viewport.keyboardInset + (viewport.keyboardVisible ? 8 : navigationHeight ? 0 : viewport.insets.bottom) }]}>
+    <View ref={viewport.viewportRef} collapsable={false} onLayout={viewport.onLayout} style={[styles.viewport, showVideoPreview && { backgroundColor: "transparent" }, { paddingBottom: viewport.keyboardInset + bottomPadding }]}>
       <Pressable accessibilityLabel="Cerrar comentarios" onPress={close} style={StyleSheet.absoluteFill} />
+      {showVideoPreview && preview.height > 0 && <Pressable accessibilityRole="button" accessibilityLabel="Volver al video completo" onPress={close}
+        style={[styles.videoPreview, { left: preview.x, top: preview.y, width: preview.width, height: preview.height }]}>
+        <View style={styles.expandVideo}><Feather name="maximize-2" size={13} color="#fff" /></View>
+      </Pressable>}
       <Animated.View style={[styles.sheet, sheetShape, { height: sheetHeight }]}>
         <View accessibilityElementsHidden={!!actionComment} importantForAccessibility={actionComment ? "no-hide-descendants" : "auto"} style={styles.panelBody}>
         <View style={styles.headerGlass}>
@@ -208,6 +225,8 @@ export default function CommentsSheet({ visible, onClose, videoId, overTabBar = 
 
 const styles = StyleSheet.create({
   viewport: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.28)" },
+  videoPreview: { position: "absolute", borderRadius: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.24)", overflow: "hidden" },
+  expandVideo: { position: "absolute", top: 5, right: 5, width: 24, height: 24, borderRadius: 12, backgroundColor: "rgba(0,0,0,0.38)", alignItems: "center", justifyContent: "center" },
   sheet: { width: "100%", overflow: "hidden", borderTopWidth: 1, borderColor: "rgba(0,242,254,0.28)" },
   panelBody: { flex: 1, backgroundColor: "#15151B" },
   headerGlass: { overflow: "hidden", borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "rgba(255,255,255,0.08)" },
@@ -234,3 +253,4 @@ const styles = StyleSheet.create({
   composer: { paddingTop: 10, paddingHorizontal: 8, paddingBottom: 8 }, replyIndicator: { alignSelf: "center", marginBottom: 6 }, replyBubble: { minWidth: 130, minHeight: 28, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }, replyLabel: { color: "#fff", fontSize: 12 },
   editor: { backgroundColor: "#22222B", flexDirection: "row", alignItems: "center", paddingHorizontal: 10, borderWidth: 1, borderColor: "#353541", gap: 8, overflow: "hidden" }, editorBody: { flex: 1, minWidth: 0 }, input: { color: "#fff", fontSize: 14, lineHeight: 20, paddingVertical: 8, paddingHorizontal: 4, maxHeight: 48 }, expandedInput: { maxHeight: 60, paddingVertical: 0 }, counter: { color: "#92929D", fontSize: 10, textAlign: "right", paddingRight: 4, paddingTop: 2 }, send: { width: 36, height: 44, alignItems: "center", justifyContent: "center" },
 });
+

@@ -220,6 +220,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.107.0
         version: 2.107.0
+      base64-js:
+        specifier: 1.5.1
+        version: 1.5.1
       date-fns:
         specifier: ^3.6.0
         version: 3.6.0

@@ -8,6 +8,9 @@ const mobile = path.join(__dirname, '../../artifacts/mobile');
 function load(relative, names, globals = {}) {
   let source = fs.readFileSync(path.join(mobile, relative), 'utf8').replace(/^import .*;\n/gm, '').replace(/export (?=(?:async )?function |const )/g, '');
   const exports = {};
+  if (relative !== 'lib/realtimeSubscriptions.ts' && globals.supabase) {
+    Object.assign(globals, load('lib/realtimeSubscriptions.ts', ['createDatabaseChannel'], { supabase: globals.supabase }));
+  }
   vm.runInNewContext(stripTypeScriptTypes(source, { mode: 'transform' }) + `\nObject.assign(exports, {${names.join(',')}});`, { exports, Error, setTimeout, clearTimeout, ...globals });
   return exports;
 }
@@ -318,3 +321,4 @@ test('oversized popovers scroll beside the selected message instead of covering 
   assert.equal(above.side, 'above');
   assert.ok(above.top + above.maxHeight <= 212);
 });
+
