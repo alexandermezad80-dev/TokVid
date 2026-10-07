@@ -31,6 +31,7 @@ interface Props {
   isGuest: boolean;
   suspended?: boolean;
   commentCue?: boolean;
+  commentCount?: number | null;
   onPosition?: (position: number, paused: boolean) => void;
   registerPlayback?: (read: () => { position: number; wasPaused: boolean }) => void;
   restorePosition?: number;
@@ -52,7 +53,7 @@ export default function VideoCard({
   onSave,
   onDelete,
   onAvatarPress,
-  isGuest, suspended, commentCue, onPosition, registerPlayback, restorePosition, restorePaused, restoreRequest,
+  isGuest, suspended, commentCue, commentCount, onPosition, registerPlayback, restorePosition, restorePaused, restoreRequest,
 }: Props) {
   const [paused, setPaused] = useState(false);
   const [showThumbnail, setShowThumbnail] = useState(true);
@@ -151,7 +152,7 @@ export default function VideoCard({
         />
         <VideoActions
           likes={formatCount(video.likes)}
-          comments={formatCount(video.comments)}
+          comments={commentCount === null ? "…" : formatCount(commentCount ?? video.comments)}
           shares={formatCount(video.shares)}
           isLiked={isLiked}
           isSaved={isSaved}

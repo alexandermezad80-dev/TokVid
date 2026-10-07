@@ -23,8 +23,9 @@ import Toast from "../../components/Toast";
 import VideoCard from "../../components/VideoCard";
 import { useAuth } from "../../context/AuthContext";
 import { useFollow } from "../../context/FollowContext";
-import { VideoItem, formatCount, useVideoFeed } from "../../hooks/useVideoFeed";
+import { VideoItem, useVideoFeed } from "../../hooks/useVideoFeed";
 import { useSavedVideos } from "../../hooks/useSavedVideos";
+import { useFeedCommentCounts } from "../../hooks/useFeedCommentCounts";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -57,6 +58,7 @@ export default function FeedScreen() {
     isGuest,
   } = useVideoFeed(followedIds);
   const { savedIds, toggleSave } = useSavedVideos();
+  const { counts: commentCounts, error: commentCountsError } = useFeedCommentCounts(videos.map(video => video.id));
 
 
   useEffect(() => {
@@ -192,6 +194,7 @@ ${item.uri}`,
       return (
         <VideoCard
           video={{ ...videoWithShares, isFollowing: videoWithShares.isFollowing || !!applied.follow?.has(item.creatorId) }}
+          commentCount={commentCounts[item.id] ?? null}
           suspended={registration.visible}
           commentCue={commentCue === item.id}
           onPosition={(position, paused) => registration.setFeedContext(item.id, position, paused)}
@@ -227,7 +230,7 @@ ${item.uri}`,
         />
       );
     },
-    [activeIndex, likedIds, savedIds, shareOverrides, user, toggleLike, toggleFollow, toggleSave, handleShare, handleDelete, registration.visible, registration.setFeedContext, registerFor, applied, restored, commentCue]
+    [activeIndex, likedIds, savedIds, shareOverrides, commentCounts, user, toggleLike, toggleFollow, toggleSave, handleShare, handleDelete, registration.visible, registration.setFeedContext, registerFor, applied, restored, commentCue]
   );
 
   return (
@@ -309,12 +312,11 @@ ${item.uri}`,
       <CommentsSheet
         visible={!!commentVideo}
         onClose={() => setCommentVideo(null)}
-        commentCount={commentVideo ? formatCount(commentVideo.comments) : "0"}
         videoId={commentVideo?.id ?? ""}
       />
-      {error ? (
+      {error || commentCountsError ? (
         <View style={styles.errorBanner}>
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorText}>{error || commentCountsError}</Text>
         </View>
       ) : null}
 

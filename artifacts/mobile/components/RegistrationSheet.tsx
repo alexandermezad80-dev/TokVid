@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from "react";
-import { Modal, View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, useWindowDimensions } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Modal, View, Text, TextInput, Pressable, StyleSheet, Keyboard, ScrollView } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Linking from "expo-linking";
 import GoogleButton from "./GoogleButton";
 import { signInWithGoogle } from "../lib/features/auth/services/googleAuth";
 import { supabase } from "../lib/supabase";
+import { useKeyboardSheetViewport } from "../hooks/useKeyboardSheetViewport";
 
 export default function RegistrationSheet({ visible, onClose, tabBarHeight, beforeAuth }: {
   visible: boolean; onClose: () => void; tabBarHeight: number; beforeAuth: () => Promise<unknown>;
@@ -16,7 +17,11 @@ export default function RegistrationSheet({ visible, onClose, tabBarHeight, befo
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const { height } = useWindowDimensions();
+  const viewport = useKeyboardSheetViewport(visible, tabBarHeight);
+  const scroll = useRef<ScrollView>(null);
+  const close = () => { Keyboard.dismiss(); onClose(); };
+  const revealCode = () => { if (sent && viewport.keyboardVisible) scroll.current?.scrollToEnd({ animated: true }); };
+  useEffect(() => { if (sent && viewport.keyboardVisible) scroll.current?.scrollToEnd({ animated: true }); }, [sent, viewport.keyboardVisible, viewport.registrationMaxHeight]);
   useEffect(() => { if (!visible) { setMethod(null); setAddress(""); setCode(""); setSent(false); setError(""); } }, [visible]);
   const run = async (action: () => Promise<void>) => {
     if (busy) return;
@@ -39,12 +44,12 @@ export default function RegistrationSheet({ visible, onClose, tabBarHeight, befo
       setSent(true);
     }
   });
-  return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-    <KeyboardAvoidingView style={styles.backdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-      <View style={{ marginHorizontal: 16, marginBottom: tabBarHeight + 12, maxHeight: height - tabBarHeight - 70 }}>
+  return <Modal visible={visible} transparent animationType="slide" onRequestClose={close} onShow={viewport.measure} statusBarTranslucent>
+    <View ref={viewport.viewportRef} collapsable={false} onLayout={viewport.onLayout} style={[styles.backdrop, { paddingBottom: viewport.keyboardInset }]}>
+      <View style={{ marginHorizontal: 16, marginBottom: viewport.registrationGap, maxHeight: viewport.registrationMaxHeight }}>
         <LinearGradient colors={["#00F2FE", "#FE0979"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.border}>
-            <Pressable onPress={onClose} style={styles.close} accessibilityLabel="Cerrar registro" accessibilityRole="button"><Feather name="x" size={22} color="#fff" /></Pressable>
-          <ScrollView style={styles.sheet} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+            <Pressable onPress={close} style={styles.close} accessibilityLabel="Cerrar registro" accessibilityRole="button"><Feather name="x" size={22} color="#fff" /></Pressable>
+          <ScrollView ref={scroll} style={[styles.sheet, { maxHeight: Math.max(0, viewport.registrationMaxHeight - 2) }]} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" onContentSizeChange={revealCode}>
             <View style={styles.handle} />
             <Text style={styles.title}>Únete a TokVid</Text>
             <Text style={styles.subtitle}>Conecta y descubre más.</Text>
@@ -57,7 +62,7 @@ export default function RegistrationSheet({ visible, onClose, tabBarHeight, befo
               <Pressable onPress={() => { setMethod(null); setSent(false); setError(""); }}><Text style={styles.link}>‹ Otros métodos</Text></Pressable>
               <Text style={styles.optionText}>{sent ? "Introduce tu código" : method === "email" ? "Tu correo electrónico" : "Tu número de teléfono"}</Text>
               <TextInput accessibilityLabel={method === "email" ? "Correo electrónico" : "Teléfono con código de país"} style={styles.input} value={address} onChangeText={setAddress} editable={!sent && !busy} autoCapitalize="none" autoCorrect={false} keyboardType={method === "email" ? "email-address" : "phone-pad"} placeholder={method === "email" ? "nombre@correo.com" : "+52…"} placeholderTextColor="#888" />
-              {sent && <TextInput accessibilityLabel="Código de verificación" style={styles.input} value={code} onChangeText={text => setCode(text.replace(/\D/g, ""))} keyboardType="number-pad" textContentType="oneTimeCode" maxLength={method === "email" ? 8 : 6} placeholder={method === "email" ? "8 dígitos" : "6 dígitos"} placeholderTextColor="#888" />}
+              {sent && <TextInput onFocus={revealCode} accessibilityLabel="Código de verificación" style={styles.input} value={code} onChangeText={text => setCode(text.replace(/\D/g, ""))} keyboardType="number-pad" textContentType="oneTimeCode" maxLength={method === "email" ? 8 : 6} placeholder={method === "email" ? "8 dígitos" : "6 dígitos"} placeholderTextColor="#888" />}
               <Pressable disabled={busy} onPress={submit} style={styles.submit}><Text style={styles.optionText}>{busy ? "Conectando…" : sent ? "Verificar y continuar" : "Enviar código"}</Text></Pressable>
               {sent && <Pressable disabled={busy} onPress={() => { setSent(false); setCode(""); }}><Text style={styles.link}>Cambiar dirección o reenviar</Text></Pressable>}
             </>}
@@ -66,7 +71,7 @@ export default function RegistrationSheet({ visible, onClose, tabBarHeight, befo
           </ScrollView>
         </LinearGradient>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   </Modal>;
 }
 const styles = StyleSheet.create({
