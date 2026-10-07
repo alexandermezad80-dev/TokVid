@@ -10,7 +10,7 @@ function requireResult<T>(result: { data: T | null; error: { message: string } |
 export async function readComments(videoId: string, limit = COMMENT_PAGE_SIZE) {
   const [page, counted] = await Promise.all([
     readCommentPage(videoId, null, limit),
-    supabase.from("comments").select("id", { count: "exact", head: true }).eq("video_id", videoId),
+    supabase.from("comments").select("id", { count: "exact", head: true }).eq("video_id", videoId).is("deleted_at", null),
   ]);
   if (counted.error) throw new Error(counted.error.message);
   if (counted.count === null) throw new Error("No se pudo comprobar el total de comentarios.");
@@ -78,4 +78,38 @@ export async function readCommentCounts(videoIds: string[]): Promise<Record<stri
     for (const row of requireResult(result) as { video_id: string; total: number }[]) counts[row.video_id] = row.total;
   }
   return counts;
+}
+
+export async function editComment(comment: FeedComment, text: string): Promise<FeedComment> {
+  const content = text.trim();
+  if (!content || commentLength(content) > COMMENT_LIMIT) throw new Error("Escribe entre 1 y 300 caracteres.");
+  const result = await supabase.rpc("edit_feed_comment", { p_comment_id: comment.id, p_text: content });
+  const rows = requireResult(result) as FeedComment[];
+  if (!rows[0]?.id || rows[0].id !== comment.id || rows[0].video_id !== comment.video_id || rows[0].text !== content || rows[0].deleted_at) throw new Error("No se pudo confirmar la edición.");
+  return rows[0];
+}
+
+export async function deleteComment(commentId: string): Promise<{ id: string; removed: boolean; deleted_at: string | null }> {
+  const result = await supabase.rpc("delete_feed_comment", { p_comment_id: commentId });
+  const rows = requireResult(result) as { id: string; removed: boolean; deleted_at: string | null }[];
+  if (rows[0]?.id !== commentId || (!rows[0].removed && !rows[0].deleted_at)) throw new Error("No se pudo confirmar la eliminación.");
+  return rows[0];
+}
+
+export async function readHiddenThreads(userId: string | undefined, videoId: string): Promise<Set<string>> {
+  if (!userId) return new Set();
+  const result = await supabase.from("hidden_feed_comment_threads").select("root_id").eq("user_id", userId).eq("video_id", videoId);
+  return new Set(requireResult(result).map(row => row.root_id as string));
+}
+
+export async function hideCommentThread(userId: string, videoId: string, rootId: string): Promise<void> {
+  const result = await supabase.from("hidden_feed_comment_threads").upsert({ user_id: userId, video_id: videoId, root_id: rootId }, { onConflict: "user_id,root_id", ignoreDuplicates: true });
+  if (result.error) throw new Error(result.error.message);
+  if (!(await readHiddenThreads(userId, videoId)).has(rootId)) throw new Error("No se pudo confirmar que el hilo está oculto.");
+}
+
+export async function restoreCommentThreads(userId: string, videoId: string): Promise<void> {
+  const result = await supabase.from("hidden_feed_comment_threads").delete().eq("user_id", userId).eq("video_id", videoId);
+  if (result.error) throw new Error(result.error.message);
+  if ((await readHiddenThreads(userId, videoId)).size) throw new Error("No se pudo confirmar que los hilos están visibles.");
 }

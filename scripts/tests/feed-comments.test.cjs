@@ -59,7 +59,7 @@ function serviceHarness(responder) {
     },
     async rpc(name, args) { const spec = { name, args }; calls.push(spec); return responder(spec); },
   };
-  return { calls, ...load('lib/features/comments/services.ts', ['readComments', 'readReplies', 'readOwnCommentLikes', 'createComment', 'setCommentLike', 'readCommentCounts'], { supabase, ...model }) };
+  return { calls, ...load('lib/features/comments/services.ts', ['readComments', 'readReplies', 'readOwnCommentLikes', 'createComment', 'setCommentLike', 'readCommentCounts', 'editComment', 'deleteComment', 'readHiddenThreads'], { supabase, ...model }) };
 }
 test('publishing sends no fabricated identity and returns only server-confirmed rows', async () => {
   const service = serviceHarness(() => ({ data: [row()], error: null }));
@@ -117,6 +117,11 @@ function hookHarness(overrides = {}) {
     async readComments() { return { rows: state.roots, total: state.roots.length, hasMore: false }; },
     async readReplies() { return { rows: [], hasMore: false }; },
     async readOwnCommentLikes() { return state.liked; },
+    async readHiddenThreads() { return new Set(); },
+    async editComment(comment, text) { calls.push({ edit: comment.id, text }); return { ...comment, text, edited_at: '2026-10-07T15:00:00Z' }; },
+    async deleteComment(id) { calls.push({ remove: id }); return { id, removed: true, deleted_at: null }; },
+    async hideCommentThread(user, video, root) { calls.push({ hide: root, user, video }); },
+    async restoreCommentThreads(user, video) { calls.push({ restore: true, user, video }); },
     async createComment(video, text, parent, request) { calls.push({ video, text, parent, request }); return row('posted', { video_id: video, text, parent_id: parent }); },
     async setCommentLike(id, liked) { calls.push({ id, liked }); return row(id, { likes_count: liked ? 1 : 0 }); }, ...overrides,
   };
@@ -151,4 +156,55 @@ test('like failure retains canonical counters and remains visible after a reload
   const h = hookHarness({ async setCommentLike() { throw new Error('Like failed'); } }); await h.rt.flush();
   await h.rt.output.like(row()); await h.rt.flush(); assert.equal(h.rt.output.roots[0].likes_count, 0); assert.equal(h.rt.output.liked.has('c1'), false); assert.match(h.rt.output.error, /Like failed/);
   await h.rt.output.refresh(); await h.rt.flush(); assert.match(h.rt.output.error, /Like failed/); h.rt.unmount();
+});
+
+test('editing and deleting require confirmed matching server results', async () => {
+  const edited = serviceHarness(() => ({ data: [row('c1', { text: 'Nuevo', edited_at: '2026-10-07T15:00:00Z' })], error: null }));
+  assert.equal((await edited.editComment(row(), ' Nuevo ')).text, 'Nuevo');
+  assert.equal(edited.calls[0].name, 'edit_feed_comment');
+  const missing = serviceHarness(() => ({ data: [], error: null }));
+  await assert.rejects(missing.editComment(row(), 'Nuevo'), /confirmar/);
+  await assert.rejects(missing.deleteComment('c1'), /confirmar/);
+  const wrong = serviceHarness(() => ({ data: [row('other', { text: 'Nuevo' })], error: null }));
+  await assert.rejects(wrong.editComment(row(), 'Nuevo'), /confirmar/);
+  const retained = serviceHarness(() => ({ data: [{ id: 'c1', removed: false, deleted_at: '2026-10-07T15:00:00Z' }], error: null }));
+  assert.equal((await retained.deleteComment('c1')).removed, false);
+});
+
+test('hidden threads are read only for the current account and video', async () => {
+  const service = serviceHarness(() => ({ data: [{ root_id: 'root' }], error: null }));
+  assert.equal((await service.readHiddenThreads(undefined, 'v1')).size, 0); assert.equal(service.calls.length, 0);
+  assert.equal((await service.readHiddenThreads('u1', 'v2')).has('root'), true);
+  assert.deepEqual(JSON.parse(JSON.stringify(service.calls[0].filters)), [['user_id', 'u1'], ['video_id', 'v2']]);
+});
+
+test('edit failure preserves the original comment and does not claim success', async () => {
+  const h = hookHarness({ async editComment() { throw new Error('Edit failed'); } }); await h.rt.flush();
+  assert.equal(await h.rt.output.edit(row(), 'Nuevo'), null); await h.rt.flush();
+  assert.equal(h.rt.output.roots[0].text, 'Real content'); assert.match(h.rt.output.error, /Edit failed/);
+  assert.equal(await h.rt.output.remove(row('foreign', { user_id: 'u2' })), null);
+  h.rt.unmount();
+});
+
+test('double edit and publish are serialized and late edits cannot modify another video', async () => {
+  const pending = deferred(); let writes = 0;
+  const h = hookHarness({ editComment: () => { writes++; return pending.promise; } }); await h.rt.flush();
+  const edit = h.rt.output.edit(row(), 'Nuevo');
+  assert.equal(await h.rt.output.edit(row(), 'Otro'), null); assert.equal(await h.rt.output.publish('Other', null), null); assert.equal(writes, 1);
+  h.state.video = 'v2'; h.state.roots = []; h.rt.update(); await h.rt.flush();
+  pending.resolve(row('c1', { text: 'Nuevo' })); assert.equal(await edit, null); await h.rt.flush();
+  assert.equal(h.rt.output.roots.length, 0); h.rt.unmount();
+});
+
+test('a stale delete confirmation cannot delete a comment after changing video', async () => {
+  const h = hookHarness(); await h.rt.flush(); const remove = h.rt.output.remove;
+  h.state.video = 'v2'; h.state.roots = []; h.rt.update(); await h.rt.flush();
+  assert.equal(await remove(row()), null); assert.equal(h.calls.length, 0); h.rt.unmount();
+});
+
+test('deletion failure and hiding failure leave public rows intact', async () => {
+  const h = hookHarness({ async deleteComment() { throw new Error('Delete failed'); }, async hideCommentThread() { throw new Error('Hide failed'); } }); await h.rt.flush();
+  assert.equal(await h.rt.output.remove(row()), null); await h.rt.flush(); assert.equal(h.rt.output.roots.length, 1);
+  assert.equal(await h.rt.output.hideThread(row()), null); await h.rt.flush();
+  assert.equal(h.rt.output.hiddenThreads.size, 0); assert.equal(h.rt.output.roots.length, 1); assert.match(h.rt.output.error, /Hide failed/); h.rt.unmount();
 });
