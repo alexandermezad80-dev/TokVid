@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "./AuthContext";
+import { createDatabaseChannel } from "../lib/realtimeSubscriptions";
 
 export interface AppNotification {
   id: string;
@@ -54,18 +55,18 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
     if (!user) return;
 
-    const channel = supabase
-      .channel(`notifications:${user.id}`)
+    let active = true;
+    const channel = createDatabaseChannel(`notifications:${user.id}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
         (payload) => {
-          setNotifications((prev) => [payload.new as AppNotification, ...prev]);
+          if (active) setNotifications((prev) => [payload.new as AppNotification, ...prev]);
         }
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { active = false; void supabase.removeChannel(channel); };
   }, [user, fetchNotifications]);
 
   const markRead = async (id: string) => {
@@ -97,3 +98,4 @@ export function useNotifications() {
   if (!ctx) throw new Error("useNotifications must be used within NotificationsProvider");
   return ctx;
 }
+

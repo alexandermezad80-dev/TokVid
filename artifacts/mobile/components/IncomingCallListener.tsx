@@ -5,6 +5,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { acceptCall, rejectCall, type Call } from "../lib/features/calls/services/calls-service";
 import { supabase } from "../lib/supabase";
+import { createDatabaseChannel } from "../lib/realtimeSubscriptions";
 
 export function IncomingCallListener() {
   const { user } = useAuth();
@@ -13,21 +14,24 @@ export function IncomingCallListener() {
 
   useEffect(() => {
     if (!user) { setIncomingCall(null); return; }
+    let active = true;
     const load = async () => {
       const { data } = await supabase.from("calls").select("*").eq("receiver_id", user.id).eq("status", "ringing").order("created_at", { ascending: false }).limit(1).maybeSingle();
-      setIncomingCall((data as Call | null) ?? null);
+      if (active) setIncomingCall((data as Call | null) ?? null);
     };
     void load();
-    const channel = supabase.channel(`incoming-calls-${user.id}`)
+    const channel = createDatabaseChannel(`incoming-calls-${user.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "calls", filter: `receiver_id=eq.${user.id}` }, (payload) => {
         const call = payload.new as Call;
+        if (!active) return;
         if (call.status === "ringing") setIncomingCall(call);
       })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "calls", filter: `receiver_id=eq.${user.id}` }, (payload) => {
         const call = payload.new as Call;
+        if (!active) return;
         setIncomingCall((current) => current?.id === call.id && call.status === "ringing" ? call : null);
       }).subscribe();
-    return () => { void supabase.removeChannel(channel); };
+    return () => { active = false; void supabase.removeChannel(channel); };
   }, [user?.id]);
 
   const reject = async () => {
