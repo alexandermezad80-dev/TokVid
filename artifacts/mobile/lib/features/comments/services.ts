@@ -23,15 +23,20 @@ export async function readReplies(videoId: string, rootId: string, limit = REPLY
 
 async function readCommentPage(videoId: string, rootId: string | null, limit: number) {
   const rows: FeedComment[] = [];
+  let cursor: FeedComment | undefined;
   // Keep each request below the API row limit, including after many pages.
-  for (let offset = 0; offset <= limit; offset += 500) {
+  while (rows.length <= limit) {
     const query = supabase.from("comments").select(COMMENT_FIELDS).eq("video_id", videoId);
-    const scoped = rootId ? query.eq("root_id", rootId) : query.is("parent_id", null);
-    const end = Math.min(limit, offset + 499);
-    const result = await scoped.order("created_at", { ascending: false }).order("id", { ascending: false }).range(offset, end);
+    let scoped = rootId ? query.eq("root_id", rootId) : query.is("parent_id", null);
+    // These values come from immutable server timestamps and UUIDs. A new
+    // newest comment cannot shift the boundary and repeat a previous row.
+    if (cursor) scoped = scoped.or(`created_at.lt.${cursor.created_at},and(created_at.eq.${cursor.created_at},id.lt.${cursor.id})`);
+    const size = Math.min(500, limit + 1 - rows.length);
+    const result = await scoped.order("created_at", { ascending: false }).order("id", { ascending: false }).range(0, size - 1);
     const batch = requireResult(result) as unknown as FeedComment[];
     rows.push(...batch);
-    if (batch.length < end - offset + 1) break;
+    if (batch.length < size) break;
+    cursor = batch[batch.length - 1];
   }
   return { rows: rows.slice(0, limit), hasMore: rows.length > limit };
 }

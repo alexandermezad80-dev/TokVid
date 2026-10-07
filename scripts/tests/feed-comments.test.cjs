@@ -49,6 +49,7 @@ function serviceHarness(responder) {
         select(fields, options) { spec.fields = fields; spec.options = options; return query; },
         eq(...value) { spec.filters.push(value); return query; }, is(...value) { spec.filters.push(value); return query; },
         in(...value) { spec.filters.push(value); return query; }, order(...value) { spec.orders.push(value); return query; },
+        or(value) { spec.cursor = value; return query; },
         range(start, end) { spec.range = [start, end]; return query; },
         then(resolve, reject) { calls.push(spec); return Promise.resolve().then(() => responder(spec)).then(resolve, reject); },
       }; return query;
@@ -68,9 +69,16 @@ test('publishing sends no fabricated identity and returns only server-confirmed 
   await assert.rejects(empty.createComment('v1', 'Content', null, 'request'), /confirmar/);
 });
 test('paging remains functional above the API maximum and replies are scoped to their video', async () => {
-  const service = serviceHarness(spec => spec.options?.head ? { data: null, count: 1250, error: null } : { data: Array.from({ length: spec.range[1] - spec.range[0] + 1 }, (_, i) => row(String(spec.range[0] + i))), error: null });
+  const service = serviceHarness(spec => {
+    if (spec.options?.head) return { data: null, count: 1250, error: null };
+    // A new newest row arrives after the first batch. Offset-based queries
+    // repeat c1501; the timestamp/id boundary remains stable.
+    const next = spec.cursor ? Number(spec.cursor.match(/id.lt.c(\d+)/)[1]) - 1 : spec.range[0] ? 2001 - spec.range[0] : 2000;
+    return { data: Array.from({ length: spec.range[1] - spec.range[0] + 1 }, (_, i) => row(`c${next - i}`)), error: null };
+  });
   const page = await service.readComments('v1', 1020);
   assert.equal(page.rows.length, 1020); assert.equal(page.hasMore, true); assert.equal(page.total, 1250);
+  assert.equal(new Set(page.rows.map(item => item.id)).size, 1020, 'Concurrent insertion must not duplicate rows');
   assert.ok(service.calls.filter(call => call.range).every(call => call.range[1] - call.range[0] < 500));
   await service.readReplies('v2', 'parent', 20);
   const replyQuery = service.calls.at(-1);
