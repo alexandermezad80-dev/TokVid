@@ -11,7 +11,7 @@ function load(relative, names, globals = {}) {
   vm.runInNewContext(stripTypeScriptTypes(source, { mode: 'transform' }) + `\nObject.assign(exports, {${names.join(',')}});`, { exports, Error, setTimeout, clearTimeout, ...globals });
   return exports;
 }
-const model = load('lib/features/comments/model.ts', ['mergeComments', 'commentTime', 'commentLength', 'COMMENT_FIELDS', 'COMMENT_LIMIT', 'COMMENT_PAGE_SIZE', 'REPLY_PAGE_SIZE']);
+const model = load('lib/features/comments/model.ts', ['mergeComments', 'commentTime', 'commentLength', 'COMMENT_FIELDS', 'COMMENT_LIMIT', 'COMMENT_PAGE_SIZE', 'REPLY_PAGE_SIZE', 'commentCapabilities']);
 const { keyboardSheetGeometry: geometry } = load('lib/keyboardSheetGeometry.ts', ['keyboardSheetGeometry']);
 const row = (id = 'c1', overrides = {}) => ({ id, video_id: 'v1', user_id: 'u1', username: 'real-profile', avatar_url: null, text: 'Real content', created_at: '2026-10-07T00:00:00Z', parent_id: null, root_id: null, reply_to_username: null, likes_count: 0, reply_count: 0, ...overrides });
 
@@ -59,7 +59,7 @@ function serviceHarness(responder) {
     },
     async rpc(name, args) { const spec = { name, args }; calls.push(spec); return responder(spec); },
   };
-  return { calls, ...load('lib/features/comments/services.ts', ['readComments', 'readReplies', 'readOwnCommentLikes', 'createComment', 'setCommentLike', 'readCommentCounts', 'editComment', 'deleteComment', 'readHiddenThreads'], { supabase, ...model }) };
+  return { calls, ...load('lib/features/comments/services.ts', ['readComments', 'readReplies', 'readOwnCommentLikes', 'createComment', 'setCommentLike', 'readCommentCounts', 'editComment', 'deleteComment', 'readHiddenThreads', 'readPublicationOwner'], { supabase, ...model }) };
 }
 test('publishing sends no fabricated identity and returns only server-confirmed rows', async () => {
   const service = serviceHarness(() => ({ data: [row()], error: null }));
@@ -116,6 +116,7 @@ function hookHarness(overrides = {}) {
   const services = {
     async readComments() { return { rows: state.roots, total: state.roots.length, hasMore: false }; },
     async readReplies() { return { rows: [], hasMore: false }; },
+    async readPublicationOwner() { return null; },
     async readOwnCommentLikes() { return state.liked; },
     async readHiddenThreads() { return new Set(); },
     async editComment(comment, text) { calls.push({ edit: comment.id, text }); return { ...comment, text, edited_at: '2026-10-07T15:00:00Z' }; },
@@ -168,7 +169,7 @@ test('editing and deleting require confirmed matching server results', async () 
   const wrong = serviceHarness(() => ({ data: [row('other', { text: 'Nuevo' })], error: null }));
   await assert.rejects(wrong.editComment(row(), 'Nuevo'), /confirmar/);
   const retained = serviceHarness(() => ({ data: [{ id: 'c1', removed: false, deleted_at: '2026-10-07T15:00:00Z' }], error: null }));
-  assert.equal((await retained.deleteComment('c1')).removed, false);
+  await assert.rejects(retained.deleteComment('c1'), /confirmar/);
 });
 
 test('hidden threads are read only for the current account and video', async () => {
@@ -207,4 +208,101 @@ test('deletion failure and hiding failure leave public rows intact', async () =>
   assert.equal(await h.rt.output.remove(row()), null); await h.rt.flush(); assert.equal(h.rt.output.roots.length, 1);
   assert.equal(await h.rt.output.hideThread(row()), null); await h.rt.flush();
   assert.equal(h.rt.output.hiddenThreads.size, 0); assert.equal(h.rt.output.roots.length, 1); assert.match(h.rt.output.error, /Hide failed/); h.rt.unmount();
+});
+
+test('authors retain edit and deletion rights in somebody else\'s publication', () => {
+  for (const comment of [row(), row('reply', { parent_id: 'root', root_id: 'root' })]) {
+    const caps = model.commentCapabilities(comment, 'u1', 'other-owner');
+    assert.equal(caps.canEdit, true); assert.equal(caps.canDelete, true); assert.equal(caps.canReply, true);
+  }
+});
+test('publication moderation never grants editing another person\'s text', () => {
+  const foreign = row('foreign', { user_id: 'u2' });
+  assert.equal(model.commentCapabilities(foreign, 'u1', 'u1').canDelete, true);
+  assert.equal(model.commentCapabilities(foreign, 'u1', 'u1').canEdit, false);
+  assert.equal(model.commentCapabilities(foreign, 'u1', 'u3').canDelete, false);
+  const guest = model.commentCapabilities(foreign, undefined, 'u1');
+  assert.equal(guest.canEdit || guest.canReply || guest.canDelete, false);
+  const legacy = model.commentCapabilities(row('old', { deleted_at: '2026-10-07' }), 'u1', null);
+  assert.equal(legacy.canDelete, true); assert.equal(legacy.canEdit || legacy.canReply, false);
+});
+test('publication ownership is read from the server and errors cannot grant moderation', async () => {
+  const service = serviceHarness(() => ({ data: [{ user_id: 'owner' }], error: null }));
+  assert.equal(await service.readPublicationOwner('video'), 'owner');
+  assert.equal(service.calls[0].name, 'get_feed_comment_owner');
+  assert.equal(service.calls[0].args.p_video_id, 'video');
+  const missing = serviceHarness(() => ({ data: [], error: null }));
+  assert.equal(await missing.readPublicationOwner('unpersisted'), null);
+  const failed = serviceHarness(() => ({ data: null, error: { message: 'Owner check failed' } }));
+  await assert.rejects(failed.readPublicationOwner('video'), /Owner check failed/);
+});
+test('deleting a root clears loaded replies, expanded state and its personal preference', async () => {
+  let h;
+  h = hookHarness({
+    readReplies: async () => ({ rows: h.state.roots.length ? [row('reply', { user_id: 'u2', parent_id: 'c1', root_id: 'c1' })] : [], hasMore: false }),
+    deleteComment: async id => { h.state.roots = []; return { id, removed: true, deleted_at: null }; },
+  });
+  await h.rt.flush(); await h.rt.output.toggleThread('c1'); await h.rt.flush();
+  assert.equal(h.rt.output.expanded.has('c1'), true);
+  assert.equal(h.rt.output.threads.c1.rows.length, 1);
+  assert.equal((await h.rt.output.remove(row())).removed, true);
+  await h.rt.flush();
+  assert.equal(h.rt.output.roots.length, 0);
+  assert.equal(h.rt.output.threads.c1, undefined);
+  assert.equal(h.rt.output.expanded.has('c1'), false);
+  h.rt.unmount();
+});
+test('confirmed individual reply removal preserves and reattaches its loaded children after read failure', async () => {
+  let failRead = false;
+  const reply = row('reply', { parent_id: 'c1', root_id: 'c1' });
+  const child = row('child', { user_id: 'u2', parent_id: 'reply', root_id: 'c1', reply_to_username: 'old-target' });
+  const sibling = row('sibling', { user_id: 'u2', parent_id: 'c1', root_id: 'c1' });
+  const h = hookHarness({
+    readComments: async () => { if (failRead) throw new Error('Reload failed'); return { rows: [row()], total: 4, hasMore: false }; },
+    readReplies: async () => ({ rows: [reply, child, sibling], hasMore: false }),
+    deleteComment: async id => { failRead = true; return { id, removed: true, deleted_at: null }; },
+  });
+  await h.rt.flush(); await h.rt.output.toggleThread('c1'); await h.rt.flush();
+  await h.rt.output.remove(reply); await h.rt.flush();
+  const remaining = h.rt.output.threads.c1.rows;
+  assert.equal(remaining.length, 2);
+  assert.equal(remaining.find(item => item.id === 'child').parent_id, 'c1');
+  assert.equal(remaining.find(item => item.id === 'child').text, child.text);
+  assert.equal(remaining.find(item => item.id === 'sibling').parent_id, 'c1');
+  assert.match(h.rt.output.error, /Reload failed/);
+  h.rt.unmount();
+});
+test('publication owners may moderate a foreign message but cannot edit it', async () => {
+  let h;
+  h = hookHarness({
+    readPublicationOwner: async () => 'u1',
+    deleteComment: async id => { h.state.roots = []; return { id, removed: true, deleted_at: null }; },
+  });
+  h.state.roots = [row('foreign', { user_id: 'u2' })];
+  await h.rt.flush();
+  assert.equal(await h.rt.output.edit(h.state.roots[0], 'Changed'), null);
+  assert.equal((await h.rt.output.remove(h.state.roots[0])).removed, true);
+  h.rt.unmount();
+});
+
+const { commentPopoverGeometry: popover } = load('lib/commentPopoverGeometry.ts', ['commentPopoverGeometry']);
+test('popovers prefer above the selected row and remain inside horizontal safe areas', () => {
+  const placement = popover({ x: 270, y: 400, width: 100, height: 90 }, { width: 390, availableHeight: 800, safeTop: 24, menuHeight: 248 });
+  assert.equal(placement.side, 'above'); assert.ok(placement.top + placement.maxHeight < 400);
+  assert.ok(placement.left >= 8); assert.ok(placement.left + placement.width <= 382);
+  const rotated = popover({ x: 10, y: 300, width: 600, height: 80 }, { width: 700, availableHeight: 380, safeTop: 0, safeLeft: 44, safeRight: 44, menuHeight: 248 });
+  assert.ok(rotated.left >= 52); assert.ok(rotated.left + rotated.width <= 648);
+});
+test('an upper-edge message uses an adjacent popover rather than clipping or a bottom sheet', () => {
+  const placement = popover({ x: 20, y: 48, width: 320, height: 64 }, { width: 360, availableHeight: 720, safeTop: 24, menuHeight: 248 });
+  assert.equal(placement.side, 'below');
+  assert.equal(placement.top, 120);
+  assert.ok(placement.top + placement.maxHeight < 720);
+});
+test('compact keyboard and rotated windows constrain large menus to a scrollable region', () => {
+  for (const availableHeight of [60, 180, 300]) {
+    const placement = popover({ x: 15, y: 130, width: 260, height: 60 }, { width: 320, availableHeight, safeTop: 24, menuHeight: 480 });
+    assert.ok(placement.top >= 32);
+    assert.ok(placement.top + placement.maxHeight <= availableHeight - 8);
+  }
 });

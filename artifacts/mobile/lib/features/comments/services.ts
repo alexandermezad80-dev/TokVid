@@ -90,10 +90,16 @@ export async function editComment(comment: FeedComment, text: string): Promise<F
 }
 
 export async function deleteComment(commentId: string): Promise<{ id: string; removed: boolean; deleted_at: string | null }> {
-  const result = await supabase.rpc("delete_feed_comment", { p_comment_id: commentId });
+  const result = await supabase.rpc("remove_feed_comment", { p_comment_id: commentId });
   const rows = requireResult(result) as { id: string; removed: boolean; deleted_at: string | null }[];
-  if (rows[0]?.id !== commentId || (!rows[0].removed && !rows[0].deleted_at)) throw new Error("No se pudo confirmar la eliminación.");
+  if (rows[0]?.id !== commentId || rows[0].removed !== true || rows[0].deleted_at !== null) throw new Error("No se pudo confirmar la eliminación.");
   return rows[0];
+}
+
+export async function readPublicationOwner(videoId: string): Promise<string | null> {
+  const result = await supabase.rpc("get_feed_comment_owner", { p_video_id: videoId });
+  const rows = requireResult(result) as { user_id: string }[];
+  return rows[0]?.user_id ?? null;
 }
 
 export async function readHiddenThreads(userId: string | undefined, videoId: string): Promise<Set<string>> {

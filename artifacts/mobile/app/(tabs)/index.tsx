@@ -323,6 +323,7 @@ ${item.uri}`,
       </Animated.View>
       {!!commentVideo && <BlurView pointerEvents="none" intensity={FEED_BLUR_INTENSITY} blurReductionFactor={1} experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />}
       <CommentsSheet
+        overTabBar
         visible={!!commentVideo}
         onClose={() => setCommentVideo(null)}
         videoId={commentVideo?.id ?? ""}

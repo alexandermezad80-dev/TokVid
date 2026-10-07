@@ -36,6 +36,7 @@ export function useKeyboardSheetViewport(visible: boolean, tabBarHeight = 0) {
   }, [visible, measure]);
   return {
     viewportRef, onLayout, measure, insets,
+    viewportTop: viewport.top,
     ...keyboardSheetGeometry({ viewportHeight: viewport.height, viewportTop: viewport.top,
       screenHeight: Dimensions.get("screen").height, keyboardTop, safeTop: insets.top, tabBarHeight }),
   };

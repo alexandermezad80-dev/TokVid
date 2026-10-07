@@ -36,3 +36,12 @@ export function commentTime(createdAt: string, now = Date.now()): string {
 }
 
 export function commentLength(text: string): number { return Array.from(text).length; }
+
+export function commentCapabilities(comment: FeedComment, userId?: string, publicationOwnerId?: string | null) {
+  const own = !!userId && comment.user_id === userId;
+  return {
+    canReply: !!userId && !comment.deleted_at,
+    canEdit: own && !comment.deleted_at,
+    canDelete: !!userId && (own || publicationOwnerId === userId),
+  };
+}

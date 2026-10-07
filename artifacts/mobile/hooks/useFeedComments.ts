@@ -2,15 +2,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
-import { COMMENT_PAGE_SIZE, FeedComment, REPLY_PAGE_SIZE, mergeComments } from "../lib/features/comments/model";
-import { createComment, deleteComment, editComment, hideCommentThread, readComments, readHiddenThreads, readOwnCommentLikes, readReplies, restoreCommentThreads, setCommentLike } from "../lib/features/comments/services";
+import { COMMENT_PAGE_SIZE, FeedComment, REPLY_PAGE_SIZE, commentCapabilities, mergeComments } from "../lib/features/comments/model";
+import { createComment, deleteComment, editComment, hideCommentThread, readComments, readHiddenThreads, readOwnCommentLikes, readPublicationOwner, readReplies, restoreCommentThreads, setCommentLike } from "../lib/features/comments/services";
 
 interface ThreadPage { rows: FeedComment[]; hasMore: boolean }
 interface State {
   key: string; roots: FeedComment[]; threads: Record<string, ThreadPage>;
   liked: Set<string>; hiddenThreads: Set<string>; total: number | null; hasMore: boolean;
+  publicationOwnerId: string | null;
 }
-const emptyState = (key: string): State => ({ key, roots: [], threads: {}, liked: new Set(), hiddenThreads: new Set(), total: null, hasMore: false });
+const emptyState = (key: string): State => ({ key, roots: [], threads: {}, liked: new Set(), hiddenThreads: new Set(), total: null, hasMore: false, publicationOwnerId: null });
 const errorText = (error: unknown) => error instanceof Error ? error.message : "No se pudo completar la operación. Inténtalo de nuevo.";
 
 export function useFeedComments(visible: boolean, videoId: string, onCountChange?: (videoId: string, total: number) => void) {
@@ -45,15 +46,16 @@ export function useFeedComments(visible: boolean, videoId: string, onCountChange
     const sequence = ++requestSequence.current;
     setLoading(true);
     try {
-      const [roots, pages] = await Promise.all([
+      const [roots, pages, publicationOwnerId] = await Promise.all([
         readComments(videoId, rootsLimit.current),
         Promise.all([...threadLimits.current].map(async ([rootId, limit]) => [rootId, await readReplies(videoId, rootId, limit)] as const)),
+        readPublicationOwner(videoId),
       ]);
       const threads = Object.fromEntries(pages);
       const ids = [...roots.rows, ...pages.flatMap(([, page]) => page.rows)].map(row => row.id);
       const [liked, hiddenThreads] = await Promise.all([readOwnCommentLikes(user?.id, ids), readHiddenThreads(user?.id, videoId)]);
       if (epoch.current !== currentEpoch || requestSequence.current !== sequence) return;
-      setState({ key, roots: roots.rows, threads, liked, hiddenThreads, total: roots.total, hasMore: roots.hasMore });
+      setState({ key, roots: roots.rows, threads, liked, hiddenThreads, total: roots.total, hasMore: roots.hasMore, publicationOwnerId });
       setError("");
       countCallback.current?.(videoId, roots.total);
     } catch (failure) {
@@ -205,13 +207,24 @@ export function useFeedComments(visible: boolean, videoId: string, onCountChange
     })));
   };
   const remove = (comment: FeedComment) => {
-    if (comment.user_id !== user?.id || comment.deleted_at || comment.video_id !== videoId) return Promise.resolve(null);
+    if (!commentCapabilities(comment, user?.id, state.publicationOwnerId).canDelete || comment.video_id !== videoId) return Promise.resolve(null);
     if (likeLocks.current.has(comment.id)) return Promise.resolve(null);
-    return mutate(() => deleteComment(comment.id), confirmed => setState(previous => {
-      const updateRows = (rows: FeedComment[]) => confirmed.removed ? rows.filter(row => row.id !== comment.id) : rows.map(row => row.id === comment.id ? { ...row, text: "Comentario eliminado", deleted_at: confirmed.deleted_at, avatar_url: null, sticker_id: null, likes_count: 0 } : row);
-      const liked = new Set(previous.liked); liked.delete(comment.id);
-      return { ...previous, liked, roots: updateRows(previous.roots), threads: Object.fromEntries(Object.entries(previous.threads).map(([id, page]) => [id, { ...page, rows: updateRows(page.rows) }])) };
-    }));
+    return mutate(() => deleteComment(comment.id), () => {
+      if (!comment.parent_id) {
+        threadLimits.current.delete(comment.id);
+        setExpanded(previous => { const next = new Set(previous); next.delete(comment.id); return next; });
+      }
+      setState(previous => {
+        const all = [...previous.roots, ...Object.values(previous.threads).flatMap(page => page.rows)];
+        const parent = all.find(row => row.id === comment.parent_id);
+        const removed = new Set(all.filter(row => row.id === comment.id || (!comment.parent_id && row.root_id === comment.id)).map(row => row.id));
+        const updateRows = (rows: FeedComment[]) => rows.filter(row => !removed.has(row.id)).map(row => row.parent_id === comment.id ? { ...row, parent_id: comment.parent_id, reply_to_username: parent?.username ?? null } : row);
+        const liked = new Set(previous.liked); for (const id of removed) liked.delete(id);
+        const hiddenThreads = new Set(previous.hiddenThreads); if (!comment.parent_id) hiddenThreads.delete(comment.id);
+        return { ...previous, liked, hiddenThreads, roots: updateRows(previous.roots),
+          threads: Object.fromEntries(Object.entries(previous.threads).filter(([id]) => comment.parent_id || id !== comment.id).map(([id, page]) => [id, { ...page, rows: updateRows(page.rows) }])) };
+      });
+    });
   };
   const hideThread = (comment: FeedComment) => {
     if (!user || comment.video_id !== videoId) return Promise.resolve(null);
