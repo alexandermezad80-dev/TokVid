@@ -2,6 +2,10 @@
 
 Red social TokVid.
 
+## Continuar el proyecto
+
+Leer [CONTINUAR_AQUI.md](CONTINUAR_AQUI.md) y [el estado entre sesiones](docs/continuity/TOKVID_SESSION_HANDOFF.md) antes de trabajar. Allí están la rama vigente, la APK #204, los cambios terminados y las pruebas físicas pendientes. Regla del usuario: **lo que está hecho se conserva salvo una actualización necesaria**. Las instrucciones de continuidad para agentes están en [AGENTS.md](AGENTS.md).
+
 ## Estructura del repositorio
 
 - `artifacts/web`: aplicación web Next.js.

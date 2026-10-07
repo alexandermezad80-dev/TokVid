@@ -1,5 +1,7 @@
 # Permisos del workflow de Supabase Auth
 
+**Estado al 7 de octubre de 2026:** el 403 reportado quedó resuelto. [Supabase migrations #192](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37658368476), intento 2, terminó en success con la configuración OTP verificada. Las instrucciones siguientes quedan como referencia operativa, no como indicación de recrear tokens o repetir cambios ya completados. El error posterior al volver de Google fue una excepción de suscripción del feed; consultar [el registro de continuidad](../continuity/TOKVID_SESSION_HANDOFF.md).
+
 El workflow `Supabase migrations` publica migraciones y después configura y verifica las plantillas OTP. Un `Auth configuration GET failed (403)` indica que la Management API denegó el acceso a la configuración de Auth. No indica que las migraciones anteriores hayan fallado: `supabase db push` puede utilizar la contraseña de base de datos y funcionar con un token sin permisos de Auth.
 
 ## Resolver el acceso

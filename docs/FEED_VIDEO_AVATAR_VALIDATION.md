@@ -13,6 +13,8 @@ Isolated implementation branch: `feature/feed-mini-video-avatar`.
 
 ## Validation
 
+Completed delivery: [Android APK #204](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37696256640), commit `a6e14783bbaede25f5f756f24250b7b62d9a85f0`. All **92 tests**, the complete mobile typecheck, standalone Android build, APK identity/source-map verification and both uploads passed. Gradle reported `BUILD SUCCESSFUL in 26m 55s`. [APK download](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37696256640/artifacts/11516477647). [Verification manifest](continuity/APK_204_VERIFICATION.json). Physical-device confirmation remains pending. Read the [session handoff](continuity/TOKVID_SESSION_HANDOFF.md) before further changes.
+
 Local tests exercise the actual Realtime topic cache and callback guard from the reported APK, delayed cleanup and overlapping setups for the three feed hooks and two global listeners. Additional tests cover keyboard-safe preview geometry, one-player presentation continuity, follow-control states, binary photo formats, upload rejection, profile update confirmation and photo-selection retry.
 
 The local snapshot lacks installed TypeScript/mobile dependencies. Component logic was checked locally with the bundled Playwright Babel TSX transform and mocked native boundaries. The Android workflow repeats the whole suite using installed TypeScript and Supabase dependencies, typechecks the complete mobile project, builds a standalone release APK and checks its diagnostic marker, source map and commit identity.

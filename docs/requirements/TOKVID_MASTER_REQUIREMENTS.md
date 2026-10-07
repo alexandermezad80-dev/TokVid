@@ -1,5 +1,13 @@
 # TOKVID
 
+## Continuidad vigente — cierre del 7 de octubre de 2026
+
+**Leer primero [CONTINUAR_AQUI.md](../../CONTINUAR_AQUI.md) y [el estado entre sesiones](../continuity/TOKVID_SESSION_HANDOFF.md).** La regla del usuario es: **«lo que está hecho no se toca a no ser que necesite una actualización»**. Conservar lo aprobado; limitar cualquier actualización a una necesidad concreta y al alcance autorizado.
+
+La línea vigente es `feature/feed-mini-video-avatar`; el último código compilado y entregado es `a6e14783bbaede25f5f756f24250b7b62d9a85f0`, **APK #204**. Pasaron 92 pruebas, el typecheck móvil y la compilación Android. Falta la confirmación física del usuario de Google, video pequeño con comentarios/teclado, + para seguir y avatar.
+
+Este documento incluye requisitos futuros e historial. Las notas antiguas sobre márgenes, desenfoque, conservación de respuestas o bloqueos de Auth deben leerse junto con sus aclaraciones posteriores. No significan que esos estados sigan vigentes ni que todos los requisitos del proyecto estén implementados.
+
 Documento maestro de requisitos y visión del proyecto
 
 **Estado:** Especificación de trabajo  
@@ -2927,3 +2935,40 @@ Validación local: 28 pruebas de comentarios aprobadas (10 nuevas), con autoría
 Pendiente de entrega: CI/typecheck y APK del nuevo commit; la apariencia y la interacción nativas requieren revisión física. El 403 de configuración Auth sigue siendo un bloqueo independiente de credenciales de GitHub; no se modifica ni se oculta para presentar un éxito falso.
 
 Revisión de pantallas compactas: se limita la altura del popover al espacio real encima/debajo del mensaje, manteniendo visible el seleccionado; las opciones excedentes usan scroll. Regresión adicional aprobada. CI del primer commit 01004bc55c59a738923c644912b70f11f2d7faca pasó con 61 pruebas; esta corrección requiere el nuevo build final.
+
+## Cierre de continuidad — Auth, video vertical, + y avatar (7 octubre 2026 UTC)
+
+### Conservación del trabajo aprobado
+
+El usuario pide dejar documentado todo para poder retomar si se cierra la sesión, y establece: **«lo que está hecho no se toca a no ser que necesite una actualización»**. Esta petición autoriza la actualización documental. Mantener el código, diseño y comportamiento aprobados; para un cambio necesario, explicar su motivo, actuar dentro de la autorización existente y validar el alcance modificado. Las decisiones resueltas no deben volver a preguntarse como si se hubieran perdido.
+
+El punto de entrada es [CONTINUAR_AQUI.md](../../CONTINUAR_AQUI.md); las reglas de agentes están en [AGENTS.md](../../AGENTS.md). La entrega completa, las rutas de código y los pendientes están en [TOKVID_SESSION_HANDOFF.md](../continuity/TOKVID_SESSION_HANDOFF.md).
+
+### Estados históricos sustituidos
+
+- **Comentarios:** la regla final es edición propia de principales y respuestas, borrado completo del hilo al eliminar el principal y borrado individual de una respuesta conservando las demás. El propietario de una publicación puede moderar eliminando, pero no editar texto ajeno. «Ocultar hilo para mí» sigue siendo una preferencia privada. La propuesta anterior de conservar respuestas bajo «Comentario eliminado» no es la regla vigente del borrado principal.
+- **Diseño:** el usuario aprobó el contador/encabezado glass, el panel de ancho completo, la tab bar **inferior** translúcida y bloqueada por el modal, y los menús flotantes junto al comentario. Conservarlos.
+- **Video:** la petición posterior autoriza que, al abrir comentarios en el feed, el video se reduzca **en vertical** y permanezca visible mientras se lee/escribe, incluido el teclado. Esto sustituye el fondo de video completo a escala 0.95 con blur en ese caso; no restaurarlo desde una nota antigua.
+- **403 de Auth:** quedó resuelto con el token dedicado y verificado en [Supabase migrations #192, intento 2](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37658368476). El acceso requiere Auth Config y Project Settings Read-write en el repository secret `SUPABASE_AUTH_ACCESS_TOKEN`. La credencial de migraciones sigue separada. No recrear tokens por el error posterior del feed.
+- **Correo:** el usuario confirmó que el registro por correo con código de ocho dígitos funcionaba y pidió conservarlo.
+
+### Diagnóstico confirmado y corrección entregada
+
+El usuario confirmó que Try Again entraba con su cuenta tras regresar de Google. Autorizó la APK de diagnóstico #202, commit `883a3a423067a8add632117c752cb8ea971ab0c7`, y aportó el informe real: `cannot add postgres_changes callbacks for realtime:feed-comment-counts after subscribe()`. El informe completo conserva las comillas de la excepción. La sesión ya estaba presente antes del fallo de renderizado.
+
+El mapa de fuentes identificó el guard de `@supabase/realtime-js@2.107.0` y `useFeedCommentCounts.ts`. Se reproduce la reutilización de un canal ya suscrito y se corrige creando un canal exclusivo en cada setup del efecto. Se aplica a los tres hooks del feed y a notificaciones/llamadas entrantes, con descarte de callbacks retirados y limpieza de la propia instancia. No es una modificación del registro por correo ni de la configuración del proveedor Google.
+
+### Cuatro cambios de la APK #204
+
+1. Corrección del fallo de Realtime al regresar de Google y de la misma condición en listeners globales.
+2. Video vertical 9:16 encima de comentarios, menor con teclado, conservando el mismo reproductor/vista, posición, sonido y pausa. Tocar el video pequeño cierra el panel y restaura el tamaño completo. Integrado en el feed principal.
+3. + cian/magenta bajo el avatar para un usuario autenticado que ve a otro creador todavía no seguido; oculto en videos propios o ya seguidos y deshabilitado durante la solicitud.
+4. Perfil → avatar/Editar perfil → elegir foto → Guardar. Subida binaria a `avatars` con ruta propia única, confirmación de la fila/URL del perfil y refresco visible. Los fallos conservan selección/editor para reintentar. Sin migraciones ni cambios Auth en este bloque.
+
+Código entregado: `a6e14783bbaede25f5f756f24250b7b62d9a85f0`, rama `feature/feed-mini-video-avatar`. [Android APK #204](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37696256640), intento 1: **success**, 92 pruebas aprobadas, typecheck móvil aprobado, `BUILD SUCCESSFUL in 26m 55s`. [Descarga del APK](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37696256640/artifacts/11516477647). [Manifiesto de verificación](../continuity/APK_204_VERIFICATION.json). Los commits documentales posteriores no cambian la identidad del binario.
+
+### Próximo paso real
+
+Recoger la prueba física del usuario de esos cuatro cambios. No volver a implementarlos desde cero ni declararlos ya confirmados en teléfono por haber compilado. Conservar las siguientes observaciones del usuario y aplicar únicamente las actualizaciones necesarias.
+
+Se mantienen como pendientes anteriores, sin darlos por resueltos en este cierre: acceso real por teléfono/SMS, interfaz del catálogo propio de stickers, navegación de notificaciones a sus destinos y desarrollo restante de Perfil/mensajería según el maestro. Los demás bloques del documento conservan su propio estado y no deben iniciarse automáticamente por esta entrega.

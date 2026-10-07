@@ -1,0 +1,16 @@
+{
+  "commit": "a6e14783bbaede25f5f756f24250b7b62d9a85f0",
+  "branch": "feature/feed-mini-video-avatar",
+  "run_id": 37696256640,
+  "run_number": 204,
+  "job_id": 113048894987,
+  "result": "success",
+  "tests_passed": 92,
+  "mobile_typecheck": "passed",
+  "gradle": "BUILD SUCCESSFUL in 26m 55s",
+  "apk_sha256": "e83b1eef7b9a3a2e8d473ae41c4b7a8d2f8d7e8a9421f765618104e2187c70a1",
+  "apk_artifact": 11516477647,
+  "apk_artifact_zip_bytes": 213919965,
+  "source_map_artifact": 11516672356,
+  "physical_device_verified": false
+}
