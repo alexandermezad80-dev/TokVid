@@ -1,4 +1,5 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Image, Keyboard, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
@@ -31,13 +32,12 @@ export default function CommentsSheet({ visible, onClose, videoId }: Props) {
   const [reply, setReply] = useState<FeedComment | null>(null);
   const input = useRef<TextInput>(null);
   const phase = useSharedValue(0);
-  const restingBottomPadding = viewport.insets.bottom + 12;
   const context = `${videoId}:${user?.id ?? "guest"}`;
   useEffect(() => { setText(""); setReply(null); }, [context]);
   useEffect(() => { phase.value = withSpring(viewport.keyboardVisible ? 1 : 0, spring); }, [viewport.keyboardVisible, phase]);
-  const sheetShape = useAnimatedStyle(() => { const p = Math.max(0, Math.min(1, phase.value)); return { borderTopLeftRadius: 32 - 16 * p, borderTopRightRadius: 32 - 16 * p }; });
-  const editorShape = useAnimatedStyle(() => { const p = Math.max(0, Math.min(1, phase.value)); return { marginHorizontal: 12 * (1 - p), borderRadius: 26 - 14 * p, height: 52 + 68 * p }; });
-  const composerShape = useAnimatedStyle(() => { const p = Math.max(0, Math.min(1, phase.value)); return { paddingTop: 12 * (1 - p), paddingBottom: restingBottomPadding * (1 - p) }; });
+  const sheetShape = useAnimatedStyle(() => { const p = Math.max(0, Math.min(1, phase.value)); return { borderRadius: 18 - 4 * p }; });
+  const editorShape = useAnimatedStyle(() => { const p = Math.max(0, Math.min(1, phase.value)); return { borderRadius: 16 - 4 * p, height: 52 + 36 * p }; });
+  const composerShape = useAnimatedStyle(() => { const p = Math.max(0, Math.min(1, phase.value)); return { paddingTop: 10 - 4 * p }; });
   const close = () => { Keyboard.dismiss(); onClose(); };
   const rows = useMemo<ListRow[]>(() => comments.roots.flatMap(root => {
     const result: ListRow[] = [{ kind: "comment", comment: root, nested: false }];
@@ -79,17 +79,17 @@ export default function CommentsSheet({ visible, onClose, videoId }: Props) {
     </View>;
   };
   return <Modal visible={visible} transparent statusBarTranslucent animationType="slide" onRequestClose={close} onShow={viewport.measure}>
-    <View ref={viewport.viewportRef} collapsable={false} onLayout={viewport.onLayout} style={[styles.viewport, { paddingBottom: viewport.keyboardInset }]}>
+    <View ref={viewport.viewportRef} collapsable={false} onLayout={viewport.onLayout} style={[styles.viewport, { paddingBottom: viewport.keyboardInset + (viewport.keyboardVisible ? 8 : viewport.insets.bottom + 8) }]}>
       <Pressable accessibilityLabel="Cerrar comentarios" onPress={close} style={StyleSheet.absoluteFill} />
       <Animated.View style={[styles.sheet, sheetShape, { height: viewport.commentsHeight }]}>
         <View style={styles.handle} />
-        <View style={styles.header}><Text style={styles.title}>{comments.total === null ? "Comentarios" : `${comments.total} comentarios`}</Text><Pressable onPress={close} accessibilityLabel="Cerrar comentarios" accessibilityRole="button" style={styles.close}><Feather name="x" size={22} color="#fff" /></Pressable></View>
+        <View style={styles.header}><LinearGradient colors={["rgba(0,242,254,0.24)", "rgba(254,9,121,0.24)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.countBadge}><Text style={styles.title}>{comments.total === null ? "Comentarios" : `${comments.total} comentarios`}</Text></LinearGradient><Pressable onPress={close} accessibilityLabel="Cerrar comentarios" accessibilityRole="button" style={styles.close}><Feather name="x" size={22} color="#fff" /></Pressable></View>
         {!!comments.error && <View style={styles.errorRow}><Text accessibilityRole="alert" style={styles.error}>{comments.error}</Text><Pressable accessibilityRole="button" onPress={() => { void comments.refresh(); }} style={styles.retry}><Text style={styles.link}>Recargar</Text></Pressable></View>}
         <FlatList<ListRow> data={rows} keyExtractor={row => row.kind === "comment" ? row.comment.id : row.kind === "thread" ? `thread:${row.root.id}` : `more:${row.rootId}`} renderItem={renderRow} style={styles.list} contentContainerStyle={rows.length ? styles.listContent : styles.emptyContainer} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} refreshing={comments.loading} onRefresh={() => { void comments.refresh(); }}
           ListEmptyComponent={comments.loading ? <ActivityIndicator color="#00F2FE" /> : comments.total === 0 ? <View style={styles.empty}><Feather name="message-circle" size={32} color="#666" /><Text style={styles.emptyText}>Sé el primero en comentar</Text></View> : null}
           ListFooterComponent={comments.hasMore ? <Pressable disabled={comments.paging} onPress={() => { void comments.loadMore(); }} style={styles.more}><Text style={styles.link}>{comments.paging ? "Cargando…" : "Cargar más comentarios"}</Text></Pressable> : null} />
         <Animated.View style={[styles.composer, composerShape]}>
-          {reply && <View style={styles.replyIndicator}><Text numberOfLines={1} style={styles.replyLabel}>Respondiendo a @{reply.username}</Text><Pressable accessibilityRole="button" accessibilityLabel="Cancelar respuesta" disabled={comments.sending} onPress={() => setReply(null)} hitSlop={8}><Feather name="x" size={16} color="#00F2FE" /></Pressable></View>}
+          {reply && <Pressable accessibilityRole="button" accessibilityLabel="Cancelar respuesta" disabled={comments.sending} onPress={() => setReply(null)} hitSlop={8} style={styles.replyIndicator}><LinearGradient colors={["rgba(0,242,254,0.22)", "rgba(254,9,121,0.22)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.replyBubble}><Text style={styles.replyLabel}>Respondiendo</Text></LinearGradient></Pressable>}
           <Animated.View style={[styles.editor, editorShape]}>
             {!viewport.keyboardVisible && <Avatar uri={profile?.avatar_url} username={profile?.username} />}
             <View style={styles.editorBody}><TextInput ref={input} value={text} editable={!comments.sending} onChangeText={value => setText(Array.from(value).slice(0, COMMENT_LIMIT).join(""))} style={[styles.input, viewport.keyboardVisible && styles.expandedInput]} placeholder="Agregar un comentario…" placeholderTextColor="#8A8A96" selectionColor="#00F2FE" accessibilityLabel="Escribe tu comentario" multiline scrollEnabled maxLength={COMMENT_LIMIT * 2} textAlignVertical={viewport.keyboardVisible ? "top" : "center"} />
@@ -107,10 +107,11 @@ export default function CommentsSheet({ visible, onClose, videoId }: Props) {
 
 const styles = StyleSheet.create({
   viewport: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.5)" },
-  sheet: { backgroundColor: "#15151B", overflow: "hidden", borderTopWidth: 1, borderColor: "#00F2FE" },
+  sheet: { backgroundColor: "#15151B", overflow: "hidden", borderTopWidth: 1, borderColor: "#00F2FE", marginHorizontal: 24 },
   handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: "#55555E", alignSelf: "center", marginTop: 10 },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingLeft: 20, paddingRight: 8, minHeight: 52 },
-  title: { color: "#fff", fontSize: 17, fontWeight: "700", flexShrink: 1 }, close: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingLeft: 12, paddingRight: 4, minHeight: 52 },
+  countBadge: { borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7, flexShrink: 1, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
+  title: { color: "#fff", fontSize: 15, fontWeight: "700", flexShrink: 1 }, close: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   list: { flex: 1 }, listContent: { paddingHorizontal: 16, paddingBottom: 12 }, emptyContainer: { flexGrow: 1, alignItems: "center", justifyContent: "center" },
   empty: { alignItems: "center", gap: 12 }, emptyText: { color: "#9999A4", fontSize: 14 },
   comment: { flexDirection: "row", gap: 10, paddingVertical: 12 }, nested: { marginLeft: 42 },
@@ -119,6 +120,6 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: "row", gap: 18, marginTop: 4 }, meta: { color: "#92929D", fontSize: 11 }, like: { alignItems: "center", justifyContent: "flex-start", gap: 4, minWidth: 36, paddingVertical: 4 },
   threadAction: { marginLeft: 42, paddingVertical: 12 }, link: { color: "#00F2FE", fontSize: 12 }, more: { padding: 16, alignItems: "center" },
   errorRow: { paddingHorizontal: 16, paddingBottom: 8, flexDirection: "row", alignItems: "center", gap: 8 }, error: { color: "#ff8dab", fontSize: 12, flex: 1 }, retry: { padding: 8 },
-  composer: { borderTopWidth: 1, borderColor: "#2B2B35", paddingTop: 12 }, replyIndicator: { flexDirection: "row", alignItems: "center", gap: 8, marginHorizontal: 16, paddingBottom: 10 }, replyLabel: { color: "#00F2FE", fontSize: 12, flex: 1 },
-  editor: { backgroundColor: "#22222B", flexDirection: "row", alignItems: "center", paddingHorizontal: 10, borderWidth: 1, borderColor: "#353541", gap: 8, overflow: "hidden" }, editorBody: { flex: 1, minWidth: 0 }, input: { color: "#fff", fontSize: 14, paddingVertical: 8, paddingHorizontal: 4, maxHeight: 48 }, expandedInput: { height: 76, maxHeight: 76 }, counter: { color: "#92929D", fontSize: 10, textAlign: "right", paddingRight: 4, paddingTop: 4 }, send: { width: 36, height: 44, alignItems: "center", justifyContent: "center" },
+  composer: { paddingTop: 10, paddingHorizontal: 12, paddingBottom: 8 }, replyIndicator: { alignSelf: "center", marginBottom: 6 }, replyBubble: { minWidth: 130, minHeight: 28, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }, replyLabel: { color: "#fff", fontSize: 12 },
+  editor: { backgroundColor: "#22222B", flexDirection: "row", alignItems: "center", paddingHorizontal: 10, borderWidth: 1, borderColor: "#353541", gap: 8, overflow: "hidden" }, editorBody: { flex: 1, minWidth: 0 }, input: { color: "#fff", fontSize: 14, paddingVertical: 8, paddingHorizontal: 4, maxHeight: 48 }, expandedInput: { height: 60, maxHeight: 60, paddingVertical: 3 }, counter: { color: "#92929D", fontSize: 10, textAlign: "right", paddingRight: 4, paddingTop: 2 }, send: { width: 36, height: 44, alignItems: "center", justifyContent: "center" },
 });

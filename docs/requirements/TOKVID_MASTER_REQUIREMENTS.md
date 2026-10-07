@@ -2759,3 +2759,122 @@ Esta implementación sustituye las pantallas antiguas descritas como pendientes 
 3. Abrir/cerrar el teclado en Comentarios, Correo y Código: editor de comentarios visible sobre el teclado; registro a 12 dp, área superior segura y X accesible. Comprobar que el login conserva el retorno al mismo video y que el Feed mantiene posiciones, iconos, colores y gestos aprobados.
 
 La compilación, CI y base están verificadas; el renderizado, Realtime entre teléfonos y notificaciones entre cuentas distintas no se declaran probados físicamente. El bloque no se da por cerrado en teléfono hasta esa comprobación. La integración posterior del contenido real del Feed sigue pendiente y no se sustituye con datos ficticios.
+
+## Pendiente recordado por el usuario — Registro con teléfono (7 octubre 2026 UTC)
+
+El usuario indicó: «Anota falta lo del teléfono en registro». Queda pendiente completar y verificar el acceso real con número de teléfono y código SMS. La existencia de la opción y de su lógica de interfaz no confirma que el proveedor, el envío ni la verificación SMS estén operativos. No se da este método por terminado ni probado físicamente.
+
+Esta petición autoriza registrar el pendiente. Se espera la revisión del usuario de la APK #196 antes de continuar con cambios de implementación; no se modifica ahora la configuración Auth, el proveedor SMS ni el Feed.
+
+## Correcciones recopiladas durante la revisión física — Campo de comentarios (7 octubre 2026 UTC)
+
+Referencia del usuario: captura `1000169308.jpg`. El campo de escritura muestra tres líneas y demasiado espacio vacío. El usuario solicita ajustar su forma:
+
+- Reducir la altura y el espacio vacío para que el campo sea más delgado, conservando la escritura multilínea.
+- Darle apariencia de burbuja flotante sobre el teclado, con margen a izquierda y derecha y separación respecto del teclado.
+- Conservar los efectos, colores, animaciones y funcionamiento actuales; el ajuste solicitado corresponde a la forma y al espacio del campo.
+
+No se han acordado nuevas medidas numéricas. Esta corrección queda anotada mientras el usuario aporta los demás detalles de su revisión; todavía no se ha aplicado al código ni generado otra APK.
+
+### Indicador de respuesta como burbuja
+
+Referencia del usuario: captura `1000169258.jpg`.
+
+- Sustituir el texto visible «Respondiendo a @usuario» por únicamente «Respondiendo».
+- Mostrar el indicador como una pequeña burbuja encima del área de escritura de comentarios.
+- Usar el gradiente cian y magenta de TOKVID con mayor translucidez. El usuario aludió a un posible efecto de cristal; todavía no se han fijado desenfoque, opacidad ni medidas concretas.
+- Conservar la cancelación de respuesta y el destino real del comentario elegido. Ocultar el nombre en este indicador no cambia la relación entre comentario y respuesta ni los nombres mostrados dentro del hilo.
+
+Este ajuste también queda registrado para la próxima implementación, mientras se recopilan las observaciones del usuario. No se ha aplicado al código ni generado otra APK.
+
+### Contador, efecto sobre el video y altura del panel
+
+- En la misma captura `1000169258.jpg`, el usuario solicita aplicar el gradiente de TOKVID al elemento que muestra el contador de comentarios. Esto no define una acción nueva para el contador ni lo convierte por sí solo en un botón.
+- El usuario solicita explícitamente incorporar el efecto del documento para que el video se encoja al abrir comentarios. Esta petición autoriza esa excepción concreta a la conservación de tamaños del Feed: reducción temporal durante la apertura del panel y recuperación al cerrarlo. El modelo adjunto propone escala 0.95. No se ha aplicado todavía y no se infiere una autorización adicional para desenfoque del Feed u otros cambios de sus controles, posiciones o comportamiento.
+- El usuario considera demasiado alta la parte implementada y anuncia una imagen para señalar la altura que quiere corregir. El elemento preciso y la nueva altura quedan pendientes de esa referencia; no se fija una medida ni se modifica el panel por suposición.
+
+Se siguen recopilando estas correcciones antes de implementarlas. No se ha modificado el código ni generado otra APK con estos ajustes.
+
+### Referencia de altura y solicitud de diseño previo
+
+En la captura `1000169309.jpg`, el usuario identifica como demasiado alto el bloque completo de comentarios. Solicita una proporción equilibrada entre el video reducido y el panel, sin llevar ninguno a un extremo, y márgenes a ambos lados de toda el área de comentarios. Solicita ver un diseño antes de implementar estos ajustes. Las medidas nuevas se propondrán visualmente; todavía no están aprobadas ni aplicadas al código.
+
+### Revisión de la propuesta visual y cancelación de respuesta
+
+El usuario considera buena la idea del diseño presentado, pero observa que los bordes se ven demasiado redondeados. Se registra reducir ese redondeo; su mensaje no fija radios ni distingue de forma inequívoca cuáles de los contornos quiere ajustar, por lo que no se asignan medidas ni se declara aprobada una geometría definitiva.
+
+El usuario pregunta por la X de la burbuja «Respondiendo». Su función es cancelar el destino de respuesta seleccionado y ocultar esa burbuja, conservando el borrador y el panel de comentarios abierto. Si después envía el texto sin elegir otra respuesta, se publica como comentario general del video. La cancelación no envía ni elimina comentarios. Esta función ya existe en el código: la X solo borra el estado de respuesta, sin borrar el texto.
+
+### Márgenes laterales, X discreta y distribución con teclado
+
+- El usuario pide que la X de la burbuja de respuesta sea proporcionada y visualmente discreta, sin protagonismo excesivo. Conservar una zona táctil cómoda sin agrandar de forma innecesaria el icono visible.
+- Con el teclado cerrado, aumentar el margen a izquierda y derecha del panel completo de comentarios respecto de la propuesta mostrada, permitiendo ver el fondo de la aplicación/Feed a los lados. No se ha fijado el ancho exacto.
+- El usuario pregunta cómo quedarán el video reducido y el campo de escritura cuando aparezca el teclado. Se propone mantener una zona visible del video arriba, adaptar la altura de la lista de comentarios al espacio disponible y ubicar la burbuja compacta de escritura inmediatamente sobre el teclado con una pequeña separación. La burbuja «Respondiendo», cuando proceda, se coloca encima del campo. La lista conserva su desplazamiento; esta distribución debe respetar las áreas seguras y no ocultar el campo detrás del teclado.
+
+Esta explicación es una propuesta de distribución, no una afirmación de implementación ni de prueba física. Las nuevas proporciones y márgenes siguen pendientes de concretar en la revisión visual.
+
+### Corrección de las imágenes de propuesta
+
+El usuario rechazó las primeras imágenes porque no mostraban de forma clara el video reducido ni los márgenes laterales con y sin teclado. No deben tratarse como una geometría aprobada. Se presentó una nueva propuesta con el video vertical reducido y centrado arriba, márgenes visibles dentro de la pantalla a ambos lados de todo el panel y el campo separado del teclado. Referencia visual local: `/workspace/generated_images/exec-3931d739-bf88-48bf-9d21-a3890eb96101.png`. Es una imagen conceptual generada, no un render del código ni una comprobación de proporciones exactas. Queda pendiente la revisión del usuario; no se cambia el código ni se da por aprobada una escala o medida por esta imagen.
+
+### Burbuja sin X y aclaración de la proporción del video
+
+El usuario aprueba quitar la X de «Respondiendo» y cancelar la respuesta tocando la burbuja completa. Al cancelarla se oculta el indicador y se conserva el borrador; un envío posterior sin otro destino seleccionado será un comentario general. Esta aprobación sustituye el requisito anterior de una X discreta en esa burbuja, sin afectar la X de cierre del panel.
+
+Se propusieron orientativamente 130 dp de ancho y 28 dp de alto para el indicador, con texto de 12 dp. No son medidas extraídas de una imagen ni dimensiones ya aplicadas; la revisión posterior debe contemplar escala de texto y área táctil cómoda.
+
+El usuario pregunta si mostrar el video encima de comentarios y reducirlo más al abrir el teclado deformaría su presentación. Se aclara: conservar la relación de aspecto y ajustar el video completo al espacio disponible evita deformarlo. Un video vertical dentro de una zona horizontal se ve vertical y centrado con espacio a ambos lados; ocupar todo el ancho requeriría recortarlo o deformarlo. La primera propuesta visual mostraba un recorte ancho, no el video vertical completo. No se da por autorizada una deformación o un recorte por esta pregunta; la geometría definitiva sigue pendiente de concretar.
+
+### Aclaración posterior: vista compacta durante la escritura y ampliación
+
+El usuario aclara que se refiere al mismo video real en reproducción, no a una imagen o sustituto. Se explica la alternativa de una vista horizontal compacta mediante un recorte visual temporal, restaurando el encuadre vertical completo al salir de esa presentación, sin deformar el contenido.
+
+El usuario precisa que la vista compacta sirve para poder escribir comentarios/mensajes, no para obligar a mirar el video en pequeño durante toda la interacción. El comportamiento solicitado queda registrado así:
+
+- El mismo reproductor continúa reproduciendo mientras se usa la vista compacta.
+- La escritura dispone de espacio gracias a esa reducción temporal.
+- El usuario puede volver a ampliar el video cuando quiera verlo completo; recuperar la vista vertical completa y conservar el borrador del comentario y la posición de reproducción.
+- No se ha definido todavía el gesto concreto para ampliar ni el detalle de la transición del teclado/panel al hacerlo. No se introduce un gesto nuevo en el Feed por suposición.
+
+Esto amplía y precisa la propuesta de interacción recopilada, pero todavía no está implementado ni probado físicamente. Las imágenes generadas no verifican reproducción continua, encuadre ni conservación del estado.
+
+### Cierre del modal y restauración automática del Feed
+
+El usuario precisa el mecanismo de retorno: tocar la X de cierre del panel de comentarios o el fondo fuera del modal cierra el panel y devuelve automáticamente el mismo video a su presentación vertical completa en el Feed. Si el teclado está abierto, el cierre del modal lo descarta. Conservar la posición de reproducción y evitar reiniciar el video durante esta transición.
+
+Esta aclaración sustituye la interpretación anterior sobre definir un gesto adicional para ampliar el video. No se añade un botón o gesto nuevo de ampliación: la restauración se vincula al cierre del modal. La burbuja «Respondiendo» sigue sin X y tocarla cancela únicamente la respuesta seleccionada; no cierra el panel ni sustituye la X del modal.
+
+## Alcance final recopilado para el siguiente ajuste del Feed (7 octubre 2026 UTC)
+
+Tras preguntar por el documento adjunto, el usuario indica «que quede así con las mejoras que te dije». Se adopta como base el efecto descrito en `tokvid comentarios.md`: escala 0.95 del Feed de fondo y desenfoque de referencia 8 dp, conservando el formato del video. La sugerencia posterior de una ventana 4:3 y las imágenes de miniaturas horizontales no se consideran una aprobación del cambio de encuadre: quedan sustituidas por esta elección del efecto del documento. El cierre del modal con su X o tocando fuera restaura el Feed. La incorporación del efecto es la excepción solicitada a la protección previa del Feed; sus restantes posiciones, controles, gestos y branding siguen protegidos.
+
+Correcciones solicitadas para este bloque:
+
+- Campo de escritura más delgado, con menos espacio vacío, forma flotante y margen lateral e inferior sobre el teclado; conservar efectos y escritura multilínea. Panel completo con más margen lateral, menor altura y esquinas menos redondeadas. Las nuevas medidas exactas se deben concretar; no se declaran extraídas de las imágenes generadas.
+- Contador de comentarios con gradiente TOKVID. Burbuja translúcida «Respondiendo», sin nombre y sin X, que cancela la respuesta al tocarla sin perder el borrador.
+- Revisar/corregir el contador de Likes del Feed que el usuario reporta inmóvil. Auditoría del código actual: `VideoCard` muestra `video.likes`; `useVideoFeed.toggleLike` modifica la selección y escribe `video_likes`, pero no actualiza ese número mostrado. Los videos de prueba conservan cifras fijas. Lectura de la base real durante la auditoría: 7 registros en `video_likes`, 22 comentarios y cero videos publicados. No se insertaron ni borraron registros para obtener ese resultado.
+- Menú al tocar comentarios y respuestas propios para editar o eliminar. Edición requiere implementar validación y permisos: actualmente `comments` no concede UPDATE a clientes autenticados. Las respuestas ya usan el mismo Like real que los comentarios; conservar solo Like, sin manito/dislike. El usuario descarta por ahora el botón + y cualquier cambio del color del texto.
+- Integrar stickers reales en el mismo editor para comentarios y respuestas. Se consulta si deben proceder de un catálogo dentro de TOKVID o de la galería del teléfono; no se inventa un proveedor, un catálogo ni una API key.
+- Antes de implementar el borrado se consulta si debe conservar las respuestas de otras personas mostrando «Comentario eliminado» o borrar el hilo completo. La relación actual tiene cascada: no se asume que eliminar comentarios ajenos asociados sea la intención del usuario.
+
+Prueba física reportada por el usuario: instaló la aplicación también en el teléfono de su hija; ambos publicaron respuestas y recibieron notificaciones. El usuario confirma su recepción entre dispositivos, pero reporta que tocarlas no abre el comentario/video de destino. No equivale a una auditoría física completa de todos los casos.
+
+Orden solicitado al final de esta recopilación: terminar Feed/comentarios y comprobar su nueva presentación, continuar con armado de Perfil, y abordar más adelante mensajería privada, navegación de notificaciones por tipo y detalles de pulido. El centro de notificaciones deberá dirigir al destino real según el tipo; para mensajes privados, abrir la conversación correspondiente en pantalla completa. No se implementa ese bloque de mensajería durante este ajuste del Feed. El registro real por teléfono/SMS continúa como pendiente previamente anotado, no como función terminada.
+
+Estado de esta recopilación y auditoría inicial: cambios documentales locales y lecturas de código/base; todavía no se han aplicado los nuevos ajustes de código, migraciones ni generado otra APK. Las preguntas de selección de stickers y alcance del borrado siguen pendientes de respuesta.
+
+### Catálogo confirmado y avance independiente del Feed
+
+El usuario elige un catálogo de stickers dentro de TOKVID, compartido entre comentarios/respuestas y, cuando se aborde ese bloque, mensajería privada. La selección desde galería deja de ser la propuesta para este catálogo. La auditoría comprobó que todavía no existe una tabla de stickers ni un catálogo cargado. Se consulta la fuente del contenido real: pack propio de TOKVID o GIFs/memes de proveedor externo. La política de borrado de hilos con respuestas ajenas también sigue pendiente. No se inventan assets, proveedores, API keys ni permisos de borrado ajeno para completar esos puntos.
+
+Se preparan y verifican los cambios independientes mientras se resuelven esas preguntas:
+
+- Panel de comentarios: margen lateral 24 dp, altura de reposo 60% de pantalla y altura con teclado ajustada al espacio real disponible; radio 18 a 14 dp. Son medidas de implementación propuestas para las mejoras solicitadas, pendientes de comprobar en teléfono, no medidas extraídas de las imágenes generadas. Campo 52 a 88 dp, márgenes conservados al escribir y separación del panel de 8 dp respecto al teclado. Gradientes cian/magenta translúcidos en contador y «Respondiendo». El indicador omite usuario y X y cancela la respuesta al tocarlo, conservando el texto. Colores del texto de comentarios y lógica de publicación/hilos/likes de comentarios conservados.
+- Feed: escala temporal 1 a 0.95 al abrir comentarios, vuelta a 1 al cerrar. Mismo reproductor, sin remount ni seek añadido. BlurView se coloca después del contenido dinámico y usa el método Android `dimezisBlurView`. Se adapta la referencia de 8 dp a píxeles nativos con PixelRatio y factor de reducción 1; Android anterior a 12 tiene límite de radio 25 px. iOS usa intensidad 8 de su efecto nativo, sin declarar equivalencia matemática exacta de radio Gaussiano. `VideoView.surfaceType` se fija en `textureView`, no se cambia durante la transición: el vídeo debe poder participar en la composición del blur. Rendimiento y efecto reales pendientes de comprobación física. Estilos de Feed/index y VideoCard idénticos al HEAD previo, comprobados por comparación del bloque completo de StyleSheet; controles, iconos y gestos no se modifican.
+- Likes del Feed: servicio y hook independientes que leen y publican estados canónicos reales. El contador deja de usar los valores fijos de los demos en el Feed principal; lecturas desconocidas muestran carga y errores visibles. No hay incremento ficticio ni fallback a cero tras errores. Serialización por video, descarte de respuestas tardías tras cambiar de cuenta y recuperación al volver a la app/Realtime. Compatible con el Like aplicado por Registro/Login y los IDs de videos de prueba existentes, sin retirar esos videos ni integrar todavía contenido nuevo.
+- Migración aplicada y versionada desde el historial oficial: `20261007042903_real_feed_video_like_totals.sql`, MD5 `fbcbc98c971b6b248d47788d55c30fe1`. Tabla de totales públicos con RLS y SELECT exclusivamente; conteos derivados de los Likes ya existentes. Trigger privado no ejecutable por clientes, RPC de lectura público y RPC de estado deseado SECURITY INVOKER solo autenticado. No se exponen las identidades de quienes reaccionan. Conserva los triggers previos de contadores de videos/perfiles reales. Realtime publica únicamente la tabla nueva de totales.
+- Verificación de la base: 7 Likes existentes, repartidos entre los seis IDs de prueba, y cero discrepancias con los nuevos totales. Prueba SQL `feed-video-likes.rollback.sql`: Like/Unlike idempotentes, protección de totales, rechazo de autoría ajena, límite de lectura, lectura pública y bloqueo de escritura invitada, contador de video UUID real. Pasó en transacción revertida con cuenta existente, sin crear usuarios Auth. Verificación posterior: 22 comentarios, 7 Likes, cero videos publicados y cero filas de auditoría conservadas. No se borraron los comentarios o reacciones reales de las pruebas físicas.
+- Pruebas locales: 12 de comentarios/geometría, 6 nuevas de Likes del Feed y 9 de retorno Auth; 27 aprobadas. No se confunden con typecheck, CI ni renderizado físico. El proxy local sigue sin responder y no se instalaron dependencias ni CLI; la migración se aplicó por el conector, su versión se obtuvo del historial real y su SQL coincide exactamente con el archivo. No se declara ejecutado `supabase migration new` localmente.
+- Advisors posteriores: ningún hallazgo nuevo para esta tabla/RPC/trigger. Persisten los 25 SECURITY DEFINER autenticados de bloques anteriores y la protección de contraseñas filtradas deshabilitada; 13 FK sin índice y dos initplans de LIVE siguen fuera del alcance. Remediaciones de referencia: https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable y https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection.
+
+El catálogo, el menú Editar/Eliminar y la política de borrado no se declaran implementados en este avance independiente. Mensajería privada, navegación de notificaciones y armado de Perfil siguen en el orden acordado. No se declara cerrado el Feed ni entregada una APK nueva por estas pruebas; publicación y CI deben comprobarse después.

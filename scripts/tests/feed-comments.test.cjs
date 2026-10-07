@@ -15,17 +15,20 @@ const model = load('lib/features/comments/model.ts', ['mergeComments', 'commentT
 const { keyboardSheetGeometry: geometry } = load('lib/keyboardSheetGeometry.ts', ['keyboardSheetGeometry']);
 const row = (id = 'c1', overrides = {}) => ({ id, video_id: 'v1', user_id: 'u1', username: 'real-profile', avatar_url: null, text: 'Real content', created_at: '2026-10-07T00:00:00Z', parent_id: null, root_id: null, reply_to_username: null, likes_count: 0, reply_count: 0, ...overrides });
 
-test('keyboard docking respects the safe area and 75% resting height', () => {
+test('a shorter floating panel leaves video space and stays above the keyboard', () => {
   const rest = geometry({ viewportHeight: 800, viewportTop: 0, screenHeight: 800, keyboardTop: null, safeTop: 24, tabBarHeight: 70 });
-  assert.equal(rest.commentsHeight, 600); assert.equal(rest.registrationGap, 82);
+  assert.equal(rest.commentsHeight, 480); assert.equal(rest.registrationGap, 82);
   const shown = geometry({ viewportHeight: 800, viewportTop: 0, screenHeight: 800, keyboardTop: 460, safeTop: 24, tabBarHeight: 70 });
   assert.equal(shown.keyboardInset, 340); assert.equal(shown.registrationGap, 12);
   assert.equal(460 - shown.registrationMaxHeight - shown.registrationGap, 36);
-  assert.equal(shown.commentsHeight, 424);
+  assert.ok(shown.commentsHeight < 330);
+  assert.ok(shown.commentsHeight + 36 + 8 <= 460);
 });
 test('Android resized windows do not subtract keyboard height twice', () => {
   const resized = geometry({ viewportHeight: 436, viewportTop: 24, screenHeight: 800, keyboardTop: 460, safeTop: 24, tabBarHeight: 70 });
-  assert.equal(resized.keyboardInset, 0); assert.equal(resized.registrationMaxHeight, 412); assert.equal(resized.commentsHeight, 424);
+  assert.equal(resized.keyboardInset, 0); assert.equal(resized.registrationMaxHeight, 412);
+  const fullWindow = geometry({ viewportHeight: 800, viewportTop: 0, screenHeight: 800, keyboardTop: 460, safeTop: 24 });
+  assert.equal(resized.commentsHeight, fullWindow.commentsHeight);
 });
 test('compact screens clamp the sheet above the status bar and keyboard', () => {
   for (const keyboardTop of [260, 180, 60]) {

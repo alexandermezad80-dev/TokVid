@@ -9,9 +9,10 @@ export function keyboardSheetGeometry({
   const availableHeight = Math.max(0, viewportHeight - keyboardInset);
   const topClearance = Math.max(0, safeTop - viewportTop) + 12;
   const registrationGap = keyboardVisible ? 12 : tabBarHeight + 12;
+  const commentsAvailableHeight = Math.max(0, availableHeight - topClearance - 8);
   return {
     keyboardVisible, keyboardInset, availableHeight,
-    commentsHeight: Math.max(0, Math.min(screenHeight * 0.75, availableHeight - topClearance)),
+    commentsHeight: Math.min(screenHeight * 0.60, commentsAvailableHeight * (keyboardVisible ? 0.72 : 1)),
     registrationGap,
     registrationMaxHeight: Math.max(0, availableHeight - topClearance - registrationGap),
   };
