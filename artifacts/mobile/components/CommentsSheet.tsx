@@ -31,12 +31,13 @@ export default function CommentsSheet({ visible, onClose, videoId }: Props) {
   const [reply, setReply] = useState<FeedComment | null>(null);
   const input = useRef<TextInput>(null);
   const phase = useSharedValue(0);
+  const restingBottomPadding = viewport.insets.bottom + 12;
   const context = `${videoId}:${user?.id ?? "guest"}`;
   useEffect(() => { setText(""); setReply(null); }, [context]);
   useEffect(() => { phase.value = withSpring(viewport.keyboardVisible ? 1 : 0, spring); }, [viewport.keyboardVisible, phase]);
   const sheetShape = useAnimatedStyle(() => { const p = Math.max(0, Math.min(1, phase.value)); return { borderTopLeftRadius: 32 - 16 * p, borderTopRightRadius: 32 - 16 * p }; });
   const editorShape = useAnimatedStyle(() => { const p = Math.max(0, Math.min(1, phase.value)); return { marginHorizontal: 12 * (1 - p), borderRadius: 26 - 14 * p, height: 52 + 68 * p }; });
-  const composerShape = useAnimatedStyle(() => { const p = Math.max(0, Math.min(1, phase.value)); return { paddingTop: 12 * (1 - p), paddingBottom: (viewport.insets.bottom + 12) * (1 - p) }; });
+  const composerShape = useAnimatedStyle(() => { const p = Math.max(0, Math.min(1, phase.value)); return { paddingTop: 12 * (1 - p), paddingBottom: restingBottomPadding * (1 - p) }; });
   const close = () => { Keyboard.dismiss(); onClose(); };
   const rows = useMemo<ListRow[]>(() => comments.roots.flatMap(root => {
     const result: ListRow[] = [{ kind: "comment", comment: root, nested: false }];
