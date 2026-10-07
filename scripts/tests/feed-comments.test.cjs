@@ -306,3 +306,15 @@ test('compact keyboard and rotated windows constrain large menus to a scrollable
     assert.ok(placement.top + placement.maxHeight <= availableHeight - 8);
   }
 });
+
+test('oversized popovers scroll beside the selected message instead of covering it', () => {
+  const anchor = { x: 16, y: 130, width: 280, height: 60 };
+  const placement = popover(anchor, { width: 320, availableHeight: 300, safeTop: 24, menuHeight: 480 });
+  assert.equal(placement.side, 'below');
+  assert.equal(placement.top, anchor.y + anchor.height + 8);
+  assert.ok(placement.maxHeight < 480);
+  assert.ok(placement.top + placement.maxHeight <= 292);
+  const above = popover({ ...anchor, y: 220 }, { width: 320, availableHeight: 320, safeTop: 24, menuHeight: 480 });
+  assert.equal(above.side, 'above');
+  assert.ok(above.top + above.maxHeight <= 212);
+});

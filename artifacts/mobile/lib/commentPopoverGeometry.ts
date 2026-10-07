@@ -10,11 +10,14 @@ export function commentPopoverGeometry(anchor: CommentAnchor, {
   const menuWidth = Math.max(0, Math.min(260, width - safeLeft - safeRight - inset * 2));
   const left = Math.min(Math.max(leftBound, anchor.x + anchor.width - menuWidth), Math.max(leftBound, width - safeRight - inset - menuWidth));
   const topBound = Math.min(safeTop + inset, Math.max(0, availableHeight - inset));
-  const height = Math.min(menuHeight, Math.max(0, availableHeight - topBound - inset * 2));
-  const above = anchor.y - height - inset;
-  const below = anchor.y + anchor.height + inset;
-  const side = above >= topBound || above - topBound >= availableHeight - inset - below - height ? "above" : "below";
-  const top = Math.max(topBound, Math.min(side === "above" ? above : below, availableHeight - inset - height));
+  const bottomBound = Math.max(topBound, availableHeight - inset);
+  const aboveEdge = Math.max(topBound, Math.min(anchor.y - inset, bottomBound));
+  const belowEdge = Math.min(bottomBound, Math.max(topBound, anchor.y + anchor.height + inset));
+  const aboveSpace = aboveEdge - topBound;
+  const belowSpace = bottomBound - belowEdge;
+  const side = aboveSpace >= Math.min(menuHeight, 120) || aboveSpace >= belowSpace ? "above" : "below";
+  const height = Math.min(menuHeight, side === "above" ? aboveSpace : belowSpace);
+  const top = side === "above" ? aboveEdge - height : belowEdge;
   const tip = Math.min(Math.max(18, anchor.x + anchor.width - 28 - left), Math.max(18, menuWidth - 18));
   return { left, top, width: menuWidth, maxHeight: height, side, tip };
 }
