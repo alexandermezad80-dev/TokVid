@@ -1,10 +1,12 @@
 # TOKVID
 
-## Continuidad vigente — cierre del 7 de octubre de 2026
+## Continuidad vigente — seguimiento del 8 de octubre de 2026
 
 **Leer primero [CONTINUAR_AQUI.md](../../CONTINUAR_AQUI.md) y [el estado entre sesiones](../continuity/TOKVID_SESSION_HANDOFF.md).** La regla del usuario es: **«lo que está hecho no se toca a no ser que necesite una actualización»**. Conservar lo aprobado; limitar cualquier actualización a una necesidad concreta y al alcance autorizado.
 
 La línea vigente es `feature/feed-mini-video-avatar`; el último código compilado y entregado es `a6e14783bbaede25f5f756f24250b7b62d9a85f0`, **APK #204**. Pasaron 92 pruebas, el typecheck móvil y la compilación Android. Falta la confirmación física del usuario de Google, video pequeño con comentarios/teclado, + para seguir y avatar.
+
+**Seguimiento del 8 de octubre:** el usuario confirmó la documentación y pidió actualizarla y continuar. Se mantiene la entrega funcional del 7 de octubre; no se recibió una nueva prueba física ni una nueva petición de cambio de la app. Ver [el último seguimiento entre sesiones](../continuity/TOKVID_SESSION_HANDOFF.md#11-seguimiento-documental--8-de-octubre-de-2026).
 
 Este documento incluye requisitos futuros e historial. Las notas antiguas sobre márgenes, desenfoque, conservación de respuestas o bloqueos de Auth deben leerse junto con sus aclaraciones posteriores. No significan que esos estados sigan vigentes ni que todos los requisitos del proyecto estén implementados.
 

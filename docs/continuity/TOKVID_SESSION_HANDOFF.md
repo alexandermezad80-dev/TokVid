@@ -1,6 +1,6 @@
 # TokVid — estado y continuidad entre sesiones
 
-**Cierre:** 7 de octubre de 2026 (UTC). **Última entrega funcional:** APK #204.
+**Cierre funcional:** 7 de octubre de 2026 (UTC). **Última actualización documental:** 8 de octubre de 2026 (UTC). **Última entrega funcional:** APK #204.
 
 Este documento permite retomar sin depender del historial del chat. El usuario pidió documentar todo y conservar lo terminado salvo que necesite una actualización. Las instrucciones posteriores del usuario prevalecen sobre este registro.
 
@@ -193,3 +193,10 @@ Las preguntas sobre borrado principal, permisos de edición, tab bar inferior, a
 5. Recuperar APK/mapa de fuentes desde los artefactos oficiales, verificando su commit. Si expiraron, reconstruir el código correspondiente mediante el workflow adecuado; no sustituirlos por artefactos de otra versión.
 6. Para publicar, usar el padre y árbol reales, revisar que la rama no avanzó y actualizar sin forzar ni sobrescribir cambios ajenos.
 7. Actualizar esta entrega y el maestro al terminar otro bloque. Registrar expresamente toda decisión que sustituya una anterior y devolver al usuario un enlace persistente.
+
+## 11. Seguimiento documental — 8 de octubre de 2026
+
+- El usuario respondió «Excelente actualizalo» a la entrega de continuidad y después «Continua». Se actualiza el registro para retomar; no se recibió una nueva observación funcional ni un resultado de pruebas en su teléfono.
+- La documentación inicial quedó publicada en el commit [`06b73f2fc3142e7b60d768452ba8b6111edef92a`](https://github.com/alexandermezad80-dev/TokVid/commit/06b73f2fc3142e7b60d768452ba8b6111edef92a), en `feature/feed-mini-video-avatar`. Este seguimiento actualiza únicamente el punto de entrada, este registro y la cabecera vigente del documento maestro.
+- La aprobación de la documentación no confirma el funcionamiento físico de la APK. Se conserva `physical_device_verified: false` en el manifiesto; código, binario y evidencia automatizada de #204 siguen siendo los de la sección 7.
+- Continuar por las pruebas de Google, video vertical con comentarios/teclado, + para seguir y persistencia del avatar de la sección 9. Registrar los resultados cuando el usuario los comunique. No iniciar automáticamente los demás pendientes ni rehacer lo terminado.

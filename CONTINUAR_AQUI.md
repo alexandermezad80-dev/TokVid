@@ -1,6 +1,6 @@
 # TokVid — continuar desde aquí
 
-Actualizado: **7 de octubre de 2026 (UTC)**.
+Actualizado: **8 de octubre de 2026 (UTC)**.
 
 ## Regla del usuario
 
@@ -17,6 +17,10 @@ Conservar el comportamiento, diseño y decisiones aprobados. Para actualizar alg
 - [Compilación verificada](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37696256640): 92 pruebas aprobadas, typecheck móvil aprobado y Android compilado correctamente.
 - **Siguiente paso:** recoger la prueba del usuario en su teléfono de Google, video pequeño con comentarios/teclado, botón + y guardado del avatar. Estos cambios están implementados y entregados; la confirmación física de esta APK sigue pendiente.
 - Los commits de documentación posteriores pueden avanzar la rama sin cambiar el código de la APK #204. No confundir el último commit documental con el commit del binario.
+
+## Último seguimiento — 8 de octubre
+
+El usuario confirmó la entrega documental y pidió actualizarla y continuar. Este seguimiento conserva el alcance documental: todavía no hay un resultado nuevo de las pruebas físicas de la APK #204. Retomar desde esas pruebas y las siguientes observaciones concretas del usuario, manteniendo lo ya terminado.
 
 ## Documentos que debe leer la siguiente sesión
 
