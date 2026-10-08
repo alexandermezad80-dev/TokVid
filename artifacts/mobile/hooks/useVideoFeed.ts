@@ -1,3 +1,4 @@
+import { readPublishedFeedPage } from "../lib/features/feed/publications";
 import { publishedMediaKind } from "../lib/features/publishing/model";
 import { useRegistration } from "../context/RegistrationContext";
 import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
@@ -210,18 +211,10 @@ function interestScore(video: VideoItem, interests: string[], tags: string[] = [
   }, 0);
 }
 
-async function fetchRealVideos(page = 0, interests: string[] = []): Promise<VideoItem[]> {
+async function fetchRealVideos(page = 0, interests: string[] = [], followedAuthorIds?: string[]): Promise<VideoItem[]> {
   try {
-    // select("*") avoids 400s caused by explicitly naming missing columns
-    const from = page * PAGE_SIZE;
-    const to = from + PAGE_SIZE - 1;
-    const { data: vids, error } = await supabase
-      .from("videos")
-      .select("*, video_hashtags(hashtag:hashtags(tag))")
-      .order("created_at", { ascending: false })
-      .range(from, to);
-
-    if (error || !vids || vids.length === 0) return [];
+    const vids = await readPublishedFeedPage(supabase, page, followedAuthorIds);
+    if (vids.length === 0) return [];
 
     const mapped = await mapRowsToVideoItems(vids);
     if (interests.length === 0) return mapped;
@@ -240,14 +233,16 @@ async function fetchRealVideos(page = 0, interests: string[] = []): Promise<Vide
         interestScore(a, interests, tagMap.get(a.id) ?? []) ||
         rankScore(b) - rankScore(a)
     );
-  } catch {
-    return [];
+  } catch (error) {
+    throw error;
   }
 }
 
 const LIKED_KEY = "tokvid_liked";
 
-export function useVideoFeed(followedIds: Set<string>) {
+export function useVideoFeed(followedIds: Set<string>, mode: "forYou" | "following" = "forYou") {
+  const followingKey = mode === "following" ? JSON.stringify([...followedIds].sort()) : "";
+  const feedRequest = useRef(0);
   const { completed } = useRegistration();
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [realVideos, setRealVideos] = useState<VideoItem[]>([]);
@@ -316,6 +311,7 @@ export function useVideoFeed(followedIds: Set<string>) {
   }, [loadLikedIds, completed]);
 
   const loadPage = useCallback(async (nextPage = 0) => {
+    const request = ++feedRequest.current;
     setError(null);
     if (nextPage === 0) {
       setIsRefreshing(true);
@@ -324,7 +320,8 @@ export function useVideoFeed(followedIds: Set<string>) {
     }
 
     try {
-      const items = await fetchRealVideos(nextPage, interests);
+      const items = await fetchRealVideos(nextPage, interests, followingKey ? JSON.parse(followingKey) : undefined);
+      if (request !== feedRequest.current) return;
       if (nextPage === 0) {
         setRealVideos(items);
       } else {
@@ -334,15 +331,16 @@ export function useVideoFeed(followedIds: Set<string>) {
       pageRef.current = nextPage;
       setHasMore(items.length === PAGE_SIZE);
     } catch (err) {
-      setError("No se pudo cargar el feed");
+      if (request === feedRequest.current) setError("No se pudo cargar el feed");
     } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
+      if (request === feedRequest.current) { setIsLoading(false); setIsRefreshing(false); }
     }
-  }, [interests]);
+  }, [interests, followingKey]);
 
   useEffect(() => {
     let cancelled = false;
+    const request = ++feedRequest.current;
+    setRealVideos([]); setPage(0); pageRef.current = 0; setHasMore(false); setIsLoading(true);
 
     const loadInterestsAndFeed = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -366,17 +364,17 @@ export function useVideoFeed(followedIds: Set<string>) {
       setError(null);
       setIsRefreshing(true);
       try {
-        const items = await fetchRealVideos(0, userInterests);
-        if (!cancelled) {
+        const items = await fetchRealVideos(0, userInterests, followingKey ? JSON.parse(followingKey) : undefined);
+        if (!cancelled && request === feedRequest.current) {
           setRealVideos(items);
           setPage(0);
           pageRef.current = 0;
           setHasMore(items.length === PAGE_SIZE);
         }
       } catch {
-        if (!cancelled) setError("No se pudo cargar el feed");
+        if (!cancelled && request === feedRequest.current) setError("No se pudo cargar el feed");
       } finally {
-        if (!cancelled) {
+        if (!cancelled && request === feedRequest.current) {
           setIsLoading(false);
           setIsRefreshing(false);
         }
@@ -385,14 +383,14 @@ export function useVideoFeed(followedIds: Set<string>) {
 
     loadInterestsAndFeed();
     return () => {
-      cancelled = true;
+      cancelled = true; feedRequest.current++;
     };
-  }, []);
+  }, [followingKey]);
 
   const loadMore = useCallback(() => {
-    if (isLoading || !hasMore) return;
+    if (isLoading || isRefreshing || !hasMore) return;
     loadPage(pageRef.current + 1);
-  }, [hasMore, isLoading, loadPage]);
+  }, [hasMore, isLoading, isRefreshing, loadPage]);
 
   const refreshFeed = useCallback(() => {
     if (isRefreshing) return;
@@ -466,7 +464,7 @@ export function useVideoFeed(followedIds: Set<string>) {
     : [...realVideos].sort((a, b) => rankScore(b) - rankScore(a));
   // Keep demos until a real upload is verified and their removal is approved.
   const realIds = new Set(realVideos.map((v) => v.id));
-  const mockFallback = BASE_VIDEOS.filter((v) => !realIds.has(v.id));
+  const mockFallback = mode === "following" ? [] : BASE_VIDEOS.filter((v) => !realIds.has(v.id));
   const combined: VideoItem[] = [...rankedReal, ...mockFallback].filter(
     (v) => !removedIds.has(v.id)
   );

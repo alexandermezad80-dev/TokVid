@@ -50,6 +50,7 @@ export default function FeedScreen() {
   const [commentCue, setCommentCue] = useState<string | null>(null);
   useEffect(() => { setApplied({}); }, [user?.id]);
   const { followedIds, toggleFollow, loadingIds } = useFollow();
+  const [feedMode, setFeedMode] = useState<"forYou" | "following">("forYou");
   const {
     videos,
     removeVideo,
@@ -57,9 +58,15 @@ export default function FeedScreen() {
     refreshFeed,
     hasMore,
     isRefreshing,
+    isLoading,
     error,
     isGuest,
-  } = useVideoFeed(followedIds);
+  } = useVideoFeed(followedIds, feedMode);
+  const selectFeed = (next: "forYou" | "following") => {
+    if (!user) { requestRegistration(); return; }
+    if (feedMode === next) return;
+    closeComments(); setActiveIndex(0); flatListRef.current?.scrollToOffset({ offset: 0, animated: false }); setFeedMode(next);
+  };
   const refreshOnFocus = useRef(refreshFeed); refreshOnFocus.current = refreshFeed;
   useFocusEffect(useCallback(() => { setIsFocused(true); refreshOnFocus.current(); return () => setIsFocused(false); }, []));
   const { savedIds, toggleSave } = useSavedVideos();
@@ -249,20 +256,22 @@ ${item.uri}`,
       {!commentVideo && <View style={styles.feedHeader} pointerEvents="box-none">
         <View style={styles.feedModes}>
           <TouchableOpacity
-            onPress={isGuest ? () => requestRegistration() : undefined}
-            activeOpacity={isGuest ? 0.7 : 1}
+            onPress={() => selectFeed("forYou")}
+            activeOpacity={0.7}
             accessibilityRole="button"
+            accessibilityState={{ selected: feedMode === "forYou" }}
             accessibilityLabel="Para ti"
           >
-            <Text style={styles.feedModeActive}>Para ti</Text>
+            <Text style={feedMode === "forYou" ? styles.feedModeActive : styles.feedModeInactive}>Para ti</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={isGuest ? () => requestRegistration() : undefined}
-            activeOpacity={isGuest ? 0.7 : 1}
+            onPress={() => selectFeed("following")}
+            activeOpacity={0.7}
             accessibilityRole="button"
+            accessibilityState={{ selected: feedMode === "following" }}
             accessibilityLabel="Siguiendo"
           >
-            <Text style={styles.feedModeInactive}>Siguiendo</Text>
+            <Text style={feedMode === "following" ? styles.feedModeActive : styles.feedModeInactive}>Siguiendo</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => router.push("/search")}
@@ -307,6 +316,7 @@ ${item.uri}`,
             if (hasMore) loadMore();
           }}
           onEndReachedThreshold={0.75}
+          ListEmptyComponent={<View style={{ height: SCREEN_HEIGHT * 0.75, justifyContent: "center", alignItems: "center", padding: 28, gap: 14 }}>{isLoading || isRefreshing ? <ActivityIndicator color="#91D9E0" /> : <><Feather name="users" size={36} color="#91C7D0" /><Text style={{ color: "#E7E7EF", fontSize: 18, textAlign: "center" }}>{error ? "No se pudo cargar el feed" : feedMode === "following" ? "Publicaciones de quienes sigues" : "Todavía no hay publicaciones"}</Text><Text style={{ color: "#A6ABB8", textAlign: "center", lineHeight: 21 }}>{error || "Sigue a un creador y sus fotos y videos aparecerán aquí."}</Text>{!!error && <TouchableOpacity onPress={refreshFeed}><Text style={{color:"#A4E0E5",padding:12}}>Reintentar</Text></TouchableOpacity>}</>}</View>}
           ListFooterComponent={
             hasMore ? (
               <View style={styles.footer}>

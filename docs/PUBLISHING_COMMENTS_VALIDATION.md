@@ -43,3 +43,9 @@ La CLI no estaba instalada y la conexión shell no estaba disponible; se utiliz�
 4. Abrir comentarios, escribir, cambiar al teclado de emojis: el editor y Enviar deben quedar visibles; volver a letras y cerrar teclado.
 5. Verificar «Eliminar», «Ocultar mensajes» y que «Mostrar» aparezca solo después de ocultar y desaparezca al restaurar.
 6. Tocar avatar propio/ajeno de principales y respuestas: perfil del autor correcto. Conservar el resto del diseño aprobado.
+
+## APK #205 verificada y última aclaración del feed
+
+La compilación #205 (`c35905ae01333428037d4d678c04a9458156525a`) terminó correctamente: 101 pruebas con dependencias reales, typecheck móvil y `BUILD SUCCESSFUL in 19m 19s`. [APK #205](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37712127456/artifacts/11522279327), SHA256 del binario `a815c468d649397a3f2d9f0f42ac078465620c082c3d9bd1a00762a2687abfa0`.
+
+El usuario aclaró después que la publicación debe aparecer en «Para ti» y «Siguiendo». Se conectan los selectores reales: público en Para ti, autores seguidos en Siguiendo, filtrados en servidor antes de paginar. Un autor ve su publicación en su perfil y Para ti; sus seguidores la encuentran también en Siguiendo. No se incluyen publicaciones ajenas a los seguidos para rellenar ese modo. Esta última modificación requiere una nueva APK; #205 no la contiene. Cinco pruebas adicionales verifican el filtrado, imágenes/videos, páginas antiguas, lista vacía y errores. Total local: 106.
