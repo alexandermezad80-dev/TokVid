@@ -25,7 +25,7 @@ Agrega `videos.media_type` (`video` por defecto, `image` permitido); habilita JP
 
 La CLI no estaba instalada y la conexión shell no estaba disponible; se utilizó la migración MCP y se recuperó su versión real del historial para el archivo del repositorio, sin inventar el timestamp.
 
-## Validación y límites
+## Validación inicial y límites (antes de las APK #205/#206)
 
 - 101 pruebas locales aprobadas, incluidas 9 nuevas para publicar/reintentar/cambio de cuenta/tamaño/duración y teclado normal → emojis → normal sin cerrar.
 - Parsing de los archivos TS/TSX y `git diff --check` aprobados.
@@ -39,7 +39,7 @@ La CLI no estaba instalada y la conexión shell no estaba disponible; se utiliz�
 
 1. Crear → Galería → elegir un video corto → reproducir/pausar → escribir una descripción única → Publicar.
 2. Ver en mi perfil: tarjeta real con miniatura; tocar abre el video. Volver al feed y buscar la descripción desde la lupa.
-3. Repetir con una foto; comprobar que se muestra como foto y persiste tras reiniciar.
+3. Desde otra cuenta, seguir al creador y comprobar el video en Siguiendo; dejar de seguir y comprobar que desaparece de ese modo. Repetir con una foto; comprobar que se muestra como foto y persiste tras reiniciar.
 4. Abrir comentarios, escribir, cambiar al teclado de emojis: el editor y Enviar deben quedar visibles; volver a letras y cerrar teclado.
 5. Verificar «Eliminar», «Ocultar mensajes» y que «Mostrar» aparezca solo después de ocultar y desaparezca al restaurar.
 6. Tocar avatar propio/ajeno de principales y respuestas: perfil del autor correcto. Conservar el resto del diseño aprobado.
@@ -48,4 +48,18 @@ La CLI no estaba instalada y la conexión shell no estaba disponible; se utiliz�
 
 La compilación #205 (`c35905ae01333428037d4d678c04a9458156525a`) terminó correctamente: 101 pruebas con dependencias reales, typecheck móvil y `BUILD SUCCESSFUL in 19m 19s`. [APK #205](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37712127456/artifacts/11522279327), SHA256 del binario `a815c468d649397a3f2d9f0f42ac078465620c082c3d9bd1a00762a2687abfa0`.
 
-El usuario aclaró después que la publicación debe aparecer en «Para ti» y «Siguiendo». Se conectan los selectores reales: público en Para ti, autores seguidos en Siguiendo, filtrados en servidor antes de paginar. Un autor ve su publicación en su perfil y Para ti; sus seguidores la encuentran también en Siguiendo. No se incluyen publicaciones ajenas a los seguidos para rellenar ese modo. Esta última modificación requiere una nueva APK; #205 no la contiene. Cinco pruebas adicionales verifican el filtrado, imágenes/videos, páginas antiguas, lista vacía y errores. Total local: 106.
+El usuario aclaró después que la publicación debe aparecer en «Para ti» y «Siguiendo». Se conectan los selectores reales: público en Para ti, autores seguidos en Siguiendo, filtrados en servidor antes de paginar. Un autor ve su publicación en su perfil y Para ti; sus seguidores la encuentran también en Siguiendo. No se incluyen publicaciones ajenas a los seguidos para rellenar ese modo. Esta última modificación está incluida en la APK #206; #205 no la contiene. Cinco pruebas adicionales verifican el filtrado, imágenes/videos, páginas antiguas, lista vacía y errores. Total local y CI de #206: 106.
+
+## Entrega final de publicación y comentarios — APK #206
+
+La entrega vigente está en `feature/feed-mini-video-avatar`, commit `a5fbc7ba45effa5145f00124dce7a99db1646a35`, árbol `c55eaa4eef050332912edfea87348eb673b35bce`. [Android APK #206](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37794716857) terminó en **success**: 106 pruebas con dependencias reales, cero fallos, typecheck móvil aprobado y `BUILD SUCCESSFUL in 18m 42s`. [Descargar APK](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37794716857/artifacts/11559456417); extraer el ZIP e instalar `app-release.apk`.
+
+SHA256 del APK sin comprimir: `35553e7c0cd6afc866af1b8167497f8043a1889400f01b9a6bf843caa36d0edd`. [Mapa de fuentes y manifiesto del mismo binario](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37794716857/artifacts/11559920504). La verificación del workflow comprobó el identificador diagnóstico y el commit dentro del bundle; no usar un mapa de otra APK. ZIP APK: 214050698 bytes. Artefactos disponibles al verificar esta entrega; su retención puede expirar.
+
+Incluye el bloque de publicación real/perfil/búsqueda y comentarios de #205 más la aclaración final: «Para ti» muestra publicaciones públicas; «Siguiendo» solo los autores seguidos por la cuenta, filtrados en servidor antes de paginar. Un creador ve lo suyo en su perfil y Para ti; sus seguidores también lo ven en Siguiendo. Este modo no usa ejemplos para rellenarse. Los ejemplos previos de Para ti permanecen hasta validar la primera subida real y autorizar retirarlos. La grilla propia usa solo publicaciones reales.
+
+El SQL de prueba se revirtió y no dejó publicaciones. La migración `20261008010846_support_photo_and_video_publications` sí está aplicada, registrada y guardada en el repositorio. No tocar Auth/OTP, no recrear tokens y no volver a aplicar una migración inventando otra versión. El envío nativo transmite el archivo desde disco, con progreso y reintento manual conservando ID/rutas confirmadas; no implementa TUS ni limpieza automática de subidas abandonadas.
+
+**Pendiente físico:** publicar un video corto desde el teléfono, ver perfil/Para ti/búsqueda, comprobar Siguiendo desde otra cuenta seguidora; repetir con foto; comprobar editor visible al abrir emojis y navegación de avatares. Conservar también la comprobación física pendiente de Google sin Try Again. El usuario aprobó el aspecto de comentarios, pero no ha confirmado toda esta nueva APK. No marcar `physical_device_verified` como verdadero sin esa prueba.
+
+[Registro verificable](continuity/APK_206_VERIFICATION.json).

@@ -1,16 +1,16 @@
 # TOKVID
 
-## Continuidad vigente — seguimiento del 8 de octubre de 2026
+## Continuidad vigente — entrega del 8 de octubre de 2026
 
-**Nueva autorización vigente:** publicar fotos/videos reales desde Crear/Galería hacia perfil/feed y búsqueda; grilla real con márgenes pequeños, redondeado leve, borde de marca y marca de agua TokVid; avatares de comentarios hacia el autor; corrección de editor sobre emojis, «Eliminar», «Ocultar mensajes» y «Mostrar» condicional. Implementación preparada y migración aplicada; compilación Android pendiente. Ver [detalle actual](../PUBLISHING_COMMENTS_VALIDATION.md). Las notas documentales anteriores que dicen que aún no había observaciones del teléfono pertenecen al cierre anterior a estas capturas.
+**Última entrega: [APK #206](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37794716857/artifacts/11559456417)**, rama `feature/feed-mini-video-avatar`, código `a5fbc7ba45effa5145f00124dce7a99db1646a35`. [CI](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37794716857) verificada: **106 pruebas aprobadas, cero fallos, typecheck móvil y compilación Android correctos**. La prueba física de esta versión sigue pendiente; no confundir evidencia automatizada con aprobación en teléfono.
 
-**Leer primero [CONTINUAR_AQUI.md](../../CONTINUAR_AQUI.md) y [el estado entre sesiones](../continuity/TOKVID_SESSION_HANDOFF.md).** La regla del usuario es: **«lo que está hecho no se toca a no ser que necesite una actualización»**. Conservar lo aprobado; limitar cualquier actualización a una necesidad concreta y al alcance autorizado.
+**Alcance autorizado y entregado:** Crear/Galería para publicar fotos/videos reales, perfil con grilla real y bordes suaves de marca, búsqueda, Para ti público y Siguiendo filtrado por autores seguidos. Avatares de comentarios hacia el autor; editor sobre teclado emoji; «Eliminar», «Ocultar mensajes» y «Mostrar» solo si hay hilos ocultos. Migración `20261008010846_support_photo_and_video_publications` aplicada. [Detalle y prueba](../PUBLISHING_COMMENTS_VALIDATION.md).
 
-La línea vigente es `feature/feed-mini-video-avatar`; el último código compilado y entregado es `a6e14783bbaede25f5f756f24250b7b62d9a85f0`, **APK #204**. Pasaron 92 pruebas, el typecheck móvil y la compilación Android. Falta la confirmación física del usuario de Google, video pequeño con comentarios/teclado, + para seguir y avatar.
+**Leer primero [CONTINUAR_AQUI.md](../../CONTINUAR_AQUI.md) y [el estado entre sesiones](../continuity/TOKVID_SESSION_HANDOFF.md).** Regla vigente del usuario: **«lo que está hecho no se toca a no ser que necesite una actualización»**. Conservar lo aprobado y limitar cualquier actualización al alcance autorizado. No volver a preguntar permisos de un bloque ya autorizado.
 
-**Seguimiento del 8 de octubre:** el usuario confirmó la documentación y pidió actualizarla y continuar. Se mantiene la entrega funcional del 7 de octubre; no se recibió una nueva prueba física ni una nueva petición de cambio de la app. Ver [el último seguimiento entre sesiones](../continuity/TOKVID_SESSION_HANDOFF.md#11-seguimiento-documental--8-de-octubre-de-2026).
+**Siguiente paso:** instalar #206 y probar un video desde Galería, perfil/Para ti/búsqueda y Siguiendo desde otra cuenta que siga al autor; repetir con foto y revisar emojis/avatares. Preservar Auth/OTP y las decisiones de comentarios. Las notas antiguas de espera documental, compilación pendiente y APK #204/#205 son históricas y quedan sustituidas por esta cabecera y el cierre final al pie.
 
-Este documento incluye requisitos futuros e historial. Las notas antiguas sobre márgenes, desenfoque, conservación de respuestas o bloqueos de Auth deben leerse junto con sus aclaraciones posteriores. No significan que esos estados sigan vigentes ni que todos los requisitos del proyecto estén implementados.
+Este documento conserva requisitos futuros e historial. No significa que todos estén implementados ni autoriza empezar otro bloque automáticamente. El dato demo del feed Para ti permanece según la decisión previa hasta validar una subida real y autorizar su retirada; la grilla propia y Siguiendo muestran publicaciones reales.
 
 Documento maestro de requisitos y visión del proyecto
 
@@ -2982,3 +2982,17 @@ Se mantienen como pendientes anteriores, sin darlos por resueltos en este cierre
 El usuario autorizó implementar los ajustes de [PUBLISHING_COMMENTS_VALIDATION.md](../PUBLISHING_COMMENTS_VALIDATION.md). Su última aclaración es que «Mostrar» solo aparece cuando existen mensajes/hilos ocultos, y desaparece al restaurarlos todos. «Eliminar hilo» pasa a «Eliminar» y «Ocultar hilo para mí» a «Ocultar mensajes» sin cambiar la semántica ni los permisos. Tocar solo el avatar abre el perfil del autor de cualquier comentario o respuesta.
 
 Se reemplaza la pantalla roja de creación por cámara/vista previa amplia, galería accesible, controles de foto/video y tonos suaves de la marca. Se habilita publicación real de fotos/videos con confirmación del servidor, perfil/feed/búsqueda conectados, grilla sin ejemplos y tarjetas separadas, ligeramente redondeadas, borde cian/magenta y marca de agua del icono TokVid en el fondo. Se conservará todo lo demás salvo actualizaciones necesarias. La aprobación de la maqueta previa de comentarios no constituye una prueba completa de las nuevas funciones; se debe entregar y verificar su APK.
+
+## Entrega final de publicación y comentarios — APK #206
+
+La entrega vigente está en `feature/feed-mini-video-avatar`, commit `a5fbc7ba45effa5145f00124dce7a99db1646a35`, árbol `c55eaa4eef050332912edfea87348eb673b35bce`. [Android APK #206](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37794716857) terminó en **success**: 106 pruebas con dependencias reales, cero fallos, typecheck móvil aprobado y `BUILD SUCCESSFUL in 18m 42s`. [Descargar APK](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37794716857/artifacts/11559456417); extraer el ZIP e instalar `app-release.apk`.
+
+SHA256 del APK sin comprimir: `35553e7c0cd6afc866af1b8167497f8043a1889400f01b9a6bf843caa36d0edd`. [Mapa de fuentes y manifiesto del mismo binario](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37794716857/artifacts/11559920504). La verificación del workflow comprobó el identificador diagnóstico y el commit dentro del bundle; no usar un mapa de otra APK. ZIP APK: 214050698 bytes. Artefactos disponibles al verificar esta entrega; su retención puede expirar.
+
+Incluye el bloque de publicación real/perfil/búsqueda y comentarios de #205 más la aclaración final: «Para ti» muestra publicaciones públicas; «Siguiendo» solo los autores seguidos por la cuenta, filtrados en servidor antes de paginar. Un creador ve lo suyo en su perfil y Para ti; sus seguidores también lo ven en Siguiendo. Este modo no usa ejemplos para rellenarse. Los ejemplos previos de Para ti permanecen hasta validar la primera subida real y autorizar retirarlos. La grilla propia usa solo publicaciones reales.
+
+El SQL de prueba se revirtió y no dejó publicaciones. La migración `20261008010846_support_photo_and_video_publications` sí está aplicada, registrada y guardada en el repositorio. No tocar Auth/OTP, no recrear tokens y no volver a aplicar una migración inventando otra versión. El envío nativo transmite el archivo desde disco, con progreso y reintento manual conservando ID/rutas confirmadas; no implementa TUS ni limpieza automática de subidas abandonadas.
+
+**Pendiente físico:** publicar un video corto desde el teléfono, ver perfil/Para ti/búsqueda, comprobar Siguiendo desde otra cuenta seguidora; repetir con foto; comprobar editor visible al abrir emojis y navegación de avatares. Conservar también la comprobación física pendiente de Google sin Try Again. El usuario aprobó el aspecto de comentarios, pero no ha confirmado toda esta nueva APK. No marcar `physical_device_verified` como verdadero sin esa prueba.
+
+[Manifiesto de entrega](../continuity/APK_206_VERIFICATION.json).

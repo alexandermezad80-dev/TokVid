@@ -1,6 +1,6 @@
 # TokVid — estado y continuidad entre sesiones
 
-**Cierre funcional:** 7 de octubre de 2026 (UTC). **Última actualización documental:** 8 de octubre de 2026 (UTC). **Última entrega funcional:** APK #204.
+**Cierre funcional y documental:** 8 de octubre de 2026 (UTC). **Última entrega funcional:** [APK #206](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37794716857/artifacts/11559456417), código `a5fbc7ba45effa5145f00124dce7a99db1646a35`. La sección 13 contiene la entrega vigente; las secciones históricas conservan la evidencia anterior.
 
 Este documento permite retomar sin depender del historial del chat. El usuario pidió documentar todo y conservar lo terminado salvo que necesite una actualización. Las instrucciones posteriores del usuario prevalecen sobre este registro.
 
@@ -10,7 +10,7 @@ Este documento permite retomar sin depender del historial del chat. El usuario p
 
 No rehacer el diseño, reemplazar flujos o volver a resolver decisiones aceptadas por iniciativa estética del agente. Para una actualización necesaria, explicar el problema y el alcance, respetar la autorización existente, aplicar un cambio puntual y registrar su validación. Si el usuario pide esperar antes de implementar, esperar. No solicitar de nuevo permisos para lo ya autorizado.
 
-La APK #204 está implementada, comprobada automáticamente y entregada. **El usuario todavía no ha confirmado sus cuatro cambios en el teléfono.** Conservar esa distinción. La petición posterior a la entrega fue exclusivamente documentar y dejar continuidad; no pidió modificar nuevamente la app.
+Después de #204, el usuario aprobó el aspecto de comentarios y autorizó los ajustes y la publicación real descritos en las secciones 12–13. La espera previa mientras enumeraba cambios terminó con esa autorización. La entrega automática está verificada; la prueba física completa de la versión vigente sigue pendiente.
 
 ## 2. Fuente de verdad y ubicación
 
@@ -18,7 +18,9 @@ La APK #204 está implementada, comprobada automáticamente y entregada. **El us
 | --- | --- |
 | Repositorio | `alexandermezad80-dev/TokVid` |
 | Rama vigente | `feature/feed-mini-video-avatar` |
-| Código de APK #204 | `a6e14783bbaede25f5f756f24250b7b62d9a85f0` |
+| Código vigente APK #206 | `a5fbc7ba45effa5145f00124dce7a99db1646a35` |
+| Árbol vigente | `c55eaa4eef050332912edfea87348eb673b35bce` |
+| Código histórico APK #204 | `a6e14783bbaede25f5f756f24250b7b62d9a85f0` |
 | Árbol de ese código | `3f52efddcc93abfd4aaaca0a0b68cd2a1ba4d9f1` |
 | Primer commit de los cuatro cambios | `619974503e9b3e0a7bfa4cd5a1e01d771871db36` |
 | Base de diagnóstico | `883a3a423067a8add632117c752cb8ea971ab0c7`, rama `diagnostics/google-return` |
@@ -27,7 +29,7 @@ La APK #204 está implementada, comprobada automáticamente y entregada. **El us
 | Aplicación móvil | `artifacts/mobile` (Expo / React Native) |
 | Documento maestro | [TOKVID_MASTER_REQUIREMENTS.md](../requirements/TOKVID_MASTER_REQUIREMENTS.md) |
 
-Los cambios funcionales de esta entrega están en la rama vigente. No se afirma que se hayan fusionado a `main` o a la rama anterior. Verificar las referencias remotas si se retoma más adelante; no sobrescribir avances posteriores. Un commit documental posterior no cambia el commit incorporado en la APK #204.
+Los cambios funcionales de esta entrega están en la rama vigente. No se afirma que se hayan fusionado a `main` o a la rama anterior. Verificar las referencias remotas si se retoma más adelante; no sobrescribir avances posteriores. Un commit documental posterior no cambia el commit incorporado en la APK #206.
 
 ## 3. Estado de los bloques de esta sesión
 
@@ -64,7 +66,7 @@ Los cambios funcionales de esta entrega están en la rama vigente. No se afirma 
 | Eliminar una respuesta | Elimina esa respuesta; conserva las demás. Si tenía respuestas hijas, el servidor las enlaza al padre anterior |
 | Dueño de la publicación | Puede moderar eliminando comentarios/hilos en su publicación; no puede editar texto ajeno |
 | Otro usuario sin autoría ni propiedad | No obtiene permisos de edición o eliminación ajenos |
-| «Ocultar hilo para mí» | Preferencia privada de esa cuenta; no equivale a eliminar el hilo público |
+| «Ocultar mensajes» (antes «Ocultar hilo para mí») | Preferencia privada de esa cuenta; no equivale a eliminar el hilo público |
 | Cancelar | Cierra las opciones sin aplicar la acción |
 
 La definición final de cascada reemplaza la propuesta antigua de dejar «Comentario eliminado» con respuestas al borrar un principal. La RPC nueva es `remove_feed_comment`; la antigua se conserva para clientes cuyo diálogo describía la política anterior. No cambiar silenciosamente ese contrato.
@@ -105,7 +107,7 @@ La instrumentación permanece disponible en #204. Si hay otro error, capturar **
 - Se anima a una ventana vertical **9:16** encima de los comentarios; se reduce al aparecer el teclado usando el espacio realmente medido del modal.
 - Conserva posición, sonido, bucle y estado de pausa. Un video que ya estaba pausado sigue pausado.
 - Tocar el video pequeño cierra comentarios/teclado y restaura el tamaño completo. El scroll del feed queda bloqueado mientras está abierto el modal.
-- En esta entrega la integración del video pequeño corresponde al **feed principal**. El componente de comentarios ofrece props opcionales; no afirmar que todos los otros lectores de video ya recibieron esa integración.
+- Desde #205, la integración del video pequeño corresponde al **feed principal y al nuevo lector `/publication`**. El componente de comentarios ofrece props opcionales; no afirmar que todos los lectores anteriores ya recibieron esa integración.
 
 ### Botón + bajo el avatar
 
@@ -124,7 +126,7 @@ La instrumentación permanece disponible en #204. Si hay otro error, capturar **
 - El bucket y las políticas existentes se reutilizaron. Este bloque no requirió migraciones ni cambios de configuración Auth.
 - No se implementó una limpieza de imágenes anteriores; no afirmar que subir una nueva borra automáticamente el objeto viejo.
 
-## 7. Entrega y evidencia verificadas
+## 7. Entrega histórica #204 y evidencia verificadas
 
 | Evidencia | Valor |
 | --- | --- |
@@ -176,7 +178,7 @@ Las pruebas usan `node:module.stripTypeScriptTypes`; la referencia validada en C
 
 ## 9. Pendientes reales y orden para continuar
 
-1. **Primero recibir la revisión física de #204.** Probar Google sin Try Again; video visible y con audio al comentar y escribir; regreso al tamaño completo sin reinicio; + en otro creador no seguido; avatar guardado después de reabrir y reiniciar. Registrar qué confirmó el usuario y qué falla, con versión exacta.
+1. **Recibir la revisión física de la APK #206.** Empezar por publicar un video real y revisar perfil, Para ti, búsqueda y Siguiendo desde otra cuenta; repetir con foto, teclado emoji y avatares de comentarios. Seguir la lista de [validación](../PUBLISHING_COMMENTS_VALIDATION.md). Comprobar también Google sin Try Again y conservar la versión exacta de cualquier informe.
 2. Si hay un problema, reproducir o recoger evidencia, limitar la actualización al problema y conservar el resto. Ante otra excepción, pedir el informe diagnóstico de esa APK, no asumir que es un permiso de token.
 3. Continuar con las siguientes observaciones que indique el usuario. El orden anterior recogido en el maestro era Feed/comentarios, después Perfil y posteriormente mensajería/notificaciones.
 4. **Pendientes anteriores que no quedan terminados por #204:** acceso real por teléfono/SMS; integración del catálogo propio TOKVID de stickers en el editor (hay preparación de servidor, no se declaró cerrada la interfaz); navegación de notificaciones al comentario/video/conversación correspondiente; desarrollo restante del Perfil y mensajería privada según el maestro. El usuario había confirmado recepción de notificaciones entre dos teléfonos, pero reportó que tocarlas no abría el destino.
@@ -187,14 +189,14 @@ Las preguntas sobre borrado principal, permisos de edición, tab bar inferior, a
 ## 10. Cómo retomar tras perder el entorno
 
 1. Abrir el repositorio y seleccionar `feature/feed-mini-video-avatar`; leer este documento y `CONTINUAR_AQUI.md` antes de editar.
-2. Leer el HEAD real de esa rama y comprobar si existen avances posteriores a este cierre. La APK #204 seguirá identificándose por `a6e14783...`, aunque haya nuevos commits documentales.
+2. Leer el HEAD real de esa rama y comprobar si existen avances posteriores a este cierre. La APK #206 seguirá identificándose por `a5fbc7ba45effa5145f00124dce7a99db1646a35`, aunque haya nuevos commits documentales.
 3. Trabajar desde un checkout completo o recuperar los archivos del commit correcto. La carpeta de esta sesión `/workspace/TokVid-expanded` es un snapshot parcial; sus commits locales son artificiales y **no son padres válidos para publicar cambios en GitHub**.
 4. Los snapshots `/workspace/TokVid-work` y `/workspace/TokVid-auth-diagnostics` corresponden a etapas anteriores. Los archivos temporales, las imágenes adjuntas y los valores de `functions.store` pueden desaparecer; no tratarlos como la única copia del estado.
 5. Recuperar APK/mapa de fuentes desde los artefactos oficiales, verificando su commit. Si expiraron, reconstruir el código correspondiente mediante el workflow adecuado; no sustituirlos por artefactos de otra versión.
 6. Para publicar, usar el padre y árbol reales, revisar que la rama no avanzó y actualizar sin forzar ni sobrescribir cambios ajenos.
 7. Actualizar esta entrega y el maestro al terminar otro bloque. Registrar expresamente toda decisión que sustituya una anterior y devolver al usuario un enlace persistente.
 
-## 11. Seguimiento documental — 8 de octubre de 2026
+## 11. Seguimiento documental histórico — antes de las nuevas observaciones del 8 de octubre
 
 - El usuario respondió «Excelente actualizalo» a la entrega de continuidad y después «Continua». Se actualiza el registro para retomar; no se recibió una nueva observación funcional ni un resultado de pruebas en su teléfono.
 - La documentación inicial quedó publicada en el commit [`06b73f2fc3142e7b60d768452ba8b6111edef92a`](https://github.com/alexandermezad80-dev/TokVid/commit/06b73f2fc3142e7b60d768452ba8b6111edef92a), en `feature/feed-mini-video-avatar`. Este seguimiento actualiza únicamente el punto de entrada, este registro y la cabecera vigente del documento maestro.
@@ -205,4 +207,28 @@ Las preguntas sobre borrado principal, permisos de edición, tab bar inferior, a
 
 El usuario mostró capturas y aprobó conservar el aspecto de comentarios. Reportó el teclado emoji tapando el editor y pidió «Eliminar», «Ocultar mensajes» y botón «Mostrar» bajo el encabezado, únicamente si hay hilos ocultos. Después autorizó el rediseño de Crear según la referencia con identidad propia, galería para publicar video/foto en perfil/feed, búsqueda y tocar avatares de comentarios para ir al autor. Añadió grilla real, sin ejemplos, con separación, redondeado leve, bordes de marca y marca de agua del icono TokVid. Esta autorización sustituye la espera que había solicitado mientras enumeraba las observaciones.
 
-El alcance, archivos, migración y prueba están en [PUBLISHING_COMMENTS_VALIDATION.md](../PUBLISHING_COMMENTS_VALIDATION.md). Implementación preparada; 101 pruebas locales y ensayo SQL revertido aprobados; migración `20261008010846_support_photo_and_video_publications` aplicada. Compilación Android y entrega del nuevo APK pendientes al preparar este commit. No confundir la aprobación visual de comentarios con confirmación física de todos los cambios de #204 ni de la nueva publicación. Se mantienen intactos Auth/OTP y las decisiones previas de borrar/editar/moderar.
+El alcance, archivos, migración y prueba están en [PUBLISHING_COMMENTS_VALIDATION.md](../PUBLISHING_COMMENTS_VALIDATION.md). Implementación entregada en #206; 106 pruebas y typecheck aprobados en CI, ensayo SQL revertido aprobado y migración `20261008010846_support_photo_and_video_publications` aplicada. La sección 13 reemplaza el estado anterior de compilación pendiente. No confundir la aprobación visual de comentarios con confirmación física de todos los cambios de #204 ni de la nueva publicación. Se mantienen intactos Auth/OTP y las decisiones previas de borrar/editar/moderar.
+
+## 13. Entrega final de publicación y comentarios — APK #206
+
+La entrega vigente está en `feature/feed-mini-video-avatar`, commit `a5fbc7ba45effa5145f00124dce7a99db1646a35`, árbol `c55eaa4eef050332912edfea87348eb673b35bce`. [Android APK #206](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37794716857) terminó en **success**: 106 pruebas con dependencias reales, cero fallos, typecheck móvil aprobado y `BUILD SUCCESSFUL in 18m 42s`. [Descargar APK](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37794716857/artifacts/11559456417); extraer el ZIP e instalar `app-release.apk`.
+
+SHA256 del APK sin comprimir: `35553e7c0cd6afc866af1b8167497f8043a1889400f01b9a6bf843caa36d0edd`. [Mapa de fuentes y manifiesto del mismo binario](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37794716857/artifacts/11559920504). La verificación del workflow comprobó el identificador diagnóstico y el commit dentro del bundle; no usar un mapa de otra APK. ZIP APK: 214050698 bytes. Artefactos disponibles al verificar esta entrega; su retención puede expirar.
+
+Incluye el bloque de publicación real/perfil/búsqueda y comentarios de #205 más la aclaración final: «Para ti» muestra publicaciones públicas; «Siguiendo» solo los autores seguidos por la cuenta, filtrados en servidor antes de paginar. Un creador ve lo suyo en su perfil y Para ti; sus seguidores también lo ven en Siguiendo. Este modo no usa ejemplos para rellenarse. Los ejemplos previos de Para ti permanecen hasta validar la primera subida real y autorizar retirarlos. La grilla propia usa solo publicaciones reales.
+
+El SQL de prueba se revirtió y no dejó publicaciones. La migración `20261008010846_support_photo_and_video_publications` sí está aplicada, registrada y guardada en el repositorio. No tocar Auth/OTP, no recrear tokens y no volver a aplicar una migración inventando otra versión. El envío nativo transmite el archivo desde disco, con progreso y reintento manual conservando ID/rutas confirmadas; no implementa TUS ni limpieza automática de subidas abandonadas.
+
+**Pendiente físico:** publicar un video corto desde el teléfono, ver perfil/Para ti/búsqueda, comprobar Siguiendo desde otra cuenta seguidora; repetir con foto; comprobar editor visible al abrir emojis y navegación de avatares. Conservar también la comprobación física pendiente de Google sin Try Again. El usuario aprobó el aspecto de comentarios, pero no ha confirmado toda esta nueva APK. No marcar `physical_device_verified` como verdadero sin esa prueba.
+
+[Manifiesto](./APK_206_VERIFICATION.json).
+
+### Archivos del bloque nuevo
+
+- Crear y subir: `artifacts/mobile/app/(tabs)/create.tsx`, `lib/features/publishing/{model,service,nativeUpload}.ts`; `expo-file-system@19.0.23` y `expo-image-manipulator@14.0.8` fijados en package/lock.
+- Perfil y búsqueda: `hooks/usePublishedMedia.ts`, `components/PublicationThumbnail.tsx`, `app/(tabs)/profile.tsx`, `app/user-profile.tsx`, `app/publication.tsx`, `app/search.tsx`. Las rutas abreviadas pertenecen a `artifacts/mobile`.
+- Feeds: `app/(tabs)/index.tsx`, `hooks/useVideoFeed.ts`, `lib/features/feed/publications.ts`; consultas filtradas antes de paginar y descarte de respuestas tardías al cambiar de modo.
+- Comentarios/teclado: `components/CommentsSheet.tsx`, `components/CommentActionsPopover.tsx`, `hooks/useKeyboardSheetViewport.ts`, `lib/features/comments/model.ts`; conservar borrado en cascada, respuesta individual y ocultación privada.
+- Migración: `supabase/migrations/20261008010846_support_photo_and_video_publications.sql`. Pruebas: `scripts/tests/publishing.test.cjs`, `published-feed.test.cjs`, `publishing.rollback.sql` y regresiones de geometría del teclado. Consultar el árbol para el nombre exacto antes de editar.
+
+La comprobación automática no sustituye galería, cámara, reproducción ni IME en Android real. No iniciar LIVE, mensajería u otros bloques históricos automáticamente por esta entrega.

@@ -1,0 +1,23 @@
+{
+  "commit": "a5fbc7ba45effa5145f00124dce7a99db1646a35",
+  "tree": "c55eaa4eef050332912edfea87348eb673b35bce",
+  "branch": "feature/feed-mini-video-avatar",
+  "run_id": 37794716857,
+  "run_number": 206,
+  "run_attempt": 1,
+  "job_id": 113371058106,
+  "result": "success",
+  "tests_passed": 106,
+  "tests_failed": 0,
+  "mobile_typecheck": "passed",
+  "gradle": "BUILD SUCCESSFUL in 18m 42s",
+  "apk_sha256": "35553e7c0cd6afc866af1b8167497f8043a1889400f01b9a6bf843caa36d0edd",
+  "apk_artifact": 11559456417,
+  "apk_artifact_zip_bytes": 214050698,
+  "apk_artifact_zip_digest": "sha256:798821247a05c27bdd69024ec2b9f8ff04f6e42a8ee7ec2b056bf7d271d3f148",
+  "source_map_artifact": 11559920504,
+  "source_map_zip_bytes": 3321547,
+  "artifacts_expire_at": "2027-01-06T14:42:52Z",
+  "diagnostics": true,
+  "physical_device_verified": false
+}
