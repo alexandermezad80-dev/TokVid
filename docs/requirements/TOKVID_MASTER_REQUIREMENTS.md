@@ -2,6 +2,8 @@
 
 ## Continuidad vigente — seguimiento del 8 de octubre de 2026
 
+**Nueva autorización vigente:** publicar fotos/videos reales desde Crear/Galería hacia perfil/feed y búsqueda; grilla real con márgenes pequeños, redondeado leve, borde de marca y marca de agua TokVid; avatares de comentarios hacia el autor; corrección de editor sobre emojis, «Eliminar», «Ocultar mensajes» y «Mostrar» condicional. Implementación preparada y migración aplicada; compilación Android pendiente. Ver [detalle actual](../PUBLISHING_COMMENTS_VALIDATION.md). Las notas documentales anteriores que dicen que aún no había observaciones del teléfono pertenecen al cierre anterior a estas capturas.
+
 **Leer primero [CONTINUAR_AQUI.md](../../CONTINUAR_AQUI.md) y [el estado entre sesiones](../continuity/TOKVID_SESSION_HANDOFF.md).** La regla del usuario es: **«lo que está hecho no se toca a no ser que necesite una actualización»**. Conservar lo aprobado; limitar cualquier actualización a una necesidad concreta y al alcance autorizado.
 
 La línea vigente es `feature/feed-mini-video-avatar`; el último código compilado y entregado es `a6e14783bbaede25f5f756f24250b7b62d9a85f0`, **APK #204**. Pasaron 92 pruebas, el typecheck móvil y la compilación Android. Falta la confirmación física del usuario de Google, video pequeño con comentarios/teclado, + para seguir y avatar.
@@ -2974,3 +2976,9 @@ Código entregado: `a6e14783bbaede25f5f756f24250b7b62d9a85f0`, rama `feature/fee
 Recoger la prueba física del usuario de esos cuatro cambios. No volver a implementarlos desde cero ni declararlos ya confirmados en teléfono por haber compilado. Conservar las siguientes observaciones del usuario y aplicar únicamente las actualizaciones necesarias.
 
 Se mantienen como pendientes anteriores, sin darlos por resueltos en este cierre: acceso real por teléfono/SMS, interfaz del catálogo propio de stickers, navegación de notificaciones a sus destinos y desarrollo restante de Perfil/mensajería según el maestro. Los demás bloques del documento conservan su propio estado y no deben iniciarse automáticamente por esta entrega.
+
+## Publicación real y revisión de comentarios — 8 de octubre de 2026
+
+El usuario autorizó implementar los ajustes de [PUBLISHING_COMMENTS_VALIDATION.md](../PUBLISHING_COMMENTS_VALIDATION.md). Su última aclaración es que «Mostrar» solo aparece cuando existen mensajes/hilos ocultos, y desaparece al restaurarlos todos. «Eliminar hilo» pasa a «Eliminar» y «Ocultar hilo para mí» a «Ocultar mensajes» sin cambiar la semántica ni los permisos. Tocar solo el avatar abre el perfil del autor de cualquier comentario o respuesta.
+
+Se reemplaza la pantalla roja de creación por cámara/vista previa amplia, galería accesible, controles de foto/video y tonos suaves de la marca. Se habilita publicación real de fotos/videos con confirmación del servidor, perfil/feed/búsqueda conectados, grilla sin ejemplos y tarjetas separadas, ligeramente redondeadas, borde cian/magenta y marca de agua del icono TokVid en el fondo. Se conservará todo lo demás salvo actualizaciones necesarias. La aprobación de la maqueta previa de comentarios no constituye una prueba completa de las nuevas funciones; se debe entregar y verificar su APK.

@@ -2,7 +2,7 @@ import { useRegistration } from "../../context/RegistrationContext";
 import type { RegistrationKind } from "../../lib/features/auth/services/registrationBridge";
 import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -43,6 +43,7 @@ export default function FeedScreen() {
   const flatListRef = useRef<FlatList>(null);
 
   const { user, profile } = useAuth();
+  const [isFocused, setIsFocused] = useState(false);
   const registration = useRegistration();
   const [applied, setApplied] = useState<Record<string, Set<string>>>({});
   const [restored, setRestored] = useState<{ id: string; position: number; paused: boolean; requestId?: string } | null>(null);
@@ -59,6 +60,8 @@ export default function FeedScreen() {
     error,
     isGuest,
   } = useVideoFeed(followedIds);
+  const refreshOnFocus = useRef(refreshFeed); refreshOnFocus.current = refreshFeed;
+  useFocusEffect(useCallback(() => { setIsFocused(true); refreshOnFocus.current(); return () => setIsFocused(false); }, []));
   const { savedIds, toggleSave } = useSavedVideos();
   const { counts: commentCounts, error: commentCountsError } = useFeedCommentCounts(videos.map(video => video.id));
   const { counts: likeCounts, likedIds, toggleLike, error: likeCountsError } = useFeedVideoLikes(videos.map(video => video.id));
@@ -209,7 +212,7 @@ ${item.uri}`,
           restorePosition={restored?.id === item.id ? restored.position : undefined}
           restorePaused={restored?.id === item.id ? restored.paused : undefined}
           restoreRequest={restored?.id === item.id ? restored.requestId : undefined}
-          isActive={index === activeIndex}
+          isActive={isFocused && index === activeIndex}
           isLiked={likedIds.has(item.id)}
           isSaved={savedIds.has(item.id) || !!applied.favorite?.has(item.id)}
           isOwner={isOwner}
@@ -237,7 +240,7 @@ ${item.uri}`,
         />
       );
     },
-    [activeIndex, likedIds, savedIds, shareOverrides, commentCounts, likeCounts, user, profile?.avatar_url, commentVideo?.id, previewFrame, loadingIds, toggleLike, toggleFollow, toggleSave, handleShare, handleDelete, registration.visible, registration.setFeedContext, registerFor, applied, restored, commentCue]
+    [activeIndex, isFocused, likedIds, savedIds, shareOverrides, commentCounts, likeCounts, user, profile?.avatar_url, commentVideo?.id, previewFrame, loadingIds, toggleLike, toggleFollow, toggleSave, handleShare, handleDelete, registration.visible, registration.setFeedContext, registerFor, applied, restored, commentCue]
   );
 
   return (
@@ -262,8 +265,8 @@ ${item.uri}`,
             <Text style={styles.feedModeInactive}>Siguiendo</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={isGuest ? () => requestRegistration() : undefined}
-            activeOpacity={isGuest ? 0.7 : 1}
+            onPress={() => router.push("/search")}
+            activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel="Buscar"
             style={styles.searchButton}

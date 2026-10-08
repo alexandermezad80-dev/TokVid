@@ -18,7 +18,11 @@ Conservar el comportamiento, diseño y decisiones aprobados. Para actualizar alg
 - **Siguiente paso:** recoger la prueba del usuario en su teléfono de Google, video pequeño con comentarios/teclado, botón + y guardado del avatar. Estos cambios están implementados y entregados; la confirmación física de esta APK sigue pendiente.
 - Los commits de documentación posteriores pueden avanzar la rama sin cambiar el código de la APK #204. No confundir el último commit documental con el commit del binario.
 
-## Último seguimiento — 8 de octubre
+## Trabajo autorizado en curso — 8 de octubre
+
+El usuario ya revisó comentarios y añadió ajustes concretos: emojis, etiquetas/Mostrar condicional, avatares hacia perfil, nueva pantalla Crear, publicación real de fotos/videos y grilla sin ejemplos con bordes suaves y marca de agua TokVid. Implementación preparada; migración aplicada y 101 pruebas locales aprobadas. La compilación Android nueva y la verificación física de esta entrega siguen pendientes. Consultar [detalle y pruebas](docs/PUBLISHING_COMMENTS_VALIDATION.md). La APK #204 arriba es la entrega anterior, no contiene estos cambios.
+
+## Último seguimiento documental anterior — 8 de octubre
 
 El usuario confirmó la entrega documental y pidió actualizarla y continuar. Este seguimiento conserva el alcance documental: todavía no hay un resultado nuevo de las pruebas físicas de la APK #204. Retomar desde esas pruebas y las siguientes observaciones concretas del usuario, manteniendo lo ya terminado.
 

@@ -1,3 +1,5 @@
+import PublicationThumbnail from "../components/PublicationThumbnail";
+import { usePublishedMedia } from "../hooks/usePublishedMedia";
 import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
@@ -106,14 +108,14 @@ export default function UserProfileScreen() {
     if (!user) requestRegistration();
   }, [user]);
 
-  if (!user) return null;
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
   const [profile, setProfile] = useState<PublicProfile | null>(null);
-  const [videos, setVideos] = useState<ProfileVideo[]>([]);
+  const publications = usePublishedMedia({ userId, enabled: !!userId && !!user });
+  const videos = publications.items;
+  const videosLoading = publications.loading;
   const [loading, setLoading] = useState(true);
-  const [videosLoading, setVideosLoading] = useState(true);
   const [tab, setTab] = useState<"videos" | "liked">("videos");
   const [msgLoading, setMsgLoading] = useState(false);
 
@@ -140,35 +142,8 @@ export default function UserProfileScreen() {
     setLoading(false);
   }, [userId]);
 
-  const fetchVideos = useCallback(async () => {
-    if (!userId) return;
-    setVideosLoading(true);
-    const { data, error } = await supabase
-      .from("videos")
-      .select("id, url, likes_count")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
-
-    if (!error && data) {
-      setVideos(
-        (data as Array<{ id: string; url: string; likes_count?: number | null }>).map(
-          (video) => ({
-            id: video.id,
-            url: video.url,
-            likes_count: video.likes_count ?? 0,
-          })
-        )
-      );
-    } else {
-      setVideos([]);
-    }
-    setVideosLoading(false);
-  }, [userId]);
-
-  useEffect(() => {
-    fetchProfile();
-    fetchVideos();
-  }, [fetchProfile, fetchVideos]);
+  useEffect(() => { void fetchProfile(); }, [fetchProfile]);
+  if (!user) return null;
 
   const isOwnProfile = user?.id === userId;
 
@@ -270,27 +245,23 @@ export default function UserProfileScreen() {
               <View style={styles.gridState}>
                 <ActivityIndicator color="#FE2C55" size="small" />
               </View>
-            ) : videos.length === 0 ? (
+            ) : publications.error ? (<TouchableOpacity style={styles.gridState} onPress={() => void publications.refresh()}><Text style={styles.gridStateText}>{publications.error}</Text><Text style={{color:"#99DFE3"}}>Reintentar</Text></TouchableOpacity>) : videos.length === 0 ? (
               <View style={styles.gridState}>
                 <Feather name="video-off" size={28} color="#555" />
-                <Text style={styles.gridStateTitle}>Todavía no hay videos</Text>
+                <Text style={styles.gridStateTitle}>Todavía no hay publicaciones</Text>
                 <Text style={styles.gridStateText}>
-                  Cuando publique videos, aparecerán acá.
+                  Sus fotos y videos aparecerán aquí.
                 </Text>
               </View>
             ) : (
               <View style={styles.grid}>
                 {videos.map((video) => (
-                  <TouchableOpacity key={video.id} style={styles.gridItem}>
-                    <Image
-                      source={{ uri: video.url }}
-                      style={StyleSheet.absoluteFill}
-                      resizeMode="cover"
-                    />
+                  <TouchableOpacity key={video.id} style={styles.gridItem} onPress={() => router.push({ pathname: "/publication", params: { id: video.id } })}>
+                    <PublicationThumbnail item={video} />
                     <View style={styles.viewsBadge}>
                       <Feather name="play" size={10} color="#fff" />
                       <Text style={styles.viewsText}>
-                        {video.likes_count} Me gusta
+                        {video.likes} Me gusta
                       </Text>
                     </View>
                   </TouchableOpacity>
@@ -407,7 +378,7 @@ const styles = StyleSheet.create({
   tabItemActive: { borderBottomWidth: 2, borderBottomColor: "#fff" },
 
   // Grid
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 1 },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 6, paddingHorizontal: 10, paddingVertical: 10 },
   gridState: {
     minHeight: 180,
     alignItems: "center",
@@ -417,7 +388,7 @@ const styles = StyleSheet.create({
   },
   gridStateTitle: { color: "#fff", fontSize: 16, fontWeight: "700" },
   gridStateText: { color: "#777", fontSize: 13, textAlign: "center", lineHeight: 19 },
-  gridItem: { width: "33.3%", height: 190, backgroundColor: "#111", overflow: "hidden" },
+  gridItem: { width: "32%", aspectRatio: 0.64, borderRadius: 10, backgroundColor: "#111", overflow: "hidden" },
   viewsBadge: {
     position: "absolute", bottom: 6, left: 6,
     flexDirection: "row", alignItems: "center", gap: 3,
@@ -429,3 +400,4 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
 });
+

@@ -4,6 +4,8 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   Dimensions,
   Image,
+  Text,
+  ActivityIndicator,
   Pressable,
   StyleSheet,
   View,
@@ -60,7 +62,9 @@ export default function VideoCard({
   onAvatarPress,
   isGuest, suspended, commentCue, commentCount, likeCount, previewFrame, followPending, onPosition, registerPlayback, restorePosition, restorePaused, restoreRequest,
 }: Props) {
+  const isImage = video.mediaType === "image";
   const [paused, setPaused] = useState(false);
+  const [playbackError, setPlaybackError] = useState(false);
   const [showThumbnail, setShowThumbnail] = useState(true);
   const [showDoubleLike, setShowDoubleLike] = useState(false);
   const [playPauseFeedback, setPlayPauseFeedback] = useState<"play" | "pause" | null>(null);
@@ -85,22 +89,21 @@ export default function VideoCard({
     return () => { active = false; };
   }, [previewFrame?.x, previewFrame?.y, previewFrame?.width, previewFrame?.height, isActive, videoFrame]);
 
-  const player = useVideoPlayer(video.uri, (p) => {
+  const player = useVideoPlayer(isImage ? null : video.uri, (p) => {
     p.loop = true;
     p.muted = false;
   });
 
   useEffect(() => {
-    if (suspended) { player.pause(); return; }
-    if (isActive && !paused) {
-      player.play();
-      const t = setTimeout(() => setShowThumbnail(false), 300);
-      return () => clearTimeout(t);
-    } else {
-      player.pause();
-      setShowThumbnail(true);
-    }
-  }, [isActive, paused, suspended]);
+    setShowThumbnail(true); setPlaybackError(false);
+    const subscription = player.addListener?.("statusChange", event => setPlaybackError(event.status === "error"));
+    return () => subscription?.remove();
+  }, [video.uri, player]);
+  useEffect(() => {
+    if (isImage) return;
+    if (suspended || !isActive || paused) player.pause();
+    else player.play();
+  }, [isActive, paused, suspended, isImage, player]);
 
   useEffect(() => { if (isActive) registerPlayback?.(() => ({ position: player.currentTime, wasPaused: paused })); }, [isActive, registerPlayback, player, paused]);
   useEffect(() => {
@@ -124,6 +127,7 @@ export default function VideoCard({
 
     lastTap.current = now;
     singleTapTimer.current = setTimeout(() => {
+    if (isImage) return;
     const nextPaused = !paused;
     setPaused(nextPaused);
     if (nextPaused) {
@@ -137,7 +141,7 @@ export default function VideoCard({
     feedbackTimer.current = setTimeout(() => {
       setPlayPauseFeedback(null);
       feedbackTimer.current = null;
-    }, 450);
+    }, 850);
     }, 300);
   };
 
@@ -151,16 +155,19 @@ export default function VideoCard({
   return (
     <Pressable ref={containerRef} onPress={handleTap} style={styles.container}>
       <Animated.View style={[styles.videoSurface, videoPresentation]}>
-      <VideoView
+      {isImage ? <Image source={{ uri: video.uri }} style={styles.video} resizeMode="contain" /> : <VideoView
         player={player}
         style={styles.video}
         surfaceType="textureView"
         contentFit="cover"
         nativeControls={false}
-      />
-      {showThumbnail && !paused && (
+        onFirstFrameRender={() => setShowThumbnail(false)}
+      />}
+      {!isImage && showThumbnail && !!video.thumbnail && (
         <Image source={video.thumbnail} style={styles.thumbnail} resizeMode="cover" />
       )}
+      {!isImage && isActive && showThumbnail && !playbackError && <View pointerEvents="none" style={styles.playPauseOverlay}><ActivityIndicator color="#D2F9FA" /></View>}
+      {!isImage && playbackError && <View style={styles.playPauseOverlay}><Text style={{ color: "#fff", padding: 12, textAlign: "center" }}>No se pudo reproducir el video</Text><Pressable accessibilityRole="button" accessibilityLabel="Reintentar video" onPress={() => { setPlaybackError(false); void player.replaceAsync(video.uri).then(() => { if (!paused) player.play(); }).catch(() => setPlaybackError(true)); }}><Text style={{ color: "#99E0E4", padding: 12 }}>Reintentar</Text></Pressable></View>}
       </Animated.View>
 
       {!previewFrame && <View style={styles.overlay}>
@@ -201,11 +208,11 @@ export default function VideoCard({
           <Feather name="heart" size={86} color="#FE0979" />
         </View>
       )}
-      {playPauseFeedback && !previewFrame && (
+      {!isImage && (playPauseFeedback || paused) && !previewFrame && (
         <View style={styles.playPauseOverlay} pointerEvents="none">
           <View style={styles.playPauseBadge}>
             <Feather
-              name={playPauseFeedback === "play" ? "play" : "pause"}
+              name={paused && !playPauseFeedback ? "play" : playPauseFeedback === "play" ? "play" : "pause"}
               size={30}
               color="#fff"
             />

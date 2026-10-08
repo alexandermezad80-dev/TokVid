@@ -7,7 +7,7 @@ const envKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
 // Swap if the values were stored inverted (URL ends up in KEY slot and vice versa)
 const supabaseUrl = envUrl.startsWith("http") ? envUrl : envKey;
-const supabaseAnonKey = envUrl.startsWith("http") ? envKey : envUrl;
+export const supabaseAnonKey = envUrl.startsWith("http") ? envKey : envUrl;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {

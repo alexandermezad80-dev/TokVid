@@ -1,9 +1,12 @@
+import PublicationThumbnail from "../../components/PublicationThumbnail";
+import { usePublishedMedia } from "../../hooks/usePublishedMedia";
 import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
+  ActivityIndicator,
   Image,
   Platform,
   ScrollView,
@@ -18,14 +21,6 @@ import { useFollow } from "../../context/FollowContext";
 import { useVideoFeed } from "../../hooks/useVideoFeed";
 import { useSavedVideos } from "../../hooks/useSavedVideos";
 
-const MY_VIDEOS = [
-  { id: "1", image: require("../../assets/images/thumb1.png"), views: "2.8M", likes: "284K" },
-  { id: "2", image: require("../../assets/images/thumb3.png"), views: "5.2M", likes: "521K" },
-  { id: "3", image: require("../../assets/images/thumb5.png"), views: "7.4M", likes: "743K" },
-  { id: "4", image: require("../../assets/images/thumb2.png"), views: "1.2M", likes: "192K" },
-  { id: "5", image: require("../../assets/images/thumb4.png"), views: "3.9M", likes: "389K" },
-  { id: "6", image: require("../../assets/images/thumb6.png"), views: "12M", likes: "1.2M" },
-];
 
 function avatarUrl(user: any, profile: any): string {
   if (profile?.avatar_url) return profile.avatar_url;
@@ -41,6 +36,7 @@ export default function ProfileScreen() {
   useEffect(() => {
     if (!user) requestRegistration();
   }, [user]);
+  const publications = usePublishedMedia({ userId: user?.id, enabled: !!user });
   const { savedVideos } = useSavedVideos();
   const { followedIds } = useFollow();
   const { likedVideos } = useVideoFeed(followedIds);
@@ -170,7 +166,7 @@ export default function ProfileScreen() {
                 style={styles.gridItem}
                 onPress={() => router.push(`/saved-feed?startIndex=${idx}`)}
               >
-                <Image source={v.thumbnail} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                <PublicationThumbnail item={v} />
                 <View style={styles.savedBadge}>
                   <Feather name="bookmark" size={10} color="#FFD60A" />
                 </View>
@@ -195,11 +191,7 @@ export default function ProfileScreen() {
                 style={styles.gridItem}
                 onPress={() => router.push(`/liked-feed?startIndex=${idx}`)}
               >
-                <Image
-                  source={v.isReal ? { uri: v.uri } : v.thumbnail}
-                  style={StyleSheet.absoluteFill}
-                  resizeMode="cover"
-                />
+                <PublicationThumbnail item={v} />
                 <View style={styles.viewsBadge}>
                   <Feather name="heart" size={10} color="#FE2C55" />
                 </View>
@@ -208,16 +200,12 @@ export default function ProfileScreen() {
           </View>
         )
       ) : (
-        <View style={styles.grid}>
-          {MY_VIDEOS.map((v) => (
-            <TouchableOpacity key={v.id} style={styles.gridItem}>
-              <Image source={v.image} style={StyleSheet.absoluteFill} resizeMode="cover" />
-              <View style={styles.viewsBadge}>
-                <Feather name="play" size={10} color="#fff" />
-                <Text style={styles.viewsText}>{v.views}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+        <View>
+          {publications.loading && publications.items.length === 0 ? <ActivityIndicator color="#85D5DB" style={{ padding: 24 }} /> : null}
+          {!!publications.error && <TouchableOpacity onPress={() => void publications.refresh()} style={styles.emptyState}><Text style={styles.emptyText}>{publications.error}</Text><Text style={{color:"#9CDEE1"}}>Reintentar</Text></TouchableOpacity>}
+          {!publications.loading && !publications.error && publications.items.length === 0 && <TouchableOpacity style={styles.emptyState} onPress={() => router.push("/(tabs)/create")}><Feather name="plus-circle" size={36} color="#8DCBD0" /><Text style={styles.emptyTitle}>Tu primera publicación</Text><Text style={styles.emptyText}>Comparte una foto o un video desde Galería.</Text></TouchableOpacity>}
+          <View style={styles.grid}>{publications.items.map(item => <TouchableOpacity key={item.id} style={styles.gridItem} accessibilityRole="button" accessibilityLabel={`Abrir publicación: ${item.caption || "Sin descripción"}`} onPress={() => router.push({ pathname:"/publication", params:{id:item.id} })}><PublicationThumbnail item={item} /></TouchableOpacity>)}</View>
+          {publications.hasMore && <TouchableOpacity onPress={() => void publications.loadMore()} disabled={publications.loading} style={{padding:20,alignItems:"center"}}><Text style={{color:"#A6E1E5"}}>{publications.loading ? "Cargando…" : "Ver más"}</Text></TouchableOpacity>}
         </View>
       )}
 
@@ -299,10 +287,10 @@ const styles = StyleSheet.create({
   },
   tabItem: { flex: 1, alignItems: "center", paddingVertical: 12 },
   tabItemActive: { borderBottomWidth: 2, borderBottomColor: "#fff" },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 1 },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 6, paddingHorizontal: 10, paddingVertical: 10 },
   gridItem: {
-    width: "33.3%",
-    height: 190,
+    width: "32%",
+    aspectRatio: 0.64, borderRadius: 10,
     backgroundColor: "#111",
     overflow: "hidden",
   },

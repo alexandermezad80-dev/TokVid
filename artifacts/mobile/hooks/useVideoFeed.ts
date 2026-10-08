@@ -1,3 +1,4 @@
+import { publishedMediaKind } from "../lib/features/publishing/model";
 import { useRegistration } from "../context/RegistrationContext";
 import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -8,6 +9,7 @@ import { router } from "expo-router";
 export interface VideoItem {
   id: string;
   uri: string;
+  mediaType?: "video" | "image";
   thumbnail: any;
   creator: string;
   creatorHandle: string;
@@ -170,13 +172,14 @@ export async function mapRowsToVideoItems(vids: any[]): Promise<VideoItem[]> {
     return {
       id: v.id,
       uri: videoUrl,
-      thumbnail: { uri: videoUrl },
+      mediaType: publishedMediaKind(v),
+      thumbnail: v.thumbnail_url ? { uri: v.thumbnail_url } : publishedMediaKind(v) === "image" ? { uri: videoUrl } : null,
       creator: username,
       creatorHandle: `@${username}`,
       creatorAvatar: avatarUrl,
       creatorId: v.user_id,
       caption: v.caption ?? "",
-      song: "♫ Sonido original",
+      song: publishedMediaKind(v) === "image" ? "Foto" : "♫ Sonido original",
       likes: v.likes_count ?? 0,
       comments: v.comments_count ?? 0,
       shares: v.shares_count ?? 0,
@@ -496,3 +499,4 @@ export function useVideoFeed(followedIds: Set<string>) {
     isGuest,
   };
 }
+

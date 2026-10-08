@@ -1,6 +1,8 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Image, Keyboard, Modal, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
@@ -32,7 +34,16 @@ function Avatar({ uri, username }: { uri?: string | null; username?: string | nu
     <View style={[styles.avatar, styles.initialAvatar]}>{username ? <Text style={styles.initial}>{Array.from(username)[0]?.toUpperCase()}</Text> : <Feather name="user" size={18} color="#aaa" />}</View>;
 }
 
-export default function CommentsSheet({ visible, onClose, videoId, overTabBar = false, showVideoPreview = false, onPreviewFrame }: Props) {
+export default function CommentsSheet(props: Props) {
+  const back = useRef(props.onClose);
+  return <Modal visible={props.visible} transparent statusBarTranslucent navigationBarTranslucent animationType="slide" onRequestClose={() => back.current()}>
+    <KeyboardProvider statusBarTranslucent navigationBarTranslucent preload={false}>
+      <CommentsPanel {...props} backHandler={back} />
+    </KeyboardProvider>
+  </Modal>;
+}
+
+function CommentsPanel({ visible, onClose, videoId, overTabBar = false, showVideoPreview = false, onPreviewFrame, backHandler }: Props & { backHandler: React.MutableRefObject<() => void> }) {
   const { user, profile } = useAuth();
   const { tabBarHeight } = useRegistration();
   const { width, fontScale } = useWindowDimensions();
@@ -59,6 +70,13 @@ export default function CommentsSheet({ visible, onClose, videoId, overTabBar = 
   const composerShape = useAnimatedStyle(() => { const p = Math.max(0, Math.min(1, phase.value)); return { paddingTop: 10 - 4 * p }; });
   const dismissActions = () => { selectionSequence.current++; setActionComment(null); setActionAnchor(null); };
   const close = () => { dismissActions(); Keyboard.dismiss(); onClose(); };
+  backHandler.current = () => actionComment ? dismissActions() : close();
+  const openProfile = (authorId: string) => {
+    if (!authorId) return;
+    close();
+    if (authorId === user?.id) router.push("/(tabs)/profile");
+    else router.push({ pathname: "/user-profile", params: { userId: authorId } });
+  };
   const rows = useMemo<ListRow[]>(() => comments.roots.flatMap(root => {
     if (comments.hiddenThreads.has(root.id)) return [];
     const result: ListRow[] = [{ kind: "comment", comment: root, nested: false }];
@@ -129,8 +147,8 @@ export default function CommentsSheet({ visible, onClose, videoId, overTabBar = 
   const actions: CommentAction[] = actionComment && capabilities ? [
     ...(capabilities.canReply ? [{ key: "reply", title: "Responder", icon: "corner-up-left" as const, disabled: busy || !!editing, onPress: () => startReply(actionComment) }] : []),
     ...(capabilities.canEdit ? [{ key: "edit", title: "Editar", icon: "edit-2" as const, disabled: busy, onPress: () => startEdit(actionComment) }] : []),
-    ...(capabilities.canDelete ? [{ key: "delete", title: actionComment.parent_id ? "Eliminar respuesta" : "Eliminar hilo", icon: "trash-2" as const, destructive: true, disabled: busy, onPress: () => confirmDelete(actionComment) }] : []),
-    { key: "hide", title: "Ocultar hilo para mí", icon: "eye-off", disabled: busy, onPress: () => { const selected = actionComment; dismissActions(); void comments.hideThread(selected); } },
+    ...(capabilities.canDelete ? [{ key: "delete", title: "Eliminar", icon: "trash-2" as const, destructive: true, disabled: busy, onPress: () => confirmDelete(actionComment) }] : []),
+    { key: "hide", title: "Ocultar mensajes", icon: "eye-off", disabled: busy, onPress: () => { const selected = actionComment; dismissActions(); void comments.hideThread(selected); } },
     { key: "cancel", title: "Cancelar", icon: "x", onPress: dismissActions },
   ] : [];
   const placement = actionAnchor ? commentPopoverGeometry(actionAnchor, {
@@ -165,7 +183,7 @@ export default function CommentsSheet({ visible, onClose, videoId, overTabBar = 
     const row = item.comment;
     const liked = comments.liked.has(row.id);
     return <View ref={view => { if (view) rowViews.current.set(row.id, view); else rowViews.current.delete(row.id); }} collapsable={false} style={[styles.comment, item.nested && styles.nested, actionComment?.id === row.id && styles.selectedComment]}>
-      <Avatar uri={row.avatar_url} username={row.username} />
+      <Pressable accessibilityRole="button" accessibilityLabel={`Ver perfil de ${row.username}`} onPress={() => openProfile(row.user_id)} hitSlop={6}><Avatar uri={row.avatar_url} username={row.username} /></Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel={`Opciones del comentario de ${row.username}`} onPress={() => openActions(row)} onLongPress={() => openActions(row)} style={styles.body}>
         <View style={styles.commentHeader}><Text numberOfLines={1} ellipsizeMode="tail" style={[styles.username, styles.usernameHeading]}>@{row.username}</Text><Pressable accessibilityRole="button" accessibilityLabel="Opciones del comentario" disabled={busy || comments.pendingLikes.has(row.id)} onPress={event => { event.stopPropagation(); openActions(row); }} hitSlop={10} style={styles.optionsButton}><Feather name="more-horizontal" size={18} color="#92929D" /></Pressable></View>
         {row.parent_id && !!row.reply_to_username && <Text numberOfLines={1} style={styles.replyTo}>↳ @{row.reply_to_username}</Text>}
@@ -180,8 +198,7 @@ export default function CommentsSheet({ visible, onClose, videoId, overTabBar = 
       </View>
     </View>;
   };
-  return <Modal visible={visible} transparent statusBarTranslucent navigationBarTranslucent animationType="slide" onRequestClose={() => actionComment ? dismissActions() : close()} onShow={viewport.measure}>
-    <View ref={viewport.viewportRef} collapsable={false} onLayout={viewport.onLayout} style={[styles.viewport, showVideoPreview && { backgroundColor: "transparent" }, { paddingBottom: viewport.keyboardInset + bottomPadding }]}>
+  return <View ref={viewport.viewportRef} collapsable={false} onLayout={viewport.onLayout} style={[styles.viewport, showVideoPreview && { backgroundColor: "transparent" }, { paddingBottom: viewport.keyboardInset + bottomPadding }]}>
       <Pressable accessibilityLabel="Cerrar comentarios" onPress={close} style={StyleSheet.absoluteFill} />
       {showVideoPreview && preview.height > 0 && <Pressable accessibilityRole="button" accessibilityLabel="Volver al video completo" onPress={close}
         style={[styles.videoPreview, { left: preview.x, top: preview.y, width: preview.width, height: preview.height }]}>
@@ -196,7 +213,7 @@ export default function CommentsSheet({ visible, onClose, videoId, overTabBar = 
         <View style={[styles.header, { paddingLeft: 12 + viewport.insets.left, paddingRight: 4 + viewport.insets.right }]}><LinearGradient colors={["rgba(0,242,254,0.24)", "rgba(254,9,121,0.24)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.countBadge}><Text style={styles.title}>{comments.total === null ? "Comentarios" : `${comments.total} comentarios`}</Text></LinearGradient><Pressable onPress={close} accessibilityLabel="Cerrar comentarios" accessibilityRole="button" style={styles.close}><Feather name="x" size={22} color="#fff" /></Pressable></View>
         </View>
         {!!comments.error && <View style={styles.errorRow}><Text accessibilityRole="alert" style={styles.error}>{comments.error}</Text><Pressable accessibilityRole="button" onPress={() => { void comments.refresh(); }} style={styles.retry}><Text style={styles.link}>Recargar</Text></Pressable></View>}
-        {comments.hiddenThreads.size > 0 && <Pressable accessibilityRole="button" disabled={busy} onPress={() => { void comments.restoreThreads(); }} style={styles.hiddenNotice}><Text style={styles.link}>{comments.hiddenThreads.size} {comments.hiddenThreads.size === 1 ? "hilo oculto" : "hilos ocultos"} · Mostrar</Text></Pressable>}
+        {comments.hiddenThreads.size > 0 && <Pressable accessibilityRole="button" accessibilityLabel="Mostrar mensajes ocultos" disabled={busy} onPress={() => { void comments.restoreThreads(); }} style={styles.hiddenNotice}><LinearGradient colors={["rgba(0,242,254,0.20)", "rgba(254,9,121,0.20)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.showBadge}><Feather name="eye" size={15} color="#fff" /><Text style={styles.showLabel}>Mostrar</Text></LinearGradient></Pressable>}
         <FlatList<ListRow> data={rows} keyExtractor={row => row.kind === "comment" ? row.comment.id : row.kind === "thread" ? `thread:${row.root.id}` : `more:${row.rootId}`} renderItem={renderRow} style={styles.list} onScrollBeginDrag={dismissActions} contentContainerStyle={[rows.length ? styles.listContent : styles.emptyContainer, { paddingLeft: 12 + viewport.insets.left, paddingRight: 12 + viewport.insets.right }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} refreshing={comments.loading} onRefresh={() => { void comments.refresh(); }}
           ListEmptyComponent={comments.loading ? <ActivityIndicator color="#00F2FE" /> : comments.total === 0 || comments.hiddenThreads.size > 0 ? <View style={styles.empty}><Feather name="message-circle" size={32} color="#666" /><Text style={styles.emptyText}>{comments.total === 0 ? "Sé el primero en comentar" : "No hay hilos visibles en esta página"}</Text></View> : null}
           ListFooterComponent={comments.hasMore ? <Pressable disabled={comments.paging} onPress={() => { void comments.loadMore(); }} style={styles.more}><Text style={styles.link}>{comments.paging ? "Cargando…" : "Cargar más comentarios"}</Text></Pressable> : null} />
@@ -220,7 +237,7 @@ export default function CommentsSheet({ visible, onClose, videoId, overTabBar = 
       </Animated.View>
       {actionComment && placement && <CommentActionsPopover key={actionComment.id} placement={placement} actions={actions} onClose={dismissActions} onContentHeight={setActionMenuHeight} />}
     </View>
-  </Modal>;
+  ;
 }
 
 const styles = StyleSheet.create({
@@ -235,7 +252,9 @@ const styles = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingLeft: 12, paddingRight: 4, minHeight: 52 },
   countBadge: { borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7, flexShrink: 1, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
   title: { color: "#fff", fontSize: 15, fontWeight: "700", flexShrink: 1 }, close: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
-  hiddenNotice: { paddingHorizontal: 12, paddingBottom: 8 },
+  hiddenNotice: { alignSelf: "flex-start", marginLeft: 12, marginTop: 8, marginBottom: 6 },
+  showBadge: { minHeight: 44, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1, borderColor: "rgba(255,255,255,0.10)", flexDirection: "row", alignItems: "center", gap: 8 },
+  showLabel: { color: "#fff", fontSize: 13, fontWeight: "600" },
   editIndicator: { alignSelf: "center", paddingVertical: 6 },
   deletedText: { color: "#92929D", fontStyle: "italic" },
   likeButton: { alignItems: "center", gap: 4, minHeight: 36 },
