@@ -1,10 +1,17 @@
+import { useRegistration } from "../../context/RegistrationContext";
+import type { RegistrationKind } from "../../lib/features/auth/services/registrationBridge";
+import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { router } from "expo-router";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Dimensions,
   FlatList,
+  PixelRatio,
   Platform,
   RefreshControl,
   Share,
@@ -13,67 +20,72 @@ import {
   TouchableOpacity,
   View,
   ViewToken,
-  ActivityIndicator,
 } from "react-native";
 import { supabase } from "../../lib/supabase";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import CommentsSheet from "../../components/CommentsSheet";
 import Toast from "../../components/Toast";
 import VideoCard from "../../components/VideoCard";
 import { useAuth } from "../../context/AuthContext";
 import { useFollow } from "../../context/FollowContext";
-import { VideoItem, formatCount, useVideoFeed } from "../../hooks/useVideoFeed";
+import { VideoItem, useVideoFeed } from "../../hooks/useVideoFeed";
 import { useSavedVideos } from "../../hooks/useSavedVideos";
+import { useFeedCommentCounts } from "../../hooks/useFeedCommentCounts";
+import { useFeedVideoLikes } from "../../hooks/useFeedVideoLikes";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
-
-function EmptyFollowing({ onDiscover }: { onDiscover: () => void }) {
-  return (
-    <View style={styles.emptyWrap}>
-      <View style={styles.emptyIcon}>
-        <Feather name="user-plus" size={36} color="#333" />
-      </View>
-      <Text style={styles.emptyTitle}>Seguí a alguien</Text>
-      <Text style={styles.emptyText}>
-        Cuando sigas a un creador, sus videos aparecerán acá.
-      </Text>
-      <TouchableOpacity style={styles.discoverBtn} onPress={onDiscover}>
-        <Text style={styles.discoverBtnText}>Ir a Discover</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
+// Expo's Android blur radius is in native pixels. Match the 8 dp reference,
+// respecting the pre-Android-12 RenderScript radius limit.
+const FEED_BLUR_INTENSITY = Platform.OS === "android"
+  ? Math.min(Number(Platform.Version) < 31 ? 25 : 100, 8 * PixelRatio.get()) : 8;
 
 export default function FeedScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [commentVideo, setCommentVideo] = useState<VideoItem | null>(null);
-  const [activeTab, setActiveTab] = useState<"following" | "foryou">("foryou");
+  const commentsPhase = useSharedValue(0);
+  useEffect(() => { commentsPhase.value = withSpring(commentVideo ? 1 : 0, { damping: 15, stiffness: 90, mass: 0.8 }); }, [!!commentVideo, commentsPhase]);
+  const feedPresentation = useAnimatedStyle(() => ({ transform: [{ scale: 1 - 0.05 * Math.max(0, Math.min(1, commentsPhase.value)) }] }));
   const [shareOverrides, setShareOverrides] = useState<Record<string, number>>({});
   const [toastMsg, setToastMsg] = useState("");
   const [toastVisible, setToastVisible] = useState(false);
   const [toastKey, setToastKey] = useState(0);
-  const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList>(null);
-  const followingListRef = useRef<FlatList>(null);
 
   const { user } = useAuth();
+  const registration = useRegistration();
+  const [applied, setApplied] = useState<Record<string, Set<string>>>({});
+  const [restored, setRestored] = useState<{ id: string; position: number; paused: boolean; requestId?: string } | null>(null);
+  const [commentCue, setCommentCue] = useState<string | null>(null);
+  useEffect(() => { setApplied({}); }, [user?.id]);
   const { followedIds, toggleFollow } = useFollow();
   const {
     videos,
-    followingVideos,
-    likedIds,
-    toggleLike,
     removeVideo,
     loadMore,
     refreshFeed,
     hasMore,
-    isLoading,
     isRefreshing,
     error,
+    isGuest,
   } = useVideoFeed(followedIds);
   const { savedIds, toggleSave } = useSavedVideos();
+  const { counts: commentCounts, error: commentCountsError } = useFeedCommentCounts(videos.map(video => video.id));
+  const { counts: likeCounts, likedIds, toggleLike, error: likeCountsError } = useFeedVideoLikes(videos.map(video => video.id));
 
-  const currentFeed = activeTab === "foryou" ? videos : followingVideos;
+
+  useEffect(() => {
+    const intent = registration.completed;
+    if (!intent?.videoId) return;
+    const index = videos.findIndex(video => video.id === intent.videoId);
+    if (index < 0) return;
+    setActiveIndex(index); flatListRef.current?.scrollToIndex({ index, animated: false });
+    setRestored({ id: intent.videoId, position: intent.position ?? 0, paused: !!intent.wasPaused, requestId: intent.requestId });
+    if (["like", "follow", "favorite"].includes(intent.kind)) setApplied(prev => ({ ...prev, [intent.kind]: new Set([...(prev[intent.kind] ?? []), intent.kind === "follow" ? intent.creatorId! : intent.videoId!]) }));
+    if (intent.kind === "comment") setCommentCue(intent.videoId);
+    registration.acknowledge();
+  }, [registration.completed, videos, registration.acknowledge]);
+  useEffect(() => { if (!commentCue) return; const timer = setTimeout(() => setCommentCue(null), 2500); return () => clearTimeout(timer); }, [commentCue]);
+  const clearApplied = (kind: string, id: string) => setApplied(prev => { const next = new Set(prev[kind]); next.delete(id); return { ...prev, [kind]: next }; });
+  const registerFor = useCallback((kind: RegistrationKind, item: VideoItem) => requestRegistration({ kind, videoId: item.id, creatorId: item.creatorId, isDemo: !item.isReal }), []);
 
   const showToast = useCallback((msg: string) => {
     setToastMsg(msg);
@@ -131,21 +143,26 @@ export default function FeedScreen() {
   );
 
   const handleShare = useCallback(async (item: VideoItem) => {
+    if (!user) {
+      requestRegistration();
+      return;
+    }
     // Optimistic UI update
     setShareOverrides((prev) => ({
       ...prev,
       [item.id]: (prev[item.id] ?? 0) + 1,
     }));
 
-    // Open system share sheet
     try {
       await Share.share({
         title: item.caption,
-        message: `${item.caption}\n\n${item.uri}`,
+        message: `${item.caption}
+
+${item.uri}`,
         url: item.uri,
       });
     } catch {
-      // Share cancelled or failed — revert optimistic update
+      // Share cancelled or failed — revert optimistic update.
       setShareOverrides((prev) => ({
         ...prev,
         [item.id]: Math.max(0, (prev[item.id] ?? 1) - 1),
@@ -153,23 +170,19 @@ export default function FeedScreen() {
       return;
     }
 
-    // Increment in Supabase (best-effort — no-op for mock videos not in DB)
-    try {
-      const { data } = await supabase
-        .from("videos")
-        .select("shares_count")
-        .eq("id", item.id)
-        .maybeSingle();
-      if (data) {
-        await supabase
-          .from("videos")
-          .update({ shares_count: (data.shares_count ?? 0) + 1 })
-          .eq("id", item.id);
-      }
-    } catch {
-      // Silently ignore — local count already updated
+    // Persist the share through the protected RPC. Mock videos that are
+    // not persisted in Supabase are reverted without affecting the DB.
+    const { error } = await supabase.rpc("increment_video_share_count", {
+      p_video_id: item.id,
+    });
+
+    if (error) {
+      setShareOverrides((prev) => ({
+        ...prev,
+        [item.id]: Math.max(0, (prev[item.id] ?? 1) - 1),
+      }));
     }
-  }, []);
+  }, [user]);
 
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -191,46 +204,83 @@ export default function FeedScreen() {
       const isOwner = !!user && user.id === item.creatorId;
       return (
         <VideoCard
-          video={videoWithShares}
+          video={{ ...videoWithShares, isFollowing: videoWithShares.isFollowing || !!applied.follow?.has(item.creatorId) }}
+          commentCount={commentCounts[item.id] ?? null}
+          likeCount={likeCounts[item.id] ?? null}
+          suspended={registration.visible}
+          commentCue={commentCue === item.id}
+          onPosition={(position, paused) => registration.setFeedContext(item.id, position, paused)}
+          registerPlayback={read => registration.registerPlayback(item.id, read)}
+          restorePosition={restored?.id === item.id ? restored.position : undefined}
+          restorePaused={restored?.id === item.id ? restored.paused : undefined}
+          restoreRequest={restored?.id === item.id ? restored.requestId : undefined}
           isActive={index === activeIndex}
           isLiked={likedIds.has(item.id)}
-          isSaved={savedIds.has(item.id)}
+          isSaved={savedIds.has(item.id) || !!applied.favorite?.has(item.id)}
           isOwner={isOwner}
-          onLike={() => toggleLike(item.id)}
-          onDoubleLike={() => toggleLike(item.id)}
-          onFollow={() => toggleFollow(item.creatorId)}
-          onComment={() => setCommentVideo(item)}
+          onLike={() => !user ? registerFor("like", item) : (clearApplied("like", item.id), toggleLike(item.id))}
+          onDoubleLike={() => !user ? registerFor("like", item) : !likedIds.has(item.id) && toggleLike(item.id)}
+          onFollow={() => !user ? registerFor("follow", item) : (clearApplied("follow", item.creatorId), toggleFollow(item.creatorId))}
+          onComment={() => {
+            if (!user) {
+              registerFor("comment", item);
+              return;
+            }
+            setCommentVideo(item);
+          }}
           onShare={() => handleShare(item)}
-          onSave={() => toggleSave(item.id)}
+          onSave={() => !user ? registerFor("favorite", item) : (clearApplied("favorite", item.id), toggleSave(item.id))}
           onDelete={() => handleDelete(item)}
-          onAvatarPress={() => router.push(`/user-profile?userId=${item.creatorId}`)}
+          isGuest={isGuest}
+          onAvatarPress={() => {
+            if (!user) {
+              requestRegistration();
+              return;
+            }
+            router.push(`/user-profile?userId=${item.creatorId}`);
+          }}
         />
       );
     },
-    [activeIndex, likedIds, savedIds, shareOverrides, user, toggleLike, toggleFollow, toggleSave, handleShare, handleDelete]
+    [activeIndex, likedIds, savedIds, shareOverrides, commentCounts, likeCounts, user, toggleLike, toggleFollow, toggleSave, handleShare, handleDelete, registration.visible, registration.setFeedContext, registerFor, applied, restored, commentCue]
   );
-
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
-
-  const handleTabSwitch = (tab: "following" | "foryou") => {
-    setActiveTab(tab);
-    setActiveIndex(0);
-  };
 
   return (
     <View style={styles.container}>
-      {isLoading && videos.length === 0 ? (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#FE2C55" />
+      <Animated.View style={[StyleSheet.absoluteFill, feedPresentation]}>
+      <View style={styles.feedHeader} pointerEvents="box-none">
+        <View style={styles.feedModes}>
+          <TouchableOpacity
+            onPress={isGuest ? () => requestRegistration() : undefined}
+            activeOpacity={isGuest ? 0.7 : 1}
+            accessibilityRole="button"
+            accessibilityLabel="Para ti"
+          >
+            <Text style={styles.feedModeActive}>Para ti</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={isGuest ? () => requestRegistration() : undefined}
+            activeOpacity={isGuest ? 0.7 : 1}
+            accessibilityRole="button"
+            accessibilityLabel="Siguiendo"
+          >
+            <Text style={styles.feedModeInactive}>Siguiendo</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={isGuest ? () => requestRegistration() : undefined}
+            activeOpacity={isGuest ? 0.7 : 1}
+            accessibilityRole="button"
+            accessibilityLabel="Buscar"
+            style={styles.searchButton}
+          >
+            <Feather name="search" size={19} color="#fff" />
+          </TouchableOpacity>
         </View>
-      ) : null}
-      {activeTab === "following" && followingVideos.length === 0 ? (
-        <EmptyFollowing onDiscover={() => handleTabSwitch("foryou")} />
-      ) : (
-        <FlatList
-          key={activeTab}
-          ref={activeTab === "foryou" ? flatListRef : followingListRef}
-          data={currentFeed}
+      </View>
+
+      <FlatList
+          ref={flatListRef}
+          data={videos}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           pagingEnabled
@@ -240,7 +290,7 @@ export default function FeedScreen() {
           decelerationRate="fast"
           onViewableItemsChanged={onViewableItemsChanged}
           viewabilityConfig={viewabilityConfig}
-          scrollEnabled={currentFeed.length > 0}
+          scrollEnabled={videos.length > 0}
           getItemLayout={(_, index) => ({
             length: SCREEN_HEIGHT,
             offset: SCREEN_HEIGHT * index,
@@ -250,9 +300,9 @@ export default function FeedScreen() {
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={refreshFeed}
-              tintColor="#FE2C55"
+              tintColor="#FE0979"
               title="Actualizando"
-              titleColor="#FE2C55"
+              titleColor="#FE0979"
             />
           }
           onEndReached={() => {
@@ -262,7 +312,7 @@ export default function FeedScreen() {
           ListFooterComponent={
             hasMore ? (
               <View style={styles.footer}>
-                <ActivityIndicator size="small" color="#FE2C55" />
+                <ActivityIndicator size="small" color="#FE0979" />
               </View>
             ) : null
           }
@@ -270,34 +320,17 @@ export default function FeedScreen() {
           maxToRenderPerBatch={3}
           windowSize={3}
         />
-      )}
-
-      {/* Header overlay */}
-      <View style={[styles.header, { paddingTop: topPad + 10 }]}>
-        <TouchableOpacity onPress={() => handleTabSwitch("following")}>
-          <Text style={[styles.tab, activeTab === "following" && styles.tabActive]}>
-            Following
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => handleTabSwitch("foryou")}>
-          <Text style={[styles.tab, activeTab === "foryou" && styles.tabActive]}>
-            For You
-          </Text>
-        </TouchableOpacity>
-
-        <Feather name="search" size={24} color="#fff" />
-      </View>
-
+      </Animated.View>
+      {!!commentVideo && <BlurView pointerEvents="none" intensity={FEED_BLUR_INTENSITY} blurReductionFactor={1} experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />}
       <CommentsSheet
+        overTabBar
         visible={!!commentVideo}
         onClose={() => setCommentVideo(null)}
-        commentCount={commentVideo ? formatCount(commentVideo.comments) : "0"}
         videoId={commentVideo?.id ?? ""}
       />
-      {error ? (
+      {error || commentCountsError || likeCountsError ? (
         <View style={styles.errorBanner}>
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorText}>{error || commentCountsError || likeCountsError}</Text>
         </View>
       ) : null}
 
@@ -308,52 +341,56 @@ export default function FeedScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000" },
-  header: {
+  feedHeader: {
     position: "absolute",
-    top: 0,
+    top: 52,
     left: 0,
     right: 0,
+    zIndex: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 20,
-    gap: 24,
-    zIndex: 10,
   },
-  tab: {
-    color: "rgba(255,255,255,0.6)",
-    fontSize: 17,
-    fontWeight: "600",
+  feedModes: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 22,
   },
-  tabActive: {
+  feedModeActive: {
     color: "#fff",
-    textDecorationLine: "underline",
-    textDecorationColor: "#FE2C55",
+    fontSize: 16,
+    fontWeight: "800",
+    textShadowColor: "rgba(0,0,0,0.65)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
-  emptyWrap: {
-    flex: 1,
+  feedModeInactive: {
+    color: "rgba(255,255,255,0.68)",
+    fontSize: 15,
+    fontWeight: "600",
+    textShadowColor: "rgba(0,0,0,0.65)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  searchButton: {
+    width: 30,
+    height: 30,
     alignItems: "center",
     justifyContent: "center",
-    gap: 14,
-    paddingHorizontal: 40,
+    marginLeft: 2,
   },
-  emptyIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#111",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 4,
-  },
-  emptyTitle: { color: "#fff", fontSize: 20, fontWeight: "700" },
-  emptyText: { color: "#555", fontSize: 14, textAlign: "center", lineHeight: 22 },
-  discoverBtn: {
-    marginTop: 8,
-    backgroundColor: "#FE2C55",
+  errorBanner: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    bottom: 90,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: 12,
-    paddingHorizontal: 32,
-    paddingVertical: 12,
+    backgroundColor: "rgba(30,30,36,0.96)",
+    zIndex: 30,
   },
-  discoverBtnText: { color: "#fff", fontWeight: "700", fontSize: 15 },
+  errorText: { color: "#fff", fontSize: 13, textAlign: "center" },
+  footer: { paddingVertical: 16, alignItems: "center" },
 });

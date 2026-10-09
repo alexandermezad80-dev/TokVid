@@ -35,31 +35,15 @@ export async function saveVideoTags(opts: SaveTagsOpts): Promise<void> {
   const hashtags = parseHashtags(opts.caption);
   const mentions = parseMentions(opts.caption);
 
-  // ── Hashtags: atomically create-or-increment each tag, then link it ──
+  // ── Hashtags: create/link/increment atomically per video ──
   if (hashtags.length > 0) {
-    const relations: { video_id: string; hashtag_id: string }[] = [];
     for (const tag of hashtags) {
-      const { data: hashtagId, error } = await supabase.rpc("upsert_hashtag", {
+      const { error } = await supabase.rpc("upsert_hashtag", {
         p_tag: tag,
+        p_video_id: opts.videoId,
       });
       if (error) {
         console.warn(`[videoTags] upsert_hashtag failed for #${tag}:`, error.message);
-        continue;
-      }
-      if (hashtagId) {
-        relations.push({ video_id: opts.videoId, hashtag_id: hashtagId as string });
-      }
-    }
-    if (relations.length > 0) {
-      // .select() so a silent RLS block (which returns no error) is observable.
-      const { data, error } = await supabase
-        .from("video_hashtags")
-        .insert(relations)
-        .select("hashtag_id");
-      if (error) {
-        console.warn("[videoTags] linking hashtags failed:", error.message);
-      } else if (!data || data.length < relations.length) {
-        console.warn("[videoTags] some hashtag links were not persisted (check RLS).");
       }
     }
   }

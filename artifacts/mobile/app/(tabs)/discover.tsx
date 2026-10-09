@@ -1,3 +1,4 @@
+import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -123,6 +124,12 @@ export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) requestRegistration();
+  }, [user]);
+
+  if (!user) return null;
 
   const doSearch = useCallback(async (q: string) => {
     if (q.trim().length < 2) {

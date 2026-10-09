@@ -1,3 +1,4 @@
+import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -18,6 +19,7 @@ import { supabase } from "../lib/supabase";
 import CommentsSheet from "../components/CommentsSheet";
 import VideoCard from "../components/VideoCard";
 import { useFollow } from "../context/FollowContext";
+import { useAuth } from "../context/AuthContext";
 import {
   VideoItem,
   formatCount,
@@ -39,6 +41,14 @@ export default function TagScreen() {
   const [shareOverrides, setShareOverrides] = useState<Record<string, number>>({});
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList>(null);
+
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) requestRegistration();
+  }, [user]);
+
+  if (!user) return null;
 
   const { followedIds, toggleFollow } = useFollow();
   const { likedIds, toggleLike } = useVideoFeed(followedIds);
@@ -116,20 +126,15 @@ export default function TagScreen() {
       }));
       return;
     }
-    try {
-      const { data } = await supabase
-        .from("videos")
-        .select("shares_count")
-        .eq("id", item.id)
-        .maybeSingle();
-      if (data) {
-        await supabase
-          .from("videos")
-          .update({ shares_count: (data.shares_count ?? 0) + 1 })
-          .eq("id", item.id);
-      }
-    } catch {
-      /* no-op */
+    const { error } = await supabase.rpc("increment_video_share_count", {
+      p_video_id: item.id,
+    });
+
+    if (error) {
+      setShareOverrides((prev) => ({
+        ...prev,
+        [item.id]: Math.max(0, (prev[item.id] ?? 1) - 1),
+      }));
     }
   }, []);
 
@@ -145,6 +150,7 @@ export default function TagScreen() {
           isLiked={likedIds.has(item.id)}
           isSaved={savedIds.has(item.id)}
           isOwner={false}
+          isGuest={false}
           onLike={() => toggleLike(item.id)}
           onDoubleLike={() => toggleLike(item.id)}
           onFollow={() => toggleFollow(item.creatorId)}

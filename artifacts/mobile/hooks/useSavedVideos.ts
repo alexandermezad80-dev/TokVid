@@ -1,5 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useRegistration } from "../context/RegistrationContext";
+import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { router } from "expo-router";
 import { BASE_VIDEOS, VideoItem, mapRowsToVideoItems } from "./useVideoFeed";
 
 /**
@@ -27,12 +30,16 @@ async function resolveSavedVideos(ids: Set<string>): Promise<VideoItem[]> {
 }
 
 export function useSavedVideos() {
+  const { completed } = useRegistration();
+  const requestSequence = useRef(0);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [savedVideos, setSavedVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadSaved = useCallback(async () => {
+    const request = ++requestSequence.current;
     const { data: { user } } = await supabase.auth.getUser();
+    if (request !== requestSequence.current) return;
     if (!user) {
       setSavedIds(new Set());
       setSavedVideos([]);
@@ -46,8 +53,10 @@ export function useSavedVideos() {
       .eq("user_id", user.id);
 
     const ids = new Set((data ?? []).map((r: { video_id: string }) => r.video_id));
+    const resolved = await resolveSavedVideos(ids);
+    if (request !== requestSequence.current) return;
     setSavedIds(ids);
-    setSavedVideos(await resolveSavedVideos(ids));
+    setSavedVideos(resolved);
     setLoading(false);
   }, []);
 
@@ -55,11 +64,14 @@ export function useSavedVideos() {
     loadSaved();
     const { data: sub } = supabase.auth.onAuthStateChange(() => { loadSaved(); });
     return () => sub.subscription.unsubscribe();
-  }, [loadSaved]);
+  }, [loadSaved, completed]);
 
   const toggleSave = useCallback(async (videoId: string) => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      requestRegistration();
+      return;
+    }
 
     const alreadySaved = savedIds.has(videoId);
 

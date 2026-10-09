@@ -1,3 +1,4 @@
+import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { formatDistanceToNowStrict } from "date-fns";
 import { es } from "date-fns/locale";
@@ -40,6 +41,7 @@ function iconForType(type: string) {
     case "follow": return "user-plus";
     case "comment": return "message-circle";
     case "mention": return "at-sign";
+    case "message": return "message-circle";
     default: return "bell";
   }
 }
@@ -126,6 +128,12 @@ export default function InboxScreen() {
   const { notifications, unreadCount, loading: notifLoading, markRead, markAllRead, refresh } = useNotifications();
   const [refreshing, setRefreshing] = useState(false);
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) requestRegistration();
+  }, [user]);
+
+  if (!user) return null;
 
   // Messages state
   const [convos, setConvos] = useState<ConversationRow[]>([]);
@@ -233,7 +241,27 @@ export default function InboxScreen() {
             }
           >
             {notifications.map((n) => (
-              <NotifItem key={n.id} notif={n} onPress={() => markRead(n.id)} />
+              <NotifItem
+                key={n.id}
+                notif={n}
+                onPress={() => {
+                  void markRead(n.id);
+                  if (
+                    n.type === "message" &&
+                    typeof n.data?.conversationId === "string"
+                  ) {
+                    const otherUserId =
+                      typeof n.data?.otherUserId === "string" ? n.data.otherUserId : "";
+                    const otherUsername =
+                      typeof n.data?.otherUsername === "string" ? n.data.otherUsername : "Usuario";
+                    const otherAvatar =
+                      typeof n.data?.otherAvatar === "string" ? n.data.otherAvatar : "";
+                    router.push(
+                      `/chat?conversationId=${n.data.conversationId}&otherUserId=${otherUserId}&otherUsername=${encodeURIComponent(otherUsername)}&otherAvatar=${encodeURIComponent(otherAvatar)}`
+                    );
+                  }
+                }}
+              />
             ))}
             <View style={{ height: Platform.OS === "web" ? 34 : insets.bottom + 80 }} />
           </ScrollView>

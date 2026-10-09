@@ -1,15 +1,19 @@
-* {
-  box-sizing: border-box;
-}
-
-html,
-body {
-  margin: 0;
-  min-height: 100%;
-  font-family: Inter, system-ui, sans-serif;
-  background: #f7f8fb;
-}
-
-button {
-  font: inherit;
-}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body { font-family: Inter, system-ui, sans-serif; background: #090909; color: #fff; }
+button, input { font: inherit; }
+.onboarding { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: radial-gradient(circle at 50% 20%, #272727, #090909 65%); }
+.onboarding-card { width: 100%; max-width: 520px; padding: 32px; border-radius: 24px; background: rgba(20,20,20,.94); box-shadow: 0 20px 60px rgba(0,0,0,.45); }
+.onboarding-card h1 { margin: 8px 0; font-size: 32px; }
+.onboarding-card > p:not(.step) { color: #bdbdbd; line-height: 1.5; }
+.step { margin: 0; font-size: 12px; letter-spacing: .12em; color: #aaa; font-weight: 700; }
+.onboarding-card form { display: grid; gap: 16px; margin-top: 24px; }
+.onboarding-card label { display: grid; gap: 8px; color: #ddd; font-weight: 600; }
+.onboarding-card input[type="text"] { padding: 13px 14px; border: 1px solid #444; border-radius: 12px; background: #111; color: #fff; outline: none; }
+.onboarding-card input[type="file"] { color: #bbb; }
+.onboarding-card form button, .onboarding-card > button { width: 100%; margin-top: 8px; padding: 14px 18px; border: 0; border-radius: 999px; background: #fff; color: #111; font-weight: 700; cursor: pointer; }
+.onboarding-card button:disabled { opacity: .45; cursor: not-allowed; }
+.error { color: #ff8f8f; }
+.interest-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 24px 0; }
+.interest { padding: 13px 10px; border: 1px solid #444; border-radius: 14px; background: #111; color: #ddd; cursor: pointer; }
+.interest.selected { border-color: #fff; background: #fff; color: #111; }
