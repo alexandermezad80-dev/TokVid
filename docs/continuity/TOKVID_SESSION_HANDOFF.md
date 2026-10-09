@@ -1,11 +1,6 @@
 # TokVid — estado y continuidad entre sesiones
 
-## Trabajo autorizado en curso — 9 de octubre de 2026
-
-Se implementó la corrección de mensajería privada, teclado, opciones flotantes discretas, borrado para mí/para todos, perfiles y seguimiento a partir de la prueba física del usuario con #206. **124 pruebas locales y la prueba SQL de privacidad pasaron; la nueva APK aún no se ha entregado.** Las dos migraciones de mensajería ya están aplicadas. [Alcance, evidencia y prueba física](../PRIVATE_MESSAGES_PROFILE_VALIDATION.md). La autorización ya está dada; continuar con typecheck, compilación y entrega, sin volver a pedir permiso ni rehacer lo aprobado.
-
-
-**Cierre funcional y documental:** 8 de octubre de 2026 (UTC). **Última entrega funcional:** [APK #206](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37794716857/artifacts/11559456417), código `a5fbc7ba45effa5145f00124dce7a99db1646a35`. La sección 13 contiene la entrega vigente; las secciones históricas conservan la evidencia anterior.
+**Cierre funcional y documental: 9 de octubre de 2026 (UTC). Última entrega: [APK #207](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37886244472/artifacts/11597441070), código `5485c9961f7bd1869468c92d7b5ec25c81262425`. La sección 14 es vigente; las anteriores son históricas. 124 pruebas, typecheck y build Android aprobados; aceptación física pendiente.**
 
 Este documento permite retomar sin depender del historial del chat. El usuario pidió documentar todo y conservar lo terminado salvo que necesite una actualización. Las instrucciones posteriores del usuario prevalecen sobre este registro.
 
@@ -15,7 +10,7 @@ Este documento permite retomar sin depender del historial del chat. El usuario p
 
 No rehacer el diseño, reemplazar flujos o volver a resolver decisiones aceptadas por iniciativa estética del agente. Para una actualización necesaria, explicar el problema y el alcance, respetar la autorización existente, aplicar un cambio puntual y registrar su validación. Si el usuario pide esperar antes de implementar, esperar. No solicitar de nuevo permisos para lo ya autorizado.
 
-Después de #204, el usuario aprobó el aspecto de comentarios y autorizó los ajustes y la publicación real descritos en las secciones 12–13. La espera previa mientras enumeraba cambios terminó con esa autorización. La entrega automática está verificada; la prueba física completa de la versión vigente sigue pendiente.
+Después de #206, el usuario probó publicación y chat en dos teléfonos y autorizó las correcciones de la sección 14. Confirmó borrar para mí/para todos y pidió tonos todavía más discretos. Esa autorización terminó la espera mientras enumeraba observaciones. La entrega #207 está verificada automáticamente; la aceptación física sigue pendiente.
 
 ## 2. Fuente de verdad y ubicación
 
@@ -23,8 +18,8 @@ Después de #204, el usuario aprobó el aspecto de comentarios y autorizó los a
 | --- | --- |
 | Repositorio | `alexandermezad80-dev/TokVid` |
 | Rama vigente | `feature/feed-mini-video-avatar` |
-| Código vigente APK #206 | `a5fbc7ba45effa5145f00124dce7a99db1646a35` |
-| Árbol vigente | `c55eaa4eef050332912edfea87348eb673b35bce` |
+| Código vigente APK #207 | `5485c9961f7bd1869468c92d7b5ec25c81262425` |
+| Árbol vigente | `881d419c7a1fa9a278cb4f08bd45fb1d619ddf17` |
 | Código histórico APK #204 | `a6e14783bbaede25f5f756f24250b7b62d9a85f0` |
 | Árbol de ese código | `3f52efddcc93abfd4aaaca0a0b68cd2a1ba4d9f1` |
 | Primer commit de los cuatro cambios | `619974503e9b3e0a7bfa4cd5a1e01d771871db36` |
@@ -34,7 +29,7 @@ Después de #204, el usuario aprobó el aspecto de comentarios y autorizó los a
 | Aplicación móvil | `artifacts/mobile` (Expo / React Native) |
 | Documento maestro | [TOKVID_MASTER_REQUIREMENTS.md](../requirements/TOKVID_MASTER_REQUIREMENTS.md) |
 
-Los cambios funcionales de esta entrega están en la rama vigente. No se afirma que se hayan fusionado a `main` o a la rama anterior. Verificar las referencias remotas si se retoma más adelante; no sobrescribir avances posteriores. Un commit documental posterior no cambia el commit incorporado en la APK #206.
+Los cambios funcionales de esta entrega están en la rama vigente. No se afirma que se hayan fusionado a `main` o a la rama anterior. Verificar las referencias remotas si se retoma más adelante; no sobrescribir avances posteriores. Un commit documental posterior no cambia el commit incorporado en la APK #207.
 
 ## 3. Estado de los bloques de esta sesión
 
@@ -238,7 +233,31 @@ El SQL de prueba se revirtió y no dejó publicaciones. La migración `202610080
 
 La comprobación automática no sustituye galería, cámara, reproducción ni IME en Android real. No iniciar LIVE, mensajería u otros bloques históricos automáticamente por esta entrega.
 
-## 14. Mensajería y coherencia del perfil — implementación del 9 de octubre
+## 14. Entrega #207 — mensajería y coherencia del perfil
 
-Se implementó la corrección de mensajería privada, teclado, opciones flotantes discretas, borrado para mí/para todos, perfiles y seguimiento a partir de la prueba física del usuario con #206. **124 pruebas locales y la prueba SQL de privacidad pasaron; la nueva APK aún no se ha entregado.** Las dos migraciones de mensajería ya están aplicadas. [Alcance, evidencia y prueba física](docs/PRIVATE_MESSAGES_PROFILE_VALIDATION.md). La autorización ya está dada; continuar con typecheck, compilación y entrega, sin volver a pedir permiso ni rehacer lo aprobado.
+Esta sección sustituye como estado vigente los cierres anteriores. El usuario pidió continuar e implementar después de las observaciones; no queda una autorización pendiente para este bloque. Confirmó **Eliminar para mí / Eliminar para todos** y fondo/bordes aún más discretos que la imagen propuesta.
 
+Se corrigieron Inbox (join incorrecto), entrega en chat abierto (tablas fuera de Realtime), compositor Android, menús flotantes y selección/borrado. Se conectaron listas de relaciones, perfil propio único desde avatares/tab bar y ocultación del Follow propio. Grillas con tamaños explícitos conservan bordes, separación y marca de agua. [Detalle de archivos, decisiones, migraciones y pruebas](../PRIVATE_MESSAGES_PROFILE_VALIDATION.md).
+
+| Evidencia | Valor |
+| --- | --- |
+| Workflow | [Android APK #207](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37886244472), intento 1, success |
+| Código | `5485c9961f7bd1869468c92d7b5ec25c81262425` |
+| Árbol | `881d419c7a1fa9a278cb4f08bd45fb1d619ddf17` |
+| Job | `113676784264` |
+| Pruebas con dependencias reales en CI | 124 aprobadas, 0 fallidas |
+| Typecheck móvil | Aprobado |
+| Android | `BUILD SUCCESSFUL in 27m 29s` |
+| APK | [tokvid-android-feed-avatar](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37886244472/artifacts/11597441070), artifact `11597441070` |
+| ZIP APK | 214058955 bytes |
+| SHA256 del APK sin comprimir | `0f50f8a36a453a98b0f76920eac4fd63263924c399b41c601d556edee4aa8d33` |
+| Mapa + manifiesto | [tokvid-auth-diagnostic-sourcemap](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37886244472/artifacts/11597396350) |
+| Retención anunciada | 7 de enero de 2027; comprobar disponibilidad al retomar |
+
+Migraciones **ya aplicadas**: `20261009042214_private_chat_delivery_visibility_and_removal` y `20261009043643_atomic_private_message_sending`. No borraron conversaciones, perfiles ni videos existentes. La segunda elimina el trigger/función recién añadidos para sustituir la notificación por RPC atómica compatible con clientes antiguos. SQL de pruebas pasó y fue revertido. Vistas/funciones invocadoras respetan RLS; se negó acceso/edición/eliminación a un tercero.
+
+El usuario preguntó qué se destruiría con SQL: se explicó el alcance anterior. No interpretar esa consulta como permiso para borrar contenido ni como un problema pendiente del token. Auth/OTP permanece intacto.
+
+El archivo [APK_207_VERIFICATION.json](APK_207_VERIFICATION.json) registra identidades del binario y sus artefactos. El documento maestro y CONTINUAR_AQUI se actualizan con esta misma entrega; no recompilar por el cierre documental.
+
+**Pendiente real:** prueba física #207 en ambos teléfonos de recepción, teclado/emojis, opciones y borrado; confirmar grilla del video ya existente, rutas propias y relaciones. Pruebas automáticas no certifican esos gestos nativos. Continuar desde observaciones del usuario; no restaurar #206 ni rehacer funciones aprobadas.

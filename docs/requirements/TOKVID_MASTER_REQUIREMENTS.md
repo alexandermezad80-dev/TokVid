@@ -1,20 +1,18 @@
 # TOKVID
 
-## Actualización autorizada en curso — 9 de octubre de 2026
+## Continuidad vigente — entrega del 9 de octubre de 2026
 
-Se implementó la corrección de mensajería privada, teclado, opciones flotantes discretas, borrado para mí/para todos, perfiles y seguimiento a partir de la prueba física del usuario con #206. **124 pruebas locales y la prueba SQL de privacidad pasaron; la nueva APK aún no se ha entregado.** Las dos migraciones de mensajería ya están aplicadas. [Alcance, evidencia y prueba física](../PRIVATE_MESSAGES_PROFILE_VALIDATION.md). La autorización ya está dada; continuar con typecheck, compilación y entrega, sin volver a pedir permiso ni rehacer lo aprobado.
+**Última entrega: [APK #207](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37886244472/artifacts/11597441070)**, rama `feature/feed-mini-video-avatar`, código `5485c9961f7bd1869468c92d7b5ec25c81262425`. [CI](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37886244472) verificada: **124 pruebas aprobadas, cero fallos, typecheck móvil y compilación Android correctos** (`BUILD SUCCESSFUL in 27m 29s`). La prueba física de esta versión está pendiente; no confundir validación automática con aprobación en teléfono.
 
-## Continuidad vigente — entrega del 8 de octubre de 2026
+**Alcance autorizado y entregado:** bandeja privada independiente de Actividad, mensajes en el chat abierto, recuperación al reconectar, compositor sobre teclado/emojis, popover flotante y selector de burbujas con fondo/bordes más discretos. Selección individual/varios/todos; propios con **Eliminar para mí / Eliminar para todos**, recibidos solo para mí. Autoría y acceso por participantes verificados en servidor. Perfil propio unificado desde avatares/tab bar, sin Seguir en video propio, grilla medida y acceso a Siguiendo/Seguidores/Amigos mutuos. [Evidencia, migraciones y prueba física](../PRIVATE_MESSAGES_PROFILE_VALIDATION.md).
 
-**Última entrega: [APK #206](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37794716857/artifacts/11559456417)**, rama `feature/feed-mini-video-avatar`, código `a5fbc7ba45effa5145f00124dce7a99db1646a35`. [CI](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37794716857) verificada: **106 pruebas aprobadas, cero fallos, typecheck móvil y compilación Android correctos**. La prueba física de esta versión sigue pendiente; no confundir evidencia automatizada con aprobación en teléfono.
+El usuario autorizó implementar después de enumerar observaciones de #206 y confirmó las dos modalidades de borrado. La espera previa terminó; no volver a pedir permiso para ese alcance. Su petición de conservar lo aprobado continúa vigente. El video real ya existía y era visible para su propietario en la base; se corrigió el tamaño de la grilla sin volver a subir ni alterar contenido. No se borraron conversaciones, perfiles ni videos existentes. Las pruebas SQL se revirtieron; el `DROP` de la segunda migración reemplaza únicamente el trigger/función de aviso recién añadidos para evitar duplicaciones con clientes anteriores.
 
-**Alcance autorizado y entregado:** Crear/Galería para publicar fotos/videos reales, perfil con grilla real y bordes suaves de marca, búsqueda, Para ti público y Siguiendo filtrado por autores seguidos. Avatares de comentarios hacia el autor; editor sobre teclado emoji; «Eliminar», «Ocultar mensajes» y «Mostrar» solo si hay hilos ocultos. Migración `20261008010846_support_photo_and_video_publications` aplicada. [Detalle y prueba](../PUBLISHING_COMMENTS_VALIDATION.md).
+**Leer primero [CONTINUAR_AQUI.md](../../CONTINUAR_AQUI.md) y [el estado entre sesiones](../continuity/TOKVID_SESSION_HANDOFF.md).** Conservar Auth/OTP de ocho dígitos, publicación real, diseño y permisos de comentarios y video pequeño al comentar. El borrado privado no reemplaza la cascada de comentarios públicos.
 
-**Leer primero [CONTINUAR_AQUI.md](../../CONTINUAR_AQUI.md) y [el estado entre sesiones](../continuity/TOKVID_SESSION_HANDOFF.md).** Regla vigente del usuario: **«lo que está hecho no se toca a no ser que necesite una actualización»**. Conservar lo aprobado y limitar cualquier actualización al alcance autorizado. No volver a preguntar permisos de un bloque ya autorizado.
+**Siguiente paso:** instalar #207 en ambos teléfonos, intercambiar mensajes manteniendo ambos chats abiertos y comprobar bandeja sin tocar Actividad; probar teclado/emojis, borrado privado/para todos, selector de burbujas, grilla propia, rutas del perfil y relaciones. Las APK #206 y anteriores son históricas. No marcar ninguna de estas pruebas físicas como completada hasta la confirmación del usuario.
 
-**Siguiente paso:** instalar #206 y probar un video desde Galería, perfil/Para ti/búsqueda y Siguiendo desde otra cuenta que siga al autor; repetir con foto y revisar emojis/avatares. Preservar Auth/OTP y las decisiones de comentarios. Las notas antiguas de espera documental, compilación pendiente y APK #204/#205 son históricas y quedan sustituidas por esta cabecera y el cierre final al pie.
-
-Este documento conserva requisitos futuros e historial. No significa que todos estén implementados ni autoriza empezar otro bloque automáticamente. El dato demo del feed Para ti permanece según la decisión previa hasta validar una subida real y autorizar su retirada; la grilla propia y Siguiendo muestran publicaciones reales.
+Este documento conserva requisitos futuros e historial; no autoriza iniciar otro bloque automáticamente. Los ejemplos de Para ti permanecen según la decisión previa; la grilla propia y Siguiendo muestran publicaciones reales.
 
 Documento maestro de requisitos y visión del proyecto
 
@@ -3000,3 +2998,7 @@ El SQL de prueba se revirtió y no dejó publicaciones. La migración `202610080
 **Pendiente físico:** publicar un video corto desde el teléfono, ver perfil/Para ti/búsqueda, comprobar Siguiendo desde otra cuenta seguidora; repetir con foto; comprobar editor visible al abrir emojis y navegación de avatares. Conservar también la comprobación física pendiente de Google sin Try Again. El usuario aprobó el aspecto de comentarios, pero no ha confirmado toda esta nueva APK. No marcar `physical_device_verified` como verdadero sin esa prueba.
 
 [Manifiesto de entrega](../continuity/APK_206_VERIFICATION.json).
+
+## Cierre de entrega — 9 de octubre de 2026, APK #207
+
+La entrega vigente es #207, código `5485c9961f7bd1869468c92d7b5ec25c81262425`: 124 pruebas, typecheck y compilación Android aprobados. Las dos migraciones privadas están aplicadas y la prueba SQL se revirtió. [APK](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37886244472/artifacts/11597441070), [manifiesto](../continuity/APK_207_VERIFICATION.json) y [validación/aceptación](../PRIVATE_MESSAGES_PROFILE_VALIDATION.md). La cabecera vigente y la sección 14 del handoff sustituyen estados anteriores de APK pendiente o #206 como última entrega. Falta únicamente la confirmación física del usuario con ambos teléfonos y sus nuevas observaciones; no rehacer lo aprobado ni cambiar Auth/OTP.

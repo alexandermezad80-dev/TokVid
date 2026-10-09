@@ -1,0 +1,28 @@
+{
+  "commit": "5485c9961f7bd1869468c92d7b5ec25c81262425",
+  "tree": "881d419c7a1fa9a278cb4f08bd45fb1d619ddf17",
+  "branch": "feature/feed-mini-video-avatar",
+  "run_id": 37886244472,
+  "run_number": 207,
+  "run_attempt": 1,
+  "job_id": 113676784264,
+  "result": "success",
+  "tests_passed": 124,
+  "tests_failed": 0,
+  "mobile_typecheck": "passed",
+  "gradle": "BUILD SUCCESSFUL in 27m 29s",
+  "apk_sha256": "0f50f8a36a453a98b0f76920eac4fd63263924c399b41c601d556edee4aa8d33",
+  "apk_artifact": 11597441070,
+  "apk_artifact_zip_bytes": 214058955,
+  "apk_artifact_zip_digest": "sha256:789af9d4c5e8ee5a24a3a5945ad8cdac83f6286a822127c3a53ac0041007484e",
+  "source_map_artifact": 11597396350,
+  "source_map_zip_bytes": 3335695,
+  "artifacts_expire_at": "2027-01-07T04:56:56Z",
+  "diagnostics": true,
+  "physical_device_verified": false,
+  "applied_migrations": [
+    "20261009042214_private_chat_delivery_visibility_and_removal",
+    "20261009043643_atomic_private_message_sending"
+  ],
+  "sql_rollback_validation": "passed"
+}

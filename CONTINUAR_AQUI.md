@@ -6,44 +6,43 @@ Actualizado: **9 de octubre de 2026 (UTC)**.
 
 > «Lo que está hecho no se toca a no ser que necesite una actualización».
 
-Conservar el comportamiento, diseño y decisiones aprobados. Limitar cualquier actualización a la necesidad concreta autorizada; no rehacer bloques terminados ni volver a preguntar decisiones resueltas.
-
-## Trabajo autorizado en curso — 9 de octubre de 2026
-
-Se implementó la corrección de mensajería privada, teclado, opciones flotantes discretas, borrado para mí/para todos, perfiles y seguimiento a partir de la prueba física del usuario con #206. **124 pruebas locales y la prueba SQL de privacidad pasaron; la nueva APK aún no se ha entregado.** Las dos migraciones de mensajería ya están aplicadas. [Alcance, evidencia y prueba física](docs/PRIVATE_MESSAGES_PROFILE_VALIDATION.md). La autorización ya está dada; continuar con typecheck, compilación y entrega, sin volver a pedir permiso ni rehacer lo aprobado.
+Conservar lo aprobado y limitar cambios a la necesidad autorizada. No volver a solicitar decisiones o permisos ya dados. Si el usuario pide esperar para un bloque nuevo, esperar.
 
 ## Entrega vigente
 
 - Repositorio: [alexandermezad80-dev/TokVid](https://github.com/alexandermezad80-dev/TokVid).
 - Rama: **`feature/feed-mini-video-avatar`**.
-- Código de la APK: **`a5fbc7ba45effa5145f00124dce7a99db1646a35`**. Los commits documentales posteriores no cambian la identidad del binario.
-- [Descargar APK #206](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37794716857/artifacts/11559456417): descargar el ZIP, extraer e instalar `app-release.apk`.
-- [Compilación #206](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37794716857): **106 pruebas aprobadas, 0 fallidas**, typecheck móvil aprobado y `BUILD SUCCESSFUL in 18m 42s`.
-- [Manifiesto y checksum](docs/continuity/APK_206_VERIFICATION.json). No confundir el SHA256 del APK con el del ZIP de GitHub.
+- Código de la APK: **`5485c9961f7bd1869468c92d7b5ec25c81262425`**. Los commits documentales posteriores no cambian el binario.
+- [Descargar APK #207](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37886244472/artifacts/11597441070): extraer el ZIP e instalar `app-release.apk` en ambos teléfonos.
+- [Compilación #207](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37886244472): **124 pruebas aprobadas, 0 fallidas**, typecheck móvil aprobado y `BUILD SUCCESSFUL in 27m 29s`.
+- [Manifiesto y checksum](docs/continuity/APK_207_VERIFICATION.json). El SHA256 del APK difiere del ZIP de GitHub.
 
-## Qué incluye
+## Qué incluye esta actualización
 
-- Crear con cámara/galería, vista previa, descripción, progreso y publicación real de foto/video.
-- Perfil propio con grilla real, separación y esquinas suaves, borde de marca y fondo con marca de agua TokVid; lector de publicaciones y búsqueda desde el feed.
-- «Para ti» consulta publicaciones públicas; «Siguiendo» consulta únicamente autores que sigue esa cuenta, filtrando antes de paginar. La publicación propia aparece en el perfil y Para ti; sus seguidores también la encuentran en Siguiendo.
-- Corrección del editor ante el cambio a teclado emoji, «Eliminar», «Ocultar mensajes», «Mostrar» solo con hilos ocultos y avatares de comentarios/respuestas que abren su perfil.
-- Conserva el diseño aprobado, video pequeño vertical al comentar, + para seguir, avatar guardable y corrección Realtime tras Google. No cambia Auth/OTP ni los permisos/semántica de comentarios.
+- Inbox privado con conversaciones y no leídos, independiente de tocar notificaciones. Recepción dentro del chat abierto, canales sin reutilización y recuperación de eventos perdidos al reconectar/volver a la app.
+- Compositor ajustado al teclado/emojis. Popover flotante al tocar mensaje o las opciones del encabezado, submenú Burbujas desplazable y tonos/bordes más discretos, como pidió el usuario.
+- Seleccionar uno, varios o todos. Propios: **Eliminar para mí / Eliminar para todos**. Recibidos: solo para mí. RLS protege cada conversación y el servidor valida autoría; la prueba con un tercero fue rechazada.
+- Perfil propio unificado al tocar los avatares de su video; ocultación de Seguir en videos propios. Grillas de tres columnas con tamaños medidos y el diseño aprobado. Siguiendo/Seguidores/Amigos abren sus listas; Amigos requiere seguimiento mutuo.
+- Conserva las funciones de #206: publicación real por cámara/galería, búsqueda/Para ti/Siguiendo, foto de avatar, comentarios y video pequeño. Auth/OTP no se modificaron.
 
-La migración `20261008010846_support_photo_and_video_publications` ya está aplicada y registrada. No volver a crearla. La APK #205 es la compilación anterior: no incluye el ajuste final de Para ti/Siguiendo. #204 corresponde a la entrega anterior de Google/video pequeño/avatar.
+## Base de datos
+
+Aplicadas y registradas `20261009042214_private_chat_delivery_visibility_and_removal` y `20261009043643_atomic_private_message_sending`. No reaplicarlas ni editar su historial. No se eliminaron datos existentes: los tests SQL se revirtieron. La segunda migración quita solo el trigger/función de avisos creados por la primera y los reemplaza por envío atómico para evitar duplicaciones en clientes antiguos. Se conserva la migración de publicaciones `20261008010846_support_photo_and_video_publications`.
 
 ## Siguiente paso concreto
 
-Probar en teléfono **Crear → Galería → video corto → Publicar**, comprobar perfil, Para ti, búsqueda y Siguiendo desde una segunda cuenta que siga al autor. Después probar foto, teclado emoji y avatares. [Lista y límites de validación](docs/PUBLISHING_COMMENTS_VALIDATION.md#prueba-en-teléfono). Las pruebas automáticas y la APK están verificadas; **la prueba física de esta versión está pendiente**. No publicar contenido en nombre del usuario para simular esa prueba.
+**Probar #207 en ambos teléfonos:** intercambiar mensajes sin salir del chat y revisar Inbox sin tocar Actividad; comprobar teclado/emoji, menú discreto y borrado en sus dos modalidades. Después verificar el video ya subido en la grilla propia, los dos avatares del feed, ausencia de autofollow y listas de relaciones. [Lista exacta y límites](docs/PRIVATE_MESSAGES_PROFILE_VALIDATION.md#prueba-física-de-aceptación).
 
-Los datos de ejemplo del feed Para ti se conservan según la decisión previa hasta verificar una subida real y autorizar su retirada. La grilla del perfil propio y Siguiendo usan contenido real. La subida actual tiene reintento manual; no se presenta como transferencia reanudable TUS.
+La compilación y las verificaciones automáticas están completas. **La aceptación física está pendiente**. No publicar mensajes/videos reales para simularla. Los datos de ejemplo de Para ti se conservan hasta autorización de retirarlos; grilla propia y Siguiendo usan contenido real. La transferencia sigue con reintento manual, sin presentar TUS como terminado.
 
 ## Documentos para retomar
 
-1. [Estado entre sesiones](docs/continuity/TOKVID_SESSION_HANDOFF.md).
-2. [Documento maestro](docs/requirements/TOKVID_MASTER_REQUIREMENTS.md): su historial no convierte todos los requisitos futuros en tareas actuales.
-3. [Detalle técnico y pruebas](docs/PUBLISHING_COMMENTS_VALIDATION.md).
-4. [Reglas para agentes](AGENTS.md).
+1. [Estado entre sesiones](docs/continuity/TOKVID_SESSION_HANDOFF.md), sección 14 vigente.
+2. [Documento maestro](docs/requirements/TOKVID_MASTER_REQUIREMENTS.md).
+3. [Mensajería y perfil: evidencia y pruebas](docs/PRIVATE_MESSAGES_PROFILE_VALIDATION.md).
+4. [Publicación y comentarios de #206](docs/PUBLISHING_COMMENTS_VALIDATION.md).
+5. [Reglas para agentes](AGENTS.md).
 
 **Frase para otra sesión:**
 
-> Continuemos TokVid desde `feature/feed-mini-video-avatar`. Lee `CONTINUAR_AQUI.md`, el handoff y el maestro. La última entrega es la APK #206, código `a5fbc7ba45effa5145f00124dce7a99db1646a35`. Conserva lo aprobado y retoma desde mi prueba física de publicación/comentarios y mis siguientes observaciones.
+> Continuemos TokVid desde `feature/feed-mini-video-avatar`. Lee CONTINUAR_AQUI, el handoff y el maestro. Última entrega APK #207, código `5485c9961f7bd1869468c92d7b5ec25c81262425`. Mensajería/perfiles y SQL están implementados y verificados automáticamente; retoma desde mi prueba física con dos cuentas. Conserva lo aprobado.

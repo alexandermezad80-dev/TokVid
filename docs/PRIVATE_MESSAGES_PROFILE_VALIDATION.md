@@ -41,10 +41,10 @@ La primera migración incluía un trigger de notificación, reemplazado en la se
 ## Evidencia y límites
 
 - **124 pruebas locales aprobadas, 0 fallidas.** Incluyen las 106 anteriores, modelos/servicios de mensajería, recepción en chat abierto, actualización de Inbox sin notificaciones, reconexión, eventos/consultas obsoletos, reintento sin duplicados, borrado, geometría del popover, grilla, relaciones y botón de seguimiento propio.
-- Transpilación local: 68 archivos TS/TSX, 0 errores de sintaxis; `git diff --check` correcto. El adaptador local de TypeScript no equivale a un typecheck: la comprobación completa queda a cargo del workflow con las dependencias reales.
+- Transpilación local: 68 archivos TS/TSX, 0 errores de sintaxis; `git diff --check` correcto. El adaptador local de TypeScript no equivale a un typecheck: el workflow #207 completó además el typecheck con las dependencias reales.
 - `scripts/tests/private-messages.rollback.sql` pasó después de aplicar las dos migraciones: envío/aviso atómicos, bandeja de ambos, no leídos, lectura, borrado privado/para todos, lote mixto rechazado y acceso de un tercero denegado. Transacción revertida; no conserva chats ni notificaciones de prueba ni elimina conversaciones existentes.
 - Advisor de seguridad: ningún aviso nuevo sobre los objetos añadidos. Persisten 25 advertencias previas de funciones `SECURITY DEFINER` de LIVE/contadores y protección de contraseñas filtradas desactivada. Son otro alcance; [referencia de funciones](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable) y [referencia de Auth](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). No se cambiaron Auth ni funciones LIVE para este bloque.
-- **Compilación/entrega Android: pendiente de registrar el resultado.** Ninguna prueba automática sustituye probar teclado, emojis, scroll, menú y llegada en dos teléfonos con la APK final.
+- **[APK #207](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37886244472/artifacts/11597441070) entregada**, código `5485c9961f7bd1869468c92d7b5ec25c81262425`. CI confirmó las **124 pruebas**, typecheck móvil completo, `BUILD SUCCESSFUL in 27m 29s`, marcador/SHA dentro del bundle y mapa de fuentes correspondiente. [Manifiesto](continuity/APK_207_VERIFICATION.json). Ninguna prueba automática sustituye probar teclado, emojis, scroll, menú y llegada en dos teléfonos con la APK final.
 
 ## Prueba física de aceptación
 
