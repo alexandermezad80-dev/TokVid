@@ -1,3 +1,5 @@
+import {usePublicationGrid} from "../../hooks/usePublicationGrid";
+import {useMyConnections} from "../../hooks/useMyConnections";
 import PublicationThumbnail from "../../components/PublicationThumbnail";
 import { usePublishedMedia } from "../../hooks/usePublishedMedia";
 import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
@@ -28,6 +30,8 @@ function avatarUrl(user: any, profile: any): string {
 }
 
 export default function ProfileScreen() {
+  const gridLayout=usePublicationGrid();
+  const connections=useMyConnections();
   const [tab, setTab] = useState<"videos" | "liked" | "saved">("videos");
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
@@ -80,7 +84,7 @@ export default function ProfileScreen() {
     n >= 1_000 ? `${(n / 1_000).toFixed(1)}K` : String(n);
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView onLayout={gridLayout.onLayout} style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={[styles.header, { paddingTop: topPad + 10 }]}>
         <TouchableOpacity style={styles.menuBtn}>
           <Feather name="menu" size={24} color="#fff" />
@@ -105,17 +109,19 @@ export default function ProfileScreen() {
 
         <View style={styles.stats}>
           {[
-            { value: fmtCount(following), label: "Following" },
-            { value: fmtCount(followers), label: "Followers" },
-            { value: fmtCount(likes), label: "Likes" },
+            { value: connections.loading ? "…" : fmtCount(connections.following.length), label: "Siguiendo", target:"following" },
+            { value: connections.loading ? "…" : fmtCount(connections.followers.length), label: "Seguidores", target:"followers" },
+            { value: connections.loading ? "…" : fmtCount(connections.friends.length), label: "Amigos", target:"friends" },
+            { value: fmtCount(likes), label: "Me gusta", target:"liked" },
           ].map((s) => (
-            <View key={s.label} style={styles.stat}>
+            <TouchableOpacity key={s.label} style={styles.stat} accessibilityRole="button" accessibilityLabel={`Ver ${s.label}`} onPress={()=>s.target==="liked"?setTab("liked"):router.push({pathname:"/(tabs)/friends",params:{tab:s.target}})}>
               <Text style={styles.statValue}>{s.value}</Text>
               <Text style={styles.statLabel}>{s.label}</Text>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
 
+        {!!connections.error&&<TouchableOpacity onPress={()=>void connections.refresh()}><Text style={{color:"#E7ACBF",fontSize:12}}>{connections.error}</Text></TouchableOpacity>}
         <View style={styles.actions}>
           <TouchableOpacity style={styles.editBtn} onPress={() => router.push("/edit-profile")}>
             <Text style={styles.editBtnText}>Editar perfil</Text>
@@ -123,7 +129,7 @@ export default function ProfileScreen() {
           <TouchableOpacity style={styles.shareBtn}>
             <Feather name="share" size={16} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.shareBtn}>
+          <TouchableOpacity style={styles.shareBtn} onPress={()=>router.push({pathname:"/(tabs)/friends",params:{tab:"friends"}})}>
             <Feather name="user-plus" size={16} color="#fff" />
           </TouchableOpacity>
         </View>
@@ -163,7 +169,7 @@ export default function ProfileScreen() {
             {savedVideos.map((v, idx) => (
               <TouchableOpacity
                 key={v.id}
-                style={styles.gridItem}
+                style={[styles.gridItem,gridLayout.tile]}
                 onPress={() => router.push(`/saved-feed?startIndex=${idx}`)}
               >
                 <PublicationThumbnail item={v} />
@@ -188,7 +194,7 @@ export default function ProfileScreen() {
             {likedVideos.map((v, idx) => (
               <TouchableOpacity
                 key={v.id}
-                style={styles.gridItem}
+                style={[styles.gridItem,gridLayout.tile]}
                 onPress={() => router.push(`/liked-feed?startIndex=${idx}`)}
               >
                 <PublicationThumbnail item={v} />
@@ -204,7 +210,7 @@ export default function ProfileScreen() {
           {publications.loading && publications.items.length === 0 ? <ActivityIndicator color="#85D5DB" style={{ padding: 24 }} /> : null}
           {!!publications.error && <TouchableOpacity onPress={() => void publications.refresh()} style={styles.emptyState}><Text style={styles.emptyText}>{publications.error}</Text><Text style={{color:"#9CDEE1"}}>Reintentar</Text></TouchableOpacity>}
           {!publications.loading && !publications.error && publications.items.length === 0 && <TouchableOpacity style={styles.emptyState} onPress={() => router.push("/(tabs)/create")}><Feather name="plus-circle" size={36} color="#8DCBD0" /><Text style={styles.emptyTitle}>Tu primera publicación</Text><Text style={styles.emptyText}>Comparte una foto o un video desde Galería.</Text></TouchableOpacity>}
-          <View style={styles.grid}>{publications.items.map(item => <TouchableOpacity key={item.id} style={styles.gridItem} accessibilityRole="button" accessibilityLabel={`Abrir publicación: ${item.caption || "Sin descripción"}`} onPress={() => router.push({ pathname:"/publication", params:{id:item.id} })}><PublicationThumbnail item={item} /></TouchableOpacity>)}</View>
+          <View style={styles.grid}>{publications.items.map(item => <TouchableOpacity key={item.id} style={[styles.gridItem,gridLayout.tile]} accessibilityRole="button" accessibilityLabel={`Abrir publicación: ${item.caption || "Sin descripción"}`} onPress={() => router.push({ pathname:"/publication", params:{id:item.id} })}><PublicationThumbnail item={item} /></TouchableOpacity>)}</View>
           {publications.hasMore && <TouchableOpacity onPress={() => void publications.loadMore()} disabled={publications.loading} style={{padding:20,alignItems:"center"}}><Text style={{color:"#A6E1E5"}}>{publications.loading ? "Cargando…" : "Ver más"}</Text></TouchableOpacity>}
         </View>
       )}

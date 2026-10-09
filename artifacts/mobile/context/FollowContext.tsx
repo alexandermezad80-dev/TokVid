@@ -16,6 +16,7 @@ interface FollowContextValue {
   isFollowing: (creatorId: string) => boolean;
   toggleFollow: (creatorId: string) => Promise<void>;
   loadingIds: Set<string>;
+  revision: number;
 }
 
 const FollowContext = createContext<FollowContextValue | null>(null);
@@ -24,6 +25,8 @@ export function FollowProvider({ children }: { children: React.ReactNode }) {
   const { user, requireAuth } = useAuth();
   const { completed } = useRegistration();
   const loadSequence = useRef(0);
+  const [revision,setRevision]=useState(0);
+  const pending=useRef(new Set<string>());
   const [followedIds, setFollowedIds] = useState<Set<string>>(new Set());
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
 
@@ -53,7 +56,8 @@ export function FollowProvider({ children }: { children: React.ReactNode }) {
   const toggleFollow = useCallback(
     async (creatorId: string) => {
       const currentUser = user ?? await requireAuth();
-      if (!currentUser || creatorId === currentUser.id) return;
+      if (!currentUser || creatorId === currentUser.id || pending.current.has(creatorId)) return;
+      pending.current.add(creatorId);
 
       const alreadyFollowing = followedIds.has(creatorId);
 
@@ -69,6 +73,7 @@ export function FollowProvider({ children }: { children: React.ReactNode }) {
         try { await setDemoFollow(currentUser.id, creatorId, !alreadyFollowing); }
         catch { setFollowedIds(prev => { const next = new Set(prev); alreadyFollowing ? next.add(creatorId) : next.delete(creatorId); return next; }); }
         setLoadingIds(prev => { const next = new Set(prev); next.delete(creatorId); return next; });
+        pending.current.delete(creatorId);setRevision(n=>n+1);
         return;
       }
       let error = null;
@@ -104,6 +109,7 @@ export function FollowProvider({ children }: { children: React.ReactNode }) {
         });
       }
 
+      pending.current.delete(creatorId);setRevision(n=>n+1);
       setLoadingIds((prev) => {
         const next = new Set(prev);
         next.delete(creatorId);
@@ -114,7 +120,7 @@ export function FollowProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <FollowContext.Provider value={{ followedIds, isFollowing, toggleFollow, loadingIds }}>
+    <FollowContext.Provider value={{ followedIds, isFollowing, toggleFollow, loadingIds, revision }}>
       {children}
     </FollowContext.Provider>
   );
@@ -125,3 +131,4 @@ export function useFollow() {
   if (!ctx) throw new Error("useFollow must be used within FollowProvider");
   return ctx;
 }
+

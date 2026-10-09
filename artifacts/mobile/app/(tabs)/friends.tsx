@@ -1,9 +1,13 @@
+import {useMyConnections} from "../../hooks/useMyConnections";
+import {openPrivateConversation} from "../../lib/features/messages/services/private-messages";
 import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
+  ScrollView,
   Image,
   Modal,
   Platform,
@@ -41,27 +45,6 @@ function getAvatar(person: Pick<Person, "id" | "username" | "avatar_url">) {
   return `https://api.dicebear.com/9.x/initials/png?seed=${encodeURIComponent(
     person.username || person.id
   )}&backgroundColor=FE0979&textColor=ffffff&size=128`;
-}
-
-async function findOrCreateConversation(myId: string, otherId: string) {
-  const { data: existing } = await supabase
-    .from("conversations")
-    .select("id")
-    .or(
-      `and(user1_id.eq.${myId},user2_id.eq.${otherId}),and(user1_id.eq.${otherId},user2_id.eq.${myId})`
-    )
-    .limit(1)
-    .maybeSingle();
-
-  if (existing?.id) return existing.id as string;
-
-  const { data: created } = await supabase
-    .from("conversations")
-    .insert({ user1_id: myId, user2_id: otherId })
-    .select("id")
-    .single();
-
-  return (created?.id as string) ?? null;
 }
 
 function FollowAction({ person }: { person: Person }) {
@@ -110,9 +93,8 @@ function ProfileModal({
   const openMessage = async () => {
     if (!user || !person) return;
     setMessageLoading(true);
-    const conversationId = await findOrCreateConversation(user.id, person.id);
-    setMessageLoading(false);
-    if (!conversationId) return;
+    let conversationId:string;
+    try{conversationId=await openPrivateConversation(person.id);}catch(e){Alert.alert("No se pudo abrir el chat",e instanceof Error?e.message:"Inténtalo de nuevo.");return;}finally{setMessageLoading(false);}
     onClose();
     router.push(
       `/chat?conversationId=${conversationId}&otherUserId=${person.id}&otherUsername=${encodeURIComponent(
@@ -188,68 +170,36 @@ function ProfileModal({
 }
 
 export default function FriendsScreen() {
+  const params=useLocalSearchParams<{tab?:string}>();
+  const connections=useMyConnections();
+  const [error,setError]=useState<string|null>(null);
+  const [retry,setRetry]=useState(0);
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<FriendTab>("friends");
+  useEffect(()=>{if(params.tab==="friends"||params.tab==="followers"||params.tab==="following"){setTab(params.tab);setSearch("");}},[params.tab]);
   const [people, setPeople] = useState<Person[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
 
-  const loadPeople = useCallback(async () => {
-    if (!user) return;
-
-    setLoading(true);
-
-    const { data: followingRows, error: followingError } = await supabase
-      .from("follows")
-      .select("following_id")
-      .eq("follower_id", user.id);
-
-    const { data: followerRows, error: followerError } = await supabase
-      .from("follows")
-      .select("follower_id")
-      .eq("following_id", user.id);
-
-    if (followingError || followerError) {
-      setPeople([]);
-      setLoading(false);
-      return;
-    }
-
-    const followingIds = (followingRows ?? []).map((row) => row.following_id as string);
-    const followerIds = (followerRows ?? []).map((row) => row.follower_id as string);
-
-    let ids: string[] = followingIds;
-    if (tab === "followers") ids = followerIds;
-    if (tab === "friends") {
-      const followingSet = new Set(followingIds);
-      ids = followerIds.filter((id) => followingSet.has(id));
-    }
-
-    if (ids.length === 0) {
-      setPeople([]);
-      setLoading(false);
-      return;
-    }
-
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("id, username, avatar_url, bio, followers_count, following_count, likes_count")
-      .in("id", ids)
-      .order("username", { ascending: true });
-
-    setPeople((profiles ?? []) as Person[]);
-    setLoading(false);
-  }, [tab, user]);
-
-  useEffect(() => {
-    if (!user) {
-      requestRegistration();
-      return;
-    }
-    loadPeople();
-  }, [user, loadPeople]);
+  const idsKey=JSON.stringify(connections[tab]);
+  useFocusEffect(useCallback(()=>{
+    let active=true;
+    if(!user){requestRegistration();setPeople([]);setLoading(false);return;}
+    setLoading(true);setError(null);
+    void(async()=>{
+      try{const ids=JSON.parse(idsKey) as string[],rows:Person[]=[];
+        for(let start=0;start<ids.length;start+=200){
+          const {data,error}=await supabase.from("profiles").select("id,username,avatar_url,bio,followers_count,following_count,likes_count").in("id",ids.slice(start,start+200));
+          if(error)throw error;rows.push(...(data??[]) as Person[]);
+        }
+        if(active)setPeople(rows.sort((a,b)=>a.username.localeCompare(b.username)));
+      }catch{if(active)setError("No se pudo cargar la lista. Vuelve a intentarlo.");}
+      finally{if(active)setLoading(false);}
+    })();
+    return()=>{active=false;};
+  },[user?.id,idsKey,retry]));
 
   const filteredPeople = useMemo(() => {
     const term = search.trim().toLowerCase().replace(/^@/, "");
@@ -270,8 +220,8 @@ export default function FriendsScreen() {
           <Feather name="arrow-left" size={22} color="#fff" />
         </TouchableOpacity>
         <View style={styles.headerTitleWrap}>
-          <Text style={styles.headerTitle}>Amigos</Text>
-          <Text style={styles.headerSubtitle}>Personas que sigues y te siguen</Text>
+          <Text style={styles.headerTitle}>{tab==="friends"?"Amigos":tab==="followers"?"Seguidores":"Siguiendo"}</Text>
+          <Text style={styles.headerSubtitle}>{tab==="friends"?"Se siguen mutuamente":tab==="followers"?"Personas que te siguen":"Personas a las que sigues"}</Text>
         </View>
         <View style={styles.headerButton} />
       </View>
@@ -316,8 +266,8 @@ export default function FriendsScreen() {
         ) : null}
       </View>
 
-      <View style={styles.list}>
-        {loading ? (
+      <ScrollView style={styles.list} contentContainerStyle={{flexGrow:1,paddingBottom:insets.bottom+90}}>
+        {error||connections.error ? <View style={styles.empty}><Text style={styles.emptyText}>{error||connections.error}</Text><TouchableOpacity onPress={()=>{setRetry(n=>n+1);void connections.refresh();}} style={{padding:16}}><Text style={{color:"#A0D9DB"}}>Reintentar</Text></TouchableOpacity></View> : loading||connections.loading ? (
           <View style={styles.center}>
             <ActivityIndicator size="large" color="#FE0979" />
             <Text style={styles.centerText}>Cargando...</Text>
@@ -347,7 +297,7 @@ export default function FriendsScreen() {
             <TouchableOpacity
               key={person.id}
               style={styles.personRow}
-              onPress={() => setSelectedPerson(person)}
+              onPress={() => router.push({pathname:"/user-profile",params:{userId:person.id}})}
               activeOpacity={0.8}
             >
               <Image source={{ uri: getAvatar(person) }} style={styles.avatar} />
@@ -363,7 +313,7 @@ export default function FriendsScreen() {
             </TouchableOpacity>
           ))
         )}
-      </View>
+      </ScrollView>
 
       <ProfileModal
         person={selectedPerson}
@@ -569,3 +519,4 @@ const styles = StyleSheet.create({
   },
   messageButtonText: { color: "#fff", fontSize: 13, fontWeight: "800" },
 });
+

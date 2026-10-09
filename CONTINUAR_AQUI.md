@@ -1,12 +1,16 @@
 # TokVid — continuar desde aquí
 
-Actualizado: **8 de octubre de 2026 (UTC)**.
+Actualizado: **9 de octubre de 2026 (UTC)**.
 
 ## Regla del usuario
 
 > «Lo que está hecho no se toca a no ser que necesite una actualización».
 
 Conservar el comportamiento, diseño y decisiones aprobados. Limitar cualquier actualización a la necesidad concreta autorizada; no rehacer bloques terminados ni volver a preguntar decisiones resueltas.
+
+## Trabajo autorizado en curso — 9 de octubre de 2026
+
+Se implementó la corrección de mensajería privada, teclado, opciones flotantes discretas, borrado para mí/para todos, perfiles y seguimiento a partir de la prueba física del usuario con #206. **124 pruebas locales y la prueba SQL de privacidad pasaron; la nueva APK aún no se ha entregado.** Las dos migraciones de mensajería ya están aplicadas. [Alcance, evidencia y prueba física](docs/PRIVATE_MESSAGES_PROFILE_VALIDATION.md). La autorización ya está dada; continuar con typecheck, compilación y entrega, sin volver a pedir permiso ni rehacer lo aprobado.
 
 ## Entrega vigente
 

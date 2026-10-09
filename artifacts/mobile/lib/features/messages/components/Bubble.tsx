@@ -86,11 +86,12 @@ type BubbleProps = {
   styleVariant?: BubbleStyleVariant;
   timestamp?: string;
   onLongPress?: () => void;
+  onPress?: () => void;
 };
 
 export default function Bubble({
   text, direction, groupPosition = "single", styleVariant = "classic",
-  timestamp, onLongPress,
+  timestamp, onLongPress, onPress,
 }: BubbleProps) {
   const token = T[styleVariant][direction];
   const [topLeft, topRight, bottomRight, bottomLeft] = radius(token, direction, groupPosition);
@@ -140,7 +141,7 @@ export default function Bubble({
 
   return (
     <View style={[styles.row, { alignItems: direction === "sent" ? "flex-end" : "flex-start" }]}>
-      <Pressable disabled={!onLongPress} onLongPress={onLongPress} accessibilityRole="text">
+      <Pressable disabled={!onLongPress && !onPress} onPress={onPress} onLongPress={onLongPress} accessibilityRole={onPress ? "button" : "text"}>
         {visual}
       </Pressable>
       {timestamp ? <Text style={styles.time}>{timestamp}</Text> : null}
@@ -154,3 +155,4 @@ const styles = StyleSheet.create({
   text: { fontFamily:"Inter", includeFontPadding:false },
   time: { color:"#444", fontSize:11, marginTop:4, paddingHorizontal:2 },
 });
+

@@ -63,6 +63,8 @@ interface Props {
   caption: string;
   song: string;
   isFollowing: boolean;
+  isOwner?: boolean;
+  followPending?: boolean;
   onFollow: () => void;
   onAvatarPress?: () => void;
 }
@@ -74,6 +76,8 @@ export default function VideoInfo({
   caption,
   song,
   isFollowing,
+  isOwner=false,
+  followPending=false,
   onFollow,
   onAvatarPress,
 }: Props) {
@@ -111,9 +115,9 @@ export default function VideoInfo({
         <TouchableOpacity onPress={onAvatarPress} activeOpacity={0.85}>
           <Text style={styles.creatorName}>{creatorHandle}</Text>
         </TouchableOpacity>
-        {(
-          <TouchableOpacity onPress={onFollow} style={styles.followBtn}>
-            <Text style={[styles.followText, isFollowing && { color: "#00F2FE" }]}>{isFollowing ? "Siguiendo" : "Follow"}</Text>
+        {!isOwner && (
+          <TouchableOpacity disabled={followPending} onPress={onFollow} style={styles.followBtn}>
+            <Text style={[styles.followText, isFollowing && { color: "#00F2FE" }]}>{isFollowing ? "Siguiendo" : "Seguir"}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -206,3 +210,4 @@ const styles = StyleSheet.create({
     width: 600,
   },
 });
+

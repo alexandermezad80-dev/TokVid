@@ -172,6 +172,8 @@ export default function VideoCard({
 
       {!previewFrame && <View style={styles.overlay}>
         <VideoInfo
+          isOwner={isOwner}
+          followPending={followPending}
           creator={video.creator}
           creatorHandle={video.creatorHandle}
           creatorAvatar={video.creatorAvatar}

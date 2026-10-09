@@ -1,5 +1,10 @@
 # TokVid — estado y continuidad entre sesiones
 
+## Trabajo autorizado en curso — 9 de octubre de 2026
+
+Se implementó la corrección de mensajería privada, teclado, opciones flotantes discretas, borrado para mí/para todos, perfiles y seguimiento a partir de la prueba física del usuario con #206. **124 pruebas locales y la prueba SQL de privacidad pasaron; la nueva APK aún no se ha entregado.** Las dos migraciones de mensajería ya están aplicadas. [Alcance, evidencia y prueba física](../PRIVATE_MESSAGES_PROFILE_VALIDATION.md). La autorización ya está dada; continuar con typecheck, compilación y entrega, sin volver a pedir permiso ni rehacer lo aprobado.
+
+
 **Cierre funcional y documental:** 8 de octubre de 2026 (UTC). **Última entrega funcional:** [APK #206](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37794716857/artifacts/11559456417), código `a5fbc7ba45effa5145f00124dce7a99db1646a35`. La sección 13 contiene la entrega vigente; las secciones históricas conservan la evidencia anterior.
 
 Este documento permite retomar sin depender del historial del chat. El usuario pidió documentar todo y conservar lo terminado salvo que necesite una actualización. Las instrucciones posteriores del usuario prevalecen sobre este registro.
@@ -232,3 +237,8 @@ El SQL de prueba se revirtió y no dejó publicaciones. La migración `202610080
 - Migración: `supabase/migrations/20261008010846_support_photo_and_video_publications.sql`. Pruebas: `scripts/tests/publishing.test.cjs`, `published-feed.test.cjs`, `publishing.rollback.sql` y regresiones de geometría del teclado. Consultar el árbol para el nombre exacto antes de editar.
 
 La comprobación automática no sustituye galería, cámara, reproducción ni IME en Android real. No iniciar LIVE, mensajería u otros bloques históricos automáticamente por esta entrega.
+
+## 14. Mensajería y coherencia del perfil — implementación del 9 de octubre
+
+Se implementó la corrección de mensajería privada, teclado, opciones flotantes discretas, borrado para mí/para todos, perfiles y seguimiento a partir de la prueba física del usuario con #206. **124 pruebas locales y la prueba SQL de privacidad pasaron; la nueva APK aún no se ha entregado.** Las dos migraciones de mensajería ya están aplicadas. [Alcance, evidencia y prueba física](docs/PRIVATE_MESSAGES_PROFILE_VALIDATION.md). La autorización ya está dada; continuar con typecheck, compilación y entrega, sin volver a pedir permiso ni rehacer lo aprobado.
+

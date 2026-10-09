@@ -1,3 +1,4 @@
+import {usePrivateInbox} from "../../hooks/usePrivateInbox";
 import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { formatDistanceToNowStrict } from "date-fns";
@@ -31,6 +32,7 @@ interface ConversationRow {
   other_id: string;
   other_username: string;
   other_avatar: string | null;
+  unread_count?: number;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -114,7 +116,8 @@ function ConvoItem({ convo }: { convo: ConversationRow }) {
         </Text>
         <Text style={styles.notifTime}>{timeAgo(convo.last_message_at)}</Text>
       </View>
-      <Feather name="chevron-right" size={16} color="#333" />
+      {!!convo.unread_count && <View style={styles.badge}><Text style={styles.badgeText}>{convo.unread_count}</Text></View>}
+      <Feather name="chevron-right" size={16} color="#777" />
     </TouchableOpacity>
   );
 }
@@ -133,66 +136,15 @@ export default function InboxScreen() {
     if (!user) requestRegistration();
   }, [user]);
 
-  if (!user) return null;
-
-  // Messages state
-  const [convos, setConvos] = useState<ConversationRow[]>([]);
-  const [convosLoading, setConvosLoading] = useState(false);
-
-  const loadConvos = useCallback(async () => {
-    if (!user) return;
-    setConvosLoading(true);
-    const { data } = await supabase
-      .from("conversations")
-      .select(`
-        id, user1_id, user2_id, last_message, last_message_at,
-        user1:profiles!conversations_user1_id_fkey(id, username, avatar_url),
-        user2:profiles!conversations_user2_id_fkey(id, username, avatar_url)
-      `)
-      .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
-      .order("last_message_at", { ascending: false });
-
-    if (data) {
-      const rows: ConversationRow[] = (data as any[]).map((c) => {
-        const isUser1 = c.user1_id === user.id;
-        const other = isUser1 ? c.user2 : c.user1;
-        return {
-          id: c.id,
-          user1_id: c.user1_id,
-          user2_id: c.user2_id,
-          last_message: c.last_message,
-          last_message_at: c.last_message_at,
-          other_id: other?.id ?? "",
-          other_username: other?.username ?? "Usuario",
-          other_avatar: other?.avatar_url ?? null,
-        };
-      });
-      setConvos(rows);
-    }
-    setConvosLoading(false);
-  }, [user]);
-
-  useEffect(() => {
-    if (tab === "messages") loadConvos();
-  }, [tab, loadConvos]);
-
-  // Real-time: refresh convos when a new message arrives
-  useEffect(() => {
-    if (!user) return;
-    const channel = supabase
-      .channel("inbox-convos")
-      .on("postgres_changes", { event: "*", schema: "public", table: "conversations" }, () => {
-        if (tab === "messages") loadConvos();
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [user, tab, loadConvos]);
+  const {conversations:convos,loading:convosLoading,error:convosError,refresh:loadConvos}=usePrivateInbox(user?.id);
 
   const handleRefresh = async () => {
     setRefreshing(true);
     await Promise.all([refresh(), tab === "messages" ? loadConvos() : Promise.resolve()]);
     setRefreshing(false);
   };
+
+  if (!user) return null;
 
   return (
     <View style={[styles.container, { paddingTop: topPad }]}>
@@ -267,8 +219,10 @@ export default function InboxScreen() {
           </ScrollView>
         )
       ) : (
-        convosLoading ? (
+        convosLoading && convos.length === 0 ? (
           <View style={styles.center}><ActivityIndicator color="#FE2C55" /></View>
+        ) : convosError ? (
+          <View style={styles.emptyState}><Text style={styles.emptyText}>{convosError}</Text><TouchableOpacity onPress={()=>void loadConvos()} style={{padding:16}}><Text style={{color:"#A6D4DA"}}>Reintentar</Text></TouchableOpacity></View>
         ) : convos.length === 0 ? (
           <View style={styles.emptyState}>
             <View style={styles.emptyIcon}><Feather name="message-square" size={36} color="#333" /></View>
@@ -353,3 +307,4 @@ const styles = StyleSheet.create({
   emptyTitle: { color: "#fff", fontSize: 18, fontWeight: "700" },
   emptyText: { color: "#555", fontSize: 14, textAlign: "center", lineHeight: 20 },
 });
+

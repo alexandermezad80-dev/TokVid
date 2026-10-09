@@ -1,11 +1,14 @@
+import {usePublicationGrid} from "../hooks/usePublicationGrid";
+import {openPrivateConversation} from "../lib/features/messages/services/private-messages";
 import PublicationThumbnail from "../components/PublicationThumbnail";
 import { usePublishedMedia } from "../hooks/usePublishedMedia";
 import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router";
+import { Redirect, router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Platform,
   ScrollView,
@@ -18,29 +21,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
 import { useFollow } from "../context/FollowContext";
 import { supabase } from "../lib/supabase";
-
-async function findOrCreateConversation(myId: string, otherId: string): Promise<string | null> {
-  // Look for existing conversation in both orderings
-  const { data: existing } = await supabase
-    .from("conversations")
-    .select("id")
-    .or(
-      `and(user1_id.eq.${myId},user2_id.eq.${otherId}),and(user1_id.eq.${otherId},user2_id.eq.${myId})`
-    )
-    .limit(1)
-    .maybeSingle();
-
-  if (existing) return existing.id as string;
-
-  // Create new conversation
-  const { data: created } = await supabase
-    .from("conversations")
-    .insert({ user1_id: myId, user2_id: otherId })
-    .select("id")
-    .single();
-
-  return (created?.id as string) ?? null;
-}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -101,6 +81,7 @@ function FollowButton({ userId }: { userId: string }) {
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function UserProfileScreen() {
+  const gridLayout=usePublicationGrid();
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const { user } = useAuth();
 
@@ -122,9 +103,8 @@ export default function UserProfileScreen() {
   const openChat = async () => {
     if (!user || !userId || !profile) return;
     setMsgLoading(true);
-    const convId = await findOrCreateConversation(user.id, userId);
-    setMsgLoading(false);
-    if (!convId) return;
+    let convId:string;
+    try{convId=await openPrivateConversation(userId);}catch(e){Alert.alert("No se pudo abrir el chat",e instanceof Error?e.message:"Inténtalo de nuevo.");return;}finally{setMsgLoading(false);}
     router.push(
       `/chat?conversationId=${convId}&otherUserId=${userId}&otherUsername=${encodeURIComponent(profile.username)}&otherAvatar=${encodeURIComponent(profile.avatar_url ?? "")}`
     );
@@ -144,11 +124,12 @@ export default function UserProfileScreen() {
 
   useEffect(() => { void fetchProfile(); }, [fetchProfile]);
   if (!user) return null;
+  if(user.id===userId) return <Redirect href="/(tabs)/profile"/>;
 
   const isOwnProfile = user?.id === userId;
 
   return (
-    <View style={[styles.container]}>
+    <View onLayout={gridLayout.onLayout} style={[styles.container]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 6 }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
@@ -256,7 +237,7 @@ export default function UserProfileScreen() {
             ) : (
               <View style={styles.grid}>
                 {videos.map((video) => (
-                  <TouchableOpacity key={video.id} style={styles.gridItem} onPress={() => router.push({ pathname: "/publication", params: { id: video.id } })}>
+                  <TouchableOpacity key={video.id} style={[styles.gridItem,gridLayout.tile]} onPress={() => router.push({ pathname: "/publication", params: { id: video.id } })}>
                     <PublicationThumbnail item={video} />
                     <View style={styles.viewsBadge}>
                       <Feather name="play" size={10} color="#fff" />

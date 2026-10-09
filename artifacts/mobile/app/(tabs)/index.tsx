@@ -242,7 +242,7 @@ ${item.uri}`,
               requestRegistration();
               return;
             }
-            router.push(`/user-profile?userId=${item.creatorId}`);
+            router.push(item.creatorId===user.id ? "/(tabs)/profile" : `/user-profile?userId=${item.creatorId}`);
           }}
         />
       );

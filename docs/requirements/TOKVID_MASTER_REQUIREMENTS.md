@@ -1,5 +1,9 @@
 # TOKVID
 
+## Actualización autorizada en curso — 9 de octubre de 2026
+
+Se implementó la corrección de mensajería privada, teclado, opciones flotantes discretas, borrado para mí/para todos, perfiles y seguimiento a partir de la prueba física del usuario con #206. **124 pruebas locales y la prueba SQL de privacidad pasaron; la nueva APK aún no se ha entregado.** Las dos migraciones de mensajería ya están aplicadas. [Alcance, evidencia y prueba física](../PRIVATE_MESSAGES_PROFILE_VALIDATION.md). La autorización ya está dada; continuar con typecheck, compilación y entrega, sin volver a pedir permiso ni rehacer lo aprobado.
+
 ## Continuidad vigente — entrega del 8 de octubre de 2026
 
 **Última entrega: [APK #206](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37794716857/artifacts/11559456417)**, rama `feature/feed-mini-video-avatar`, código `a5fbc7ba45effa5145f00124dce7a99db1646a35`. [CI](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37794716857) verificada: **106 pruebas aprobadas, cero fallos, typecheck móvil y compilación Android correctos**. La prueba física de esta versión sigue pendiente; no confundir evidencia automatizada con aprobación en teléfono.
