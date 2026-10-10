@@ -1,0 +1,12 @@
+/* Colores declarados en el SVG original · sRGB */
+:root {
+  --tv-turquesa-base: #0C959F;
+  --tv-celeste-menta: #66C7C6;
+  --tv-plata-lavanda: #828297;
+  --tv-reflejo-celeste: #EFFCFC;
+  --tv-sombra-menta: #60ABAF;
+  --tv-reflejo-plata: #CBD3D9;
+  --tv-sombra-lavanda: #8E7C95;
+  --tv-play-menta: #6EC6C7;
+  --tv-play-profundo: #217B84;
+}

@@ -1,0 +1,134 @@
+{
+  "color_space": "sRGB",
+  "source": "source/referencia-original.svg",
+  "method": "Lectura directa de atributos fill del SVG original; no se promedian colores ni se toman de la recreación 3D. Los tonos base representan una de las superficies del original, que contiene varios reflejos y sombras.",
+  "colors": [
+    {
+      "name": "Turquesa base",
+      "hex": "#0C959F",
+      "rgb": [
+        12,
+        149,
+        159
+      ],
+      "role": "Fondo",
+      "primary": true,
+      "source_group_indexes": [
+        33
+      ]
+    },
+    {
+      "name": "Celeste menta · T",
+      "hex": "#66C7C6",
+      "rgb": [
+        102,
+        199,
+        198
+      ],
+      "role": "Cara de la T",
+      "primary": true,
+      "source_group_indexes": [
+        43
+      ]
+    },
+    {
+      "name": "Plata / lavanda · V",
+      "hex": "#828297",
+      "rgb": [
+        130,
+        130,
+        151
+      ],
+      "role": "Tono principal de la cara lavanda de la V",
+      "primary": true,
+      "source_group_indexes": [
+        59
+      ]
+    },
+    {
+      "name": "Reflejo celeste · T",
+      "hex": "#EFFCFC",
+      "rgb": [
+        239,
+        252,
+        252
+      ],
+      "role": "Reflejos de la T",
+      "primary": false,
+      "source_group_indexes": [
+        46
+      ]
+    },
+    {
+      "name": "Sombra menta · T",
+      "hex": "#60ABAF",
+      "rgb": [
+        96,
+        171,
+        175
+      ],
+      "role": "Sombras de la T",
+      "primary": false,
+      "source_group_indexes": [
+        50
+      ]
+    },
+    {
+      "name": "Reflejo plata · V",
+      "hex": "#CBD3D9",
+      "rgb": [
+        203,
+        211,
+        217
+      ],
+      "role": "Reflejos de la V",
+      "primary": false,
+      "source_group_indexes": [
+        52
+      ]
+    },
+    {
+      "name": "Sombra lavanda · V",
+      "hex": "#8E7C95",
+      "rgb": [
+        142,
+        124,
+        149
+      ],
+      "role": "Sombras internas de la V",
+      "primary": false,
+      "source_group_indexes": [
+        62
+      ]
+    },
+    {
+      "name": "Menta · botón play",
+      "hex": "#6EC6C7",
+      "rgb": [
+        110,
+        198,
+        199
+      ],
+      "role": "Cara del botón de reproducción",
+      "primary": false,
+      "source_group_indexes": [
+        34
+      ]
+    },
+    {
+      "name": "Turquesa profundo · play",
+      "hex": "#217B84",
+      "rgb": [
+        33,
+        123,
+        132
+      ],
+      "role": "Interior del botón de reproducción",
+      "primary": false,
+      "source_group_indexes": [
+        37
+      ]
+    }
+  ],
+  "note": "Un único HEX representa un tono sólido; el volumen y el acabado suave dependen de la iluminación, los reflejos y las sombras."
+}

@@ -1,0 +1,115 @@
+{
+  "3d/app-icon-1024.png": {
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGB"
+  },
+  "3d/app-icon-google-play-512.png": {
+    "size": [
+      512,
+      512
+    ],
+    "mode": "RGB"
+  },
+  "3d/logo-3d-transparente-1024.png": {
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "real_alpha": true,
+    "play_opening_alpha": 0,
+    "objects": "T, V y botón superior",
+    "opaque_components": 3
+  },
+  "vector/isotipo-negro.svg": {
+    "vector_only": true,
+    "paths": 3,
+    "solid_color": "#000000",
+    "transparent_play_cutout": true
+  },
+  "vector/isotipo-blanco.svg": {
+    "vector_only": true,
+    "paths": 3,
+    "solid_color": "#FFFFFF",
+    "transparent_play_cutout": true
+  },
+  "favicon": {
+    "16": {
+      "size": [
+        16,
+        16
+      ],
+      "visible_play_hole": true
+    },
+    "32": {
+      "size": [
+        32,
+        32
+      ],
+      "visible_play_hole": true
+    },
+    "48": {
+      "size": [
+        48,
+        48
+      ],
+      "visible_play_hole": true
+    }
+  },
+  "palette": {
+    "exact_svg_values": true,
+    "colors": 9,
+    "primary": [
+      {
+        "name": "Turquesa base",
+        "hex": "#0C959F",
+        "rgb": [
+          12,
+          149,
+          159
+        ],
+        "role": "Fondo",
+        "primary": true,
+        "source_group_indexes": [
+          33
+        ]
+      },
+      {
+        "name": "Celeste menta · T",
+        "hex": "#66C7C6",
+        "rgb": [
+          102,
+          199,
+          198
+        ],
+        "role": "Cara de la T",
+        "primary": true,
+        "source_group_indexes": [
+          43
+        ]
+      },
+      {
+        "name": "Plata / lavanda · V",
+        "hex": "#828297",
+        "rgb": [
+          130,
+          130,
+          151
+        ],
+        "role": "Tono principal de la cara lavanda de la V",
+        "primary": true,
+        "source_group_indexes": [
+          59
+        ]
+      }
+    ]
+  },
+  "manual": {
+    "pages": 3,
+    "searchable_text": true,
+    "transparency_proof_on_light_and_dark_backgrounds": true
+  }
+}

@@ -1,0 +1,118 @@
+[
+  {
+    "path": "identidad-visual-TV/3d/app-icon-1024.png",
+    "bytes": 819360
+  },
+  {
+    "path": "identidad-visual-TV/3d/app-icon-google-play-512.png",
+    "bytes": 201421
+  },
+  {
+    "path": "identidad-visual-TV/3d/app-icon-master-1254.png",
+    "bytes": 1317071
+  },
+  {
+    "path": "identidad-visual-TV/3d/logo-3d-transparente-1024.png",
+    "bytes": 437224
+  },
+  {
+    "path": "identidad-visual-TV/3d/logo-3d-transparente-master-1254.png",
+    "bytes": 732534
+  },
+  {
+    "path": "identidad-visual-TV/LEEME.md",
+    "bytes": 3160
+  },
+  {
+    "path": "identidad-visual-TV/favicon/favicon-16.png",
+    "bytes": 368
+  },
+  {
+    "path": "identidad-visual-TV/favicon/favicon-32.png",
+    "bytes": 668
+  },
+  {
+    "path": "identidad-visual-TV/favicon/favicon-48.png",
+    "bytes": 961
+  },
+  {
+    "path": "identidad-visual-TV/favicon/favicon-blanco.svg",
+    "bytes": 1832
+  },
+  {
+    "path": "identidad-visual-TV/favicon/favicon-negro.svg",
+    "bytes": 1832
+  },
+  {
+    "path": "identidad-visual-TV/favicon/favicon.ico",
+    "bytes": 15086
+  },
+  {
+    "path": "identidad-visual-TV/favicon/favicon.svg",
+    "bytes": 1906
+  },
+  {
+    "path": "identidad-visual-TV/manual/manual-identidad-TV.pdf",
+    "bytes": 2259847
+  },
+  {
+    "path": "identidad-visual-TV/manual/paleta.css",
+    "bytes": 340
+  },
+  {
+    "path": "identidad-visual-TV/manual/paleta.json",
+    "bytes": 2713
+  },
+  {
+    "path": "identidad-visual-TV/manual/paleta.md",
+    "bytes": 872
+  },
+  {
+    "path": "identidad-visual-TV/manual/verificacion.json",
+    "bytes": 2069
+  },
+  {
+    "path": "identidad-visual-TV/preview/manual-pagina-1.png",
+    "bytes": 286343
+  },
+  {
+    "path": "identidad-visual-TV/preview/manual-pagina-2.png",
+    "bytes": 78430
+  },
+  {
+    "path": "identidad-visual-TV/preview/manual-pagina-3.png",
+    "bytes": 183656
+  },
+  {
+    "path": "identidad-visual-TV/source/referencia-original.svg",
+    "bytes": 45086
+  },
+  {
+    "path": "identidad-visual-TV/source/referencia-render.png",
+    "bytes": 61447
+  },
+  {
+    "path": "identidad-visual-TV/tools/build_manual.py",
+    "bytes": 6450
+  },
+  {
+    "path": "identidad-visual-TV/tools/build_vectors.py",
+    "bytes": 5313
+  },
+  {
+    "path": "identidad-visual-TV/vector/isotipo-blanco-1024.png",
+    "bytes": 23340
+  },
+  {
+    "path": "identidad-visual-TV/vector/isotipo-blanco.svg",
+    "bytes": 1835
+  },
+  {
+    "path": "identidad-visual-TV/vector/isotipo-negro-1024.png",
+    "bytes": 25152
+  },
+  {
+    "path": "identidad-visual-TV/vector/isotipo-negro.svg",
+    "bytes": 1835
+  }
+]
