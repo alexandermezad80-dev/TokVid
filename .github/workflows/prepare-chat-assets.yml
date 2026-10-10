@@ -1,0 +1,47 @@
+name: Prepare chat assets
+on:
+  workflow_dispatch:
+  push:
+    branches: [ feature/feed-mini-video-avatar ]
+    paths: [ .github/workflows/prepare-chat-assets.yml ]
+permissions:
+  contents: write
+jobs:
+  prepare:
+    if: github.ref == 'refs/heads/feature/feed-mini-video-avatar'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+      - name: Extract supplied branding without merging main
+        run: |
+          git show d6383e9a5e5cd517fc586a913a348782a0318f0d:identidad-visual-TV.zip > /tmp/branding.zip
+          python3 - <<'PY'
+          import zipfile, pathlib, json
+          root=pathlib.Path('artifacts/mobile/assets/brand-kit').resolve()
+          with zipfile.ZipFile('/tmp/branding.zip') as z:
+              for info in z.infolist():
+                  dest=(root/info.filename).resolve()
+                  if not dest.is_relative_to(root): raise RuntimeError('Invalid archive path')
+                  if info.file_size>30_000_000: raise RuntimeError('Oversized asset')
+              z.extractall(root)
+              pathlib.Path('docs/BRAND_KIT_FILES.json').write_text(json.dumps([{'path':i.filename,'bytes':i.file_size} for i in z.infolist()],indent=2))
+          PY
+      - name: Resolve Expo SDK compatible audio and clipboard packages
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.15.1 --activate
+          pnpm install
+          cd artifacts/mobile
+          pnpm exec expo install expo-audio expo-clipboard
+      - name: Preserve generated assets and dependency lock
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add artifacts/mobile/assets/brand-kit docs/BRAND_KIT_FILES.json artifacts/mobile/package.json pnpm-lock.yaml
+          git diff --cached --quiet || git commit -m 'chore: extract supplied TokVid branding and resolve chat dependencies [skip ci]'
+          git push origin HEAD:feature/feed-mini-video-avatar

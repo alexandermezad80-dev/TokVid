@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   build-android:
-    if: github.ref == 'refs/heads/feature/feed-mini-video-avatar'
+    if: github.ref == 'refs/heads/feature/feed-mini-video-avatar' && !contains(github.event.head_commit.message, '[prepare only]')
     environment: production
     runs-on: ubuntu-latest
     env:
