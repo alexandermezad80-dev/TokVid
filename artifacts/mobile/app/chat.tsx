@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Image,
   KeyboardAvoidingView,
@@ -65,6 +66,42 @@ export default function ChatScreen() {
     ? decodeURIComponent(otherAvatar)
     : `https://api.dicebear.com/9.x/initials/png?seed=${encodeURIComponent(otherUsername ?? "U")}&backgroundColor=FE2C55&textColor=ffffff&fontSize=38&size=80`;
 
+  const markReceivedMessagesRead = async () => {
+    if (!conversationId || !user) return;
+    await supabase
+      .from("messages")
+      .update({ read_by_other: true })
+      .eq("conversation_id", conversationId)
+      .eq("read_by_other", false)
+      .neq("sender_id", user.id);
+  };
+
+  const deleteMessage = async (messageId: string) => {
+    if (!user) return;
+    Alert.alert(
+      "Eliminar mensaje",
+      "¿Querés eliminar este mensaje?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            const { data, error } = await supabase
+              .from("messages")
+              .delete()
+              .eq("id", messageId)
+              .eq("sender_id", user.id)
+              .select("id");
+
+            if (error || !data || data.length === 0) return;
+            setMessages((prev) => prev.filter((m) => m.id !== messageId));
+          },
+        },
+      ]
+    );
+  };
+
   // Load messages
   useEffect(() => {
     if (!conversationId) return;
@@ -76,6 +113,7 @@ export default function ChatScreen() {
       .then(({ data }) => {
         setMessages((data as MessageRow[]) ?? []);
         setLoading(false);
+        void markReceivedMessagesRead();
       });
 
     // Real-time
@@ -92,7 +130,7 @@ export default function ChatScreen() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [conversationId]);
+  }, [conversationId, user?.id]);
 
   const send = async () => {
     if (!text.trim() || !user || !conversationId || sending) return;
@@ -111,11 +149,28 @@ export default function ChatScreen() {
     setMessages((prev) => [...prev, optimistic]);
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
 
-    await supabase.from("messages").insert({
+    const { error: messageError } = await supabase.from("messages").insert({
       conversation_id: conversationId,
       sender_id: user.id,
       text: msgText,
     });
+
+    if (!messageError && otherUserId) {
+      await supabase.from("notifications").insert({
+        user_id: otherUserId,
+        actor_id: user.id,
+        actor_name: user.user_metadata?.username ?? user.user_metadata?.display_name ?? null,
+        actor_avatar: null,
+        type: "message",
+        message: "Te envió un mensaje",
+        data: {
+          conversationId,
+          otherUserId: user.id,
+          otherUsername: user.user_metadata?.username ?? "",
+          otherAvatar: "",
+        },
+      });
+    }
 
     // Update conversation last_message
     await supabase
@@ -138,11 +193,16 @@ export default function ChatScreen() {
         {showTime && (
           <Text style={styles.timeLabel}>{timeLabel(item.created_at)}</Text>
         )}
-        <View style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleThem]}>
+        <TouchableOpacity
+          activeOpacity={0.9}
+          disabled={!isMe}
+          onLongPress={isMe ? () => deleteMessage(item.id) : undefined}
+          style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleThem]}
+        >
           <Text style={[styles.bubbleText, isMe ? styles.bubbleTextMe : styles.bubbleTextThem]}>
             {item.text}
           </Text>
-        </View>
+        </TouchableOpacity>
       </View>
     );
   };

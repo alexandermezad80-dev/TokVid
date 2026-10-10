@@ -49,6 +49,20 @@ function RootLayoutNav() {
         <>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen
+            name="story-viewer"
+            options={{
+              presentation: "fullScreenModal",
+              animation: "fade",
+            }}
+          />
+          <Stack.Screen
+            name="story-create"
+            options={{
+              presentation: "modal",
+              animation: "slide_from_bottom",
+            }}
+          />
+          <Stack.Screen
             name="edit-profile"
             options={{
               presentation: "modal",

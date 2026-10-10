@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Install pnpm
-        run: npm install -g pnpm@latest
+        run: npm install -g pnpm@10.15.1
 
       - name: Use Node.js
         uses: actions/setup-node@v6

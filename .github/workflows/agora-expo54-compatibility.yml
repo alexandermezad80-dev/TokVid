@@ -1,0 +1,63 @@
+name: Agora Expo 54 compatibility
+
+on:
+  push:
+    branches:
+      - test/agora-expo54-compatibility
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Use Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+      - name: Install pnpm
+        run: npm install -g pnpm@10.15.1
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: Validate Expo config
+        working-directory: artifacts/mobile
+        run: pnpm exec expo config --type public
+      - name: Generate native Android project
+        working-directory: artifacts/mobile
+        run: pnpm exec expo prebuild --platform android --clean --no-install
+      - name: Build Android debug
+        working-directory: artifacts/mobile/android
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+  ios-prebuild:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Use Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+      - name: Install pnpm
+        run: npm install -g pnpm@10.15.1
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: Generate native iOS project
+        working-directory: artifacts/mobile
+        run: pnpm exec expo prebuild --platform ios --clean --no-install
+      - name: Install CocoaPods
+        working-directory: artifacts/mobile/ios
+        run: pod install
+      - name: Build iOS simulator
+        working-directory: artifacts/mobile/ios
+        run: |
+          xcodebuild \
+            -workspace Tokvid.xcworkspace \
+            -scheme Tokvid \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build

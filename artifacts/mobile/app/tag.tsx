@@ -116,20 +116,15 @@ export default function TagScreen() {
       }));
       return;
     }
-    try {
-      const { data } = await supabase
-        .from("videos")
-        .select("shares_count")
-        .eq("id", item.id)
-        .maybeSingle();
-      if (data) {
-        await supabase
-          .from("videos")
-          .update({ shares_count: (data.shares_count ?? 0) + 1 })
-          .eq("id", item.id);
-      }
-    } catch {
-      /* no-op */
+    const { error } = await supabase.rpc("increment_video_share_count", {
+      p_video_id: item.id,
+    });
+
+    if (error) {
+      setShareOverrides((prev) => ({
+        ...prev,
+        [item.id]: Math.max(0, (prev[item.id] ?? 1) - 1),
+      }));
     }
   }, []);
 
