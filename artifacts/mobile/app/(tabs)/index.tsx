@@ -1,3 +1,5 @@
+import {useSafeAreaInsets} from "react-native-safe-area-context";
+import {publicationId} from "../../lib/features/publishing/model";
 import { useRegistration } from "../../context/RegistrationContext";
 import type { RegistrationKind } from "../../lib/features/auth/services/registrationBridge";
 import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
@@ -32,6 +34,7 @@ import type { VideoPreviewFrame } from "../../lib/commentVideoLayout";
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 export default function FeedScreen() {
+  const insets=useSafeAreaInsets();
   const [activeIndex, setActiveIndex] = useState(0);
   const [commentVideo, setCommentVideo] = useState<VideoItem | null>(null);
   const [previewFrame, setPreviewFrame] = useState<VideoPreviewFrame | null>(null);
@@ -156,13 +159,14 @@ export default function FeedScreen() {
     }));
 
     try {
-      await Share.share({
+      const shared=await Share.share({
         title: item.caption,
         message: `${item.caption}
 
 ${item.uri}`,
         url: item.uri,
       });
+      if(shared.action===Share.dismissedAction)throw new Error("cancelled");
     } catch {
       // Share cancelled or failed — revert optimistic update.
       setShareOverrides((prev) => ({
@@ -174,8 +178,8 @@ ${item.uri}`,
 
     // Persist the share through the protected RPC. Mock videos that are
     // not persisted in Supabase are reverted without affecting the DB.
-    const { error } = await supabase.rpc("increment_video_share_count", {
-      p_video_id: item.id,
+    const { error } = await supabase.rpc("record_video_share", {
+      p_video_id: item.id,p_event_id:publicationId(),
     });
 
     if (error) {
@@ -253,25 +257,27 @@ ${item.uri}`,
   return (
     <View style={styles.container}>
       <View style={StyleSheet.absoluteFill}>
-      {!commentVideo && <View style={styles.feedHeader} pointerEvents="box-none">
+      {!commentVideo && <View style={[styles.feedHeader,{top:insets.top+8}]} pointerEvents="box-none">
         <View style={styles.feedModes}>
           <TouchableOpacity
             onPress={() => selectFeed("forYou")}
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityState={{ selected: feedMode === "forYou" }}
+            style={{flex:1,minHeight:44,justifyContent:"center",alignItems:"center"}}
             accessibilityLabel="Para ti"
           >
-            <Text style={feedMode === "forYou" ? styles.feedModeActive : styles.feedModeInactive}>Para ti</Text>
+            <Text numberOfLines={1} maxFontSizeMultiplier={1.6} style={feedMode === "forYou" ? styles.feedModeActive : styles.feedModeInactive}>Para ti</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => selectFeed("following")}
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityState={{ selected: feedMode === "following" }}
+            style={{flex:1,minHeight:44,justifyContent:"center",alignItems:"center"}}
             accessibilityLabel="Siguiendo"
           >
-            <Text style={feedMode === "following" ? styles.feedModeActive : styles.feedModeInactive}>Siguiendo</Text>
+            <Text numberOfLines={1} maxFontSizeMultiplier={1.6} style={feedMode === "following" ? styles.feedModeActive : styles.feedModeInactive}>Siguiendo</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => router.push("/search")}
@@ -364,7 +370,9 @@ const styles = StyleSheet.create({
   feedModes: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 22,
+    gap: 8,
+    flex: 1,
+    maxWidth: 420,
   },
   feedModeActive: {
     color: "#fff",
@@ -383,8 +391,8 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   searchButton: {
-    width: 30,
-    height: 30,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
     marginLeft: 2,

@@ -1,0 +1,32 @@
+begin;
+select set_config('tokvid.test.actor',(select id::text from public.profiles order by created_at limit 1),true);
+select set_config('tokvid.test.recipient',(select id::text from public.profiles where id::text<>current_setting('tokvid.test.actor') order by created_at limit 1),true);
+select set_config('request.jwt.claim.sub',current_setting('tokvid.test.actor'),true);
+set local role authenticated;
+do $test$
+declare a uuid:=auth.uid(); b uuid:=current_setting('tokvid.test.recipient')::uuid; g uuid:=gen_random_uuid(); outsider uuid:=gen_random_uuid(); visit uuid:=gen_random_uuid(); before_count integer; after_count integer; denied boolean;
+begin
+ perform public.create_chat_group(g,'__group_rollback__',array[a,b]);
+ perform public.create_chat_group(g,'__group_rollback__',array[a,b]);
+ insert into public.chat_group_messages(group_id,sender_id,text) values(g,a,'__private_group__');
+ if not exists(select 1 from public.chat_group_inbox where id=g and last_message='__private_group__') then raise exception 'Creator group inbox missing';end if;
+ perform set_config('request.jwt.claim.sub',b::text,true);
+ if not exists(select 1 from public.chat_group_messages where group_id=g) then raise exception 'Group recipient cannot read';end if;
+ insert into public.chat_group_messages(group_id,sender_id,text) values(g,b,'__group_reply__');
+ denied:=false;begin insert into public.chat_group_members(group_id,user_id,creator_id) values(g,outsider,b);exception when insufficient_privilege or foreign_key_violation then denied:=true;end;
+ if not denied then raise exception 'Recipient added outsider';end if;
+ before_count:=(select count(*) from public.notifications where actor_id=a and type='profile_visit');
+ perform set_config('request.jwt.claim.sub',a::text,true);
+ perform public.record_profile_visit(b,visit);
+ perform public.record_profile_visit(b,visit);
+ perform set_config('request.jwt.claim.sub',b::text,true);
+ after_count:=(select count(*) from public.notifications where actor_id=a and type='profile_visit');
+ if after_count-before_count<>1 then raise exception 'Visit retry duplicated';end if;
+ perform set_config('request.jwt.claim.sub',outsider::text,true);
+ if exists(select 1 from public.chat_groups where id=g) or exists(select 1 from public.chat_group_messages where group_id=g) or exists(select 1 from public.chat_group_members where group_id=g) then raise exception 'Outsider can read group';end if;
+ denied:=false;begin insert into public.chat_group_messages(group_id,sender_id,text) values(g,outsider,'__intrusion__');exception when insufficient_privilege then denied:=true;end;
+ if not denied then raise exception 'Outsider inserted group message';end if;
+end $test$;
+reset role;
+select 'groups and visits: isolated group, participant delivery, own membership, outsider denial and visit idempotency passed' result;
+rollback;

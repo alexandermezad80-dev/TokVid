@@ -24,6 +24,8 @@ async function sendIncomingCallPush(
   receiverId: string,
   call: { id: string; type: "voice" | "video"; conversation_id: string },
 ) {
+  const { data: preference } = await admin.from("chat_preferences").select("mute_calls").eq("user_id", receiverId).eq("conversation_id", call.conversation_id).maybeSingle();
+  if (preference?.mute_calls) return;
   const { data: profile } = await admin
     .from("profile_private")
     .select("push_token")

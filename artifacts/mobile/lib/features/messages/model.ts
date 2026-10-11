@@ -20,6 +20,10 @@ export function privateMessagePopover(anchor: { x:number; y:number; width:number
   const upper=Math.min(Math.max(safeTop,8),height-16), bottom=Math.max(upper,height-16);
   const above=Math.max(0,Math.min(anchor.y-8,bottom)-upper);
   const below=Math.max(0,bottom-Math.max(upper,anchor.y+anchor.height+8));
+  if(Math.max(above,below)<Math.min(180,bottom-upper)){
+    const maxHeight=Math.min(desiredHeight,Math.max(0,bottom-upper));
+    return {width:menuWidth,left:Math.max(margin,Math.min(width-margin-menuWidth,anchor.x+anchor.width-menuWidth)),top:Math.max(upper,Math.min(bottom-maxHeight,anchor.y)),maxHeight};
+  }
   const useAbove=above>=Math.min(desiredHeight,180)||above>=below;
   const maxHeight=Math.min(desiredHeight,Math.max(0,useAbove?above:below));
   return {width:menuWidth,left:Math.max(margin,Math.min(width-margin-menuWidth,anchor.x+anchor.width-menuWidth)),

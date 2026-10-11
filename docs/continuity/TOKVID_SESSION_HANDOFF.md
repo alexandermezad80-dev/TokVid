@@ -1,3 +1,5 @@
+> **11 de octubre de 2026 — fase nueva autorizada en implementación.** El usuario confirmó recepción inmediata y contador/vista previa de Mensajes en #207. Solicitó nuevos menús, ajustes, privacidad, actividad agrupada, teclado, adaptación general y branding. Ver [registro de fase](https://github.com/alexandermezad80-dev/TokVid/blob/feature/feed-mini-video-avatar/docs/MESSAGING_PHASE_2.md). Último APK entregado continúa siendo #207 hasta registrar la nueva compilación. «Eliminar todos» oculta solo mis mensajes y solo para mí. El ZIP sí llegó a main y ya fue extraído.
+
 # TokVid — estado y continuidad entre sesiones
 
 **Cierre funcional y documental: 9 de octubre de 2026 (UTC). Última entrega: [APK #207](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37886244472/artifacts/11597441070), código `5485c9961f7bd1869468c92d7b5ec25c81262425`. La sección 14 es vigente; las anteriores son históricas. 124 pruebas, typecheck y build Android aprobados; aceptación física pendiente.**

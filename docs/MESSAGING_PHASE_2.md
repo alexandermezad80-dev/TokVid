@@ -22,3 +22,13 @@ El usuario confirmó físicamente la recepción inmediata en ambos sentidos, la 
 ## Entrega pendiente
 
 Implementar, verificar permisos y regresiones, compilar un APK de esta fase, actualizar maestro/handoff/manifiesto con evidencia. No afirmar verificación física nueva ni borrar datos reales como prueba. Auth/OTP y publicación ya aprobada se conservan.
+
+## Avance verificado — 11 de octubre, antes de compilar
+
+- Kit de marca extraído en `assets/brand-kit/identidad-visual-TV` mediante preparación de CI, commit `c68821039f076ac5969e0309dbe3f4fb75f2c38d`. SVG plano, logos 3D, iconos de tiendas y manual conservados. Icono, splash, favicon y marca de agua conectados al kit; máscara adaptativa con margen de seguridad.
+- Código inicial de fase `a5a0eb286e5ec4ff2428595313fdb48859793237`: [validación CI](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38153686206) aprobada (regresiones, TypeScript real y prebuild Android). Ese commit NO generó un APK. Cambios posteriores todavía requieren su propia compilación.
+- Las pruebas originales de mensajería y las nuevas pruebas SQL de respuestas/reacciones, borrado privado, cancelar antes de leer, bloqueo, grupos privados, visitas y compartidas pasan en transacciones revertidas. No se enviaron mensajes o publicaciones reales para probar.
+- Migraciones aplicadas: `20261011154613_private_chat_tools_and_grouped_activity`, `20261011155643_private_chat_groups`, `20261011160329_private_share_activity`, `20261011160621_avoid_recursive_group_membership_policies`, `20261011160655_idempotent_private_profile_visit_events`. Las últimas dos corrigen problemas detectados por las pruebas; no editar/reaplicar el historial. Grupo nuevo separado del chat privado original. FK compuesta impide falsificar al creador sin ampliar permisos.
+- Edge Function `calls` v6 conserva autenticación interna existente y añade respeto de silenciar llamadas antes del push. Bloqueo verificado en servidor para ambos sentidos. No se cambió Auth/OTP.
+- Traducción Android local con ML Kit: descarga modelos de idioma, no envía texto a un servicio de traducción. Grupos básicos de texto separados de chats personales. Medios privados en bucket `chat-media`, enlaces de lectura de cinco minutos; un archivo ya descargado por el destinatario no puede recuperarse de su teléfono.
+- La prueba física de teclado, escalas, llamadas, audio, cámara, traducción, máscaras de icono y nuevas herramientas queda pendiente de instalar la APK de esta fase. No afirmar confirmación de dispositivos por haber pasado CI.

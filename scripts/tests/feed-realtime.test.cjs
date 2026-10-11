@@ -68,6 +68,7 @@ function harness(file, name, args) {
     createContext: () => ({ Provider: 'Provider' }), createElement: () => null, jsx: () => null, jsxs: () => null, StyleSheet: { create: value => value },
     useRef: current => ({ current }), useCallback: callback => callback,
     useEffect: effect => effects.push(effect),
+    useSafeAreaInsets: () => ({top:24,bottom:24,left:0,right:0}),
     useAuth: () => ({ user: { id: 'actor' } }), useRegistration: () => ({ completed: null }),
     AppState: { addEventListener: () => ({ remove() {} }) },
     readCommentCounts: async () => ({}), readVideoLikes: async () => ({ counts: {}, liked: new Set() }),
@@ -108,6 +109,7 @@ for (const [file, name, args, expectedBindings, globalSubscription] of [
     assert.equal(h.client.getChannels().length, 1); assert.equal(h.client.getChannels()[0], second);
     const activeWrites = h.stateWrites;
     second.bindings[0].callback({ new: { status: 'ringing', id: 'call' } });
+    await Promise.resolve(); await Promise.resolve();
     if (globalSubscription) assert.ok(h.stateWrites > activeWrites); else assert.equal(h.timers.size, 1);
   });
   test(`${name} supports overlapping mounts of the same account and video`, () => {

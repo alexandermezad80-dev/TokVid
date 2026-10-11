@@ -1,3 +1,4 @@
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -9,26 +10,29 @@ import { createDatabaseChannel } from "../lib/realtimeSubscriptions";
 
 export function IncomingCallListener() {
   const { user } = useAuth();
+  const insets=useSafeAreaInsets();
   const [incomingCall, setIncomingCall] = useState<Call | null>(null);
   const [busy, setBusy] = useState<"accept" | "reject" | null>(null);
 
   useEffect(() => {
     if (!user) { setIncomingCall(null); return; }
-    let active = true;
+    let active = true,version=0;
+    const present=async(call:Call|null)=>{const request=++version;if(!call){if(active)setIncomingCall(null);return;}const {data,error}=await supabase.from("chat_preferences").select("mute_calls").eq("user_id",user.id).eq("conversation_id",call.conversation_id).maybeSingle();if(active&&request===version&&!error)setIncomingCall(data?.mute_calls?null:call);};
     const load = async () => {
       const { data } = await supabase.from("calls").select("*").eq("receiver_id", user.id).eq("status", "ringing").order("created_at", { ascending: false }).limit(1).maybeSingle();
-      if (active) setIncomingCall((data as Call | null) ?? null);
+      if (active) void present((data as Call | null) ?? null);
     };
     void load();
     const channel = createDatabaseChannel(`incoming-calls-${user.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "calls", filter: `receiver_id=eq.${user.id}` }, (payload) => {
         const call = payload.new as Call;
         if (!active) return;
-        if (call.status === "ringing") setIncomingCall(call);
+        if (call.status === "ringing") void present(call);
       })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "calls", filter: `receiver_id=eq.${user.id}` }, (payload) => {
         const call = payload.new as Call;
         if (!active) return;
+        ++version;
         setIncomingCall((current) => current?.id === call.id && call.status === "ringing" ? call : null);
       }).subscribe();
     return () => { active = false; void supabase.removeChannel(channel); };
@@ -44,7 +48,7 @@ export function IncomingCallListener() {
   };
   if (!incomingCall) return null;
   const isVideo = incomingCall.type === "video";
-  return <View style={styles.overlay} pointerEvents="box-none"><View style={styles.card}>
+  return <View style={[styles.overlay,{paddingTop:insets.top+8}]} pointerEvents="box-none"><View style={styles.card}>
     <View style={styles.icon}><Feather name={isVideo ? "video" : "phone"} size={26} color="#fff" /></View>
     <View style={styles.info}><Text style={styles.title}>Llamada entrante</Text><Text style={styles.subtitle}>{isVideo ? "Videollamada" : "Llamada de voz"}</Text></View>
     <View style={styles.actions}>

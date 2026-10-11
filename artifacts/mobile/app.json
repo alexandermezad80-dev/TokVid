@@ -91,6 +91,9 @@
           "backgroundColor": "#0C959F",
           "imageWidth": 200
         }
+      ],
+      [
+        "./plugins/withSafeBrandIcon"
       ]
     ],
     "experiments": {
