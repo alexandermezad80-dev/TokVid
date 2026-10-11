@@ -26,15 +26,15 @@ type Token = {
 
 const T: Record<BubbleStyleVariant, Record<BubbleDirection, Token>> = {
   classic: {
-    sent: { radius: [18,18,18,18], tight: 6, bg: "#FE2C55", color: "#FFFFFF", px:14, py:10, fs:15, lh:21, fw:"400", maxWidth:"78%" },
-    received: { radius: [18,18,18,18], tight: 6, bg: "#FE2C55", color: "#F5F5F7", px:14, py:10, fs:15, lh:21, fw:"400", maxWidth:"78%" },
+    sent: { radius: [18,18,18,18], tight: 6, bg: "#304B55", color: "#FFFFFF", px:14, py:10, fs:15, lh:21, fw:"400", maxWidth:"78%" },
+    received: { radius: [18,18,18,18], tight: 6, bg: "#304B55", color: "#F5F5F7", px:14, py:10, fs:15, lh:21, fw:"400", maxWidth:"78%" },
   },
   minimal: {
-    sent: { radius: [10,10,10,10], tight: 6, bg:"transparent", color:"#FFFFFF", border:"#00C2FF", px:12, py:8, fs:14, lh:20, fw:"400", maxWidth:"78%" },
+    sent: { radius: [10,10,10,10], tight: 6, bg:"transparent", color:"#FFFFFF", border:"#668B95", px:12, py:8, fs:14, lh:20, fw:"400", maxWidth:"78%" },
     received: { radius: [10,10,10,10], tight: 6, bg:"transparent", color:"#F5F5F7", border:"#FFFFFF", px:12, py:8, fs:14, lh:20, fw:"400", maxWidth:"78%" },
   },
   rounded: {
-    sent: { radius: [999,999,999,999], tight: 20, bg:"#FF0050", color:"#FFFFFF", px:20, py:12, fs:15, lh:21, fw:"500", maxWidth:"76%" },
+    sent: { radius: [999,999,999,999], tight: 20, bg:"#493B4C", color:"#FFFFFF", px:20, py:12, fs:15, lh:21, fw:"500", maxWidth:"76%" },
     received: { radius: [999,999,999,999], tight: 20, bg:"#24242E", color:"#F5F5F7", px:20, py:12, fs:15, lh:21, fw:"500", maxWidth:"76%" },
   },
   glass: {
@@ -42,27 +42,27 @@ const T: Record<BubbleStyleVariant, Record<BubbleDirection, Token>> = {
     received: { radius: [16,16,16,16], tight: 8, bg:"rgba(255,255,255,0.10)", color:"#F5F5F7", border:"rgba(255,255,255,0.20)", px:14, py:10, fs:15, lh:21, fw:"400", maxWidth:"78%" },
   },
   gradient: {
-    sent: { radius: [20,20,20,20], tight: 8, bg:"#FE2C55", color:"#FFFFFF", px:15, py:11, fs:15, lh:21, fw:"500", maxWidth:"78%" },
+    sent: { radius: [20,20,20,20], tight: 8, bg:"#304B55", color:"#FFFFFF", px:15, py:11, fs:15, lh:21, fw:"500", maxWidth:"78%" },
     received: { radius: [20,20,20,20], tight: 8, bg:"#24212E", color:"#F5F5F7", px:15, py:11, fs:15, lh:21, fw:"400", maxWidth:"78%" },
   },
   neon: {
-    sent: { radius: [14,14,14,14], tight: 6, bg:"rgba(255,44,138,0.10)", color:"#FF6C9B", border:"#FF2C8A", px:14, py:10, fs:14.5, lh:20, fw:"400", maxWidth:"78%" },
-    received: { radius: [14,14,14,14], tight: 6, bg:"rgba(0,194,255,0.08)", color:"#5FF6EF", border:"#00C2FF", px:14, py:10, fs:14.5, lh:20, fw:"400", maxWidth:"78%" },
+    sent: { radius: [14,14,14,14], tight: 6, bg:"rgba(255,44,138,0.10)", color:"#F3F5F7", border:"#796A7A", px:14, py:10, fs:14.5, lh:20, fw:"400", maxWidth:"78%" },
+    received: { radius: [14,14,14,14], tight: 6, bg:"rgba(0,194,255,0.08)", color:"#F3F5F7", border:"#668B95", px:14, py:10, fs:14.5, lh:20, fw:"400", maxWidth:"78%" },
   },
   elegant: {
-    sent: { radius: [22,22,22,22], tight: 8, bg:"#1B1B22", color:"#F0E9DC", border:"#C8A96B", px:18, py:13, fs:15, lh:23, fw:"400", maxWidth:"76%" },
+    sent: { radius: [22,22,22,22], tight: 8, bg:"#1B1B22", color:"#F0E9DC", border:"#827D70", px:18, py:13, fs:15, lh:23, fw:"400", maxWidth:"76%" },
     received: { radius: [22,22,22,22], tight: 8, bg:"#14141A", color:"#E8E4DC", border:"rgba(255,255,255,0.14)", px:18, py:13, fs:15, lh:23, fw:"400", maxWidth:"76%" },
   },
   compact: {
-    sent: { radius: [8,8,8,8], tight: 4, bg:"#00C2BC", color:"#06110F", px:10, py:6, fs:13, lh:17, fw:"400", maxWidth:"84%" },
+    sent: { radius: [8,8,8,8], tight: 4, bg:"#345158", color:"#F3F5F7", px:10, py:6, fs:13, lh:17, fw:"400", maxWidth:"84%" },
     received: { radius: [8,8,8,8], tight: 4, bg:"#1D1D24", color:"#F5F5F7", px:10, py:6, fs:13, lh:17, fw:"400", maxWidth:"84%" },
   },
 };
 
 export const BUBBLE_VARIANTS = Object.keys(T) as BubbleStyleVariant[];
 export const BUBBLE_VARIANT_NAMES: Record<BubbleStyleVariant, string> = {
-  classic:"Classic", minimal:"Minimal", rounded:"Rounded", glass:"Glass",
-  gradient:"Gradient", neon:"Neon", elegant:"Elegant", compact:"Compact",
+  classic:"Clásica", minimal:"Minimalista", rounded:"Redonda", glass:"Cristal",
+  gradient:"Degradado", neon:"Borde suave", elegant:"Elegante", compact:"Compacta",
 };
 
 function radius(token: Token, direction: BubbleDirection, position: BubbleGroupPosition) {
@@ -96,7 +96,6 @@ export default function Bubble({
   const token = T[styleVariant][direction];
   const [topLeft, topRight, bottomRight, bottomLeft] = radius(token, direction, groupPosition);
   const base: ViewStyle = {
-    maxWidth: token.maxWidth,
     borderTopLeftRadius: topLeft,
     borderTopRightRadius: topRight,
     borderBottomRightRadius: bottomRight,
@@ -125,7 +124,7 @@ export default function Bubble({
 
   if ((styleVariant === "classic" || styleVariant === "gradient") && direction === "sent") {
     visual = (
-      <LinearGradient colors={["#00C2FF", "#FE2C55"]} start={{x:0,y:0}} end={{x:1,y:1}} style={[styles.bubble, base]}>
+      <LinearGradient colors={["#304C56", "#493A4F"]} start={{x:0,y:0}} end={{x:1,y:1}} style={[styles.bubble, base]}>
         {textNode}
       </LinearGradient>
     );
@@ -133,7 +132,7 @@ export default function Bubble({
 
   if (styleVariant === "gradient" && direction === "received") {
     visual = (
-      <LinearGradient colors={["#5B5B68", "#24212E"]} start={{x:0,y:0}} end={{x:1,y:1}} style={[styles.bubble, base]}>
+      <LinearGradient colors={["#30323F", "#28252F"]} start={{x:0,y:0}} end={{x:1,y:1}} style={[styles.bubble, base]}>
         {textNode}
       </LinearGradient>
     );
@@ -141,7 +140,7 @@ export default function Bubble({
 
   return (
     <View style={[styles.row, { alignItems: direction === "sent" ? "flex-end" : "flex-start" }]}>
-      <Pressable disabled={!onLongPress && !onPress} onPress={onPress} onLongPress={onLongPress} accessibilityRole={onPress ? "button" : "text"}>
+      <Pressable style={{maxWidth:token.maxWidth}} disabled={!onLongPress && !onPress} onPress={onPress} onLongPress={onLongPress} accessibilityRole={onPress ? "button" : "text"}>
         {visual}
       </Pressable>
       {timestamp ? <Text style={styles.time}>{timestamp}</Text> : null}
@@ -151,8 +150,8 @@ export default function Bubble({
 
 const styles = StyleSheet.create({
   row: { width:"100%", marginVertical:2 },
-  bubble: { overflow:"hidden", shadowColor:"#000", shadowOpacity:0.22, shadowRadius:7, shadowOffset:{width:0,height:3} },
-  text: { fontFamily:"Inter", includeFontPadding:false },
-  time: { color:"#444", fontSize:11, marginTop:4, paddingHorizontal:2 },
+  bubble: { overflow:"hidden" },
+  text: { includeFontPadding:false },
+  time: { color:"#A6ABB5", fontSize:11, marginTop:4, paddingHorizontal:2 },
 });
 

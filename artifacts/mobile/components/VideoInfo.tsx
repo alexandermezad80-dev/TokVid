@@ -112,12 +112,12 @@ export default function VideoInfo({
         <TouchableOpacity onPress={onAvatarPress} activeOpacity={0.85}>
           <Image source={{ uri: creatorAvatar }} style={styles.avatar} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={onAvatarPress} activeOpacity={0.85}>
-          <Text style={styles.creatorName}>{creatorHandle}</Text>
+        <TouchableOpacity style={{flex:1,minWidth:0}} onPress={onAvatarPress} activeOpacity={0.85}>
+          <Text numberOfLines={1} style={styles.creatorName}>{creatorHandle}</Text>
         </TouchableOpacity>
         {!isOwner && (
           <TouchableOpacity disabled={followPending} onPress={onFollow} style={styles.followBtn}>
-            <Text style={[styles.followText, isFollowing && { color: "#00F2FE" }]}>{isFollowing ? "Siguiendo" : "Seguir"}</Text>
+            <Text numberOfLines={1} maxFontSizeMultiplier={1.4} style={[styles.followText, isFollowing && { color: "#00F2FE" }]}>{isFollowing ? "Siguiendo" : "Seguir"}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -172,7 +172,10 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "#fff",
     borderRadius: 6,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
+    minHeight: 44,
+    maxWidth: "42%",
+    justifyContent: "center",
     paddingVertical: 4,
   },
   followText: {

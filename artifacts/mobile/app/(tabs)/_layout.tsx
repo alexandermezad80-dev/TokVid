@@ -8,7 +8,8 @@ import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
 import { SymbolView } from "expo-symbols";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useNotifications } from "../../context/NotificationsContext";
 import { useAuth } from "../../context/AuthContext";
 import { router } from "expo-router";
@@ -96,11 +97,18 @@ function ClassicTabLayout() {
   const { unreadCount } = useNotifications();
   const { user } = useAuth();
   const guest = !user;
+  const insets = useSafeAreaInsets();
+  const { fontScale } = useWindowDimensions();
+  const bottomInset = Math.max(insets.bottom, isWeb ? 12 : 0);
+  const barBody = Math.max(60, 36 + 16 * fontScale);
   const { setTabBarHeight } = useRegistration();
 
   return (
     <Tabs
+      safeAreaInsets={{ bottom: bottomInset }}
       screenOptions={{
+        tabBarLabelPosition: "below-icon",
+        tabBarItemStyle: { minHeight: barBody, paddingVertical: 4 },
         tabBarActiveTintColor: PRIMARY,
         tabBarInactiveTintColor: "#8A8B97",
         headerShown: false,
@@ -110,7 +118,9 @@ function ClassicTabLayout() {
           borderTopWidth: 1,
           borderTopColor: BORDER,
           elevation: 0,
-          ...(isWeb ? { height: 84 } : {}),
+          height: barBody + bottomInset,
+          paddingBottom: bottomInset,
+          paddingTop: 0,
         },
         tabBarLabelStyle: {
           fontSize: 10,

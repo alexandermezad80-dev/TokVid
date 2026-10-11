@@ -1,0 +1,10 @@
+import React,{useEffect,useState} from "react";
+import {Image,Pressable,Text,View} from "react-native";
+import {useAudioPlayer,useAudioPlayerStatus} from "expo-audio";
+import {useVideoPlayer,VideoView} from "expo-video";
+import {Feather} from "@expo/vector-icons";
+import {privateMediaUrl} from "../services/chat-media";
+import type {Attachment} from "../services/chat-tools";
+function Audio({url}:{url:string}){const player=useAudioPlayer(url);const state=useAudioPlayerStatus(player);return <Pressable accessibilityLabel={state.playing?"Pausar audio":"Reproducir audio"} onPress={()=>{if(state.playing)player.pause();else{if(state.didJustFinish)void player.seekTo(0);player.play();}}} style={{minHeight:48,flexDirection:"row",alignItems:"center",gap:12,padding:10}}><Feather name={state.playing?"pause":"play"} size={22} color="#EAF2F5"/><Text style={{color:"#EAF2F5"}}>Audio · {Math.round(state.currentTime??0)} s</Text></Pressable>;}
+function Video({url}:{url:string}){const player=useVideoPlayer(url);return <VideoView player={player} style={{width:"100%",height:220}} nativeControls contentFit="contain"/>;}
+export default function ChatMedia({attachment}:{attachment:Attachment}){const [url,setUrl]=useState<string|null>(null),[error,setError]=useState(false),[retry,setRetry]=useState(0);useEffect(()=>{let active=true;setUrl(null);setError(false);void privateMediaUrl(attachment.path).then(u=>{if(active)setUrl(u);}).catch(()=>{if(active)setError(true);});const timer=setTimeout(()=>{if(active)setRetry(n=>n+1);},240000);return()=>{active=false;clearTimeout(timer);};},[attachment.path,retry]);return <View style={{width:"100%",maxWidth:240,borderRadius:12,overflow:"hidden",backgroundColor:"#26343E"}}>{url?(attachment.kind==="image"?<Image source={{uri:url}} style={{width:"100%",height:200}} resizeMode="contain"/>:attachment.kind==="video"?<Video url={url}/>:<Audio url={url}/>):<Pressable onPress={()=>setRetry(n=>n+1)} style={{padding:16}}><Text style={{color:"#C8D6DF"}}>{error?"Archivo no disponible · Reintentar":"Cargando…"}</Text></Pressable>}</View>;}

@@ -1,106 +1,110 @@
-import { Feather } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
+import {Feather} from "@expo/vector-icons";
+import {LinearGradient} from "expo-linear-gradient";
+import {router,useLocalSearchParams,useFocusEffect} from "expo-router";
 import React,{useCallback,useEffect,useRef,useState} from "react";
-import { ActivityIndicator,Alert,BackHandler,FlatList,Image,Keyboard,Pressable,StyleSheet,Text,TextInput,View,useWindowDimensions } from "react-native";
-import { useAuth } from "../context/AuthContext";
-import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
-import { usePrivateChat } from "../hooks/usePrivateChat";
-import { useKeyboardSheetViewport } from "../hooks/useKeyboardSheetViewport";
-import { supabase } from "../lib/supabase";
-import Bubble,{type BubbleStyleVariant} from "../lib/features/messages/components/Bubble";
-import MessageMenu,{type MessageMenuPage} from "../lib/features/messages/components/MessageMenu";
-import { canRemoveForEveryone,type PrivateMessage } from "../lib/features/messages/model";
-import { getBubbleStyleVariant,setBubbleStyleVariant } from "../lib/features/messages/services/bubble-preferences";
-import { createCall,type CallType } from "../lib/features/calls/services/calls-service";
+import {ActivityIndicator,Alert,BackHandler,FlatList,Image,Keyboard,Pressable,StyleSheet,Text,TextInput,View,useWindowDimensions} from "react-native";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
+import {KeyboardAvoidingView} from "react-native-keyboard-controller";
+import * as Clipboard from "expo-clipboard";
+import * as ImagePicker from "expo-image-picker";
+import {RecordingPresets,requestRecordingPermissionsAsync,setAudioModeAsync,useAudioRecorder,useAudioRecorderState} from "expo-audio";
+import {useAuth} from "../context/AuthContext";
+import {usePrivateChat} from "../hooks/usePrivateChat";
+import {supabase} from "../lib/supabase";
+import {createDatabaseChannel} from "../lib/realtimeSubscriptions";
+import Bubble from "../lib/features/messages/components/Bubble";
+import MessageMenu,{type MessageMenuPage,type MessageAction} from "../lib/features/messages/components/MessageMenu";
+import ChatMedia from "../lib/features/messages/components/ChatMedia";
+import type {PrivateMessage} from "../lib/features/messages/model";
+import {CHAT_BACKGROUNDS,DEFAULT_CHAT_PREFERENCES,readChatPreferences,saveChatPreferences,readChatTools,reactToMessage,pinMessage,hideOwnMessages,cancelUnreadMessage,type ChatPreferences,type MessageDetail,type Reaction,type Attachment} from "../lib/features/messages/services/chat-tools";
+import {uploadChatMedia,type LocalChatMedia} from "../lib/features/messages/services/chat-media";
+import {createCall} from "../lib/features/calls/services/calls-service";
 import LiveShareCard from "../lib/features/live/LiveShareCard";
 
 type Anchor={x:number;y:number;width:number;height:number};
 export default function ChatScreen(){
- const params=useLocalSearchParams<{conversationId:string}>();
+ const params=useLocalSearchParams<{conversationId:string;messageId?:string}>();
  const conversationId=typeof params.conversationId==="string"?params.conversationId:"";
- const {user}=useAuth(); const chat=usePrivateChat(conversationId,user?.id);
- const [focused,setFocused]=useState(false);useFocusEffect(useCallback(()=>{setFocused(true);return()=>setFocused(false);},[]));
- const viewport=useKeyboardSheetViewport(focused);const {width}=useWindowDimensions();
- const [text,setText]=useState("");const textRef=useRef("");textRef.current=text;
- const [style,setStyle]=useState<BubbleStyleVariant>("classic"),[page,setPage]=useState<MessageMenuPage>("options");
- const [anchor,setAnchor]=useState<Anchor|null>(null),[target,setTarget]=useState<string|null>(null);
- const [selecting,setSelecting]=useState(false),[selected,setSelected]=useState<Set<string>>(new Set());
- const [all,setAll]=useState<{before:string;total:number;own:number}|null>(null);
- const [busy,setBusy]=useState(false),[startingCall,setStartingCall]=useState<CallType|null>(null);
- const list=useRef<FlatList<PrivateMessage>>(null),rowRefs=useRef(new Map<string,View>()),toolbar=useRef<View>(null);
+ const {user}=useAuth(),chat=usePrivateChat(conversationId,user?.id),insets=useSafeAreaInsets(),window=useWindowDimensions();
+ const [focused,setFocused]=useState(false),[text,setText]=useState(""),[prefs,setPrefs]=useState<ChatPreferences>(DEFAULT_CHAT_PREFERENCES);
+ const [anchor,setAnchor]=useState<Anchor|null>(null),[target,setTarget]=useState<string|null>(null),[page,setPage]=useState<MessageMenuPage>("options");
+ const [reply,setReply]=useState<PrivateMessage|null>(null),[busy,setBusy]=useState(false),[keyboard,setKeyboard]=useState(false);
+ const [ownSelection,setOwnSelection]=useState<{before:string;count:number}|null>(null);
+ const [media,setMedia]=useState<LocalChatMedia|null>(null),uploaded=useRef<Attachment|null>(null);
+ const [details,setDetails]=useState<MessageDetail[]>([]),[reactions,setReactions]=useState<Reaction[]>([]),[pins,setPins]=useState<string[]>([]);
+ const [emojiTarget,setEmojiTarget]=useState<string|null>(null),[emoji,setEmoji]=useState("");
+ const [viewport,setViewport]=useState({top:0,height:window.height});
+ const root=useRef<View>(null),list=useRef<FlatList<PrivateMessage>>(null),input=useRef<TextInput>(null),rowRefs=useRef(new Map<string,View>());
+ const atBottom=useRef(true),initialScroll=useRef(true),textRef=useRef(text),operation=useRef(false);textRef.current=text;
+ const recorder=useAudioRecorder(RecordingPresets.HIGH_QUALITY),recording=useAudioRecorderState(recorder);
  const close=()=>{setAnchor(null);setTarget(null);setPage("options");};
- const clearSelection=()=>{setSelecting(false);setSelected(new Set());setAll(null);};
- useEffect(()=>{if(!user)requestRegistration();},[user]);
- useEffect(()=>{void getBubbleStyleVariant().then(setStyle);},[]);
- useEffect(()=>{setText("");clearSelection();close();},[conversationId,user?.id]);
- useEffect(()=>{if(!focused){close();clearSelection();}},[focused]);
- useEffect(()=>{if(!anchor&&!selecting)return;const event=BackHandler.addEventListener("hardwareBackPress",()=>{anchor?close():clearSelection();return true;});return()=>event.remove();},[!!anchor,selecting]);
- useEffect(()=>{setSelected(old=>new Set([...old].filter(id=>chat.messages.some(m=>m.id===id))));if(target&&!chat.messages.some(m=>m.id===target))close();},[chat.messages]);
- const lastId=chat.messages.at(-1)?.id;
- useEffect(()=>{if(lastId&&!selecting)requestAnimationFrame(()=>list.current?.scrollToEnd({animated:true}));},[lastId,viewport.keyboardInset]);
- const open=(id:string|null,menuPage:MessageMenuPage="options")=>{
-   Keyboard.dismiss();const node=id?rowRefs.current.get(id):toolbar.current;
-   node?.measureInWindow((x,y,w,h)=>{setTarget(id);setPage(menuPage);setAnchor({x,y:y-viewport.viewportTop,width:w,height:h});});
+ const showError=(e:unknown)=>Alert.alert("No se pudo completar",e instanceof Error?e.message:"Inténtalo de nuevo.");
+ const perform=async(action:()=>Promise<void>)=>{if(operation.current)return;operation.current=true;setBusy(true);try{await action();}catch(e){showError(e);}finally{operation.current=false;setBusy(false);}};
+ useFocusEffect(useCallback(()=>{let active=true;setFocused(true);if(user)void readChatPreferences(user.id,conversationId).then(p=>{if(active)setPrefs(p);}).catch(showError);return()=>{active=false;setFocused(false);};},[conversationId,user?.id]));
+ useEffect(()=>{setText("");setReply(null);setMedia(null);uploaded.current=null;setOwnSelection(null);close();atBottom.current=true;initialScroll.current=true;},[conversationId,user?.id]);
+ useEffect(()=>{const show=Keyboard.addListener("keyboardDidShow",()=>setKeyboard(true)),hide=Keyboard.addListener("keyboardDidHide",()=>setKeyboard(false));return()=>{show.remove();hide.remove();};},[]);
+ useEffect(()=>{if(!focused){close();if(recording.isRecording)void recorder.stop().then(()=>setAudioModeAsync({allowsRecording:false}));}},[focused]);
+ useEffect(()=>{if(!anchor&&!ownSelection&&!emojiTarget)return;const listener=BackHandler.addEventListener("hardwareBackPress",()=>{if(anchor)close();else if(emojiTarget)setEmojiTarget(null);else setOwnSelection(null);return true;});return()=>listener.remove();},[!!anchor,!!ownSelection,emojiTarget]);
+ const toolsGeneration=useRef(0);
+ const refreshTools=useCallback(async()=>{const seq=++toolsGeneration.current;const data=await readChatTools(chat.messages.map(m=>m.id));if(seq!==toolsGeneration.current)return;setDetails(data.details);setReactions(data.reactions);setPins(data.pins);},[chat.messages]);
+ useEffect(()=>{if(!focused)return;void refreshTools().catch(()=>{});const timer=setInterval(()=>void refreshTools().catch(()=>{}),4000);return()=>{clearInterval(timer);++toolsGeneration.current;};},[refreshTools,focused]);
+ useEffect(()=>{if(!focused||!user)return;const channel=createDatabaseChannel(`chat-tools:${conversationId}`).on("postgres_changes",{event:"INSERT",schema:"public",table:"message_reactions"},()=>void refreshTools().catch(()=>{})).on("postgres_changes",{event:"UPDATE",schema:"public",table:"message_reactions"},()=>void refreshTools().catch(()=>{})).subscribe();return()=>{void supabase.removeChannel(channel);};},[focused,conversationId,refreshTools,user?.id]);
+ useEffect(()=>{if(target&&!chat.messages.some(m=>m.id===target))close();if(reply&&!chat.messages.some(m=>m.id===reply.id))setReply(null);},[chat.messages]);
+ const jump=(id:string)=>{const index=chat.messages.findIndex(m=>m.id===id);if(index>=0){atBottom.current=false;list.current?.scrollToIndex({index,animated:true,viewPosition:0.5});}else if(chat.hasOlder&&!chat.loading)void chat.loadOlder();};
+ useEffect(()=>{if(params.messageId&&chat.messages.length)jump(params.messageId);},[params.messageId,chat.messages.length]);
+ const open=(id:string)=>{const node=rowRefs.current.get(id);node?.measureInWindow((x,y,width,height)=>{setTarget(id);setPage("options");setAnchor({x,y:y-viewport.top,width,height});});};
+ const selected=chat.messages.find(m=>m.id===target);
+ const remove=(forAll:boolean)=>{if(!selected)return;const id=selected.id;Alert.alert(forAll?"Eliminar para todos":"Eliminar para mí",forAll?"Este mensaje tuyo se quitará de ambos chats.":"Este mensaje se ocultará solo de tu vista.",[{text:"Cancelar",style:"cancel"},{text:"Eliminar",onPress:()=>void perform(async()=>{await chat.remove([id],forAll);close();})}]);};
+ const react=async(value:string,id=target)=>{if(!id||!user)return;await perform(async()=>{await reactToMessage(id,user.id,value,reactions.some(r=>r.message_id===id&&r.user_id===user.id&&r.emoji===value));await refreshTools();setEmojiTarget(null);setEmoji("");close();});};
+ const action=(kind:MessageAction)=>{if(!selected||!user)return;const msg=selected;
+  if(kind==="reply"){setReply(msg);close();requestAnimationFrame(()=>input.current?.focus());}
+  else if(kind==="copy")void perform(async()=>{await Clipboard.setStringAsync(msg.text);close();});
+  else if(kind==="pin")void perform(async()=>{await pinMessage(msg.id,user.id,pins.includes(msg.id));await refreshTools();close();});
+  else if(kind==="hide"||kind==="remove")remove(kind==="remove");
+  else if(kind==="cancel")void perform(async()=>{await cancelUnreadMessage(msg.id);await chat.refresh();close();});
+  else if(kind==="bulk")void perform(async()=>{const {data,error}=await supabase.rpc("private_message_selection",{p_conversation_id:conversationId});if(error||!data)throw new Error("No se pudo seleccionar.");setOwnSelection({before:data.before,count:data.own});close();Keyboard.dismiss();});
+  else if(kind==="emoji"){setEmojiTarget(msg.id);setEmoji("");close();}
+  else{close();router.push({pathname:"/chat-action",params:{conversationId,messageId:msg.id,action:kind,otherId:chat.other?.id??""}});}
  };
- const chosen=target?chat.messages.filter(m=>m.id===target):chat.messages.filter(m=>selected.has(m.id));
- const count=all?.total??selected.size;
- const everyone=!!user&&(all?all.total>0&&all.own===all.total:canRemoveForEveryone(chosen,user.id));
- const startSelecting=()=>{setSelecting(true);setSelected(new Set(target?[target]:[]));setAll(null);close();};
- const toggle=(id:string)=>{if(all)return;setSelected(old=>{const next=new Set(old);next.has(id)?next.delete(id):next.add(id);return next;});};
- const selectAll=async()=>{
-  setBusy(true);
-  try{const {data,error}=await supabase.rpc("private_message_selection",{p_conversation_id:conversationId});if(error||!data)throw Error();setSelected(new Set());setAll(data as {before:string;total:number;own:number});}
-  catch{Alert.alert("No se pudo seleccionar","Inténtalo de nuevo.");}finally{setBusy(false);}
- };
- const remove=(forAll:boolean)=>{
-  const ids=target?[target]:[...selected],before=target?undefined:all?.before;
-  Alert.alert(forAll?"Eliminar para todos":"Eliminar para mí",forAll?"Se quitarán tus mensajes seleccionados de ambos chats.":"Se quitarán los mensajes seleccionados solo de tu vista.",[
-   {text:"Cancelar",style:"cancel"},{text:"Eliminar",style:"destructive",onPress:()=>{void(async()=>{setBusy(true);try{await chat.remove(ids,forAll,before);close();clearSelection();}catch(e){Alert.alert("No se pudo eliminar",e instanceof Error?e.message:"Inténtalo de nuevo.");}finally{setBusy(false);}})();}}
-  ]);
- };
- const send=async()=>{const value=textRef.current;if(await chat.send(value)){if(textRef.current===value)setText("");}};
- const startCall=async(type:CallType)=>{if(!chat.other||startingCall)return;setStartingCall(type);try{const call=await createCall(conversationId,chat.other.id,type);router.push(`/call?callId=${encodeURIComponent(call.id)}&type=${call.type}`);}catch(e){Alert.alert("No se pudo iniciar la llamada",e instanceof Error?e.message:"Inténtalo de nuevo.");}finally{setStartingCall(null);}};
- const name=chat.other?.username??"Conversación";
- const renderMessage=({item,index}:{item:PrivateMessage;index:number})=>{
-  const mine=item.sender_id===user?.id,isSelected=all?Date.parse(item.created_at)<=Date.parse(all.before):selected.has(item.id);
-  const previous=chat.messages[index-1],next=chat.messages[index+1];
-  const sameBefore=previous?.sender_id===item.sender_id,sameAfter=next?.sender_id===item.sender_id;
-  const groupPosition=!sameBefore?(sameAfter?"first":"single"):(sameAfter?"middle":"last");
-  const time=!previous||new Date(item.created_at).getTime()-new Date(previous.created_at).getTime()>300000;
-  return <View ref={node=>{if(node)rowRefs.current.set(item.id,node);else rowRefs.current.delete(item.id);}} collapsable={false}>
-   {time&&<Text style={styles.time}>{new Date(item.created_at).toLocaleString("es",{hour:"2-digit",minute:"2-digit",day:"numeric",month:"short"})}</Text>}
-   <View style={[styles.message,isSelected&&selecting&&styles.selected]}>
-    {selecting&&<Pressable accessibilityRole="checkbox" accessibilityState={{checked:!!isSelected}} accessibilityLabel={`Seleccionar mensaje ${mine?"enviado":"recibido"}`} disabled={!!all} onPress={()=>toggle(item.id)} style={styles.check}><Feather name={isSelected?"check-circle":"circle"} color={isSelected?"#A1D6D9":"#6B7080"} size={21}/></Pressable>}
-    <View style={{flex:1}}>{item.text.startsWith("[TOKVID_LIVE_SHARE]|")?<View><LiveShareCard roomId={item.text.split("|")[2]}/><Pressable onPress={()=>selecting?toggle(item.id):open(item.id)} style={styles.liveAction}><Text style={styles.link}>Opciones del mensaje</Text></Pressable></View>:<Bubble text={item.text} direction={mine?"sent":"received"} styleVariant={style} groupPosition={groupPosition} onPress={()=>selecting?toggle(item.id):open(item.id)} onLongPress={()=>{setSelecting(true);setSelected(new Set([item.id]));setAll(null);close();}}/>}</View>
-   </View>
-  </View>;
- };
+ const pick=async(camera:boolean)=>{if(busy||recording.isRecording)return;try{if(camera){const p=await ImagePicker.requestCameraPermissionsAsync();if(!p.granted)throw new Error("Permite usar la cámara para tomar una foto.");}const result=camera?await ImagePicker.launchCameraAsync({mediaTypes:["images","videos"],videoMaxDuration:60,quality:0.85}):await ImagePicker.launchImageLibraryAsync({mediaTypes:["images","videos"],quality:0.85});if(!result.canceled&&result.assets[0]){const a=result.assets[0];uploaded.current=null;setMedia({uri:a.uri,kind:a.type==="video"?"video":"image",mime:a.mimeType??(a.type==="video"?"video/mp4":"image/jpeg")});}}catch(e){showError(e);}};
+ const record=()=>void perform(async()=>{if(recording.isRecording){await recorder.stop();await setAudioModeAsync({allowsRecording:false});if(recorder.uri){uploaded.current=null;setMedia({uri:recorder.uri,kind:"audio",mime:"audio/mp4",duration:recording.durationMillis});}}else{const permission=await requestRecordingPermissionsAsync();if(!permission.granted)throw new Error("Permite usar el micrófono para grabar un audio.");await setAudioModeAsync({allowsRecording:true,playsInSilentMode:true});await recorder.prepareToRecordAsync();recorder.record();}});
+ const send=()=>void perform(async()=>{if(!user)return;const draft=textRef.current;let attachment=uploaded.current;if(media&&!attachment){attachment=await uploadChatMedia(user.id,conversationId,media);uploaded.current=attachment;}const body=draft.trim()||(media?.kind==="audio"?"Audio":media?.kind==="video"?"Video":"Foto");if(await chat.send(body,{reply_to:reply?.id,attachment:attachment??undefined})){if(textRef.current===draft)setText("");setReply(null);setMedia(null);uploaded.current=null;atBottom.current=true;requestAnimationFrame(()=>list.current?.scrollToEnd({animated:true}));}});
+ const startCall=()=>void perform(async()=>{if(!chat.other)return;const c=await createCall(conversationId,chat.other.id,"voice");router.push(`/call?callId=${encodeURIComponent(c.id)}&type=${c.type}`);});
+ const name=chat.other?.username??"Conversación",bg=CHAT_BACKGROUNDS[prefs.background]??CHAT_BACKGROUNDS.slate;
+ const renderMessage=({item,index}:{item:PrivateMessage;index:number})=>{const mine=item.sender_id===user?.id,detail=details.find(d=>d.message_id===item.id),reactionList=reactions.filter(r=>r.message_id===item.id),quoted=chat.messages.find(m=>m.id===detail?.reply_to),chosen=!!ownSelection&&mine&&item.created_at<=ownSelection.before;const prev=chat.messages[index-1];return <View ref={node=>{if(node)rowRefs.current.set(item.id,node);else rowRefs.current.delete(item.id);}} collapsable={false} style={chosen?styles.selected:undefined}>
+  {(!prev||Date.parse(item.created_at)-Date.parse(prev.created_at)>300000)&&<Text style={styles.time}>{new Date(item.created_at).toLocaleString("es",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}</Text>}
+  <View style={{alignItems:mine?"flex-end":"flex-start",paddingVertical:3}}>
+   {detail?.forwarded&&<Text style={styles.meta}>Reenviado</Text>}
+   {detail?.reply_to&&<Pressable onPress={()=>quoted&&jump(quoted.id)} style={styles.quote}><Text style={styles.meta}>Respuesta</Text><Text numberOfLines={2} style={styles.white}>{quoted?.text??"Mensaje anterior"}</Text></Pressable>}
+   {pins.includes(item.id)&&<Text style={styles.meta}>Anclado para mí</Text>}
+   {detail?.attachment&&<ChatMedia attachment={detail.attachment}/>}
+   {item.text.startsWith("[TOKVID_LIVE_SHARE]|")?<LiveShareCard roomId={item.text.split("|")[2]}/>:<Bubble text={item.text} direction={mine?"sent":"received"} styleVariant={prefs.bubble_style} onPress={()=>open(item.id)} onLongPress={()=>open(item.id)}/>}
+   {detail?.attachment&&<Pressable onPress={()=>open(item.id)} style={styles.mediaOptions}><Text style={styles.meta}>Opciones del mensaje</Text></Pressable>}
+   {!!reactionList.length&&<View style={styles.reactionRow}>{[...new Set(reactionList.map(r=>r.emoji))].map(e=><Pressable key={e} onPress={()=>void react(e,item.id)} style={styles.reaction}><Text style={styles.white}>{e} {reactionList.filter(r=>r.emoji===e).length}</Text></Pressable>)}</View>}
+  </View>
+ </View>;};
  if(!user)return null;
- return <View ref={viewport.viewportRef} collapsable={false} onLayout={viewport.onLayout} style={[styles.screen,{paddingTop:viewport.insets.top,paddingBottom:viewport.keyboardInset}]}>
-  <LinearGradient pointerEvents="none" colors={["#10161C","#12131B","#17121A"]} start={{x:0,y:0}} end={{x:1,y:1}} style={StyleSheet.absoluteFill}/>
-  <LinearGradient colors={["rgba(0,242,254,0.055)","rgba(254,9,121,0.045)"]} start={{x:0,y:0}} end={{x:1,y:0}} style={styles.header}>
-   <Pressable style={styles.icon} onPress={()=>router.back()} accessibilityLabel="Volver"><Feather name="arrow-left" size={23} color="#EEE"/></Pressable>
-   <Pressable style={styles.person} onPress={()=>chat.other&&router.push({pathname:"/user-profile",params:{userId:chat.other.id}})} accessibilityLabel={`Ver perfil de ${name}`}>
-    {chat.other?.avatar_url?<Image source={{uri:chat.other.avatar_url}} style={styles.avatar}/>:<View style={[styles.avatar,styles.initial]}><Text style={styles.name}>{name[0]?.toUpperCase()}</Text></View>}
-    <Text style={styles.name} numberOfLines={1}>@{name}</Text>
-   </Pressable>
-   <Pressable style={styles.icon} onPress={()=>void startCall("voice")} disabled={!!startingCall||!chat.other} accessibilityLabel="Llamada de voz"><Feather name="phone" size={19} color="#DDD"/></Pressable>
-   <Pressable style={styles.icon} onPress={()=>void startCall("video")} disabled={!!startingCall||!chat.other} accessibilityLabel="Videollamada"><Feather name="video" size={19} color="#DDD"/></Pressable>
-   <Pressable style={styles.icon} onPress={()=>router.push(`/call-history?conversationId=${encodeURIComponent(conversationId)}`)} accessibilityLabel="Historial de llamadas"><Feather name="clock" size={19} color="#A9AEBB"/></Pressable>
-   <View ref={toolbar} collapsable={false}><Pressable style={styles.icon} onPress={()=>open(null)} accessibilityLabel="Opciones del chat"><Feather name="sliders" size={19} color="#DDD"/></Pressable></View>
-  </LinearGradient>
-  {selecting&&<View style={styles.selectionBar}><Pressable onPress={clearSelection} style={styles.icon} accessibilityLabel="Cancelar selección"><Feather name="x" color="#EEE" size={21}/></Pressable><Text style={styles.selectionCount}>{count} seleccionados</Text><Pressable onPress={()=>void selectAll()} disabled={busy} style={styles.allButton}><Text style={styles.link}>Seleccionar todos</Text></Pressable></View>}
-  {!!chat.error&&<Pressable onPress={()=>void chat.refresh()} style={styles.error}><Text style={styles.errorText}>{chat.error}</Text></Pressable>}
-  {chat.loading&&!chat.messages.length?<View style={styles.empty}><ActivityIndicator color="#A3D4D6"/></View>:<FlatList ref={list} data={chat.messages} renderItem={renderMessage} keyExtractor={item=>item.id} style={{flex:1}} contentContainerStyle={styles.messages} keyboardShouldPersistTaps="handled" onScrollBeginDrag={close}
-   ListHeaderComponent={chat.hasOlder?<Pressable onPress={()=>void chat.loadOlder()} style={styles.allButton}><Text style={[styles.link,{textAlign:"center"}]}>{chat.loading?"Cargando…":"Ver mensajes anteriores"}</Text></Pressable>:null}
-   ListEmptyComponent={!chat.error?<View style={styles.empty}><Text style={styles.emptyText}>Comienza la conversación</Text></View>:null}
-  />}
-  {selecting?<View style={[styles.inputRow,{paddingBottom:Math.max(viewport.insets.bottom,12)}]}><Pressable disabled={!count||busy} onPress={()=>open(null,"delete")} style={[styles.deleteBar,(!count||busy)&&{opacity:0.4}]}><Feather name="trash-2" color="#E9A0B3" size={20}/><Text style={styles.deleteText}>Eliminar ({count})</Text></Pressable></View>:<View style={[styles.inputRow,{paddingBottom:viewport.keyboardVisible?10:Math.max(viewport.insets.bottom,10)}]}>
-   <TextInput value={text} onChangeText={setText} style={styles.input} placeholder="Escribe un mensaje…" placeholderTextColor="#949AA9" selectionColor="#A6D8DC" multiline maxLength={1000} accessibilityLabel="Escribe un mensaje"/>
-   <Pressable onPress={()=>void send()} disabled={!text.trim()||chat.sending||!chat.other} style={[styles.send,(!text.trim()||chat.sending||!chat.other)&&{opacity:0.4}]} accessibilityLabel="Enviar mensaje">{chat.sending?<ActivityIndicator color="#E9EFF3"/>:<Feather name="send" size={20} color="#E9EFF3"/>}</Pressable>
-  </View>}
-  {anchor&&<MessageMenu anchor={anchor} width={width} height={viewport.availableHeight} safeTop={viewport.insets.top} page={page} onPage={setPage} onClose={close} variant={style} onVariant={variant=>{setStyle(variant);void setBubbleStyleVariant(variant).catch(()=>Alert.alert("No se guardó el estilo","Puedes volver a seleccionarlo."));close();}} onSelect={startSelecting} onDelete={remove} canDelete={!!target||count>0} forEveryone={everyone} busy={busy}/>}
+ return <View ref={root} style={styles.screen} onLayout={()=>root.current?.measureInWindow((_x,y,_w,height)=>setViewport({top:y,height}))} collapsable={false}>
+  <LinearGradient colors={bg} style={StyleSheet.absoluteFill}/>
+  <KeyboardAvoidingView behavior="padding" keyboardVerticalOffset={viewport.top} enabled={focused} style={{flex:1,paddingTop:insets.top}}>
+   <View style={styles.header}>
+    <Pressable onPress={()=>router.replace({pathname:"/(tabs)/inbox",params:{tab:"messages"}})} style={styles.icon} accessibilityLabel="Volver a Mensajes"><Feather name="arrow-left" size={23} color="#EEE"/></Pressable>
+    <Pressable style={styles.person} onPress={()=>chat.other&&router.push({pathname:"/user-profile",params:{userId:chat.other.id}})} accessibilityLabel={`Ver perfil de ${name}`}>{chat.other?.avatar_url?<Image source={{uri:chat.other.avatar_url}} style={styles.avatar}/>:<View style={[styles.avatar,styles.initial]}><Text style={styles.white}>{name[0]?.toUpperCase()}</Text></View>}<Text numberOfLines={1} style={styles.name}>@{name}</Text></Pressable>
+    <Pressable style={styles.icon} onPress={startCall} disabled={busy||!chat.other} accessibilityLabel="Llamada de voz"><Feather name="phone" size={21} color="#DEE4E8"/></Pressable>
+    <Pressable style={styles.icon} onPress={()=>router.push({pathname:"/chat-details",params:{conversationId}})} accessibilityLabel="Detalles de la conversación"><Feather name="menu" size={23} color="#DEE4E8"/></Pressable>
+   </View>
+   {!!chat.error&&<Pressable onPress={()=>void chat.refresh()} style={styles.notice}><Text style={styles.white}>{chat.error}</Text></Pressable>}
+   {ownSelection&&<View style={styles.notice}><Text style={styles.white}>{ownSelection.count} mensajes tuyos seleccionados</Text><Pressable onPress={()=>setOwnSelection(null)} style={styles.icon} accessibilityLabel="Cancelar selección"><Feather name="x" color="#EEE" size={22}/></Pressable></View>}
+   {chat.loading&&!chat.messages.length?<View style={styles.empty}><ActivityIndicator color="#A0C5CB"/></View>:<FlatList ref={list} data={chat.messages} renderItem={renderMessage} keyExtractor={m=>m.id} style={{flex:1}} contentContainerStyle={styles.messages} keyboardShouldPersistTaps="handled" onScrollBeginDrag={close} scrollEventThrottle={32} maintainVisibleContentPosition={{minIndexForVisible:0}} onScroll={e=>{const {contentOffset,contentSize,layoutMeasurement}=e.nativeEvent;atBottom.current=contentSize.height-contentOffset.y-layoutMeasurement.height<80;}} onContentSizeChange={()=>{if(!params.messageId&&(atBottom.current||initialScroll.current)&&chat.messages.length){initialScroll.current=false;list.current?.scrollToEnd({animated:false});}}} onLayout={()=>{if(atBottom.current&&!params.messageId)requestAnimationFrame(()=>list.current?.scrollToEnd({animated:false}));}} onScrollToIndexFailed={info=>{list.current?.scrollToOffset({offset:info.averageItemLength*info.index,animated:false});}} ListHeaderComponent={chat.hasOlder?<Pressable onPress={()=>void chat.loadOlder()} style={styles.mediaOptions}><Text style={styles.meta}>Ver mensajes anteriores</Text></Pressable>:null} ListEmptyComponent={<View style={styles.empty}><Text style={styles.meta}>Comienza la conversación</Text></View>}/>}
+   {reply&&<View style={styles.notice}><View style={{flex:1}}><Text style={styles.meta}>Respondiendo</Text><Text style={styles.white} numberOfLines={2}>{reply.text}</Text></View><Pressable style={styles.icon} onPress={()=>setReply(null)} accessibilityLabel="Cancelar respuesta"><Feather name="x" color="#EEE" size={20}/></Pressable></View>}
+   {media&&<View style={styles.notice}>{media.kind==="image"&&<Image source={{uri:media.uri}} style={{width:54,height:54,borderRadius:8}}/>}<Text style={[styles.white,{flex:1}]}>{media.kind==="audio"?"Audio listo para enviar":media.kind==="video"?"Video listo para enviar":"Foto lista para enviar"}</Text><Pressable disabled={busy} style={styles.icon} onPress={()=>{setMedia(null);uploaded.current=null;}} accessibilityLabel="Descartar archivo"><Feather name="x" color="#EEE" size={20}/></Pressable></View>}
+   {ownSelection?<View style={[styles.composer,{paddingBottom:Math.max(insets.bottom,10)}]}><Pressable disabled={busy||!ownSelection.count} style={styles.deleteButton} onPress={()=>Alert.alert("Eliminar todos mis mensajes","Se ocultarán solo de tu vista. Los mensajes recibidos se conservarán.",[{text:"Cancelar",style:"cancel"},{text:"Eliminar",onPress:()=>void perform(async()=>{await hideOwnMessages(conversationId,ownSelection.before);setOwnSelection(null);await chat.refresh();})}])}><Text style={styles.white}><Text style={{color:"#A0C5CB"}}>Eliminar</Text> ({ownSelection.count})</Text></Pressable></View>:<View style={[styles.composer,{paddingBottom:keyboard?8:Math.max(insets.bottom,10)}]}>
+    <Pressable style={styles.icon} onPress={()=>void pick(true)} accessibilityLabel="Cámara" disabled={busy||recording.isRecording}><Feather name="camera" color="#BAC9D0" size={22}/></Pressable>
+    <View style={styles.field}><TextInput ref={input} value={text} onChangeText={setText} editable={!recording.isRecording} style={styles.input} placeholder={recording.isRecording?`Grabando ${Math.floor(recording.durationMillis/1000)} s…`:"Mensaje…"} placeholderTextColor="#A4B4C0" selectionColor="#92B8C3" multiline maxLength={1000} accessibilityLabel="Mensaje"/><Pressable style={styles.icon} onPress={()=>void pick(false)} disabled={busy||recording.isRecording} accessibilityLabel="Galería"><Feather name="image" color="#B9CAD1" size={21}/></Pressable><Pressable style={styles.icon} accessibilityLabel={recording.isRecording?"Detener grabación":text.trim()||media?"Enviar mensaje":"Grabar audio"} disabled={busy||chat.sending||!chat.other} onPress={text.trim()||media?send:record}>{busy||chat.sending?<ActivityIndicator color="#B5D1D5"/>:<Feather name={recording.isRecording?"square":text.trim()||media?"send":"mic"} color="#D7E5E9" size={21}/>}</Pressable></View>
+   </View>}
+  </KeyboardAvoidingView>
+  {anchor&&selected&&<MessageMenu anchor={anchor} width={window.width} height={viewport.height-(keyboard?Keyboard.metrics()?.height??0:0)} safeTop={insets.top} page={page} onPage={setPage} onClose={close} variant={prefs.bubble_style} onVariant={style=>void perform(async()=>{const p=await saveChatPreferences(user.id,conversationId,{bubble_style:style});setPrefs(p);close();})} onAction={action} onReaction={value=>void react(value)} mine={selected.sender_id===user.id} canCancel={!selected.read_by_other} pinned={pins.includes(selected.id)} busy={busy}/>}
+  {emojiTarget&&<View style={styles.emojiPanel}><Text style={styles.white}>Elige un emoji con tu teclado</Text><TextInput autoFocus value={emoji} onChangeText={setEmoji} maxLength={24} style={styles.input} placeholder="😊" placeholderTextColor="#AAA"/><View style={{flexDirection:"row"}}><Pressable style={styles.mediaOptions} onPress={()=>setEmojiTarget(null)}><Text style={styles.white}>Cancelar</Text></Pressable><Pressable style={styles.mediaOptions} disabled={busy||!/[\p{Extended_Pictographic}\p{Regional_Indicator}]/u.test(emoji)} onPress={()=>void react(emoji.trim(),emojiTarget)}><Text style={styles.white}>Aplicar reacción</Text></Pressable></View></View>}
  </View>;
 }
-const styles=StyleSheet.create({screen:{flex:1,backgroundColor:"#12141A"},header:{flexDirection:"row",alignItems:"center",paddingHorizontal:6,paddingVertical:8,borderBottomWidth:StyleSheet.hairlineWidth,borderBottomColor:"#FFFFFF14"},icon:{width:36,height:44,alignItems:"center",justifyContent:"center"},person:{flex:1,flexDirection:"row",alignItems:"center",gap:8,overflow:"hidden"},avatar:{width:32,height:32,borderRadius:16},initial:{backgroundColor:"#30323D",alignItems:"center",justifyContent:"center"},name:{flexShrink:1,color:"#ECEFF5",fontSize:14,fontWeight:"600"},messages:{paddingHorizontal:12,paddingVertical:12,flexGrow:1},message:{flexDirection:"row",alignItems:"center",borderWidth:1,borderColor:"transparent",borderRadius:14,padding:2},selected:{borderColor:"#8CCAD53B",backgroundColor:"#83CDD30A"},check:{width:36,minHeight:48,alignItems:"center",justifyContent:"center"},time:{color:"#9BA0AE",fontSize:11,textAlign:"center",marginVertical:12},inputRow:{paddingTop:10,paddingHorizontal:12,flexDirection:"row",alignItems:"flex-end",gap:10,borderTopWidth:StyleSheet.hairlineWidth,borderTopColor:"#FFFFFF12",backgroundColor:"#12151DEE"},input:{flex:1,minHeight:46,maxHeight:120,paddingHorizontal:16,paddingVertical:12,borderRadius:22,backgroundColor:"#232630",color:"#F3F3F8",fontSize:15,lineHeight:21},send:{width:46,height:46,borderRadius:23,backgroundColor:"#345A65",alignItems:"center",justifyContent:"center"},empty:{flex:1,minHeight:200,alignItems:"center",justifyContent:"center"},emptyText:{color:"#AAB0BD",fontSize:15},selectionBar:{flexDirection:"row",alignItems:"center",paddingHorizontal:8,backgroundColor:"#20242D"},selectionCount:{flex:1,color:"#E3E6ED",fontSize:14},allButton:{minHeight:48,justifyContent:"center",paddingHorizontal:10},link:{color:"#A2CFD5",fontSize:13},deleteBar:{flex:1,minHeight:48,borderWidth:StyleSheet.hairlineWidth,borderColor:"#EBA1B42E",borderRadius:14,flexDirection:"row",alignItems:"center",justifyContent:"center",gap:10},deleteText:{color:"#E9A0B3",fontSize:15,fontWeight:"600"},error:{padding:12,backgroundColor:"#392530"},errorText:{color:"#EFBDC9",fontSize:13,lineHeight:18},liveAction:{alignItems:"center",padding:8}});
+const styles=StyleSheet.create({screen:{flex:1,backgroundColor:"#121820"},header:{flexDirection:"row",alignItems:"center",paddingHorizontal:4,paddingVertical:6,borderBottomWidth:StyleSheet.hairlineWidth,borderBottomColor:"#8995A428",backgroundColor:"#18212ACC"},icon:{width:44,minHeight:44,alignItems:"center",justifyContent:"center"},person:{flex:1,minWidth:0,flexDirection:"row",gap:8,alignItems:"center"},avatar:{width:36,height:36,borderRadius:18},initial:{backgroundColor:"#38444F",alignItems:"center",justifyContent:"center"},name:{flex:1,color:"#F2F4F7",fontSize:16,fontWeight:"600"},white:{color:"#F2F4F7",fontSize:14},messages:{flexGrow:1,paddingHorizontal:12,paddingVertical:8},time:{color:"#A4ADB9",fontSize:11,textAlign:"center",marginVertical:12},meta:{color:"#B5C4CE",fontSize:12},quote:{maxWidth:"82%",borderLeftWidth:2,borderLeftColor:"#789BA4",padding:10,backgroundColor:"#26343E",borderRadius:8},selected:{backgroundColor:"#82B8C01A",borderRadius:12},notice:{padding:10,flexDirection:"row",gap:8,alignItems:"center",backgroundColor:"#26313C"},composer:{paddingHorizontal:6,paddingTop:8,flexDirection:"row",alignItems:"flex-end",backgroundColor:"#141C25",borderTopWidth:StyleSheet.hairlineWidth,borderTopColor:"#667D8B26"},field:{flex:1,flexDirection:"row",alignItems:"flex-end",borderRadius:23,backgroundColor:"#25353F",borderWidth:StyleSheet.hairlineWidth,borderColor:"#87A4AE35"},input:{flex:1,minHeight:46,maxHeight:120,paddingHorizontal:12,paddingVertical:12,color:"#F0F4F6",fontSize:15},empty:{flex:1,minHeight:160,justifyContent:"center",alignItems:"center"},mediaOptions:{padding:12,minHeight:44,justifyContent:"center"},reactionRow:{flexDirection:"row",gap:4,flexWrap:"wrap",marginTop:3},reaction:{padding:6,minWidth:44,minHeight:32,borderRadius:14,backgroundColor:"#2B3B45"},deleteButton:{flex:1,minHeight:48,alignItems:"center",justifyContent:"center",borderRadius:14,backgroundColor:"#283B43"},emojiPanel:{position:"absolute",top:100,left:16,right:16,padding:16,borderRadius:16,backgroundColor:"#24303C",zIndex:100}});

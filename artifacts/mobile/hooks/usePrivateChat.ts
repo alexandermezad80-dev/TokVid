@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabase";
 import { createDatabaseChannel } from "../lib/realtimeSubscriptions";
 import { mergePrivateMessages, type PrivateMessage } from "../lib/features/messages/model";
 import { readPrivateMessages, sendPrivateMessage, removePrivateMessages } from "../lib/features/messages/services/private-messages";
+import type { Attachment } from "../lib/features/messages/services/chat-tools";
 import { publicationId } from "../lib/features/publishing/model";
 
 export function usePrivateChat(conversationId:string,userId?:string) {
@@ -14,7 +15,7 @@ export function usePrivateChat(conversationId:string,userId?:string) {
   const [sending,setSending]=useState(false),[hasOlder,setHasOlder]=useState(false);
   const boundary=useRef<PrivateMessage|null>(null);
   const generation=useRef(0),sequence=useRef(0),busy=useRef(false);
-  const draft=useRef<{id:string;conversation_id:string;sender_id:string;text:string}|null>(null);
+  const draft=useRef<{id:string;conversation_id:string;sender_id:string;text:string;reply_to?:string;attachment?:Attachment}|null>(null);
   const refresh=useCallback(async()=>{
     if(!userId||!conversationId)return;
     const request=++sequence.current, gen=generation.current;
@@ -53,10 +54,10 @@ export function usePrivateChat(conversationId:string,userId?:string) {
     const interval=setInterval(()=>{if(AppState.currentState==="active")reload();},15000);
     return()=>{active=false;++generation.current;++sequence.current;app.remove();clearInterval(interval);void supabase.removeChannel(channel);};
   },[conversationId,userId,refresh]));
-  const send=async(text:string)=>{
+  const send=async(text:string,extras?:{reply_to?:string;attachment?:Attachment})=>{
     if(!userId||!other||!text.trim()||busy.current)return false;
     const gen=generation.current;busy.current=true;setSending(true);setError(null);
-    if(!draft.current||draft.current.text!==text.trim())draft.current={id:publicationId(),conversation_id:conversationId,sender_id:userId,text:text.trim()};
+    if(!draft.current||draft.current.text!==text.trim()||draft.current.reply_to!==extras?.reply_to||draft.current.attachment?.path!==extras?.attachment?.path)draft.current={id:publicationId(),conversation_id:conversationId,sender_id:userId,text:text.trim(),...extras};
     try{const row=await sendPrivateMessage(draft.current);if(gen!==generation.current)return false;++sequence.current;setLoading(false);setMessages(old=>mergePrivateMessages(old,[row]));draft.current=null;return true;}
     catch(e){if(gen===generation.current)setError(e instanceof Error?e.message:"No se pudo enviar.");return false;}
     finally{if(gen===generation.current){busy.current=false;setSending(false);}}

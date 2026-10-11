@@ -1,30 +1,42 @@
 import React from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { BlurView } from "expo-blur";
-import { LinearGradient } from "expo-linear-gradient";
 import Bubble,{BUBBLE_VARIANTS,BUBBLE_VARIANT_NAMES,type BubbleStyleVariant} from "./Bubble";
 import { privateMessagePopover } from "../model";
-export type MessageMenuPage="options"|"bubbles"|"delete";
-export default function MessageMenu({anchor,width,height,safeTop,page,onPage,onClose,variant,onVariant,onSelect,onDelete,canDelete,forEveryone,busy}: {
+export type MessageMenuPage="options"|"bubbles"|"bulk";
+export type MessageAction="reply"|"forward"|"copy"|"pin"|"translate"|"hide"|"remove"|"bulk"|"cancel"|"report"|"emoji";
+export default function MessageMenu({anchor,width,height,safeTop,page,onPage,onClose,variant,onVariant,onAction,onReaction,mine,canCancel,pinned,busy}: {
  anchor:{x:number;y:number;width:number;height:number};width:number;height:number;safeTop:number;
  page:MessageMenuPage;onPage:(page:MessageMenuPage)=>void;onClose:()=>void;
- variant:BubbleStyleVariant;onVariant:(style:BubbleStyleVariant)=>void;onSelect:()=>void;
- onDelete:(everyone:boolean)=>void;canDelete:boolean;forEveryone:boolean;busy:boolean;
+ variant:BubbleStyleVariant;onVariant:(style:BubbleStyleVariant)=>void;
+ onAction:(action:MessageAction)=>void;onReaction:(emoji:string)=>void;
+ mine:boolean;canCancel:boolean;pinned:boolean;busy:boolean;
 }){
- const placement=privateMessagePopover(anchor,width,height,safeTop,page==="bubbles"?440:page==="delete"?240:230);
- const action=(label:string,icon:React.ComponentProps<typeof Feather>["name"],run:()=>void,destructive=false)=><Pressable accessibilityRole="button" disabled={busy} onPress={run} style={({pressed})=>[styles.action,pressed&&styles.pressed]}><Feather name={icon} color={destructive?"#F3A5B9":"#DEE2EB"} size={19}/><Text style={[styles.label,destructive&&{color:"#F3A5B9"}]}>{label}</Text></Pressable>;
+ const {fontScale}=useWindowDimensions();
+ const placement=privateMessagePopover(anchor,width,height,safeTop,page==="bubbles"?460:page==="bulk"?200:mine?Math.min(650,560*fontScale):360);
+ const action=(label:string,icon:React.ComponentProps<typeof Feather>["name"],run:()=>void)=><Pressable accessibilityRole="button" disabled={busy} onPress={run} style={({pressed})=>[styles.action,pressed&&styles.pressed]}><Feather name={icon} color="#DCE3E8" size={18}/><Text style={styles.label}>{label.startsWith("Eliminar")?<><Text style={{color:"#A0C5CB"}}>Eliminar</Text>{label.slice(8)}</>:label}</Text></Pressable>;
  return <View style={styles.overlay} accessibilityViewIsModal><Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel="Cerrar opciones"/>
   <View style={[styles.menu,{left:placement.left,top:placement.top,width:placement.width,maxHeight:placement.maxHeight}]}>
-   <BlurView pointerEvents="none" intensity={16} tint="dark" experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill}/>
-   <LinearGradient pointerEvents="none" colors={["rgba(0,242,254,0.045)","rgba(254,9,121,0.035)"]} start={{x:0,y:0}} end={{x:1,y:1}} style={StyleSheet.absoluteFill}/>
-   <ScrollView bounces={false} keyboardShouldPersistTaps="handled">
-    <View style={styles.heading}>{page!=="options"&&<Pressable onPress={()=>onPage("options")} style={styles.icon} accessibilityLabel="Volver a opciones"><Feather name="chevron-left" color="#DEE2EB" size={23}/></Pressable>}<Text style={styles.title}>{page==="bubbles"?"Burbujas":page==="delete"?"Eliminar mensajes":"Opciones"}</Text><Pressable onPress={onClose} style={styles.icon} accessibilityLabel="Cerrar menú"><Feather name="x" color="#D4D6DE" size={21}/></Pressable></View>
-    {page==="options"&&<>{action("Burbujas","message-circle",()=>onPage("bubbles"))}{action("Seleccionar mensajes","check-square",onSelect)}{canDelete&&action("Eliminar","trash-2",()=>onPage("delete"),true)}</>}
-    {page==="bubbles"&&BUBBLE_VARIANTS.map(style=><Pressable key={style} accessibilityRole="radio" accessibilityState={{checked:style===variant}} accessibilityLabel={BUBBLE_VARIANT_NAMES[style]} onPress={()=>onVariant(style)} style={[styles.variant,style===variant&&styles.selected]}><Text style={styles.variantName}>{BUBBLE_VARIANT_NAMES[style]}</Text><View pointerEvents="none" style={{flex:1}}><Bubble text="Hola" direction="sent" styleVariant={style}/></View>{style===variant&&<Feather name="check" color="#A0D9DD" size={18}/>}</Pressable>)}
-    {page==="delete"&&<><Text style={styles.hint}>Elige dónde eliminar la selección.</Text>{action("Eliminar para mí","eye-off",()=>onDelete(false),true)}{forEveryone&&action("Eliminar para todos","trash-2",()=>onDelete(true),true)}{!forEveryone&&<Text style={styles.hint}>Solo puedes eliminar para todos los mensajes que tú enviaste.</Text>}</>}
+   {page==="options"&&<ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reactions} contentContainerStyle={{paddingHorizontal:4}}>{["❤️","👍","😂","😮","😢","🙏"].map(emoji=><Pressable key={emoji} disabled={busy} onPress={()=>onReaction(emoji)} style={styles.emojiButton} accessibilityLabel={`Reaccionar ${emoji}`}><Text style={styles.emoji}>{emoji}</Text></Pressable>)}<Pressable accessibilityLabel="Más emojis del teclado" onPress={()=>onAction("emoji")} style={styles.emojiButton}><Feather name="plus" size={20} color="#EEE"/></Pressable></ScrollView>}
+   <View style={styles.heading}>{page!=="options"&&<Pressable onPress={()=>onPage("options")} style={styles.icon} accessibilityLabel="Volver a opciones"><Feather name="chevron-left" color="#DEE2EB" size={21}/></Pressable>}<Text style={styles.title}>{page==="bubbles"?"Estilo de burbuja":page==="bulk"?"Mis mensajes":"Mensaje"}</Text><Pressable onPress={onClose} style={styles.icon} accessibilityLabel="Cerrar menú"><Feather name="x" color="#D4D6DE" size={20}/></Pressable></View>
+   <ScrollView bounces={false} keyboardShouldPersistTaps="handled" style={{flexShrink:1}}>
+    {page==="options"&&<>
+     {action("Responder","corner-up-left",()=>onAction("reply"))}
+     {action("Reenviar","corner-up-right",()=>onAction("forward"))}
+     {mine&&action("Copiar","copy",()=>onAction("copy"))}
+     {action(pinned?"Desanclar":"Anclar","bookmark",()=>onAction("pin"))}
+     {mine&&action("Traducir","globe",()=>onAction("translate"))}
+     {mine&&action("Estilo de burbuja","message-circle",()=>onPage("bubbles"))}
+     {action("Eliminar para mí","eye-off",()=>onAction("hide"))}
+     {mine&&action("Eliminar para todos","trash-2",()=>onAction("remove"))}
+     {mine&&action("Eliminar todos","check-square",()=>onPage("bulk"))}
+     {mine&&canCancel&&action("Cancelar envío","rotate-ccw",()=>onAction("cancel"))}
+     {!mine&&action("Denunciar","flag",()=>onAction("report"))}
+    </>}
+    {page==="bubbles"&&BUBBLE_VARIANTS.map(style=><Pressable key={style} accessibilityRole="radio" accessibilityState={{checked:style===variant}} onPress={()=>onVariant(style)} style={[styles.variant,style===variant&&styles.selected]}><Text style={styles.variantName}>{BUBBLE_VARIANT_NAMES[style]}</Text><View pointerEvents="none" style={{width:96}}><Bubble text="Hola" direction="sent" styleVariant={style}/></View>{style===variant&&<Feather name="check" color="#A0C5CB" size={16}/>}</Pressable>)}
+    {page==="bulk"&&<><Text style={styles.hint}>Selecciona todos los mensajes que tú enviaste. Se ocultarán solo de tu vista.</Text>{action("Seleccionar todos","check-square",()=>onAction("bulk"))}</>}
    </ScrollView>
   </View>
  </View>;
 }
-const styles=StyleSheet.create({overlay:{...StyleSheet.absoluteFillObject,zIndex:50},backdrop:{...StyleSheet.absoluteFillObject,backgroundColor:"#00000026"},menu:{position:"absolute",backgroundColor:"rgba(24,26,34,0.97)",borderRadius:18,borderWidth:StyleSheet.hairlineWidth,borderColor:"#FFFFFF29",overflow:"hidden",elevation:14},heading:{flexDirection:"row",alignItems:"center",paddingLeft:16,borderBottomWidth:StyleSheet.hairlineWidth,borderBottomColor:"#FFFFFF14",minHeight:52},title:{flex:1,fontSize:16,color:"#F3F4F8",fontWeight:"600"},icon:{width:48,height:48,alignItems:"center",justifyContent:"center"},action:{flexDirection:"row",alignItems:"center",minHeight:50,paddingHorizontal:16,paddingVertical:12,gap:12},label:{flex:1,color:"#EDF0F5",fontSize:15,lineHeight:21},pressed:{backgroundColor:"#FFFFFF0C"},variant:{marginHorizontal:10,marginVertical:4,minHeight:66,padding:10,flexDirection:"row",alignItems:"center",gap:8,borderWidth:1,borderColor:"transparent",borderRadius:12},selected:{borderColor:"#86BCC15C",backgroundColor:"#91D1D608"},variantName:{color:"#E5E8F0",fontSize:14,width:85},hint:{color:"#AAB0BF",fontSize:13,lineHeight:19,padding:16}});
+const styles=StyleSheet.create({overlay:{...StyleSheet.absoluteFillObject,zIndex:50},backdrop:{...StyleSheet.absoluteFillObject,backgroundColor:"#00000036"},menu:{position:"absolute",backgroundColor:"#1C232C",borderRadius:16,borderWidth:StyleSheet.hairlineWidth,borderColor:"#8995A438",overflow:"hidden",elevation:8},heading:{flexDirection:"row",alignItems:"center",paddingLeft:12,borderBottomWidth:StyleSheet.hairlineWidth,borderBottomColor:"#FFFFFF10",minHeight:44},title:{flex:1,fontSize:14,color:"#F2F4F7",fontWeight:"600"},icon:{width:44,height:44,alignItems:"center",justifyContent:"center"},action:{flexDirection:"row",alignItems:"center",minHeight:44,paddingHorizontal:14,paddingVertical:10,gap:10},label:{flex:1,color:"#F2F4F7",fontSize:14,lineHeight:20},pressed:{backgroundColor:"#FFFFFF09"},variant:{marginHorizontal:6,marginVertical:1,minHeight:54,paddingHorizontal:8,paddingVertical:2,flexDirection:"row",alignItems:"center",gap:6,borderWidth:1,borderColor:"transparent",borderRadius:10},selected:{borderColor:"#86BCC14A",backgroundColor:"#91D1D608"},variantName:{flex:1,color:"#F2F4F7",fontSize:13},hint:{color:"#BEC6D1",fontSize:13,lineHeight:19,padding:14},reactions:{flexGrow:0,borderBottomWidth:StyleSheet.hairlineWidth,borderBottomColor:"#FFFFFF14"},emojiButton:{minWidth:44,minHeight:48,alignItems:"center",justifyContent:"center"},emoji:{fontSize:23,maxWidth:42}});

@@ -20,6 +20,7 @@ import { RegistrationProvider } from "../context/RegistrationContext";
 import { FollowProvider } from "../context/FollowContext";
 import { NotificationsProvider } from "../context/NotificationsContext";
 import { usePushNotifications } from "../hooks/usePushNotifications";
+import { ActivityBanner } from "../components/ActivityBanner";
 import { IncomingCallListener } from "../components/IncomingCallListener";
 
 const queryClient = new QueryClient();
@@ -71,7 +72,7 @@ export default function RootLayout() {
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#000" }}>
-            <KeyboardProvider>
+            <KeyboardProvider statusBarTranslucent navigationBarTranslucent>
               <AuthProvider>
                 <RegistrationProvider><FollowProvider>
                   <NotificationsProvider>
@@ -79,6 +80,7 @@ export default function RootLayout() {
                     <IncomingCallListener />
                     <StatusBar style="light" />
                     <RootLayoutNav />
+                    <ActivityBanner />
                   </NotificationsProvider>
                 </FollowProvider></RegistrationProvider>
               </AuthProvider>

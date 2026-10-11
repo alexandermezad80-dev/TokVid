@@ -1,3 +1,4 @@
+import {publicationId} from "../lib/features/publishing/model";
 import {usePublicationGrid} from "../hooks/usePublicationGrid";
 import {openPrivateConversation} from "../lib/features/messages/services/private-messages";
 import PublicationThumbnail from "../components/PublicationThumbnail";
@@ -5,7 +6,7 @@ import { usePublishedMedia } from "../hooks/usePublishedMedia";
 import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -123,6 +124,8 @@ export default function UserProfileScreen() {
   }, [userId]);
 
   useEffect(() => { void fetchProfile(); }, [fetchProfile]);
+  const visit=useRef<{key:string;id:string}|null>(null);
+  useEffect(()=>{if(!user||!userId||user.id===userId)return;const key=`${user.id}:${userId}`;if(visit.current?.key!==key)visit.current={key,id:publicationId()};void supabase.rpc("record_profile_visit",{p_other_id:userId,p_event_id:visit.current.id});},[user?.id,userId]);
   if (!user) return null;
   if(user.id===userId) return <Redirect href="/(tabs)/profile"/>;
 

@@ -1,4 +1,5 @@
 import { supabase } from "../../../supabase";
+import type { Attachment } from "./chat-tools";
 import type { PrivateConversation, PrivateMessage } from "../model";
 
 export async function openPrivateConversation(otherId:string) {
@@ -18,10 +19,12 @@ export async function readPrivateMessages(conversationId:string, before?:Pick<Pr
   if(error) throw new Error("No pudimos cargar esta conversación. Inténtalo de nuevo.");
   return (data??[]) as PrivateMessage[];
 }
-export async function sendPrivateMessage(draft:{id:string;conversation_id:string;sender_id:string;text:string}) {
-  const {data,error}=await supabase.rpc("send_private_message",{p_id:draft.id,p_conversation_id:draft.conversation_id,p_text:draft.text});
+export async function sendPrivateMessage(draft:{id:string;conversation_id:string;sender_id:string;text:string;reply_to?:string;forwarded?:boolean;attachment?:Attachment}) {
+  const rich=!!(draft.reply_to||draft.forwarded||draft.attachment);
+  const {data,error}=await supabase.rpc(rich?"send_private_message_v2":"send_private_message",{p_id:draft.id,p_conversation_id:draft.conversation_id,p_text:draft.text,...(rich?{p_reply_to:draft.reply_to??null,p_forwarded:draft.forwarded??false,p_attachment:draft.attachment??null}:{})});
   if(!error && data?.id===draft.id && data.sender_id===draft.sender_id && data.conversation_id===draft.conversation_id && data.text===draft.text && !data.deleted_at) return data as PrivateMessage;
   // Same id on retry: a lost HTTP response must not duplicate a message.
+  if(rich) throw new Error("No se confirmó el envío. Conservamos tu mensaje para reintentar.");
   const {data:existing}=await supabase.from("messages").select("*").eq("id",draft.id).maybeSingle();
   if(existing?.sender_id===draft.sender_id && existing.conversation_id===draft.conversation_id && existing.text===draft.text && !existing.deleted_at) return existing as PrivateMessage;
   throw new Error("No se envió el mensaje. Conservamos tu texto para reintentar.");

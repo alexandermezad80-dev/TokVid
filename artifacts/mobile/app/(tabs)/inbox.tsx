@@ -1,12 +1,18 @@
+import {useGroupInbox} from "../../hooks/useGroupInbox";
+import ConversationMenu from "../../lib/features/messages/components/ConversationMenu";
+import {hideConversation} from "../../lib/features/messages/services/chat-tools";
+import {openActivity} from "../../components/ActivityBanner";
 import {usePrivateInbox} from "../../hooks/usePrivateInbox";
 import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { formatDistanceToNowStrict } from "date-fns";
 import { es } from "date-fns/locale";
-import { router } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
+  Pressable,
   Image,
   Platform,
   RefreshControl,
@@ -92,12 +98,14 @@ function NotifItem({ notif, onPress }: { notif: AppNotification; onPress: () => 
         <Text style={styles.notifText}>{notif.message}</Text>
         <Text style={styles.notifTime}>{timeAgo(notif.created_at)}</Text>
       </View>
-      {!notif.read && <View style={styles.unreadDot} />}
+      <View style={styles.badge}><Text style={styles.badgeText}>{notif.event_count??1}</Text></View>
     </TouchableOpacity>
   );
 }
 
-function ConvoItem({ convo }: { convo: ConversationRow }) {
+function ConvoItem({ convo, onOptions }: { convo: ConversationRow; onOptions:(convo:ConversationRow,anchor:{x:number;y:number;width:number;height:number})=>void }) {
+  const ref=useRef<View>(null);
+  const options=()=>ref.current?.measureInWindow((x,y,width,height)=>onOptions(convo,{x,y,width,height}));
   const avatarUri = convo.other_avatar
     ?? `https://api.dicebear.com/9.x/initials/png?seed=${encodeURIComponent(convo.other_username)}&backgroundColor=FE2C55&textColor=ffffff&fontSize=38&size=80`;
 
@@ -107,7 +115,7 @@ function ConvoItem({ convo }: { convo: ConversationRow }) {
     );
 
   return (
-    <TouchableOpacity style={styles.notif} onPress={goToChat} activeOpacity={0.7}>
+    <View ref={ref} collapsable={false}><TouchableOpacity style={styles.notif} onPress={goToChat} onLongPress={options} activeOpacity={0.7}>
       <Image source={{ uri: avatarUri }} style={styles.avatar} />
       <View style={styles.notifBody}>
         <Text style={styles.notifUser}>@{convo.other_username}</Text>
@@ -117,20 +125,25 @@ function ConvoItem({ convo }: { convo: ConversationRow }) {
         <Text style={styles.notifTime}>{timeAgo(convo.last_message_at)}</Text>
       </View>
       {!!convo.unread_count && <View style={styles.badge}><Text style={styles.badgeText}>{convo.unread_count}</Text></View>}
-      <Feather name="chevron-right" size={16} color="#777" />
-    </TouchableOpacity>
+      <Pressable accessibilityLabel={`Opciones de ${convo.other_username}`} onPress={options} style={{minWidth:44,minHeight:44,alignItems:"center",justifyContent:"center"}}><Feather name="more-horizontal" size={20} color="#AABAC5" /></Pressable>
+    </TouchableOpacity></View>
   );
 }
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function InboxScreen() {
+  const params=useLocalSearchParams<{tab?:string}>();
+  const [menu,setMenu]=useState<{convo:ConversationRow;anchor:{x:number;y:number;width:number;height:number}}|null>(null);
+  const [removing,setRemoving]=useState(false);
   const [tab, setTab] = useState<"activity" | "messages">("activity");
+  useEffect(()=>{if(params.tab==="messages")setTab("messages");},[params.tab]);
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const { notifications, unreadCount, loading: notifLoading, markRead, markAllRead, refresh } = useNotifications();
   const [refreshing, setRefreshing] = useState(false);
   const { user } = useAuth();
+  const groups=useGroupInbox(user?.id);
 
   useEffect(() => {
     if (!user) requestRegistration();
@@ -198,20 +211,7 @@ export default function InboxScreen() {
                 notif={n}
                 onPress={() => {
                   void markRead(n.id);
-                  if (
-                    n.type === "message" &&
-                    typeof n.data?.conversationId === "string"
-                  ) {
-                    const otherUserId =
-                      typeof n.data?.otherUserId === "string" ? n.data.otherUserId : "";
-                    const otherUsername =
-                      typeof n.data?.otherUsername === "string" ? n.data.otherUsername : "Usuario";
-                    const otherAvatar =
-                      typeof n.data?.otherAvatar === "string" ? n.data.otherAvatar : "";
-                    router.push(
-                      `/chat?conversationId=${n.data.conversationId}&otherUserId=${otherUserId}&otherUsername=${encodeURIComponent(otherUsername)}&otherAvatar=${encodeURIComponent(otherAvatar)}`
-                    );
-                  }
+                  openActivity(n);
                 }}
               />
             ))}
@@ -223,7 +223,7 @@ export default function InboxScreen() {
           <View style={styles.center}><ActivityIndicator color="#FE2C55" /></View>
         ) : convosError ? (
           <View style={styles.emptyState}><Text style={styles.emptyText}>{convosError}</Text><TouchableOpacity onPress={()=>void loadConvos()} style={{padding:16}}><Text style={{color:"#A6D4DA"}}>Reintentar</Text></TouchableOpacity></View>
-        ) : convos.length === 0 ? (
+        ) : convos.length === 0 && groups.length === 0 ? (
           <View style={styles.emptyState}>
             <View style={styles.emptyIcon}><Feather name="message-square" size={36} color="#333" /></View>
             <Text style={styles.emptyTitle}>Sin mensajes</Text>
@@ -237,11 +237,13 @@ export default function InboxScreen() {
               <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#FE2C55" colors={["#FE2C55"]} />
             }
           >
-            {convos.map((c) => <ConvoItem key={c.id} convo={c} />)}
+            {groups.map(g=><TouchableOpacity key={g.id} style={styles.notif} onPress={()=>router.push({pathname:"/chat-group",params:{groupId:g.id}})}><View style={[styles.avatar,{backgroundColor:"#2C3D49",alignItems:"center",justifyContent:"center"}]}><Feather name="users" color="#D7E5EB" size={24}/></View><View style={styles.notifBody}><Text style={styles.notifUser}>{g.name}</Text><Text style={styles.notifText} numberOfLines={1}>{g.last_message}</Text></View>{g.unread_count>0&&<View style={styles.badge}><Text style={styles.badgeText}>{g.unread_count}</Text></View>}</TouchableOpacity>)}
+            {convos.map((c) => <ConvoItem key={c.id} convo={c} onOptions={(convo,anchor)=>setMenu({convo,anchor})} />)}
             <View style={{ height: Platform.OS === "web" ? 34 : insets.bottom + 80 }} />
           </ScrollView>
         )
       )}
+      {menu&&<ConversationMenu anchor={menu.anchor} name={menu.convo.other_username} busy={removing} onClose={()=>setMenu(null)} onDelete={()=>Alert.alert("Eliminar conversación para mí","Se ocultará esta conversación con todos sus mensajes y su contador solo de tu vista. La otra persona conserva su historial.",[{text:"Cancelar",style:"cancel"},{text:"Eliminar",onPress:()=>{setRemoving(true);void hideConversation(menu.convo.id).then(async()=>{setMenu(null);await loadConvos();}).catch(e=>Alert.alert("No se pudo eliminar",e.message)).finally(()=>setRemoving(false));}}])}/>}
     </View>
   );
 }

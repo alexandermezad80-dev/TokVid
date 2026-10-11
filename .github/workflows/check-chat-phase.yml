@@ -1,0 +1,28 @@
+name: Check chat phase
+on:
+  push:
+    branches: [ feature/feed-mini-video-avatar ]
+    paths: [ 'artifacts/mobile/**', 'scripts/tests/**', '.github/workflows/check-chat-phase.yml' ]
+concurrency:
+  group: chat-check-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+      - name: Install locked dependencies
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.15.1 --activate
+          pnpm install --frozen-lockfile
+      - name: Regression tests
+        run: node --test scripts/tests/*.test.cjs
+      - name: Typecheck mobile
+        run: pnpm --filter @workspace/mobile run typecheck
+      - name: Validate Android native configuration
+        working-directory: artifacts/mobile
+        run: pnpm exec expo prebuild --platform android --clean --no-install
