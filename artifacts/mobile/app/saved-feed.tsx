@@ -55,12 +55,16 @@ export default function SavedFeedScreen() {
       setShareOverrides((prev) => ({ ...prev, [item.id]: Math.max(0, (prev[item.id] ?? 1) - 1) }));
       return;
     }
-    try {
-      const { data } = await supabase.from("videos").select("shares_count").eq("id", item.id).maybeSingle();
-      if (data) {
-        await supabase.from("videos").update({ shares_count: (data.shares_count ?? 0) + 1 }).eq("id", item.id);
-      }
-    } catch { /* no-op */ }
+    const { error } = await supabase.rpc("increment_video_share_count", {
+      p_video_id: item.id,
+    });
+
+    if (error) {
+      setShareOverrides((prev) => ({
+        ...prev,
+        [item.id]: Math.max(0, (prev[item.id] ?? 1) - 1),
+      }));
+    }
   }, []);
 
   const renderItem = useCallback(
@@ -74,6 +78,7 @@ export default function SavedFeedScreen() {
           isLiked={likedIds.has(item.id)}
           isSaved={savedIds.has(item.id)}
           isOwner={false}
+          isGuest={false}
           onLike={() => toggleLike(item.id)}
           onDoubleLike={() => toggleLike(item.id)}
           onFollow={() => toggleFollow(item.creatorId)}

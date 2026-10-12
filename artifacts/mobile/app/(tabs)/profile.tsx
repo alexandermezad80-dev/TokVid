@@ -1,6 +1,7 @@
+import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -28,8 +29,7 @@ const MY_VIDEOS = [
 
 function avatarUrl(user: any, profile: any): string {
   if (profile?.avatar_url) return profile.avatar_url;
-  const seed = encodeURIComponent(user?.email ?? user?.id ?? "user");
-  return `https://api.dicebear.com/9.x/initials/png?seed=${seed}&backgroundColor=FE2C55&textColor=ffffff&fontSize=38&size=128`;
+  return user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? "";
 }
 
 export default function ProfileScreen() {
@@ -37,6 +37,10 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const { user, profile, signOut, refreshProfile } = useAuth();
+
+  useEffect(() => {
+    if (!user) requestRegistration();
+  }, [user]);
   const { savedVideos } = useSavedVideos();
   const { followedIds } = useFollow();
   const { likedVideos } = useVideoFeed(followedIds);
@@ -47,6 +51,8 @@ export default function ProfileScreen() {
     }, [])
   );
 
+  if (!user) return null;
+
   const handleSignOut = () => {
     Alert.alert("Cerrar sesión", "¿Seguro que querés salir?", [
       { text: "Cancelar", style: "cancel" },
@@ -55,7 +61,7 @@ export default function ProfileScreen() {
         style: "destructive",
         onPress: async () => {
           await signOut();
-          router.replace("/auth/login");
+          router.replace("/(tabs)");
         },
       },
     ]);
@@ -83,18 +89,15 @@ export default function ProfileScreen() {
         <TouchableOpacity style={styles.menuBtn}>
           <Feather name="menu" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.handle}>{handle}</Text>
-        <TouchableOpacity style={styles.menuBtn} onPress={handleSignOut}>
+        <Text style={styles.handle} numberOfLines={1} ellipsizeMode="tail">{handle}</Text>
+        <TouchableOpacity style={styles.menuBtn} onPress={handleSignOut} accessibilityRole="button" accessibilityLabel="Cerrar sesión">
           <Feather name="log-out" size={22} color="#fff" />
         </TouchableOpacity>
       </View>
 
       <View style={styles.profileSection}>
         <View style={styles.avatarWrap}>
-          <Image
-            source={{ uri: avatarUrl(user, profile) }}
-            style={styles.avatar}
-          />
+          {avatarUrl(user, profile) ? <Image source={{ uri: avatarUrl(user, profile) }} style={styles.avatar} /> : <View style={[styles.avatar, { backgroundColor: "#555", alignItems: "center", justifyContent: "center" }]}><Feather name="user" size={46} color="#bbb" /></View>}
           <View style={styles.editBadge}>
             <Feather name="edit-2" size={12} color="#fff" />
           </View>
@@ -235,10 +238,11 @@ const styles = StyleSheet.create({
   menuBtn: {
     width: 40,
     height: 40,
+    flexShrink: 0,
     alignItems: "center",
     justifyContent: "center",
   },
-  handle: { color: "#fff", fontSize: 17, fontWeight: "700" },
+  handle: { flex: 1, minWidth: 0, textAlign: "center", color: "#fff", fontSize: 17, fontWeight: "700" },
   profileSection: {
     alignItems: "center",
     paddingVertical: 16,

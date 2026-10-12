@@ -20,46 +20,22 @@ export default function AuthCallbackPage() {
       }
 
       if (data.session) {
-        router.replace("/home")
+        router.replace(
+          data.session.user.user_metadata?.onboarding_completed === true
+            ? "/home"
+            : "/auth/onboarding-profile",
+        )
       }
     }
-
     void handleCallback()
   }, [router])
 
   return (
-    <main
-      style={{
-        display: "flex",
-        minHeight: "100vh",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px",
-        background: "#f7f8fb",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 520,
-          borderRadius: 24,
-          background: "#fff",
-          padding: "32px",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.08)",
-          textAlign: "center",
-        }}
-      >
-        <h1 style={{ margin: 0, marginBottom: 20, fontSize: 30 }}>
-          Procesando autenticación
-        </h1>
-        <p style={{ margin: 0, marginBottom: 24, color: "#666" }}>
-          Por favor espera mientras terminamos el inicio de sesión.
-        </p>
-        {errorMessage ? (
-          <p style={{ color: "#c00" }}>{errorMessage}</p>
-        ) : (
-          <p style={{ color: "#666" }}>Redirigiendo...</p>
-        )}
+    <main style={{ display:"flex", minHeight:"100vh", alignItems:"center", justifyContent:"center", padding:24, background:"#090909", color:"#fff" }}>
+      <div style={{ width:"100%", maxWidth:520, borderRadius:24, background:"#141414", padding:32, textAlign:"center" }}>
+        <h1>Procesando autenticación</h1>
+        <p style={{ color:"#bbb" }}>Por favor espera mientras terminamos el inicio de sesión.</p>
+        {errorMessage ? <p style={{ color:"#ff8f8f" }}>{errorMessage}</p> : <p style={{ color:"#aaa" }}>Redirigiendo...</p>}
       </div>
     </main>
   )

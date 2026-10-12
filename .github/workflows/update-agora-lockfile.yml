@@ -1,0 +1,43 @@
+name: Update Agora lockfile
+
+on:
+  push:
+    branches: [ feature/onboarding-profile-interests ]
+    paths:
+      - artifacts/api-server/package.json
+      - pnpm-lock.yaml
+      - .github/workflows/update-agora-lockfile.yml
+
+permissions:
+  contents: write
+
+jobs:
+  update-lockfile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: feature/onboarding-profile-interests
+          fetch-depth: 0
+      - name: Install pnpm
+        run: npm install -g pnpm@10.15.1
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: pnpm
+      - name: Update lockfile
+        run: pnpm install --lockfile-only
+      - name: Commit lockfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- pnpm-lock.yaml; then
+            echo "Lockfile already current."
+            exit 0
+          fi
+          git add pnpm-lock.yaml
+          git commit -m "chore(calls): update lockfile for Agora token builder"
+          git fetch origin feature/onboarding-profile-interests
+          git rebase origin/feature/onboarding-profile-interests
+          git push origin HEAD:feature/onboarding-profile-interests

@@ -1,0 +1,2929 @@
+# TOKVID
+
+Documento maestro de requisitos y visión del proyecto
+
+**Estado:** Especificación de trabajo  
+**Propósito:** Servir como referencia para la auditoría, planificación y evolución de TokVid.  
+**Regla principal:** Primero auditar. No modificar código, base de datos, migraciones ni configuración sin autorización explícita.
+
+## 1. IDENTIDAD Y PERFIL
+
+Cada usuario tendrá un perfil con:
+
+- Nombre.
+- Nombre de usuario.
+- Foto/avatar.
+- Videos publicados.
+- Seguidores.
+- Seguidos.
+- Amigos, cuando exista seguimiento mutuo.
+- Videos favoritos/guardados.
+- Videos a los que dio Me gusta.
+- Nichos o categorías de contenido.
+- Actividad e interacciones correspondientes.
+
+## 2. FEED DE VIDEOS
+
+El feed debe proporcionar una experiencia de video vertical con:
+
+- Scroll infinito.
+- Reproducción automática del contenido visible.
+- Precarga inteligente del siguiente video.
+- Ventana limitada de precarga para no consumir excesivamente datos, memoria o batería.
+- Adaptación a diferentes velocidades de conexión.
+- Me gusta.
+- Comentarios.
+- Compartir.
+- Guardar/favoritos.
+- Acceso al perfil del creador.
+- Seguir al creador.
+- Hashtags.
+- Menciones.
+
+La interfaz debe tener identidad propia y no copiar literalmente la distribución de otras plataformas.
+
+## 3. STORIES
+
+Funciones previstas:
+
+- Publicar Stories.
+- Ver Stories.
+- Me gusta.
+- Notificaciones de interacción.
+- Acceso a la Story desde la notificación.
+- Controles de privacidad correspondientes.
+
+## 4. SEGUIDORES, SEGUIDOS Y AMIGOS
+
+TokVid debe permitir:
+
+- Seguir usuarios.
+- Dejar de seguir.
+- Consultar seguidores.
+- Consultar seguidos.
+- Identificar relaciones de amistad cuando el seguimiento sea mutuo.
+- Notificar nuevos seguidores.
+- Acceder al perfil correspondiente.
+
+## 5. MENSAJES PRIVADOS
+
+Sistema de mensajería privada entre usuarios.
+
+Funciones:
+
+- Conversaciones.
+- Envío y recepción de mensajes.
+- Notificaciones.
+- Eliminar un mensaje individual.
+- Seleccionar varios mensajes y eliminarlos.
+- Eliminar todos los mensajes de una conversación de una vez.
+- Eliminar/vaciar una conversación.
+
+Definir claramente la diferencia entre:
+
+- Eliminar para mí.
+- Eliminar para todos, si TokVid decide habilitarlo.
+
+Las operaciones deben respetar privacidad, permisos y RLS.
+
+## 6. LLAMADAS Y VIDEOLLAMADAS
+
+Integradas directamente dentro de los mensajes privados.
+
+Opciones:
+
+- 📞 Llamada de voz.
+- 📹 Videollamada.
+
+El usuario podrá decidir si utiliza solamente voz o voz + video.
+
+Durante la llamada:
+
+- Activar/desactivar micrófono.
+- Activar/desactivar cámara.
+- Finalizar.
+- Aceptar/rechazar llamadas.
+- Notificaciones de llamadas entrantes.
+- Notificaciones de llamadas perdidas.
+
+Los permisos de cámara y micrófono se solicitan cuando se utiliza la función.
+
+## 7. BURBUJAS DE MENSAJES
+
+Los usuarios podrán elegir estilos de burbujas para sus conversaciones.
+
+Funciones:
+
+- Diferentes diseños.
+- Vista previa.
+- Selección.
+- Cambio posterior.
+- Diferenciación entre mensajes enviados y recibidos.
+- Legibilidad y accesibilidad.
+
+Familia visual cerrada: **8 variantes** de un mismo componente:
+
+1. Classic.
+2. Minimal.
+3. Rounded.
+4. Glass.
+5. Gradient.
+6. Neon.
+7. Elegant.
+8. Compact.
+
+Reglas técnicas cerradas:
+
+- Un único componente reutilizable `Bubble`, parametrizado por variante, dirección (enviado/recibido) y posición dentro del grupo (single/first/middle/last).
+- La posición del grupo es un dato derivado en cliente; no se almacena en la base de datos.
+- La preferencia de estilo se conserva en almacenamiento local del usuario.
+- Los estilos no crean nuevos tipos de mensajes ni modifican el modelo de `messages`.
+- La implementación usa los tokens visuales definidos en el catálogo Bubbles y los SVG entregados como referencia vectorial.
+- La selección se realiza desde el selector de Bubbles dentro de Messages.
+- No requiere migraciones ni cambios de esquema en Supabase.
+
+**Estado de implementación:** 🟢 integrado en el chat de la rama de trabajo.
+
+## 8. LIVE
+
+Sistema Live independiente del feed.
+
+### Anfitrión
+
+Debe poder:
+
+- Gestionar invitados.
+- Autorizar participantes.
+- Controlar permisos de cámara.
+- Controlar permisos de micrófono.
+- Abrir/cerrar acceso.
+- Revocar permisos.
+- Gestionar la sala.
+
+El anfitrión controla la autorización, pero **no puede encender ni activar remotamente la cámara o el micrófono de ningún participante, incluido el propio anfitrión desde la perspectiva de otros usuarios**.
+
+El invitado conserva el control físico de su propio dispositivo y decide si acepta o rechaza el uso de cámara y/o micrófono. **El Guest tampoco puede encender ni activar remotamente la cámara o el micrófono de ningún otro participante.** Cada usuario controla exclusivamente sus propios dispositivos. **Ningún participante puede activar remotamente la cámara o el micrófono de otra persona.**
+
+Cuando el anfitrión autorice o invite a un invitado a abrir la cámara, TokVid podrá mostrar al invitado una notificación, por ejemplo: **“El anfitrión te invita a abrir la cámara”**.
+
+El invitado puede aceptar o rechazar la invitación.
+
+Si el invitado rechaza abrir la cámara, **no se activa su cámara** y su participación puede mostrarse mediante el audio autorizado y la imagen/avatar de su perfil, según los permisos concedidos.
+
+### Invitados
+
+Los invitados son los usuarios que participan en una **ventanilla** dentro del mismo Live.
+
+Podrán participar cuando estén autorizados y decidir individualmente si utilizan:
+
+- Cámara.
+- Micrófono.
+
+El anfitrión no puede activar estos dispositivos por ellos.
+
+### Interacciones del Live
+
+El Live debe contemplar una interacción de **Tap-Tap en pantalla**, independiente de los Me gusta del Feed.
+
+- Tap-Tap sobre la pantalla.
+- La interacción pertenece exclusivamente al LIVE activo del Host.
+- Espectadores, Guests y Host pueden realizar Tap-Tap.
+- Todos los Tap-Tap contribuyen al LIVE del Host.
+- Cada usuario ve su propia interacción en su móvil.
+- Animación visual inmediata de la interacción propia.
+- Contador global acumulado del LIVE en tiempo real.
+- El contador se reinicia al finalizar el LIVE; no es un contador histórico.
+- Los Tap-Tap deben diseñarse de forma escalable, sin convertir cada tap en una escritura persistente individual innecesaria.
+
+### Chat del Live
+
+El Live tendrá comentarios/chat en tiempo real separado de:
+
+- Comentarios de videos.
+- Mensajes privados.
+
+
+### Arquitectura de participación y ventanillas
+
+El mismo usuario puede desempeñar distintos roles según el Live:
+
+- Espectador.
+- Guest.
+- Anfitrión cuando crea su propio Live.
+
+Un Live con invitados tendrá:
+
+- 1 anfitrión.
+- Hasta 11 Guests.
+- Máximo de 12 participantes audiovisuales simultáneos contando al anfitrión.
+
+Las ventanillas son dinámicas. Un Guest puede salir voluntariamente, solicitar que lo bajen o ser retirado conforme a las herramientas de moderación. Cuando exista una ventanilla disponible, el anfitrión puede gestionar la entrada de otro participante.
+
+La arquitectura de LIVE debe soportar layouts de ventanillas sin alterar la autoridad ni el límite real de participantes. La definición visual vigente de esos layouts pertenece exclusivamente a la fuente visual canónica de la sección 43.4.
+
+### Modalidades de Live
+
+El anfitrión podrá iniciar:
+
+- **Live con Guests:** permite la gestión de hasta 11 ventanillas de Guests.
+- **Live solo:** solamente participa el anfitrión y no se muestran invitaciones ni controles de entrada de Guests.
+
+### Solicitudes e invitaciones
+
+Dentro del Live:
+
+- Un espectador puede solicitar participar.
+- El anfitrión puede invitar a un usuario.
+- Un Guest puede proponer/invitar a otro usuario.
+- La aceptación final de una solicitud o invitación corresponde al anfitrión o a un moderador autorizado por el anfitrión.
+- El usuario invitado puede aceptar o rechazar desde la propia interfaz del Live.
+- Aceptar una invitación no activa remotamente cámara ni micrófono.
+- La disponibilidad de las 11 ventanillas debe respetarse antes de incorporar un nuevo Guest.
+
+### Cámara, micrófono y efectos
+
+Cada usuario controla físicamente sus propios dispositivos.
+
+La moderación puede **silenciar/cortar el audio** de un participante, pero no encender remotamente su micrófono. Para volver a transmitir audio, el propio usuario debe activar su micrófono si conserva el permiso.
+
+La cámara permanece bajo control del propio usuario.
+
+Cada usuario podrá disponer de herramientas visuales y audiovisuales para su propia participación, incluyendo cuando corresponda:
+
+- Filtros.
+- Efectos visuales.
+- Fondos virtuales.
+- Pantalla verde/chroma key.
+- Cambios de voz.
+- Efectos de sonido.
+
+El anfitrión podrá utilizar herramientas de ambientación/apoyo dirigidas a sus Guests, tales como:
+
+- Aplausos.
+- Risas.
+- Celebraciones.
+- Efectos de sonido.
+- Cambios de voz.
+- Efectos visuales de apoyo.
+
+Estas herramientas no otorgan control remoto sobre la cámara o el micrófono del Guest.
+
+### Moderación y roles
+
+El anfitrión podrá designar moderadores para ayudar a gestionar el Live.
+
+Las capacidades de moderación podrán incluir, según los permisos concedidos:
+
+- Gestionar participantes.
+- Aceptar solicitudes o invitaciones.
+- Retirar Guests.
+- Gestionar el chat.
+- Eliminar comentarios.
+- Bloquear usuarios del Live.
+- Silenciar/cortar el micrófono de un participante.
+- Gestionar otras herramientas de moderación.
+
+El anfitrión mantiene la autoridad principal de la sala y puede conceder o retirar permisos de moderación.
+
+### Live Chat
+
+El Live Chat permite comentar en tiempo real a:
+
+- Anfitrión.
+- Guest.
+- Espectador.
+
+El chat es independiente de los comentarios del Feed y de los mensajes privados.
+
+El anfitrión podrá fijar un comentario para destacarlo en el Live. El comentario fijado se actualizará en tiempo real para los participantes y espectadores.
+
+Al tocar el avatar o comentario de un usuario podrá abrirse una mini ficha sin abandonar el Live, con información como:
+
+- Avatar.
+- Nombre.
+- @usuario.
+- Seguidores.
+- Seguir/Siguiendo.
+- Ver perfil.
+
+La misma identidad de perfil debe reutilizarse para anfitrión, Guests y participantes del chat.
+
+### Tap-Tap y Quiéreme
+
+**Tap-Tap** es una interacción de apoyo **exclusiva del Live del Host** y distinta de los Me gusta del Feed, del Follow y de Quiéreme.
+
+Los Tap-Tap siempre se acumulan para el **LIVE activo del Host**:
+
+- El espectador puede realizar Tap-Tap al LIVE que está viendo.
+- Un Guest puede realizar Tap-Tap al LIVE del Host.
+- El Host también puede realizar Tap-Tap dentro de su propio LIVE.
+- Los Tap-Tap de todos ellos contribuyen al contador global del LIVE del Host.
+- Tap-Tap no está dirigido individualmente a un espectador o Guest; el destinatario de la interacción es el LIVE del Host.
+- Cada usuario ve en su propio móvil su propia interacción de Tap-Tap.
+- Un usuario no debe ver los Tap-Tap individuales de otros usuarios como si fueran propios.
+
+Cada usuario tendrá un **medidor individual de Tap-Tap**:
+
+- Se llena progresivamente mientras realiza taps.
+- Se vacía gradualmente cuando deja de hacer taps.
+- Debe tener una presentación visual elegante, fluida, adaptable y no obstructiva.
+- El usuario podrá elegir su reacción/figura de Tap-Tap desde un catálogo.
+- La reacción/figura elegida es personal de cada usuario y se muestra en su propia interacción.
+- La figura no cambia el destinatario: todos los Tap-Tap siguen perteneciendo al LIVE del Host.
+
+El LIVE tendrá además:
+
+- Contador global acumulado de Tap-Tap del LIVE.
+- Actualización en tiempo real.
+- Animaciones inmediatas para la interacción propia.
+- Resumen de actividad de Tap-Tap disponible para el Host.
+
+Los Tap-Tap **no son históricos ni persistentes al finalizar el LIVE**:
+
+- El contador corresponde únicamente a la sesión LIVE activa.
+- Al cerrar o finalizar el LIVE, el contador de Tap-Tap desaparece y deja de acumularse.
+- Un nuevo LIVE del mismo Host comienza con el contador de Tap-Tap en cero.
+
+Los Tap-Tap deben diseñarse de forma escalable, evitando una escritura persistente individual por cada tap. La fórmula exacta mediante la cual estas señales puedan influir en descubrimiento o distribución del Live deberá definirse posteriormente y no debe asumirse como una garantía de exposición.
+
+**Contador de espectadores**
+
+El Live deberá mostrar un contador de espectadores en tiempo real, independiente de Tap-Tap y de Gifts.
+
+- Representa las personas que están viendo el Live en ese momento.
+- Se gestionará mediante presencia/Realtime.
+- Al entrar un espectador, el contador se actualiza.
+- Al salir o desconectarse, el contador se actualiza.
+- No representa usuarios históricos ni se conserva como contador del Live una vez finalizado.
+- No debe confundirse con Guests: un Guest participa audiovisualmente; un espectador observa el Live.
+- El contador debe permanecer separado de cualquier métrica de Tap-Tap o de apoyo económico.
+
+**MVP del Live (Most Valuable Player)**
+
+El Live tendrá un reconocimiento dinámico para el usuario que acumule mayor apoyo mediante Gifts durante ese Live.
+
+- El MVP puede ser un espectador o un Guest.
+- Existe un único MVP actual por Live.
+- El MVP se determina por el apoyo acumulado mediante Gifts durante la sesión.
+- Cuando otro usuario supera al MVP actual, el reconocimiento pasa al nuevo MVP.
+- Al convertirse alguien en MVP, puede mostrarse una animación destacada durante unos segundos, con avatar, identidad e insignia MVP, como una celebración especial del Live.
+- Después de la animación, queda una insignia MVP pequeña junto o debajo del avatar del usuario mientras conserve el primer lugar.
+- Si cambia el MVP, la animación vuelve a mostrarse para el nuevo MVP y la insignia se traslada.
+- El MVP es independiente del contador de espectadores y de Tap-Tap.
+- El reconocimiento MVP pertenece exclusivamente al Live activo y desaparece al finalizar la sesión.
+- La interfaz deberá mantener la celebración visible sin saturar permanentemente la pantalla.
+
+**Quiéreme** es una interacción distinta de Tap-Tap y está integrada en el área de Seguir del anfitrión.
+
+- Activar Quiéreme puede hacer que el usuario siga al anfitrión si todavía no lo sigue.
+- No debe crear seguimientos duplicados.
+- El anfitrión tendrá contador de Quiéremes.
+- El anfitrión podrá conocer quién dio Quiéreme.
+- El anfitrión podrá consultar actividad de apoyo correspondiente.
+
+El anfitrión podrá disponer de un resumen de interacción con:
+
+- Quiéremes totales.
+- Usuarios que dieron Quiéreme.
+- Tap-Tap totales.
+- Usuarios con mayor actividad de Tap-Tap.
+
+### Perfiles, seguimiento y regalos dentro del Live
+
+Desde una ventanilla, avatar o comentario del Live podrá accederse a la mini ficha del usuario y a la acción de Seguir.
+
+Esto aplica a:
+
+- Anfitrión.
+- Guests.
+- Espectadores/participantes del chat.
+
+Cada anfitrión y Guest podrá tener una **galería de regalos obtenidos**.
+
+- La galería será visible para los espectadores.
+- El espectador podrá consultarla libremente.
+- El espectador no podrá administrarla ni modificarla.
+- Los regalos podrán organizarse por niveles y precios.
+- Los regalos podrán incluir categorías y elementos especiales.
+- La presentación debe ser visualmente premium y propia de TOKVID.
+
+### Compartir un Live
+
+Los usuarios podrán compartir un Live con otros usuarios.
+
+Cuando un usuario de TOKVID comparta un Live directamente con otro usuario, este podrá recibirlo en su **bandeja de Mensajes** como una tarjeta/enlace de Live que permita abrir la transmisión.
+
+Compartir un Live no convierte automáticamente al receptor en Guest.
+
+La recepción mediante Mensajes es un mecanismo de entrega; la lógica y participación del Live permanecen separadas del dominio de Mensajes privados.
+
+### Separación de dominios
+
+LIVE es un módulo independiente.
+
+- Las llamadas de voz y videollamadas pertenecen a **Mensajes privados**.
+- Bubbles pertenece a **Mensajes privados**.
+- Live Chat pertenece exclusivamente al Live.
+- Tap-Tap, Quiéreme, regalos, ventanillas, Guests, moderación y efectos específicos del Live pertenecen al dominio Live.
+
+Puede reutilizarse infraestructura técnica común cuando corresponda, pero no debe mezclarse la lógica de negocio entre dominios.
+
+## 9. REQUISITOS PARA LIVE
+
+Propuesta actual:
+
+- Edad: 18 años o más.
+- Mínimo: 1,000 seguidores.
+- Cuenta con al menos 30 días de antigüedad.
+- Cuenta en buen estado.
+- Cumplimiento de las políticas de Live y comunidad.
+
+Estos requisitos quedan sujetos a revisión final.
+
+## 10. ENLACE EN EL PERFIL
+
+Propuesta actual:
+
+- Desbloqueo después de 60 días de antigüedad.
+- Cuenta en buen estado.
+- Verificación correspondiente.
+- Controles de seguridad para enlaces.
+
+No se exige necesariamente un número mínimo de seguidores.
+
+## 11. CREACIÓN Y PRODUCCIÓN DE VIDEO
+
+La sección Crear debe evolucionar hacia herramientas de producción completas.
+
+Funciones previstas:
+
+- Grabar video.
+- Importar video.
+- Recortar.
+- Unir clips.
+- Editar.
+- Texto.
+- Música/sonido.
+- Efectos.
+- Filtros.
+- Ajustes visuales.
+- Vista previa.
+- Publicación.
+- Guardar borradores.
+
+## 12. FILTROS Y EFECTOS
+
+Herramientas previstas:
+
+- Filtros de imagen.
+- Filtros de video.
+- Ajustes visuales.
+- Efectos especiales.
+- Efectos de audio.
+- Vista previa antes de publicar.
+
+## 13. VOZ Y SONIDO
+
+Funciones previstas:
+
+- Cambio de voz.
+- Efectos de voz.
+- Ajustes de audio.
+- Aplausos.
+- Risas.
+- Reacciones sonoras.
+- Otros efectos especiales.
+- Previsualización antes de publicar.
+
+Los efectos de imitación de voces reales deberán tener reglas específicas de seguridad y consentimiento.
+
+## 14. SUBTÍTULOS
+
+Herramientas de subtítulos:
+
+- Generación automática desde audio/voz.
+- Edición manual.
+- Sincronización.
+- Diferentes estilos.
+- Tamaño configurable.
+- Posición configurable.
+- Vista previa.
+- Diferentes idiomas.
+- Activación/desactivación durante la reproducción.
+
+## 15. IA PARA CREADORES
+
+TokVid podrá incorporar IA como herramienta de creación.
+
+Posibles funciones:
+
+- Ideas.
+- Guiones.
+- Texto para publicaciones.
+- Recursos visuales.
+- Edición asistida.
+- Transformación de contenido.
+- Generación de elementos audiovisuales cuando corresponda.
+
+La IA debe ayudar al creador manteniendo el control del usuario sobre lo que publica.
+
+Debe existir una política específica para IA y propiedad intelectual.
+
+## 16. HASHTAGS
+
+Funciones:
+
+- Crear hashtags.
+- Reconocer formato #hashtag.
+- Abrir el contenido asociado al seleccionar un hashtag.
+- Página/feed del hashtag.
+- Descubrimiento de contenido.
+- Asociación de hashtags con videos y contenido compatible.
+
+## 17. MENCIONES
+
+Funciones:
+
+- Mencionar mediante @usuario.
+- Sugerencias al escribir.
+- Abrir perfil desde la mención.
+- Notificar al usuario mencionado.
+- Controles de privacidad sobre quién puede mencionar.
+
+## 18. BORRADORES
+
+Crear debe permitir:
+
+- Guardar borradores.
+- Continuar posteriormente.
+- Mantener los elementos necesarios de edición.
+- Tener múltiples borradores.
+- Eliminar borradores.
+- Impedir publicación accidental.
+
+Un borrador no se considera contenido publicado hasta que el usuario confirme.
+
+## 19. FORMATOS Y PROCESAMIENTO DE VIDEO
+
+TokVid debe definir:
+
+- Formatos aceptados.
+- Duración máxima.
+- Resoluciones.
+- Tamaños máximos.
+- Códecs compatibles.
+- Validación de archivos.
+- Conversión/transcodificación cuando sea necesaria.
+- Optimización para dispositivos móviles.
+- Versiones apropiadas para diferentes conexiones.
+
+El objetivo es equilibrar:
+
+**calidad + velocidad + almacenamiento + consumo de datos.**
+
+## 20. NOTIFICACIONES
+
+Área propia de notificaciones.
+
+Debe contemplar:
+
+- ❤️ Me gusta en videos.
+- ❤️ Me gusta en Stories.
+- 💬 Comentarios.
+- 👤 Nuevos seguidores.
+- 📨 Mensajes.
+- 📞 Llamadas.
+- 📹 Videollamadas.
+- 🔴 Actividad relevante de Live.
+- Menciones.
+- Otras interacciones relevantes.
+
+Las notificaciones deben llevar al destino correspondiente cuando sea posible.
+
+## 21. SEGURIDAD DE MENSAJERÍA
+
+TokVid debe contemplar protección frente a mensajes potencialmente peligrosos.
+
+Cuando corresponda:
+
+- Ocultar/proteger el mensaje.
+- Permitir decidir si abrirlo.
+- Reportar.
+- Bloquear al usuario.
+- Mostrar explicación.
+
+No se debe asumir automáticamente una situación personal únicamente por una detección automática.
+
+## 22. “¿NECESITAS AYUDA?”
+
+Cuando corresponda, mostrar un recurso de ayuda que pueda incluir:
+
+- Información de apoyo.
+- Opciones de reporte.
+- Bloqueo.
+- Recursos profesionales.
+- Recursos de emergencia cuando exista riesgo inmediato.
+
+## 23. AYUDA PSICOLÓGICA
+
+El sistema podrá proporcionar un enlace a una entidad profesional y verificable de ayuda psicológica.
+
+Debe incluir:
+
+- Nombre de la entidad.
+- Enlace oficial.
+- Tipo de ayuda disponible.
+- Información actualizada.
+
+Los recursos deben verificarse antes de publicarse.
+
+## 24. CONDUCTA REPETIDA Y ADVERTENCIAS
+
+Propuesta:
+
+Si se detectan tres mensajes relacionados con una misma conducta/intención de riesgo, puede aparecer una advertencia.
+
+Una posible medida posterior sería una suspensión temporal de 24 horas, conforme a las políticas de TokVid.
+
+Antes de automatizarla deberán definirse:
+
+- Categorías.
+- Criterios.
+- Umbrales.
+- Revisión.
+- Protección contra falsos positivos.
+- Apelación.
+
+## 25. PROTECCIÓN DE MENORES
+
+Como Live será 18+:
+
+- La edad debe formar parte del sistema de seguridad.
+- La detección de voz infantil solamente será una señal de posible riesgo, no una prueba definitiva.
+- Una posible detección puede activar medidas de protección o verificación.
+- No se debe bloquear automáticamente a alguien únicamente por la apariencia de su voz.
+- Debe existir mecanismo de revisión/apelación.
+- Protección especial de privacidad y datos de menores.
+
+## 26. POLÍTICAS DE TOKVID
+
+Se preparará un conjunto de políticas independientes:
+
+- Términos y condiciones.
+- Política de privacidad.
+- Reglas de la comunidad.
+- Política de contenido y moderación.
+- Política de mensajes privados.
+- Política de Live.
+- Derechos de autor y propiedad intelectual.
+- Política de IA.
+- Seguridad y protección de usuarios.
+- Política de enlaces externos.
+- Cuentas, sanciones y apelaciones.
+- Menores y requisitos de edad.
+- Datos, eliminación de cuenta y contenido.
+- Política para creadores y monetización.
+
+Estas políticas deberán revisarse legalmente antes de convertirse en documentos jurídicos definitivos.
+
+## 27. DERECHOS DE AUTOR ©️
+
+TokVid debe contemplar:
+
+- El usuario debe tener los derechos o permisos necesarios sobre el contenido que publique.
+- Sistema para reportar infracciones.
+- Revisión de reclamaciones.
+- Retirada o restricción cuando corresponda.
+- Mecanismo de disputa/apelación.
+- Reglas para música, imágenes, videos y material de terceros.
+- Reglas para contenido generado mediante IA.
+
+TokVid no debe asumir automáticamente derechos sobre material de terceros.
+
+## 28. MONETIZACIÓN — FUNCIÓN VITAL
+
+La monetización debe formar parte de la arquitectura desde el principio.
+
+### Para creadores
+
+Posibles vías:
+
+- Regalos/apoyos en Live.
+- Suscripciones.
+- Participación en ingresos.
+- Herramientas promocionales.
+- Panel de ingresos.
+- Historial de pagos.
+- Retiros.
+
+### Para TokVid
+
+Posibles vías:
+
+- Comisiones de determinadas transacciones.
+- Publicidad.
+- Herramientas premium.
+- Servicios para creadores.
+- Funciones empresariales.
+
+### Sistema financiero
+
+Debe contemplar:
+
+- Saldo.
+- Ganancias.
+- Historial.
+- Umbral de retiro.
+- Métodos de pago según país.
+- Verificación de identidad cuando sea necesaria.
+- Prevención de fraude.
+- Reembolsos/disputas.
+- Registros financieros.
+
+Las fórmulas de reparto de ingresos deben poder evolucionar sin reconstruir toda la plataforma.
+
+## 29. HERRAMIENTAS PARA GRANDES CREADORES
+
+Usuarios con una audiencia importante podrán acceder progresivamente a:
+
+- Estadísticas.
+- Retención.
+- Visualizaciones.
+- Crecimiento.
+- Horarios de actividad.
+- Moderación avanzada.
+- Moderadores para Live.
+- Protección de cuenta.
+- Alertas de seguridad.
+- Herramientas de comunidad.
+- Encuestas.
+- Preguntas.
+- Soporte especializado.
+- Herramientas de monetización cuando sean elegibles.
+
+El acceso puede organizarse mediante niveles progresivos.
+
+## 30. PANEL ADMINISTRATIVO
+
+TokVid debe contemplar un panel administrativo para el propietario/equipo autorizado.
+
+Debe permitir supervisar, según los permisos correspondientes:
+
+- Usuarios.
+- Crecimiento.
+- Videos.
+- Stories.
+- Live.
+- Interacciones.
+- Reportes.
+- Moderación.
+- Seguridad.
+- Ingresos.
+- Comisiones.
+- Pagos a creadores.
+- Métricas de plataforma.
+
+El acceso administrativo debe estar fuertemente protegido.
+
+## 31. ARQUITECTURA DE EVOLUCIÓN SEGURA
+
+TokVid debe poder crecer sin romper funcionalidades existentes.
+
+Principios:
+
+**Producción estable → desarrollo aislado → pruebas → revisión → integración → nueva versión.**
+
+No se deben realizar cambios directamente sobre la versión estable sin control.
+
+## 32. RAMAS Y TRABAJO DE DESARROLLADORES
+
+Cada función importante podrá desarrollarse en una rama independiente.
+
+Ejemplos:
+
+- feature/chat
+- feature/video-editor
+- feature/live
+- feature/notifications
+- feature/monetization
+
+El desarrollador trabaja en su área y posteriormente presenta un Pull Request.
+
+Flujo:
+
+**Rama → CI → pruebas → revisión → aprobación → merge**
+
+No se debe entregar automáticamente acceso total a producción.
+
+## 33. PROPIEDAD DE CÓDIGO
+
+Se podrán definir responsables por áreas:
+
+- Auth.
+- Perfil.
+- Feed.
+- Crear.
+- Mensajes.
+- Live.
+- Notificaciones.
+- IA.
+- Monetización.
+- Seguridad.
+- Supabase.
+
+Las áreas sensibles pueden requerir revisiones obligatorias antes de integrar cambios.
+
+## 34. VERSIONES ESTABLES Y RECUPERACIÓN
+
+Cada versión funcional debe identificarse.
+
+Ejemplo:
+
+- v1.0.0 = estable
+- v1.1.0 = nueva función
+
+Si una nueva versión presenta un problema:
+
+**Nueva versión ❌ ↓ Última versión estable ✅**
+
+La recuperación debe poder realizarse de forma controlada.
+
+No se debe perder la versión funcional mientras se investiga el problema.
+
+## 35. SUPABASE Y BASE DE DATOS
+
+Los cambios de base de datos deben estar versionados y controlados.
+
+Las migraciones deben permitir identificar:
+
+- Qué cambio se realizó.
+- Cuándo.
+- Qué versión lo introdujo.
+- Qué dependencias tiene.
+
+Se debe tener especial cuidado con cambios destructivos.
+
+## 36. AUDITORÍA ANTES DE CAMBIAR
+
+Para cada función se debe revisar:
+
+**Interfaz ↓ Lógica ↓ Base de datos ↓ Relaciones ↓ RLS/permisos ↓ Notificaciones ↓ Navegación ↓ Rendimiento ↓ Experiencia real**
+
+No basta con que exista una pantalla, botón, tabla o migración.
+
+## 37. REGLA DE PROTECCIÓN DEL PROYECTO
+
+Durante la auditoría:
+
+**NO modificar código. NO modificar Supabase. NO modificar migraciones. NO modificar políticas. NO modificar configuración.**
+
+Primero:
+
+- Auditar.
+- Documentar.
+- Identificar lo existente.
+- Identificar lo incompleto.
+- Identificar lo que falta.
+- Identificar dependencias.
+- Planificar.
+- Solicitar autorización.
+- Implementar.
+- Probar.
+- Integrar.
+
+## 38. PRINCIPIO GENERAL DE TOKVID
+
+TokVid debe construirse para que:
+
+- Una función nueva no destruya una función existente.
+- La plataforma pueda crecer progresivamente.
+- Se pueda recuperar una versión estable cuando sea necesario.
+- Diferentes desarrolladores puedan trabajar en partes específicas sin interferir innecesariamente con otras áreas.
+
+## ESTADO ACTUAL DEL DOCUMENTO
+
+Este documento representa la visión y lista de requisitos recopilados hasta este momento.
+
+No significa que todas las funciones estén actualmente implementadas.
+
+La siguiente etapa será comparar cada requisito con el TokVid real para determinar:
+
+- ✅ Ya existe.
+- 🟡 Existe parcialmente.
+- 🔴 No existe.
+- ⚠️ Existe pero necesita revisión.
+- 🔗 Depende de otra función.
+
+**No se debe implementar nada solamente por aparecer en este documento. Primero se audita el estado real del proyecto.**
+
+
+---
+
+
+# REGISTRO SEAMLESS — ESPECIFICACIÓN VIGENTE
+
+Esta especificación define el flujo vigente de registro de TokVid y complementa la Clarificación Absoluta sobre la eliminación del onboarding tradicional. Si una lógica anterior contradice estas reglas, queda funcionalmente obsoleta para implementación.
+
+### 1. Acceso como invitado
+
+- El usuario puede consumir el Feed como invitado.
+- El scroll vertical y Play/Pause central son interacciones libres.
+- Las acciones restringidas que requieren identidad disparan el registro Seamless sin sacar al usuario innecesariamente de su contexto.
+
+### 2. Acciones pendientes significativas
+
+Cuando una acción restringida dispara el registro, puede conservarse una única intención significativa para ejecutarla después de completar Auth:
+
+- **Like:** completar automáticamente.
+- **Comentario:** confirmar la intención, sin abrir automáticamente la pantalla de comentarios.
+- **Follow:** seguir automáticamente.
+- **Favorito:** guardar automáticamente.
+
+No se debe memorizar indiscriminadamente cada toque del usuario.
+
+### 3. Registro dinámico
+
+El registro se presenta mediante un **Bottom Sheet Modal** con:
+
+- Google OAuth.
+- Correo electrónico mediante código de **8 dígitos**, según decisión del usuario del 5 de octubre de 2026 y configuración de Email comprobada en Supabase.
+- Teléfono mediante código SMS; la especificación previa de 6 dígitos queda pendiente de comprobar contra la configuración real del proveedor Phone, actualmente deshabilitado. La aprobación de 8 dígitos para Email no confirma la longitud de SMS.
+- **Sin contraseña.**
+- **Sin intereses/categorías.**
+- **Sin formulario de carga de avatar durante el registro.** El perfil sí mantiene el campo/avatar de perfil; durante el registro no se solicita una foto.
+- **Sin formulario de username.**
+
+Al completar Auth:
+
+- se crea/identifica automáticamente el perfil;
+- `onboarding_completed = true` se activa automáticamente en Backend;
+- el avatar de perfil procede de Google OAuth cuando esté disponible o usa placeholder gris;
+- el username procede de metadatos de Google o del Trigger de Supabase;
+- no existe una etapa manual posterior obligatoria antes de entrar al Feed.
+
+### 4. Retorno exacto al contexto anterior
+
+Después de Auth, la aplicación debe regresar al mismo video y posición/contexto donde se inició la intención. La acción pendiente significativa se ejecuta automáticamente cuando corresponda.
+
+- Like permanece activo.
+- Follow cambia a **Siguiendo** con el acento de TokVid.
+- Favorito permanece activo con el acento de TokVid.
+- Comentario no abre automáticamente los comentarios; puede mostrar una microanimación sutil.
+- Cualquier efecto visual opcional debe ser breve, sin sonido y sin detener el video.
+
+Si el usuario cancela el registro:
+
+- conserva el mismo video/contexto;
+- se elimina la intención pendiente;
+- el Feed continúa normalmente.
+
+### 5. Perfil según autenticación
+
+**Invitado / UNAUTHENTICATED:**
+- Al pulsar Perfil, se almacena la intención en memoria.
+- Se muestra el Bottom Sheet de registro Seamless.
+- Al completar Auth, se regresa al mismo video, posición y estado Play/Pause del Feed. La entrada por Perfil no abre automáticamente el perfil propio; esta regla es común a Google y correo.
+
+**Usuario identificado / AUTHENTICATED:**
+- Al pulsar Perfil, se abandona/desmonta la vista del Feed correspondiente a esa navegación.
+- Se renderiza la **Pantalla de Perfil Protegida**.
+- La identidad procede de Auth/Trigger de Supabase.
+- El botón central **Editar Perfil** permite modificar voluntariamente y de forma diferida username y avatar.
+
+Esta transición no autoriza borrar el código del Feed ni realizar limpieza general.
+
+### 6. Regla de implementación y auditoría
+
+Antes de modificar código, Auth, Supabase, triggers, RLS o navegación se debe auditar el estado existente. La implementación debe ser quirúrgica, conservar lo funcional y modificar únicamente lo autorizado para este flujo.
+
+No se autoriza por esta especificación:
+
+- borrar código funcional no relacionado;
+- modificar `main`;
+- hacer limpieza general;
+- alterar el Feed o branding ya aprobados;
+- crear pantallas de intereses, carga de avatar o username como parte del registro. El perfil sí conserva avatar y username como datos editables posteriormente.
+
+
+### 7. Modal Seamless — referencia visual y adaptación Android
+
+**Consolidación autorizada:** 5 de octubre de 2026. Se incorpora al Master la ficha «TOKVID — Modal Seamless: referencia visual y adaptación Android» y las aclaraciones del usuario. Esta sección es la referencia consolidada; la ficha separada no constituye otra fuente de verdad.
+
+**Alcance:** documentación del nuevo registro. No declara implementado ni probado el modal. No autoriza cambios de código, Supabase, migraciones, Feed, branding o merge a `main`.
+
+#### 7.1 Presentación del modal
+
+- Mantener un único Bottom Sheet Modal para todos los controles restringidos del invitado.
+- Conservar la propuesta visual presentada: superficie oscura, separación limpia, botón principal claro con símbolo de Google y texto **«Continuar con Google»**, y alternativas compactas **Correo** y **Teléfono** con iconos.
+- Google inicia OAuth; correo conduce a código de **8 dígitos**. El modal debe permitir introducir y validar los ocho dígitos completos, sin truncarlos a seis. Para teléfono, comprobar la longitud real del código SMS antes de implementar su verificación. No introducir contraseña, selección de intereses, formulario de username ni carga de avatar.
+- **Decisión de longitud OTP:** conservar Email OTP length en 8 en Supabase. Esta decisión sustituye las referencias anteriores a seis dígitos para correo; no modifica la caducidad ni autoriza habilitar Phone.
+- El modal solo presenta el acceso/registro y sus estados de autenticación. **No muestra la memoria interna ni anuncia resultados de acciones**: no mostrar «Like activo», «intención guardada», «Follow completado» ni subtítulos según la acción que abrió el registro.
+- La **X cierra todo el modal**, elimina la intención pendiente y conserva el mismo video y contexto como invitado. Una cancelación no aplica Like, Follow ni Favorito.
+- No trasladar a la app controles propios de la demostración como «Ver el modal», mensajes de simulación ni una barra de gesto del sistema dibujada dentro de la tarjeta.
+- La barra de arrastre visual de la muestra no constituye una implementación ni una aprobación automática de gestos de arrastre.
+
+#### 7.2 Paleta TOKVID obligatoria
+
+El modal debe utilizar la identidad existente de **TOKVID**, sin crear un branding nuevo:
+
+- **Cian Eléctrico: `#00F2FE`.**
+- **Magenta Vibrante: `#FE0979`.**
+- Fondos oscuros y neutros de soporte coherentes con el diseño aprobado.
+
+Los dos colores principales deben combinarse discretamente en **bordes, contornos o acentos** del modal y sus controles. Puede proponerse un borde o acento degradado **cian → magenta**; su aplicación concreta se comprobará visualmente antes de cerrar el bloque. No dejar toda la identidad del modal en un único acento que se perciba verde ni introducir un verde nuevo como color de marca.
+
+El botón de Google debe conservar su reconocimiento, legibilidad y símbolo propio; la combinación TOKVID se aplica al contenedor y controles de la aplicación sin recolorear el símbolo de Google. Esta regla no autoriza cambiar colores, iconos ni estados del Feed aprobado.
+
+#### 7.3 Medidas de referencia de la muestra
+
+Estos valores pertenecen a la demostración en CSS; **no son mediciones de un APK ni medidas Android ya validadas**.
+
+| Elemento | Referencia de la muestra |
+|---|---:|
+| Ancho máximo del marco | 390 px CSS |
+| Relleno interior lateral | 24 px CSS |
+| Radio superior del modal | 28 px CSS |
+| Altura mínima del botón Google | 56 px CSS |
+| Radio del botón Google | 16 px CSS |
+| Altura mínima de Correo/Teléfono | 84 px CSS |
+| Separación entre Correo/Teléfono | 12 px CSS |
+| Área de cierre X | 44 × 44 px CSS |
+| Indicador de arrastre visual | 36 × 4 px CSS |
+
+La adaptación Android debe usar tamaño disponible y áreas seguras reales, sin copiar píxeles CSS como píxeles físicos ni imponer un tamaño único a todos los teléfonos.
+
+Como referencias iniciales **propuestas**, no verificadas: relleno lateral interior de 24 dp, Google con mínimo de 56 dp de alto, alternativas de 84 dp, separación de 12 dp, radios de botones de 16 dp y tarjeta de 28 dp. Se propone área táctil de cierre de 48 × 48 dp.
+
+#### 7.4 Margen sobre la tab bar — propuesta pendiente
+
+El usuario solicitó estudiar un margen inferior que deje visible la tab bar. Se documenta la siguiente variante **pendiente de aprobación de sus valores y validación física**:
+
+- Tarjeta flotante con margen lateral de **16 dp** por lado.
+- Borde inferior **12 dp por encima del borde superior real de la tab bar**.
+- Esquinas inferiores también redondeadas, con referencia de **28 dp**.
+- Tarjeta opaca y fondo atenuado; tab bar visible detrás y temporalmente sin recibir pulsaciones mientras el modal esté abierto.
+- Altura según contenido y espacio superior visible, sin ocupar obligatoriamente toda la pantalla.
+- Adaptación al teclado y texto ampliado para conservar acceso a campos, cierre y botón de continuar, con desplazamiento interno cuando sea necesario.
+- La visibilidad completa de la tab bar se propone para el estado sin teclado; su comportamiento con teclado requiere validación.
+
+Medir el borde superior real de la tab bar; no sumar dos veces el área segura inferior cuando ya forme parte de la altura medida. **Se adapta el modal a la barra existente; no se modifica la tab bar para acomodar el modal.**
+
+#### 7.5 Memoria oculta y resultado en el Feed
+
+Esta aclaración complementa los apartados 2, 4 y 5 de Registro Seamless:
+
+| Entrada del invitado | Resultado tras completar Auth |
+|---|---|
+| Like | Regresar al mismo video con el corazón rojo, según la aclaración del usuario, y señal sutil. Conservar la identidad visual aprobada al concretar el color. |
+| Follow | Regresar al contexto del video con el creador seguido, estado **Siguiendo** y señal sutil con acento TOKVID. |
+| Favorito | Regresar al mismo video con guardado activo, marcado y señal sutil con acento TOKVID. |
+| Comentario | Regresar al mismo video y mostrar señal sutil, sin abrir automáticamente los comentarios. |
+| Perfil de la tab bar | Regresar al mismo video, posición y estado Play/Pause del Feed. No abrir Perfil automáticamente; el perfil propio se abre con una nueva pulsación después de Auth. |
+| Otros controles restringidos | Abrir el mismo registro sin inventar una acción automática adicional. |
+
+Conservar una sola intención significativa junto con la identidad del video o creador necesario y el contexto de retorno. Consumirla una vez al completar el flujo, o eliminarla al cancelar. No ejecutar un toggle ciegamente que pueda deshacer una acción ya activa.
+
+Las señales posteriores ocurren discretamente **sobre el control correspondiente del Feed**, no dentro del modal. Deben ser breves, sin sonido y sin detener el video. No se modifican distribución, tamaños, posiciones, iconos ni branding del Feed aprobado.
+
+#### 7.6 Verificaciones pendientes
+
+- Validar en Android físico ancho lógico, áreas seguras, borde superior de tab bar, escala de texto y teclado; todavía no existen medidas verificadas en el teléfono del usuario.
+- Comprobar la adaptación con navegación del sistema por gestos y por botones.
+- Comprobar cierre con X, cancelación, mismo video/contexto e intención consumida una sola vez.
+- Comprobar Google, correo y teléfono reales; la demostración visual no autentica ni envía códigos.
+- Verificar perfil automático y `onboarding_completed = true` en Backend, sin onboarding tradicional.
+- Respetar la sección **43.4.16**: mantener demos hasta validar usuario real, publicación real y aparición correcta del video en el Feed; retirarlos únicamente después.
+
+
+
+# 39. ESTADO ACTUAL CONSOLIDADO — CONCILIACIÓN CON AUDITORÍA 30
+
+**Fuente de conciliación:** `docs/TOKVID_AUDIT_30_RESULTS.md`  
+**Fecha de referencia de la auditoría:** 20 de septiembre de 2026  
+**Rama auditada:** `feature/onboarding-profile-interests`  
+**Base protegida:** `main`
+
+Esta sección integra en el Documento Maestro el estado técnico conocido de los 30 resultados de auditoría. **No reemplaza la arquitectura ni modifica los requisitos 1–38.** Los requisitos anteriores continúan siendo la referencia de producto y arquitectura; esta sección añade el estado real conocido para evitar mantener la información operativa en dos documentos.
+
+## 39.1 Matriz consolidada de estado
+
+| # | Área | Estado actual | Nota de conciliación |
+|---|---|---|---|
+| 1 | Identidad y perfil | 🟡 | Existe base funcional; quedan puntos de seguridad/hardening de perfiles. |
+| 2 | Feed | 🟡 | Funcional con datos reales; permanece fallback mock que debe resolverse antes de producción. |
+| 3 | Stories | 🔴 | No implementado. |
+| 4 | Seguidores/seguidos/amigos | 🟡 | Follow/unfollow y RLS existen; quedan hardening e integridad estructural. |
+| 5 | Mensajes privados | 🟡 | Base funcional existe; eliminación completa y flujo de notificaciones siguen pendientes. |
+| 6 | Llamadas/videollamadas | 🔗 | La arquitectura las mantiene dentro de Mensajes privados; la implementación existente se trata como trabajo separado y no se redefine aquí. |
+| 7 | Burbujas de mensajes | 🔴 | No implementado como personalización completa. |
+| 8 | LIVE | 🔴 | Arquitectura y requisitos definidos en este documento; no existe aún módulo funcional Live en el código revisado. |
+| 9 | Requisitos Live | 🔗 | Dependiente del sistema de Live; propuesta actual 18+, 1,000 seguidores, 30 días y cuenta en buen estado, sujeta a revisión final. |
+| 10 | Enlace en perfil | 🔴 | No implementado. |
+| 11 | Creación/producción de video | 🟡 | Publicación base existe; edición avanzada y drafts pendientes. |
+| 12 | Filtros/efectos | 🔴 | Pendiente. |
+| 13 | Voz/sonido | 🔴 | Pendiente. |
+| 14 | Subtítulos | 🔴 | Pendiente. |
+| 15 | IA para creadores | 🔴 | Pendiente. |
+| 16 | Hashtags | 🟡 | Base de datos y relaciones existen; sincronización de `usage_count` pendiente. |
+| 17 | Menciones | 🟡 | Extracción/persistencia base existe; falta cerrar notificación → push → navegación. |
+| 18 | Borradores | 🔴 | Pendiente. |
+| 19 | Formatos/procesamiento | 🔴 | Pendiente definición/implementación avanzada. |
+| 20 | Notificaciones | 🟡 | Base existe; UPDATE del receptor y flujo completo requieren hardening/cierre. |
+| 21 | Seguridad de mensajería | 🔴 | Pendiente. |
+| 22 | Ayuda | 🔴 | Pendiente. |
+| 23 | Ayuda psicológica | 🔴 | Pendiente. |
+| 24 | Conducta repetida/advertencias | 🔴 | Pendiente de definición segura y política. |
+| 25 | Protección de menores | 🔴 | Pendiente; Live previsto 18+. |
+| 26 | Políticas TOKVID | 🔴 | Pendiente. |
+| 27 | Copyright | 🔴 | Pendiente. |
+| 28 | Monetización | 🔴 | Pendiente, pero preservada como parte de la arquitectura futura. |
+| 29 | Herramientas grandes creadores | 🔴 | Pendiente. |
+| 30 | Panel administrativo | 🔴 | Pendiente. |
+| 31 | Arquitectura segura | 🟢 | Principios de aislamiento, ramas, revisión e integración definidos. |
+| 32 | Ramas/workflow | 🟢 | Flujo de trabajo por ramas y PR establecido. |
+| 33 | Propiedad de código | 🟡 | Áreas/responsables definidos conceptualmente; falta formalización completa. |
+| 34 | Versiones/recuperación | 🟡 | Principio definido; falta completar mecanismo operativo. |
+| 35 | Supabase/DB versionada | 🟢 | Migraciones versionadas; cambios DB deben seguir control y auditoría. |
+| 36 | Auditoría antes de cambiar | 🟢 | Regla vigente y obligatoria. |
+| 37 | Regla de protección | 🟢 | No modificar sin autorización explícita. |
+| 38 | Principio general | 🟢 | Arquitectura modular y evolución segura preservadas. |
+
+## 39.2 Hallazgos técnicos y de seguridad consolidados
+
+Estos hallazgos son **estado/documentación**, no autorización para corregirlos automáticamente:
+
+1. **Profiles:** el diagnóstico de auditoría identificó exposición pública de campos privados y permisos de actualización demasiado amplios. Cualquier corrección debe revisarse contra el esquema real vigente antes de ejecutarse.
+2. **Storage:** avatars y videos requieren hardening de tamaño/MIME antes de producción.
+3. **Videos:** existe una ruta de incremento seguro de compartidos, pero el flujo de la interfaz aún tiene una actualización directa de `shares_count` que debe unificarse.
+4. **Saved videos:** falta verificar/cerrar la integridad referencial de `video_id`.
+5. **Hashtags:** falta mecanismo de sincronización de `usage_count`.
+6. **Notifications:** los permisos de UPDATE requieren restricción al campo autoritativo correspondiente.
+7. **Security Advisor:** quedaron advertencias relacionadas con funciones security-definer de contadores; deben revisarse como hardening separado.
+8. **Performance Advisor:** existen advertencias de `auth_rls_initplan` y 11 índices marcados como unused; no se deben eliminar índices basándose solamente en una base casi vacía.
+9. **Leaked Password Protection:** la auditoría registró que la función requiere un plan compatible; no se deben cambiar otras configuraciones de contraseña como sustituto.
+10. **Mock data:** el feed y el perfil público aún contienen elementos de fallback/mock que deben resolverse antes de declarar producción.
+
+## 39.3 Dependencias consolidadas
+
+- **CI:** lockfile → instalación → typecheck/build → pruebas → PR.
+- **Registro / onboarding:** Guest Feed → interacción restringida → Registro Seamless → Auth → callback → profiles → `onboarding_completed = true` → retorno al contexto exacto del Feed → ejecución de la acción pendiente significativa. No existe pantalla de intereses/categorías, formulario de carga de avatar ni formulario de username durante el registro. El perfil sí contempla avatar y username como datos de perfil. Las preferencias se deducen en segundo plano a partir del consumo de videos durante la sesión de invitado.
+- **Publicación:** Storage de video → `video_url` → feed → likes/comments/shares → contadores → hashtags/mentions.
+- **Social:** Auth → profiles → follows → contadores → perfil público → notifications.
+- **Mensajería:** conversations → messages → RLS → notification → push → chat.
+- **Producción:** seguridad de Auth → Storage/RLS → CI → pruebas → observabilidad → hardening → producción.
+
+## 39.4 Arquitectura que NO debe perderse durante la implementación
+
+La conciliación confirma y refuerza la arquitectura definida en este Documento Maestro:
+
+```text
+TOKVID
+├── LIVE 🔴
+│   ├── Live Rooms
+│   ├── Host
+│   ├── Guests
+│   ├── Ventanillas
+│   ├── Live Chat
+│   ├── Tap-Tap
+│   ├── Quiéreme
+│   ├── Gifts
+│   ├── Moderation
+│   └── Effects
+│
+└── PRIVATE MESSAGES 💬
+    ├── Chats
+    ├── Voice Calls
+    ├── Video Calls
+    └── Bubbles
+```
+
+**Reglas de separación:**
+
+- LIVE es un dominio independiente del Feed y de Mensajes privados.
+- Calls y Video Calls permanecen dentro de Mensajes privados.
+- Bubbles permanece dentro de Mensajes privados.
+- Live Chat, Tap-Tap, Quiéreme, Gifts, Guests, ventanillas, moderación y efectos específicos pertenecen a LIVE.
+- Compartir un Live puede utilizar Mensajes como mecanismo de entrega, pero no convierte Live en parte del dominio de Mensajes.
+- La infraestructura técnica puede reutilizarse cuando corresponda; la lógica de negocio debe permanecer modular.
+- Cada bloque debe poder desarrollarse, auditarse, probarse y revisarse de forma independiente para permitir trabajo futuro de distintos desarrolladores sin mezclar dominios.
+
+## 39.5 Estado de protección y control de cambios
+
+La auditoría y esta consolidación **no autorizan** por sí mismas cambios funcionales.
+
+Reglas vigentes:
+
+- `main` permanece protegida.
+- No hacer merge sin autorización explícita.
+- No modificar Supabase, migraciones, políticas o configuración solo porque exista un hallazgo pendiente.
+- No implementar todos los 🔴 simultáneamente.
+- Antes de cada función: interfaz → lógica → DB → relaciones → RLS/permisos → notificaciones → navegación → rendimiento → experiencia real.
+- Toda nueva función importante debe aislarse en su rama correspondiente.
+- Las correcciones deben ser quirúrgicas y verificables.
+
+## 39.6 Historial documental
+
+`TOKVID_AUDIT_30_RESULTS.md` queda como **registro histórico de la auditoría de 30 resultados**. El presente Documento Maestro pasa a concentrar:
+
+**requisitos + arquitectura + estado conciliado + hallazgos + dependencias + reglas de protección.**
+
+El archivo histórico no se elimina ni se altera como consecuencia de esta consolidación.
+
+## 39.7 Nota sobre onboarding
+
+El onboarding fue objeto de una reparación autorizada posteriormente a la fecha de la auditoría de 20 de septiembre de 2026. Por tanto, cualquier lectura del estado de onboarding debe considerar el código vigente de la rama `feature/onboarding-profile-interests`, no únicamente el snapshot histórico de la auditoría.
+
+## 39.8 Regla de precedencia documental
+
+Cuando exista una diferencia entre el **requisito/arquitectura** y el **estado actual**, no se debe borrar ni reinterpretar el requisito para hacerlo coincidir con la implementación.
+
+- El Documento Maestro define **qué debe ser TOKVID**.
+- La sección 39 documenta **qué estado se conoce actualmente**.
+- El código y Supabase vigentes son la fuente de verificación técnica del estado real.
+- La implementación nunca se considera completa solamente porque esté descrita en este documento.
+
+
+
+---
+
+# 40. CONTRATO TÉCNICO DE LIVE — PREIMPLEMENTACIÓN
+
+**Estado:** Diseño técnico aprobado para implementación posterior.  
+**Propósito:** convertir los requisitos de LIVE de las secciones 8 y 9 en límites técnicos claros antes de crear código, tablas o migraciones.  
+**Regla:** este contrato no constituye una autorización para implementar. Cualquier implementación deberá hacerse posteriormente, por bloques, en una rama propia y con revisión.
+
+## 40.1 Límite del dominio
+
+LIVE es un dominio funcional independiente.
+
+LIVE es responsable de:
+
+- Salas Live.
+- Estado de la sala.
+- Host.
+- Guests.
+- Ventanillas.
+- Solicitudes e invitaciones.
+- Moderadores y permisos de moderación.
+- Live Chat.
+- Comentario fijado.
+- Tap-Tap.
+- Quiéreme.
+- Gifts.
+- Efectos específicos del Live.
+- Estado audiovisual de los participantes.
+- Compartir/referenciar un Live.
+
+LIVE no es responsable de:
+
+- Conversaciones privadas.
+- Mensajes privados.
+- Bubbles.
+- Llamadas de voz.
+- Videollamadas.
+- Comentarios del Feed.
+- Likes del Feed.
+
+Messages puede transportar una tarjeta/enlace para compartir un Live, pero LIVE conserva la autoridad sobre la sala y su participación.
+
+## 40.2 Módulos internos
+
+La implementación deberá conservar módulos separables:
+
+```text
+LIVE
+├── rooms
+├── participants
+├── invitations
+├── moderation
+├── chat
+├── tap-tap
+├── quiéreme
+├── gifts
+├── effects
+├── layout/ventanillas
+└── share
+```
+
+Cada módulo deberá tener responsabilidades propias y evitar dependencias circulares.
+
+## 40.3 Entidades conceptuales
+
+El diseño de datos deberá representar, como mínimo, estos conceptos:
+
+- **Live Room:** sala creada por un usuario.
+- **Live Participant:** relación de un usuario con una sala y su rol/estado.
+- **Live Invitation:** invitación a participar.
+- **Live Join Request:** solicitud de un espectador para participar.
+- **Live Moderator:** autorización de moderación dentro de una sala.
+- **Live Chat Message:** mensaje perteneciente exclusivamente a una sala Live.
+- **Live Pinned Message:** referencia al mensaje fijado actualmente.
+- **Live Reaction/Tap aggregate:** señales agregadas de Tap-Tap, sin una escritura persistente por cada tap.
+- **Live Quiéreme:** apoyo de un usuario hacia el Host.
+- **Live Gift:** registro de regalo enviado/recibido cuando el sistema de monetización esté habilitado.
+- **Live Share:** referencia a una sala compartida mediante Messages.
+- **Live Participant State:** estado de presencia/participación y permisos audiovisuales necesarios para la sala.
+
+Los nombres físicos de tablas, columnas y RPC deberán definirse durante el diseño de base de datos y no deben inventarse desde la interfaz.
+
+## 40.4 Roles y autoridad
+
+Los roles funcionales son:
+
+- **Spectator:** observa e interactúa con las funciones permitidas del Live.
+- **Guest:** participa en una ventanilla después de autorización.
+- **Host:** propietario y autoridad principal de su Live.
+- **Moderator:** usuario autorizado por el Host para capacidades concretas de moderación.
+
+Reglas:
+
+1. Un Live tiene un único Host.
+2. Un Live con Guests admite como máximo 11 Guests.
+3. El máximo audiovisual simultáneo es 12: 1 Host + 11 Guests.
+4. El Host conserva la autoridad final sobre su sala.
+5. Un Moderator solo puede ejecutar acciones expresamente concedidas.
+6. Un Guest no adquiere autoridad de Host.
+7. Ningún rol puede activar remotamente la cámara o el micrófono físico de otro usuario.
+
+## 40.5 Máquina de estados de la sala
+
+El estado de una sala deberá permitir distinguir, como mínimo:
+
+- Live activa.
+- Live finalizada.
+
+Las transiciones deberán estar controladas por el servidor y por permisos del Host.
+
+No se debe confiar únicamente en el estado enviado por el cliente para determinar si una sala puede recibir participantes o interacciones.
+
+## 40.6 Máquina de estados de participación
+
+La relación de un usuario con una sala deberá distinguir estados como:
+
+- espectador;
+- solicitud pendiente;
+- invitación pendiente;
+- Guest activo;
+- salida voluntaria;
+- retirado;
+- rechazado;
+- finalizado.
+
+Las transiciones deberán validar:
+
+- existencia de la sala;
+- estado de la sala;
+- identidad del actor;
+- rol del actor;
+- disponibilidad de ventanilla;
+- permisos correspondientes.
+
+## 40.7 Cámara y micrófono
+
+Principio obligatorio:
+
+**el usuario controla exclusivamente sus propios dispositivos.**
+
+El servidor podrá autorizar, revocar o silenciar capacidades dentro de la sala, pero no puede encender físicamente cámara o micrófono de otra persona.
+
+Flujo de invitación audiovisual:
+
+1. Host/moderador autorizado invita o autoriza.
+2. Guest recibe la indicación.
+3. Guest acepta o rechaza.
+4. El propio Guest activa cámara y/o micrófono si lo desea.
+5. El estado resultante se refleja en la sala.
+
+Si moderación corta el audio:
+
+- el audio deja de transmitirse;
+- el sistema no vuelve a activar el micrófono remotamente;
+- el usuario debe volver a activarlo si conserva autorización.
+
+## 40.8 Ventanillas
+
+La disponibilidad de ventanillas deberá ser una condición validada por servidor.
+
+Regla base:
+
+```text
+1 Host + máximo 11 Guests = máximo 12 participantes audiovisuales
+```
+
+La interfaz podrá presentar distintos layouts, pero el layout visual no debe alterar la autoridad ni el límite real de participantes.
+
+La implementación deberá separar:
+
+- estado de participante;
+- asignación de ventanilla;
+- presentación visual.
+
+Esto permitirá cambiar el diseño de la interfaz sin reconstruir la lógica de participación.
+
+## 40.9 Solicitudes e invitaciones
+
+Acciones permitidas:
+
+- Spectator → solicitar entrada.
+- Host → invitar usuario.
+- Guest → proponer/invitar usuario.
+- Host/Moderator autorizado → aceptar o rechazar según permisos.
+- Invitado → aceptar o rechazar.
+- Guest → salir.
+- Host/Moderator autorizado → retirar Guest.
+
+Toda acción deberá comprobar servidor-side:
+
+- actor autenticado;
+- pertenencia/rol;
+- sala activa;
+- capacidad disponible;
+- objetivo válido;
+- permiso específico.
+
+## 40.10 Live Chat
+
+El Live Chat es un dominio de datos separado de:
+
+- comentarios del Feed;
+- Messages privados.
+
+Debe soportar:
+
+- escritura en tiempo real;
+- lectura según participación/acceso al Live;
+- moderación;
+- eliminación de mensajes cuando corresponda;
+- bloqueo dentro del Live;
+- comentario fijado por Host o Moderator autorizado.
+
+El perfil mostrado desde avatar/comentario reutilizará la identidad de perfil existente, sin duplicar el sistema de perfiles.
+
+## 40.11 Tap-Tap
+
+Tap-Tap será tratado como evento de alta frecuencia.
+
+Regla técnica:
+
+**no persistir una fila ni ejecutar una escritura de base de datos por cada tap individual.**
+
+La arquitectura deberá separar:
+
+- evento/contador efímero de alta frecuencia;
+- agregación;
+- persistencia de métricas agregadas cuando corresponda.
+
+Debe existir:
+
+- contador global en tiempo real;
+- señal individual de actividad;
+- medidor individual visual;
+- catálogo de reacción/figura;
+- posibilidad de mostrar temporalmente identidad del usuario;
+- resumen para el Host.
+
+La fórmula de descubrimiento o distribución del Live no forma parte de este contrato y deberá definirse posteriormente.
+
+## 40.12 Quiéreme
+
+Quiéreme es una interacción independiente de Tap-Tap.
+
+Debe mantener:
+
+- relación usuario → Host;
+- ausencia de duplicados;
+- contador total;
+- consulta de usuarios que dieron Quiéreme.
+
+Si el usuario no sigue al Host, activar Quiéreme podrá crear el Follow correspondiente conforme a las reglas del sistema social.
+
+La operación deberá ser idempotente.
+
+## 40.13 Gifts
+
+Los regalos pertenecen a LIVE, pero los movimientos monetarios deben integrarse posteriormente con el dominio de monetización.
+
+El contrato de LIVE debe permitir:
+
+- catálogo;
+- niveles/categorías;
+- envío;
+- recepción;
+- historial necesario;
+- visualización de galería obtenida.
+
+No se deben fijar todavía precios, porcentajes de reparto ni métodos de pago dentro del módulo Live.
+
+Esos valores pertenecen al diseño financiero/monetización.
+
+## 40.14 Moderación y seguridad
+
+Las acciones de moderación deberán estar protegidas por permisos explícitos.
+
+Como mínimo se deberán distinguir:
+
+- gestionar participantes;
+- aceptar solicitudes/invitaciones;
+- retirar Guests;
+- moderar chat;
+- eliminar comentarios;
+- bloquear usuarios;
+- silenciar/cortar audio;
+- gestionar otras capacidades autorizadas.
+
+Las acciones sensibles deberán validar el actor en servidor.
+
+No se debe confiar en que ocultar un botón en la interfaz sea una medida de seguridad.
+
+## 40.15 Realtime y presencia
+
+LIVE requiere comunicación en tiempo real para:
+
+- estado de sala;
+- participantes;
+- entrada/salida;
+- invitaciones y solicitudes;
+- chat;
+- comentario fijado;
+- Tap-Tap agregado;
+- Quiéreme cuando corresponda;
+- estados audiovisuales;
+- moderación relevante.
+
+La presencia efímera no debe confundirse automáticamente con datos históricos persistentes.
+
+La arquitectura deberá definir qué eventos:
+
+- se transmiten únicamente;
+- se agregan;
+- se persisten;
+- se eliminan al terminar el Live.
+
+## 40.16 Seguridad de datos y RLS
+
+Toda entidad persistente de LIVE deberá tener una política de acceso definida antes de declararse terminada.
+
+Principios:
+
+- El usuario autenticado solo puede actuar como sí mismo.
+- El Host solo administra sus propias salas.
+- Los Moderators solo ejercen permisos concedidos.
+- Los Guests no obtienen privilegios de Host.
+- Los espectadores no pueden modificar datos autoritativos de la sala.
+- Las métricas sensibles no deben quedar expuestas mediante consultas públicas innecesarias.
+- Las operaciones críticas deberán preferir funciones/RPC o rutas servidoras con validación de actor cuando corresponda.
+
+## 40.17 Contrato de interfaz entre módulos
+
+LIVE podrá exponer a otros dominios únicamente interfaces claras.
+
+### LIVE → Messages
+
+LIVE puede solicitar/crear una referencia compartible de una sala.
+
+Messages se encarga de entregar la tarjeta/enlace.
+
+Messages no decide:
+
+- quién es Host;
+- quién es Guest;
+- quién entra;
+- qué permisos tiene un participante;
+- cuándo termina la sala.
+
+### LIVE → Profile/Social
+
+LIVE reutiliza:
+
+- avatar;
+- username;
+- nombre;
+- seguidores;
+- estado de Follow.
+
+LIVE no debe crear un segundo sistema de perfiles.
+
+### LIVE → Notifications
+
+LIVE podrá emitir eventos notificables como:
+
+- invitación;
+- solicitud;
+- actividad relevante;
+- Live compartido;
+- otras notificaciones definidas posteriormente.
+
+Notifications se encargará del mecanismo de entrega.
+
+### LIVE → Monetization
+
+LIVE podrá registrar eventos de Gifts elegibles.
+
+El dominio financiero será responsable de:
+
+- saldo;
+- ledger;
+- comisiones;
+- reparto;
+- retiros;
+- fraude;
+- reembolsos.
+
+## 40.18 Observabilidad
+
+Antes de producción deberá ser posible identificar, como mínimo:
+
+- creación/finalización de sala;
+- errores de entrada;
+- errores de invitación;
+- cambios de participación;
+- errores de Realtime;
+- fallos de moderación;
+- anomalías de capacidad;
+- fallos de Gifts cuando exista monetización.
+
+No se deben registrar secretos ni datos sensibles innecesarios.
+
+## 40.19 Orden de implementación
+
+LIVE deberá implementarse progresivamente:
+
+1. Contrato de dominio y tipos.
+2. Room/Host.
+3. Participantes/Guests y límite 1+11.
+4. Solicitudes/invitaciones.
+5. Realtime/presencia.
+6. Ventanillas/layout.
+7. Cámara/micrófono y permisos.
+8. Moderación.
+9. Live Chat.
+10. Tap-Tap.
+11. Quiéreme.
+12. Share Live.
+13. Effects.
+14. Gifts cuando monetización esté preparada.
+15. Hardening, pruebas y observabilidad.
+
+Cada bloque deberá pasar por:
+
+**interfaz → lógica → DB → relaciones → RLS/permisos → Realtime/notificaciones → navegación → rendimiento → UX real → pruebas.**
+
+## 40.20 Criterios de cierre de LIVE
+
+LIVE no se considerará terminado solamente porque exista una pantalla.
+
+Para cerrar el módulo deberán verificarse:
+
+- límites 1 Host + 11 Guests;
+- estados de sala y participantes;
+- autorización server-side;
+- RLS;
+- Realtime;
+- presencia;
+- cámara/micrófono bajo control del usuario;
+- moderación;
+- Live Chat separado;
+- Tap-Tap escalable;
+- Quiéreme sin duplicados;
+- compartir Live sin mezclar dominios;
+- layouts adaptativos;
+- manejo de salida/retiro;
+- errores y reconexión;
+- pruebas;
+- observabilidad;
+- compatibilidad con los dominios existentes.
+
+**Este contrato protege la arquitectura del Documento Maestro. No autoriza todavía la creación de tablas, migraciones, servicios, pantallas ni cambios en Supabase.**
+
+
+---
+
+# 41. DISEÑO DE BASE DE DATOS DE LIVE — PREIMPLEMENTACIÓN
+
+**Estado:** Diseño conceptual/técnico; no ejecutado.  
+**Regla:** no crea tablas ni modifica Supabase. Los nombres físicos, tipos exactos, índices, constraints, RPC y migraciones se definirán después de revisar el esquema vigente de Supabase.
+
+## 41.1 Principio de diseño
+
+La base de datos de LIVE debe representar el estado autoritativo de la sala y sus relaciones, mientras que los eventos efímeros de alta frecuencia se manejan mediante Realtime/infraestructura adecuada.
+
+No se debe usar la base de datos como canal de señalización por cada evento audiovisual o Tap-Tap.
+
+## 41.2 Entidades y relaciones
+
+Modelo conceptual:
+
+```text
+profiles
+   │
+   ├──< live_rooms
+   │       │
+   │       ├──< live_participants >── profiles
+   │       │
+   │       ├──< live_invitations >── profiles
+   │       │
+   │       ├──< live_join_requests >── profiles
+   │       │
+   │       ├──< live_moderators >── profiles
+   │       │
+   │       ├──< live_chat_messages >── profiles
+   │       │
+   │       ├── live_pinned_message
+   │       │
+   │       ├──< live_quiéreme >── profiles
+   │       │
+   │       ├──< live_gifts >── profiles
+   │       │
+   │       └──< live_shares >
+   │
+   └── relaciones sociales existentes
+```
+
+La relación con `profiles` reutiliza el usuario existente y no crea un perfil paralelo.
+
+## 41.3 Live Rooms
+
+La entidad Room deberá conservar como mínimo conceptualmente:
+
+- identificador único;
+- Host/propietario;
+- modalidad: solo o con Guests;
+- estado de la sala;
+- título/metadatos públicos necesarios;
+- timestamps de creación, inicio y finalización;
+- configuración necesaria para acceso/moderación.
+
+Reglas:
+
+- una sala tiene un único Host;
+- el Host debe corresponder a un usuario válido;
+- solo una transición autorizada puede finalizar la sala;
+- la capacidad de Guests no se debe confiar al cliente.
+
+## 41.4 Participantes
+
+`live_participants` representa la relación de un usuario con una sala.
+
+Debe poder distinguir:
+
+- usuario;
+- sala;
+- rol;
+- estado de participación;
+- ventanilla asignada;
+- autorización audiovisual;
+- estado de cámara;
+- estado de micrófono;
+- timestamps relevantes.
+
+Los estados físicos de cámara/micrófono deben distinguirse de los permisos concedidos.
+
+**Permiso ≠ dispositivo encendido.**
+
+Nunca se debe almacenar un campo que implique que el servidor puede encender remotamente el dispositivo.
+
+## 41.5 Invitaciones y solicitudes
+
+Las invitaciones y solicitudes deben permanecer como entidades separadas porque representan intenciones diferentes:
+
+- invitación iniciada por Host/Guest autorizado;
+- solicitud iniciada por Spectator.
+
+Cada registro deberá poder identificar:
+
+- sala;
+- actor;
+- usuario objetivo;
+- estado;
+- timestamps;
+- quién tomó la decisión cuando corresponda.
+
+Las transiciones deberán ser idempotentes y validar capacidad antes de activar un Guest.
+
+## 41.6 Moderadores
+
+La autorización de moderación debe ser independiente de ser participante.
+
+Conceptualmente:
+
+```text
+Host
+ └── concede permisos → Moderator
+```
+
+El modelo debe permitir permisos específicos, por ejemplo:
+
+- gestionar participantes;
+- gestionar solicitudes;
+- gestionar chat;
+- bloquear;
+- retirar;
+- silenciar.
+
+No se debe convertir automáticamente a un moderador en Guest ni a un Guest en moderador.
+
+## 41.7 Live Chat
+
+Los mensajes de Live deben tener identidad propia como contenido perteneciente a una sala.
+
+Relaciones mínimas conceptuales:
+
+```text
+live_room → live_chat_message → author/profile
+```
+
+Debe poder determinarse:
+
+- quién escribió;
+- en qué Live;
+- cuándo;
+- estado de moderación;
+- si está fijado.
+
+El sistema de chat del Live no debe reutilizar la tabla de mensajes privados para almacenar estos mensajes.
+
+## 41.8 Tap-Tap
+
+No se diseñará una fila persistente por cada tap.
+
+Separación:
+
+```text
+Tap físico
+   ↓
+evento efímero / agregación
+   ↓
+contador realtime
+   ↓
+persistencia agregada cuando corresponda
+```
+
+Si posteriormente se requiere historial, se almacenarán agregados por ventanas de tiempo o por sesión, no eventos individuales indiscriminados.
+
+El diseño deberá poder identificar actividad por usuario para el resumen del Host sin convertir cada tap en una escritura de DB.
+
+## 41.9 Quiéreme
+
+Quiéreme debe poder representarse como relación única:
+
+```text
+usuario → Host/LIVE
+```
+
+Debe existir una restricción lógica/física que impida duplicados.
+
+El contador deberá derivarse de una fuente consistente, no de incrementos directos desde clientes no confiables.
+
+La eventual creación de Follow deberá respetar las reglas del sistema social existente y mantener idempotencia.
+
+## 41.10 Gifts
+
+Los registros de Gifts deberán separar:
+
+- identidad del Live;
+- remitente;
+- receptor;
+- elemento/regalo;
+- cantidad;
+- referencia financiera cuando exista.
+
+Los saldos y movimientos financieros no deben residir dentro de la lógica básica de LIVE.
+
+La integridad monetaria deberá pertenecer a un ledger financiero posterior.
+
+## 41.11 Share Live
+
+Compartir un Live debe guardar, cuando sea necesario, una referencia al Live y al contexto de entrega.
+
+No debe copiar la lógica de participación a Messages.
+
+Conceptualmente:
+
+```text
+LIVE → referencia de Share → Messages → receptor
+```
+
+La apertura de la tarjeta devuelve al usuario al dominio LIVE.
+
+## 41.12 Integridad y constraints
+
+Antes de implementar deberán definirse explícitamente:
+
+- claves primarias;
+- referencias a usuarios;
+- referencias a salas;
+- unicidad;
+- estados permitidos;
+- reglas de capacidad;
+- timestamps;
+- comportamiento ante eliminación de usuario/sala;
+- protección contra relaciones huérfanas.
+
+La regla 1 Host + máximo 11 Guests debe quedar protegida por lógica server-side y, donde sea viable, por constraints/transacciones, no solamente por la UI.
+
+## 41.13 RLS y operaciones críticas
+
+Cada entidad persistente deberá tener RLS definida antes de considerarse terminada.
+
+Las operaciones críticas —crear/finalizar sala, aceptar Guest, retirar Guest, asignar moderador, moderar chat, registrar apoyo y otras operaciones autoritativas— deberán validar actor y estado en servidor.
+
+Los clientes no deben poder:
+
+- cambiar su rol a Host;
+- elevarse a Moderator;
+- superar el límite de Guests;
+- modificar contadores autoritativos arbitrariamente;
+- modificar registros de otros usuarios sin permiso.
+
+## 41.14 Realtime frente a persistencia
+
+Se distinguirán tres clases:
+
+**A. Efímero:** presencia, estado de conexión, eventos audiovisuales inmediatos.
+
+**B. Realtime + agregado:** Tap-Tap y señales de actividad de alta frecuencia.
+
+**C. Persistente:** salas, participantes, invitaciones, solicitudes, moderación, chat, Quiéreme, Gifts y datos históricos necesarios.
+
+Esta separación evita convertir Supabase/Postgres en el cuello de botella del Live.
+
+## 41.15 Transacciones y concurrencia
+
+Las operaciones que consumen una de las 11 ventanillas deberán ser atómicas.
+
+Ejemplo conceptual:
+
+```text
+solicitud/invitación
+      ↓
+validar sala activa
+      ↓
+validar actor/permisos
+      ↓
+contar/capturar capacidad
+      ↓
+asignar Guest
+      ↓
+confirmar
+```
+
+Dos usuarios intentando ocupar la última ventanilla simultáneamente no deben poder obtener ambas.
+
+La estrategia concreta —constraint, transacción, lock o función/RPC— se elegirá al diseñar la implementación sobre el esquema real.
+
+## 41.16 Índices y rendimiento
+
+Los índices se definirán a partir de las consultas reales, especialmente para:
+
+- salas activas;
+- Host;
+- participantes por sala;
+- solicitudes pendientes;
+- invitaciones pendientes;
+- chat por sala/tiempo;
+- moderadores por sala;
+- Quiéreme por Host;
+- Gifts por Live/usuario.
+
+No se crearán índices indiscriminadamente. Cada índice deberá justificar su consulta y coste de escritura.
+
+## 41.17 Retención y limpieza
+
+Antes de producción deberá definirse qué datos:
+
+- permanecen históricamente;
+- se agregan;
+- se archivan;
+- se eliminan al finalizar el Live;
+- requieren retención por seguridad, moderación o finanzas.
+
+Presencia y señalización efímera no deben permanecer indefinidamente como datos históricos.
+
+## 41.18 Migraciones
+
+Cuando el diseño sea aprobado para implementación:
+
+1. revisar esquema Supabase vigente;
+2. verificar nombres y dependencias;
+3. diseñar migración incremental;
+4. revisar RLS/constraints;
+5. probar en entorno controlado;
+6. ejecutar CI;
+7. revisar resultado;
+8. integrar mediante PR autorizado.
+
+**No se debe crear una migración de LIVE todavía solamente porque este diseño exista.**
+
+## 41.19 Resultado del diseño
+
+La arquitectura de datos queda preparada para implementar LIVE sin mezclar:
+
+- Feed;
+- Messages;
+- Calls;
+- Bubbles;
+- Profile/Social;
+- Monetization.
+
+La siguiente fase, antes de escribir migraciones, será **auditar el esquema Supabase vigente y contrastarlo entidad por entidad con este diseño**.
+
+---
+
+# 42. MONETIZACIÓN Y CATÁLOGO DE REGALOS — ESPECIFICACIÓN VIGENTE
+
+**Estado:** Requisito maestro incorporado a partir del documento completo de monetización.  
+**Documento financiero de referencia:** `docs/monetization/sistema_monetizacion_completo.md`  
+**Regla:** este documento completo integra el sistema de monetización blindado y constituye la referencia vigente del diseño financiero. No se debe sustituir por una especificación económica distinta.
+
+## 42.1 Sistema de monetización completo
+
+El sistema de monetización de TOKVID queda vinculado al documento completo vigente y contempla, entre otros elementos definidos allí:
+
+- arquitectura financiera con reparto **70/30**;
+- valor neto interno de **1 Moneda = $0.010 USD**;
+- precios asimétricos para evitar que TOKVID absorba las comisiones de los procesadores;
+- fórmulas diferenciadas para Web y compras In-App;
+- paquetes cerrados de monedas;
+- regla de cantidades basada en módulo 5, con excepción del regalo base de 1 moneda;
+- Ledger contable para registrar las operaciones;
+- procesamiento atómico y protección contra concurrencia;
+- controles de idempotencia para referencias externas;
+- protección antifraude mediante **escrow de 14 días** para los diamantes;
+- políticas de retiro y controles operativos;
+- integración futura con los mecanismos de pago y liquidación definidos por el sistema de monetización.
+
+Los valores económicos, precios, reparto, reglas de conversión, retiros y demás parámetros financieros deben tomarse del documento completo de monetización vigente y no deben inventarse ni sustituirse durante la implementación.
+
+## 42.2 Catálogo de regalos TOKVID
+
+TOKVID tendrá un catálogo objetivo de **445 regalos digitales**.
+
+El catálogo:
+
+- tendrá identidad visual y sello propio de TOKVID;
+- se organizará en **2 o 3 categorías**;
+- podrá utilizar niveles y elementos especiales conforme al sistema de regalos;
+- deberá integrarse con LIVE;
+- permitirá selección y envío de regalos;
+- permitirá recepción y registro de regalos;
+- permitirá la visualización de regalos obtenidos en la galería correspondiente;
+- deberá mantener separación entre la experiencia visual de LIVE y la contabilidad financiera.
+
+**No se fija en este documento una distribución numérica entre las 2 o 3 categorías ni se inventan nombres, precios o contenido individual de los 445 regalos.** Esos detalles deberán definirse posteriormente con autorización explícita.
+
+## 42.3 Relación entre LIVE y Monetización
+
+LIVE mantiene la responsabilidad de:
+
+- selector/experiencia de regalos;
+- envío y recepción dentro de la sala;
+- presentación visual;
+- historial/galería de regalos correspondiente al contrato de LIVE.
+
+Monetización mantiene la responsabilidad de:
+
+- saldo;
+- Ledger;
+- compra de monedas;
+- reparto;
+- liquidación;
+- retiros;
+- antifraude;
+- reembolsos;
+- referencias financieras.
+
+La integración entre ambos dominios debe respetar el contrato definido en la sección 40.17.
+
+## 42.4 Regla de implementación
+
+La incorporación de los 445 regalos y del sistema financiero completo al Documento Maestro **no autoriza por sí misma cambios de código, migraciones, Supabase, precios adicionales ni implementación del catálogo**.
+
+Antes de implementar cualquier parte pendiente se deberá:
+
+1. auditar el estado real existente;
+2. contrastarlo con esta especificación y con el documento completo de monetización;
+3. identificar las diferencias;
+4. presentar los cambios necesarios;
+5. solicitar autorización antes de modificar código o base de datos.
+
+---
+
+# 43. PLAN DE IMPLEMENTACIÓN ACORDADO PARA LA RAMA `feature/onboarding-profile-interests`
+
+**Estado:** Plan de ejecución acordado; este apartado no sustituye los requisitos funcionales anteriores.  
+**Regla de trabajo:** implementar bloque por bloque, auditar antes de modificar y no declarar un bloque cerrado hasta comprobarlo.
+
+## 43.1 Alcance de esta etapa
+
+La etapa actual tiene como objetivo llevar la implementación desde **ONBOARDING** hasta **LIVE**, manteniendo el Documento Maestro como referencia de requisitos.
+
+El flujo de trabajo será:
+
+1. auditar el bloque actual y el código existente;
+2. contrastarlo con este Documento Maestro;
+3. identificar diferencias reales;
+4. implementar únicamente el bloque autorizado;
+5. comprobar el cambio;
+6. hacer commit en `feature/onboarding-profile-interests`;
+7. hacer push;
+8. pasar al siguiente bloque solamente cuando el anterior pueda considerarse comprobado.
+
+No se deben inventar requisitos ni ocultar errores, bloqueos o diferencias.
+
+## 43.2 Verificación y GitHub Actions
+
+La verificación forma parte del cierre de cada bloque.
+
+Si GitHub Actions no está disponible por límite de uso, el bloque no se marcará como verificado por CI. Se podrán realizar únicamente las comprobaciones locales que estén realmente disponibles y deberán distinguirse de la verificación de GitHub Actions.
+
+Mientras la cuota de Actions esté agotada, no se deben realizar ejecuciones repetitivas destinadas solamente a consumir minutos.
+
+El reinicio de la cuota de Actions se utilizará posteriormente para volver a ejecutar la verificación correspondiente.
+
+## 43.3 APK
+
+**La etapa actual no consiste en construir el APK.**
+
+La compilación/prueba de login y la preparación del APK quedan para la etapa posterior acordada una vez que el flujo hasta LIVE esté implementado y comprobado.
+
+No se debe introducir trabajo de APK dentro de los bloques actuales salvo autorización explícita.
+
+
+## 43.4 FUENTE DE VERDAD VISUAL — UI DEFINITIVA
+
+**Estado:** vigente para la implementación actual.  
+**Prioridad:** para la implementación de **LIVE**, esta especificación visual y de interacción sustituye cualquier descripción visual anterior que la contradiga o duplique. No se deben inventar componentes, posiciones, controles, animaciones ni comportamientos fuera de lo definido aquí.  
+**Alcance:** el documento describe la UI de Home Feed, Comments Drawer, Share Sheet, Live, Studio y Bottom Tab Bar. En la etapa actual se implementa el flujo hasta **LIVE**; las pantallas restantes quedan documentadas para su implementación posterior.
+
+### 43.4.1 Rejilla y layout global
+- Diseño base: **390 × 844 px**, proporción 19.5:9.
+- Safe Area: **Top 44 px**, **Bottom 34 px**.
+- z-index: 0 video/cámara; 10 elementos interactivos flotantes; 50 hojas/modales inferiores; 100 notificaciones/toasts.
+- Paleta principal: **Cian Eléctrico #00F2FE** y **Magenta Vibrante #FE0979**.
+
+### 43.4.2 Home Feed
+Ocupa 100vw × 100vh.
+
+Header:
+- En Vivo: Top 44 px, Left 16 px; antena en Cian; abre feeds de Live.
+- Selector central Siguiendo/Para ti: Top 44 px, centrado; activo Cian con línea inferior de 2 px; inactivo blanco al 60%.
+- Búsqueda: Top 44 px, Right 16 px; abre búsqueda avanzada.
+
+Acciones derechas, Right 12 px, botones circulares de 48 × 48 px con separación vertical de 25 px:
+- Perfil creador: Top 320 px; avatar circular con borde Cian y botón + Magenta de 18 px; al seguir, el + se anima con scale(0) en 200 ms.
+- Like: Top 395 px; SVG; blanco → Magenta con rebote spring 1.3x; contador 12 px.
+- Comentarios: Top 470 px; Cian; abre Comments Drawer.
+- Favoritos: Top 545 px; marcador; activo Cian con partículas laterales.
+- Compartir: Top 620 px; flecha; borde Magenta si existe interacción sugerida.
+- Música: Top 695 px; disco 40 × 40 px, borde Cian, rotación continua 360deg, 4 s linear infinite.
+
+Bloque inferior izquierdo:
+- Left 16 px, Top 650–750 px.
+- @usuario bold 16 px blanco.
+- Descripción 14 px; hashtags/menciones en Cian.
+- Sobre 80 caracteres: mostrar "...más" gris; al pulsarlo, expandir hacia arriba duplicando la altura máxima.
+- Audio: nota Cian 14 px y título con marquee en contenedor de 200 px.
+
+### 43.4.3 Comments Drawer
+Actualización autorizada por el usuario el 6–7 octubre 2026: el documento `tokvid comentarios.md` sirve como concepto y medidas, con datos reales y sello TOKVID. Sustituye las medidas anteriores exclusivamente de Comentarios.
+
+- Panel inferior al 75% de la altura de pantalla en reposo; esquinas superiores 32 dp que pasan a 16 dp al abrir el teclado.
+- Caja de entrada de 52 dp y radio 26 dp en reposo; crece hasta 120 dp y radio 12 dp durante edición. Margen perimetral 12 dp en reposo, lados e inferior 0 dp con teclado. El área segura del sistema se suma en reposo.
+- Fondo oscuro TOKVID, acentos Cian #00F2FE y Magenta #FE0979. Enviar y Me gusta usan Magenta; respuestas y conexiones usan Cian. Avatar real del perfil o su inicial, sin fotografías ni cuentas ficticias.
+- El editor se acopla encima del teclado; el panel se limita a la altura disponible respetando barra de estado y cierre X. Se mide la ventana real del Modal para no descontar el teclado dos veces si Android ya redimensionó la ventana.
+- Feed protegido: no se implementan la escala 0.95 ni blur 8 dp propuestos por el ejemplo. No se modifican estilos, posiciones, iconos, gestos, navegación ni playback del Feed. Solo se conecta su contador de comentarios a registros reales; durante la consulta se indica carga, sin reutilizar cantidades demo.
+- Comentarios y respuestas de texto de 1–300 caracteres Unicode, persistidos en Supabase. Responder guarda parent_id/root_id del comentario, no solo un @nombre dentro del texto. Los likes son únicos por comentario y cuenta; sus contadores se mantienen en servidor.
+- Lista virtualizada, páginas de 30 comentarios principales y 20 respuestas; carga adicional real y actualización mediante Realtime/recarga. El total incluye comentarios y respuestas reales. Una lista vacía muestra su estado vacío real.
+- La entrada conserva el texto cuando falla el envío. Solo lo borra después de confirmación del servidor. Reintentar el mismo envío conserva su identificador para evitar duplicados. Fallos de publicación/like permanecen visibles aunque una recarga posterior tenga éxito.
+- Este bloque implementa texto, respuestas y likes del concepto. No incorpora controles ficticios de imágenes, GIF, adjuntos, menciones con selector o emojis. Esas funciones requieren su especificación e integración posterior.
+
+### 43.4.4 Share Sheet
+- Modal inferior de 40vh, fondo oscuro translúcido.
+- Fila 1: carrusel infinito de contactos, avatares 50 px, indicador verde y nombre 11 px.
+- Fila 2: WhatsApp, Instagram Stories, Facebook, Messenger y Copiar Enlace; Copiar Enlace destacado en Cian.
+- Fila 3: Reportar (bandera Magenta), No me interesa (corazón roto), Guardar Video (descarga Cian) y Dúo/Pegar (herramientas de edición).
+
+### 43.4.5 LIVE — interfaz de espectador/participante
+Diseño para video dividido, chat y herramientas de interacción.
+
+Barra superior:
+- Host Card: Left 12 px, Top 44 px, 140 × 36 px; avatar 28 px, nombre abreviado y Seguir en Cian.
+- Al pulsar Seguir, el estado pasa a "Unirse", fondo Magenta y corona/estrella.
+- LiveViewers inmediatamente al lado, icono ojo + métrica realtime, fondo negro translúcido.
+- Cerrar X: Right 16 px, Top 44 px, área táctil 44 × 44 px. Al salir se interrumpe la sesión de red audiovisual y se vuelve al Home Feed.
+
+Área audiovisual:
+- Ocupa el espacio principal.
+- Soporta layout dividido 50/50 cuando existe invitado.
+- Debe respetar el contrato funcional de LIVE del Documento Maestro: 1 Host + hasta 11 Guests, máximo 12 participantes audiovisuales.
+- Las ventanillas son dinámicas; no se crea una segunda representación fija del participante local cuando ya está en el layout.
+- El layout se adapta al dispositivo y al área segura.
+
+Chat Live:
+- Left 12 px, width aproximado 90%, Bottom 150 px.
+- Scroll/auto-scroll.
+- Fondo rgba(0,0,0,0.3).
+- Usuarios en bold; Cian para moderadores/suscriptores y Magenta para usuarios comunes; cuerpo blanco.
+- Es independiente de comentarios del Feed y Messages.
+
+Bottom Live Tools:
+- Bottom 75 px.
+- Input izquierda, 60% del espacio; border-radius 20px; borde Cian; placeholder exacto "escribe algo".
+- Acciones derechas, 36 × 36 px, separación 10 px:
+  - Invitación 👥: Cian; solicita conexión en pantalla dividida.
+  - Gifts 🎁: Magenta; abre la experiencia de regalos.
+  - Compartir ➡️: comparte enlace directo.
+- La superficie visible debe respetar el rol/permisos efectivos y no mostrar controles no autorizados.
+
+### 43.4.6 LIVE — Creator Panel
+Visible solamente para un usuario con permisos de transmisión/Host.
+- Se abre mediante control flotante de herramientas y ocupa la mitad inferior.
+- Filtros: fila de sliders, nodos Cian; enfoque, suavizado de piel y filtros de color.
+- Efectos de audio: cuadrícula 2 × 3 con bordes Magenta:
+  - Aplausos.
+  - Risas.
+  - Besos, con partículas de corazones Magenta.
+  - Sonidos Extra/efectos personalizables.
+- Estos efectos nunca conceden control remoto de cámara o micrófono de otra persona.
+
+### 43.4.7 LIVE — reglas de interacción y seguridad visual
+- Cámara y micrófono: cada usuario controla físicamente sus propios dispositivos.
+- Autorización server-side y activación física son conceptos distintos.
+- Ningún Host, Guest o Moderator puede activar remotamente cámara/micrófono de otra persona.
+- Moderación puede silenciar/cortar audio conforme a permisos, pero no encender remotamente el micrófono.
+- La UI debe mostrar únicamente funciones reales y evitar botones duplicados.
+- Chat, Tap-Tap, Quiéreme, Gifts y Share Live permanecen separados por dominio.
+- Tap-Tap es interacción exclusiva del Live del Host, independiente de Like del Feed.
+- Quiéreme permanece separado de Tap-Tap.
+- Gifts pertenece a LIVE visualmente, mientras que saldo/Ledger/finanzas pertenecen a Monetization.
+- Los límites de capacidad y permisos no se confían al cliente.
+
+### 43.4.8 Studio / Centro de Creación
+Se activa desde el botón central +.
+
+Header:
+- X: Top 44 px, Left 16 px.
+- Añadir sonido: Top 44 px, centrado; cápsula negra con borde Cian.
+
+Herramientas laterales Right 16 px desde Top 100 px:
+- Voltear.
+- Velocidad: 0.3x, 0.5x, 1x por defecto, 2x, 3x.
+- Filtros.
+- Tiempo: 3 o 10 s.
+- Voz: helio, robot, eco, gigante.
+- Efectos.
+
+Obturador:
+- centro, Bottom 110 px;
+- diámetro 76 px;
+- Magenta #FE0979;
+- anillo Cian, separación negra de 4 px.
+- Tap: inicia grabación; cambia a Stop; progreso blanco sobre anillo.
+- Mantener pulsado: grabación analógica y zoom mediante arrastre vertical.
+
+Controles:
+- Efectos: Left 45 px.
+- Cargar multimedia: Right 45 px.
+- Modos inferiores: FOTO / VIDEO / STORY; selector centrado, Cian activo y transición snapping.
+
+### 43.4.9 Bottom Tab Bar global
+- position fixed, bottom 0, width 100vw, height 80 px, z-index 100.
+- En Home Feed: fondo transparente.
+- En pantallas secundarias: bloque negro sólido.
+- Cinco columnas iguales, 20% cada una: Home, Amigos, +, Mensajes, Perfil.
+- Pestaña activa: Cian; pasivas: blanco atenuado.
+
+Botón central +:
+- columna 3.
+- Capa base izquierda Cian, desplazada 2 px a la izquierda.
+- Capa base derecha Magenta, desplazada 2 px a la derecha.
+- Capa frontal central blanca sobre Home oscuro o negra en Perfil/Inbox.
+- Símbolo + centrado.
+- Al pulsar: scale(0.95) y apertura de Studio.
+
+
+
+### 43.4.9.1 Guest Feed — comportamiento de invitado y barra Android
+
+Esta subsección fija el comportamiento acordado para el **Feed de invitado** y tiene prioridad sobre cualquier descripción anterior de navegación que la contradiga.
+
+#### Feed de invitado
+
+- El invitado puede entrar al Home Feed y consumir contenido para probar la experiencia vertical.
+- El contenido de muestra/mock que exista en el proyecto es **exclusivamente para desarrollo y pruebas internas** de reproducción, scroll vertical, avance entre videos, precarga y comportamiento de carga.
+- Los datos mock/demo **no representan contenido real de usuarios y no deben tratarse como contenido de producción**.
+- El Feed de producción se alimentará con **videos reales** una vez que exista contenido real disponible.
+- El objetivo del mock/demo es permitir probar el scroll y la experiencia del Feed antes de cargar videos reales.
+
+#### Barra inferior Android del invitado
+
+La barra inferior del invitado tendrá exactamente cinco posiciones:
+
+1. **Home** — icono Android válido de Home.
+2. **Amigos** — icono Android válido de usuarios.
+3. **+** — botón central de Crear.
+4. **Mensajes** — icono Android válido de mensajes.
+5. **Perfil** — icono Android válido de usuario/perfil.
+
+Para la implementación Android se deben utilizar identificadores de iconos válidos y existentes en la librería de iconos utilizada por la aplicación, evitando cualquier fallback que renderice un signo de interrogación. La referencia actual de iconos es:
+
+- Home: `home`
+- Amigos: `users`
+- Crear: `plus`
+- Mensajes: `message-circle`
+- Perfil: `user`
+
+No debe aparecer **Discover/Descubrir** en esta barra de invitado ni como un elemento adicional de la barra.
+
+#### Navegación del invitado
+
+Mientras el usuario no esté autenticado:
+
+- **Home → Registro**
+- **Amigos → Registro**
+- **+ → Registro**
+- **Mensajes → Registro**
+- **Perfil → Registro**
+
+Esto significa que incluso Home, al pulsarse desde el estado de invitado, dirige al flujo de Registro. El invitado puede consumir el Feed antes de pulsar estas acciones, pero no obtiene acceso a las funciones autenticadas mediante la barra.
+
+#### Botón Crear (+) del invitado
+
+El botón central **+** debe conservar la identidad visual TOKVID:
+
+- capa/base izquierda: **Cian Eléctrico #00F2FE**;
+- capa/base derecha: **Magenta Vibrante #FE0979**;
+- símbolo **+** centrado;
+- no utilizar el rojo legado **#FE2C55** ni otro color de identidad no definido.
+
+En el estado de invitado, pulsar el + lleva a Registro. La apertura de Studio corresponde al comportamiento autenticado definido para el botón Crear.
+
+#### Barra inferior del usuario autenticado
+
+Una vez autenticado, los mismos cinco espacios recuperan sus funciones correspondientes:
+
+- **Home** → Home Feed.
+- **Amigos** → Amigos.
+- **+** → Crear/Studio.
+- **Mensajes** → Mensajes.
+- **Perfil** → Perfil.
+
+El Feed autenticado conserva las interacciones funcionales definidas en este Documento Maestro, incluyendo cuando correspondan:
+
+- Seguir desde el avatar/perfil del creador.
+- Me gusta.
+- Comentarios.
+- Favoritos/Guardar.
+- Compartir.
+- Acceso al perfil del creador.
+- Hashtags y menciones.
+
+La lógica de invitado no debe deshabilitar ni sustituir estas funciones cuando exista una sesión autenticada.
+
+
+
+### 43.4.9.2 Video Feed — control Play/Pause
+
+En cada video del Feed vertical debe existir un control **Play/Pause** superpuesto de forma **semi-transparente**, discreto y sin obstaculizar la visualización del contenido.
+
+- El control debe permanecer visualmente integrado con el video y no cubrir innecesariamente el contenido.
+- Al pulsar **Play**, el video debe comenzar/reanudar su reproducción.
+- Al pulsar **Pause**, el video debe detener su reproducción.
+- La indicación/control de Play/Pause debe **desaparecer inmediatamente después de la acción**, para dejar nuevamente limpia la visualización.
+- El control no debe permanecer permanentemente visible sobre el video.
+- La interacción debe funcionar independientemente de las demás acciones del Feed (Like, Comentarios, Favoritos, Compartir y Seguir).
+- El comportamiento debe aplicarse al video que esté actualmente visible en el scroll.
+
+### 43.4.10 Regla de precedencia y eliminación de duplicados
+Para la **implementación actual de LIVE**, esta sección es la única referencia visual y de interacción de este Documento Maestro.
+
+Si una sección anterior del Documento Maestro contiene una descripción visual de LIVE que contradice esta sección, repite la misma decisión con valores diferentes o añade una decisión visual no presente aquí, esa descripción anterior queda **sin efecto para implementación de LIVE** y no debe duplicarse en código ni documentación operativa.
+
+Los requisitos funcionales, de seguridad, roles, RLS, Realtime, límites de participantes, separación de dominios y demás contratos no visuales del Documento Maestro **siguen vigentes** salvo contradicción explícita de esta especificación visual.
+
+No se eliminan requisitos funcionales válidos solamente por no aparecer en este mapa visual.
+
+### 43.4.11 Supabase y migraciones
+No se autoriza una migración por el solo hecho de existir un elemento visual en esta especificación.
+
+Antes de cualquier cambio:
+1. auditar el esquema Supabase vigente;
+2. comprobar tablas, columnas, funciones, RLS y relaciones existentes;
+3. identificar la diferencia exacta;
+4. informar qué debe modificarse;
+5. obtener autorización cuando corresponda;
+6. probar el cambio antes de cerrar el bloque.
+
+No duplicar ni reemplazar entidades existentes sin una diferencia real y justificada.
+
+### 43.4.12 Cierre por bloque y Git
+Cada bloque debe:
+- corresponder a esta fuente visual y al contrato funcional vigente;
+- ser comprobado;
+- registrar errores o bloqueos sin ocultarlos;
+- tener commit en feature/onboarding-profile-interests;
+- hacer push;
+- registrar la verificación disponible.
+
+GitHub Actions y las pruebas locales deben distinguirse: un fallo por cuota/límite externo no se marca como éxito de CI.
+
+La compilación de la app, prueba de login y APK quedan para después de completar y comprobar el flujo hasta LIVE, según el plan acordado.
+
+### 43.4.13 Estado
+**Vigente para la implementación actual:** ONBOARDING → LIVE.  
+**Fuente visual canónica:** el mapa técnico/visual definitivo proporcionado para TOKVID.  
+**Regla:** no inventar, no ocultar, no duplicar y no avanzar al siguiente bloque sin comprobar el bloque actual.
+
+### 43.4.14 Cierre del Guest Feed y del branding vigente
+
+**Estado:** 🟢 **CERRADO Y APROBADO PARA LA IMPLEMENTACIÓN ACTUAL.**
+
+El **Guest Feed queda establecido como referencia funcional y visual vigente** en el estado comprobado de la rama feature/onboarding-profile-interests.
+
+El cierre comprende:
+
+- La experiencia visual actual del Guest Feed se conserva como está y **no se rediseña ni se modifica como parte del trabajo de Registro/Login**.
+- El branding y la identidad visual TOKVID actualmente aprobados **no se tocan**.
+- Los elementos interactivos visibles del Guest Feed deben comunicar una acción real y no funcionar como decoración sin destino.
+- En estado de invitado, las acciones que requieren autenticación conducen al flujo de **Registro**.
+- La barra inferior del invitado mantiene sus cinco posiciones: **Home, Amigos, +, Mensajes y Perfil**.
+- Una vez autenticado, cada una de esas posiciones recupera su función correspondiente dentro de la aplicación: **Home → Feed, Amigos → Amigos, + → Crear/Studio, Mensajes → Mensajes y Perfil → Perfil**.
+- Las acciones del Feed autenticado (Seguir, Me gusta, Comentarios, Favoritos/Guardar, Compartir, Perfil del creador y las demás que correspondan) deben conservar su destino y comportamiento funcional real.
+- Los iconos y botones no deben quedar como elementos visuales sin función cuando exista una acción definida para ellos.
+- El estado cerrado del Guest Feed no impide futuras mejoras o correcciones, pero cualquier modificación posterior deberá tratarse como un cambio nuevo, auditarse y consultarse antes de alterar el estado aprobado.
+
+**Regla de alcance:** a partir de este cierre, el siguiente bloque de trabajo es **Registro/Login**. No se debe modificar el Guest Feed ni el branding para avanzar ese bloque, salvo que durante la implementación aparezca una dependencia real y se informe antes de actuar.
+
+### 43.4.15 Auditoría funcional del Guest Feed — referencia para integración posterior
+
+**Estado:** 🟢 **AUDITADO.** Esta sección documenta las funciones encontradas en el Feed actual. **No autoriza cambios de código.**
+
+#### A. Zona superior del Feed
+
+- **Para ti:** modo del Feed. En estado invitado, la pulsación conduce a Registro.
+- **Siguiendo:** modo destinado al contenido de creadores seguidos. En estado invitado, la pulsación conduce a Registro.
+- **Buscar:** icono superior de búsqueda. En estado invitado, la pulsación conduce a Registro.
+- Estos tres controles forman parte de la interfaz del Feed y deberán conservarse como puntos de integración del usuario autenticado. **El comportamiento autenticado concreto deberá auditarse/implementarse cuando corresponda; no se inventa aquí.**
+
+#### B. Video y navegación vertical
+
+- El Feed presenta videos en pantalla completa con scroll vertical por páginas.
+- El video visible es el video activo.
+- El video se reproduce automáticamente cuando está activo.
+- El video entra en pausa cuando deja de estar activo.
+- El usuario puede tocar el video para alternar **Play/Pause**.
+- Después de la acción aparece temporalmente el indicador visual Play/Pause y desaparece.
+- El doble toque sobre el video activa **Me gusta** y muestra temporalmente la animación de corazón.
+- El Feed permite actualizar mediante gesto de refresh.
+- El Feed carga más contenido al acercarse al final cuando existe más contenido disponible.
+- El Feed muestra estado de carga y puede mostrar un mensaje de error si la carga falla.
+
+#### C. Columna lateral de acciones del video
+
+Cada acción es un punto funcional del Feed:
+
+1. **Perfil/avatar del creador**
+   - Invitado → Registro.
+   - Usuario autenticado → acceso al perfil del creador.
+2. **Seguir / + debajo del avatar**
+   - Invitado → Registro.
+   - Usuario autenticado → Follow/Unfollow del creador.
+3. **Me gusta**
+   - Invitado → Registro.
+   - Usuario autenticado → Like/Unlike.
+   - El estado se refleja visualmente.
+4. **Comentarios**
+   - Invitado → Registro.
+   - Usuario autenticado → apertura del panel de comentarios del video.
+5. **Compartir**
+   - Invitado → Registro.
+   - Usuario autenticado → hoja de compartir del sistema y registro del share cuando corresponde.
+6. **Guardar/Favoritos**
+   - Invitado → Registro.
+   - Usuario autenticado → Guardar/Quitar de guardados.
+   - El estado se refleja visualmente.
+7. **Menú de propietario**
+   - Solo aparece para el propietario autenticado del video.
+   - Permite la acción de eliminación del video mediante confirmación.
+   - La eliminación debe comprobar que Supabase realmente eliminó el registro antes de retirar el video de la interfaz.
+
+#### D. Información inferior del video
+
+- Avatar del creador: acceso al perfil/destino de autenticación según estado.
+- Nombre/handle del creador: acceso al mismo destino del creador.
+- Botón **Follow** junto al creador: Follow/Unfollow en usuario autenticado; en invitado, el flujo existente conduce a Registro.
+- Caption/descripción: texto del video.
+- **Hashtags:** son interactivos y llevan a la pantalla de hashtag correspondiente.
+- **@Menciones:** son interactivas; buscan el usuario por username y llevan a su perfil cuando existe.
+- **Sonido/canción:** se muestra como información del contenido y actualmente tiene animación horizontal del texto; no se debe inventar una navegación o acción adicional no existente en el código auditado.
+
+#### E. Barra inferior
+
+La barra del Guest Feed conserva exactamente cinco posiciones:
+
+1. **Inicio/Home** → Invitado: Registro; autenticado: Home Feed.
+2. **Amigos** → Invitado: Registro; autenticado: pantalla Amigos.
+3. **Crear (+)** → Invitado: Registro; autenticado: Crear/Studio.
+4. **Mensajes** → Invitado: Registro; autenticado: Mensajes.
+5. **Perfil** → Invitado: Registro; autenticado: Perfil.
+
+**Discover/Descubrir no forma parte de la barra.**
+
+El botón central Crear conserva el gradiente TOKVID **#00F2FE → #FE0979** y el símbolo +.
+
+#### F. Reglas de integración posterior
+
+Cuando se complete Registro/Login y el usuario quede autenticado, estas funciones del Feed deberán integrarse con el usuario real y sus datos de Supabase sin cambiar la experiencia visual aprobada:
+
+- identidad/perfil del creador;
+- Follow/Unfollow;
+- Like/Unlike;
+- Comentarios;
+- Compartir;
+- Guardar/Favoritos;
+- eliminación para propietario;
+- hashtags;
+- menciones;
+- modos **Para ti / Siguiendo**;
+- búsqueda;
+- navegación de la barra inferior;
+- navegación vertical y reproducción;
+- Play/Pause y doble toque para Like.
+
+**Importante:** esta auditoría describe el comportamiento encontrado actualmente. No declara como terminado aquello que el código todavía no implementa para usuario autenticado, y no convierte una intención futura en una función ya existente.
+### 43.4.16 Consolidación de placeholders del Guest Feed y sustitución por contenido real
+
+**Fecha de consolidación:** 2026-10-03  
+**Estado:** 🟢 **CONSOLIDADO Y VIGENTE.**
+
+Los videos utilizados actualmente como **placeholder/mock/demo** en el Guest Feed son **temporales y exclusivamente de prueba**. No representan contenido real de usuarios y no forman parte del contenido definitivo de TOKVID.
+
+La regla queda establecida de forma explícita:
+
+- Los placeholders se mantienen durante la etapa actual únicamente para permitir probar y validar el Guest Feed mientras el flujo de autenticación todavía no está completo.
+- **No se deben considerar contenido real de producción.**
+- En el siguiente bloque, **Registro/Login**, se completará la autenticación de un usuario real.
+- Una vez que exista un usuario real autenticado, se realizará la prueba de **carga/publicación de un video real asociado a ese usuario**.
+- La validación deberá comprobar que el video real puede incorporarse al sistema y aparecer correctamente en el Feed con la identidad del usuario correspondiente.
+- **Después de validar satisfactoriamente ese flujo real, los videos placeholder/mock serán retirados del Feed de prueba.**
+- Los placeholders **no deben eliminarse antes de esa validación**, porque continúan siendo necesarios para las pruebas del Feed mientras se completa Registro/Login.
+- La eliminación de los placeholders forma parte de la transición de prueba hacia contenido real y **no autoriza cambios adicionales al Feed visual aprobado**.
+
+**Regla de cierre:** primero se valida Registro/Login + usuario real + carga/publicación de video real + aparición correcta en Feed. **Después se eliminan los placeholders.** No se invierte este orden ni se omite la validación.
+
+**Alcance:** esta consolidación documenta una regla de transición de pruebas. No modifica en este momento el código del Guest Feed, no elimina videos placeholder y no autoriza cambios de branding.
+
+
+### Autorización expresa de conservación del Guest Feed y branding
+
+**Autorización consolidada:** el **diseño aprobado del Guest Feed y el branding vigente quedan fuera de cualquier modificación en los siguientes bloques**, salvo autorización expresa posterior del usuario.
+
+Esta autorización se basa además en la prueba directa realizada en un teléfono físico con la aplicación instalada: el Guest Feed fue probado y **cumple correctamente con la función esperada, sin una mala función detectada que justifique cambios**.
+
+Por tanto:
+
+- **NO tocar el diseño visual aprobado del Feed.**
+- **NO cambiar la distribución, tamaños, posiciones, iconos, acciones ni comportamiento ya aprobado del Feed.**
+- **NO tocar el branding ni la identidad visual aprobada de TOKVID.**
+- La próxima etapa debe concentrarse en **Registro/Login** y posteriormente en la integración del contenido real, sin rediseñar ni alterar lo que ya fue probado y aprobado.
+- Si durante una etapa futura se detecta una falla real que obligue a modificar algo del Feed o branding, se debe **informar y consultar antes de realizar cualquier cambio**.
+
+**Regla:** que el trabajo continúe hacia Registro/Login **no significa que el Feed quede abierto a rediseño**. El Feed aprobado se conserva tal como fue probado.
+
+---
+
+## 12. CLARIFICACIÓN ABSOLUTA SOBRE LA ELIMINACIÓN DEL ONBOARDING TRADICIONAL
+
+Esta sección es una **regla de precedencia obligatoria** para el flujo de registro inicial de TokVid. Cualquier requisito anterior del Documento Maestro que contradiga estas reglas queda sustituido por esta especificación y no debe implementarse.
+
+### Pantallas estrictamente prohibidas durante el registro inicial
+
+- ❌ **NO implementar pantalla de “Selección de Intereses / Categorías”.** El usuario no debe ver burbujas de texto para elegir gustos durante el registro. El algoritmo deducirá sus preferencias en segundo plano analizando los videos consumidos durante su sesión de invitado. La bandera `onboarding_completed = true` se activa automáticamente en el Backend al procesar el Auth.
+- ❌ **NO implementar formulario de “Carga de Avatar” en el registro.** No se solicita una foto para crear la cuenta. El perfil sí contempla avatar; durante el registro, el avatar se obtiene de Google OAuth cuando esté disponible o se asigna un placeholder gris por defecto.
+- ❌ **NO implementar formulario de “Escribir Nombre de Usuario” en el registro.** No se solicita un username al registrarse. Se obtiene de los metadatos de Google o el Trigger de Supabase genera uno aleatorio, por ejemplo `Usuario_TokVid_a1b2c3`.
+
+### Comportamiento de la pestaña “Perfil” en la Tab Bar inferior
+
+El botón de **Perfil** actúa como un enrutador inteligente basado en el estado de autenticación (`supabase.auth.getSession()`).
+
+1. **Estado — UNAUTHENTICATED (Invitado):**
+   - Al hacer clic, se almacena la intención en memoria.
+   - Se despliega el **Bottom Sheet Modal** de registro dinámico.
+   - Después del registro, se retorna exactamente al video, posición y estado Play/Pause del Feed anterior, también cuando la entrada fue Perfil. No se abre automáticamente el perfil propio ni se introduce una pantalla de onboarding tradicional.
+
+2. **Estado — AUTHENTICATED (Identificado):**
+   - Al hacer clic, la app abandona/destruye la vista del Feed correspondiente a esa navegación y renderiza una **UI completamente nueva: Pantalla de Perfil Protegida**.
+   - El usuario aparece identificado con los datos automáticos provistos por Auth/Trigger de Supabase.
+   - Se expone un botón central **“Editar Perfil”**.
+   - La edición de `username` y `avatar_url` es **voluntaria y diferida**; no forma parte del registro inicial.
+
+### Flujo obligatorio
+
+`Invitado → consume Feed → cualquier control restringido, incluido Perfil → registro dinámico → Auth → Trigger/Backend crea identidad → onboarding_completed = true → mismo video y contexto del Feed`
+
+Posteriormente:
+
+`Feed autenticado → nueva pulsación en Perfil → Perfil protegido → Editar Perfil → cambio voluntario de username/avatar`
+
+### Regla de integración Frontend/Backend
+
+Frontend y Backend deben respetar exactamente esta eliminación del onboarding tradicional. No se permite reintroducir posteriormente, con otro nombre o mediante otra pantalla, ninguna de las tres etapas prohibidas:
+
+1. Selección de intereses/categorías durante el registro.
+2. Carga de avatar durante el registro.
+3. Escritura de username durante el registro.
+
+La lógica de preferencias puede ejecutarse en segundo plano a partir del comportamiento del invitado, sin convertir ese procesamiento en una pantalla de onboarding.
+
+### Regla de precedencia
+
+Si alguna sección anterior o posterior del Documento Maestro describe un flujo de registro que exige intereses, carga de avatar o username antes de completar Auth, **esta Sección 12 prevalece para implementación** y dicha descripción debe interpretarse como obsoleta en ese punto. El avatar y el username siguen siendo datos del perfil y pueden editarse voluntariamente después del registro.
+
+Esta regla aplica al **Documento Maestro, Frontend y Backend** y no autoriza cambios funcionales fuera del flujo de Registro/Login.
+
+## Registro Seamless — corrección de la base de autenticación (6 octubre 2026 UTC)
+
+- Se recuperan en Git las migraciones ya aplicadas `20261005141201`, `20261005141242` y `20261005141914`, sin modificar el historial remoto. La tercera fue una reversión que dejó una referencia inválida a `profiles.email`.
+- La nueva migración `20261006051054_fix_seamless_auth_profile_initialization` reemplaza ese trigger: correo en `profile_private`, nombre/avatar de metadata, username automático con manejo de colisiones y `onboarding_completed = true` al crear la cuenta. No exige intereses, carga de avatar ni captura de username. No modifica usuarios existentes.
+- OAuth usa PKCE explícito y extrae el código del retorno. El callback comparte la finalización con el navegador para no intercambiar dos veces un código de un solo uso; conserva compatibilidad con links de correo y retornos antiguos con tokens.
+- El callback, Google en Android y la navegación raíz ya no desvían al onboarding tradicional. Esto corrige la base de autenticación; no declara terminado el modal Seamless ni la memoria del Feed. Las pantallas antiguas quedan pendientes de sustitución por el modal aprobado.
+- La app mantiene el esquema existente `mobile`. La implementación instalada de Expo Linking genera `mobile:///auth/callback` para el APK standalone (tres barras). Falta añadir esa URL exacta en Authentication → URL Configuration → Redirect URLs de Supabase y validar el recorrido en un APK físico. El callback Google → Supabase es distinto: `https://kvbppgofblldwnkkoscb.supabase.co/auth/v1/callback`.
+- Validación local: typecheck móvil, cinco pruebas del callback y prueba del trigger en PostgreSQL embebido con casos Google, username duplicado y teléfono sin correo. No sustituye una prueba real de OAuth/SMS ni confirma por sí sola que el workflow haya aplicado la migración.
+- Branding, diseño del Feed y videos demo permanecen sin cambios. No se hace merge a main.
+
+**Verificación posterior al push:** commit de código `8eaca6cb73e899f609ec3bfe21099346609c6ecb`. El workflow Supabase migrations `37417534220` aplicó únicamente la nueva migración y verificó el historial; CI pasó. Una lectura de Supabase confirmó la definición corregida, el trigger activo y ausencia de permiso EXECUTE para anon/authenticated. El workflow Android APK `37417534223` terminó correctamente: Gradle reportó `BUILD SUCCESSFUL in 24m 57s` y publicó el artifact `tokvid-android-release` (id `11392985397`) con `app-release.apk`. Descarga: https://github.com/alexandermezad80-dev/TokVid/actions/runs/37417534223/artifacts/11392985397. Corresponde al commit de código indicado. No se declara validado el login físico, el modal ni la memoria de acciones.
+
+**Siguiente prueba física:** añadir/verificar `mobile:///auth/callback` en Redirect URLs de Supabase, instalar el APK publicado y probar Google con una cuenta de prueba para confirmar sesión y perfil automático sin desvío a intereses/avatar/username. El modal aprobado y la memoria discreta requieren su integración posterior; esta entrega cierra las correcciones de la base de autenticación y la compilación, no el Registro Seamless completo.
+
+## Registro Seamless — sustitución del registro viejo (6 octubre 2026 UTC)
+
+Esta implementación sustituye las pantallas antiguas descritas como pendientes en la entrega anterior. El APK del commit `8eaca6c` era una corrección de la base Auth y conserva formularios antiguos; no debe usarse para validar esta sustitución.
+
+- Se eliminan las pantallas de intereses, avatar/username de onboarding y verificación tradicional. Las rutas antiguas login/register/welcome quedan únicamente como entradas de compatibilidad al modal; no contienen formularios viejos.
+- Los controles restringidos del Feed y la tab bar abren el mismo modal flotante. El invitado conserva scroll y Play/Pause. Branding, posiciones e iconos del Feed no se rediseñan.
+- Google conserva símbolo multicolor y botón blanco. Correo usa OTP de ocho dígitos; teléfono usa SMS de seis dígitos. No hay contraseña, captura de username, selección de intereses ni avatar durante el registro.
+- La tarjeta usa fondo oscuro, borde cian #00F2FE → magenta #FE0979, lados 16 dp, radio 28 dp y separación inferior de 12 dp sobre la altura medida de la tab bar existente. El fondo/barra permanecen visibles atenuados e inertes. Estas medidas siguen pendientes de validación en Android físico.
+- Una sola intención se conserva discretamente en AsyncStorage antes de salir a Google. La X cierra todo el modal y borra esa intención. El video se pausa y conserva posición y estado previo Play/Pause; al cerrar o completar Auth se restaura el contexto.
+- Like/favorito/follow se aplican de forma idempotente, sin alternar el resultado al repetir un callback. El corazón queda rojo; favorito marcado; follow en Siguiendo con acento TokVid. Comentario muestra una señal breve y no abre el panel. El modal no anuncia acciones guardadas ni resultados. **Actualización autorizada del retorno:** la entrada por Perfil de la tab bar vuelve al mismo video y contexto del Feed; Perfil se abre con una nueva pulsación después de Auth.
+- Los creadores demo no son usuarios reales: Follow de demo se guarda únicamente como estado de prueba en el dispositivo por usuario, sin crear relaciones ficticias en Supabase. Follow de creador real se guarda con RLS. Los demos siguen disponibles después del registro hasta validar carga/publicación real y autorizar su retirada.
+- La identidad continúa creándose en el trigger ya verificado: onboarding_completed true, username automático y avatar Google o placeholder gris. Editar Perfil es posterior y voluntario.
+- El script versionado configure-seamless-auth.mjs modifica únicamente TokVid desde GitHub Actions: conserva redirects existentes, añade mobile:///auth/callback, establece OTP de correo a ocho dígitos y plantillas con {{ .Token }}; comprueba la configuración después. No cambia credenciales Google, SMTP ni SMS.
+- Teléfono requiere que el proveedor SMS esté habilitado y configurado. Correo para usuarios externos requiere una entrega SMTP operativa; el servicio predeterminado puede tener restricciones. Estos requisitos no se dan por resueltos por la interfaz.
+- Validación local: typecheck móvil y once pruebas de callback, intención, idempotencia, fallos y ausencia del onboarding antiguo. La compilación nueva y el recorrido físico se documentarán con sus resultados reales. No se hace merge a main.
+
+**Verificación del reemplazo:** el commit `dda3febc764861bfbf9ed02188174a2c2db450eb` pasó CI (runs `37422606942` y `37422611686`). El export Android local generó el bundle correctamente. Una prueba adicional del componente real y coordinador con servicios simulados confirmó cierre/cancelación, snapshot de playback, OTP correo de ocho dígitos, favorito idempotente, comentario sin apertura del panel y navegación a Perfil protegido. Esa navegación automática a Perfil es un resultado histórico, sustituido por la corrección de retorno al Feed autorizada posteriormente. No equivale a ejecutar Google/SMS en un Android físico.
+
+**Bloqueo externo confirmado:** Supabase migrations `37422606978` verificó migraciones, pero el paso de configuración Auth falló en GET `/config/auth` con HTTP 403. No se ejecutó PATCH. El token del workflow necesita acceso a la configuración Auth de TokVid antes de ejecutar de nuevo el script; el redirect y las plantillas OTP no se declaran aplicados. Las credenciales no se imprimen en logs. Teléfono/SMTP tampoco se declaran habilitados. La retirada del registro viejo no resuelve estos permisos de la cuenta.
+
+**Ajustes de verificación:** cierre X fijo fuera del área desplazable del modal; lecturas de likes, favoritos y follows descartan respuestas anteriores para no sobrescribir el resultado del registro; señales breves usan la animación existente. APK 1.0.1, versionCode 2, para distinguir esta entrega de la versión anterior.
+
+
+**APK nueva publicada:** código `a1103b07777c04620681c0cb2753179a44591533`, versión 1.0.1 / versionCode 2. CI final pasó (`37423052677`, `37423058281`). Android APK `37423052680`, job `112136567606`, terminó en success y Gradle reportó `BUILD SUCCESSFUL in 25m 45s`. Se subió un archivo `app-release.apk` en `tokvid-android-release`, artifact `11394822505` (ZIP 213883677 bytes, sha256 `07353a908cd942490a13b25fb0f1ee32c6540ddbb3e56a005494915bb48d360c`). Descarga: https://github.com/alexandermezad80-dev/TokVid/actions/runs/37423052680/artifacts/11394822505. Esta APK contiene el reemplazo del registro viejo por el modal; sustituye la entrega de la base Auth anterior. `main` conserva `acdb98ffff206553318d3c40b4622367f9d97fda`. Quedan pendientes el recorrido físico y la configuración Auth bloqueada por 403; no se declara probado Google/correo/SMS en producción.
+
+## Registro Seamless — retorno al video desde todas las entradas (6 octubre 2026 UTC)
+
+**Autorización expresa del usuario:** quitar el desvío automático a Perfil después de Registro/Login y actualizar la excepción del maestro. Esta regla sustituye las descripciones anteriores de retorno automático a Perfil; no cambia la navegación voluntaria a Perfil cuando el usuario ya está autenticado.
+
+- Todos los controles restringidos del Guest Feed, incluido Perfil de la barra inferior, completan Registro/Login y retornan al mismo video, posición y estado Play/Pause. Google y correo comparten ese destino.
+- El coordinador conserva el contexto ya capturado y lo entrega a la restauración existente del Feed, sin ejecutar una navegación automática al perfil propio. El callback de Google vuelve a Home/Feed. Las intenciones `profile` guardadas por la APK anterior también respetan esta regla.
+- Like, Follow y Favorito conservan su aplicación idempotente; Comentario no abre automáticamente el panel. El cierre/cancelación descarta la intención como antes.
+- El perfil se crea automáticamente en Backend y puede consultarse con una nueva pulsación en Perfil después de Auth.
+- Alcance del cambio: coordinador de Registro/Login, aclaración de su servicio de acciones pendientes, pruebas de regresión y este documento. No se modifican el diseño, los controles, los componentes, los datos demo ni el branding del Feed. No requiere una migración de base de datos.
+- Comprobación local: nueve pruebas con los efectos reales del coordinador y callback, usando eventos Auth y almacenamiento simulados. Tres reproducían el desvío anterior; las nueve pasan con la corrección. Cubren contexto de playback, seis entradas, intención antigua persistida, cancelación y consumo único. Se ejecutan con Node 24 y `--test-isolation=none` por la limitación del entorno para procesos de prueba separados. No sustituyen el typecheck/CI ni una prueba en teléfono físico.
+- Acceso Git: el proxy del entorno impide la clonación/push por HTTPS. El conector GitHub obtiene los objetos Git; la base y el árbol completo se comprueban por sus SHA. La publicación se realiza por el conector sobre la rama existente, conservando el historial y sin force-push. Los resultados remotos se verificarán después de publicar.
+- Pendiente de cierre físico: probar correo y Google desde Perfil y otra acción sobre un video avanzado, comprobar el mismo video/posición al completar Auth y confirmar que una nueva pulsación en Perfil abre el perfil propio.
+
+**Verificación posterior a la publicación:** commit de código `13169d62e7ed13ab89eaeb88fa5b5c9463e68c0e`, publicado en `feature/onboarding-profile-interests` mediante el conector GitHub. El árbol remoto coincide con el árbol Git comprobado localmente (`0e539aa23123956979f51b8a6b2e9e16793cb708`); el diff remoto contiene únicamente los cuatro archivos del cambio autorizado y `main` permanece sin cambios. CI de push `37503468493` y CI de PR `37503476856` terminaron en **success**: 20 pruebas, 20 aprobadas, cero fallos; typecheck completo y móvil, compilación web y API aprobados. Android APK `37503468667` fue iniciado automáticamente por el workflow existente y continúa en compilación al registrar esta verificación; no se declara publicada una APK nueva ni probado el retorno en teléfono. La APK anterior no contiene esta corrección. No se añadieron migraciones y no se eliminó ningún usuario ni dato de LIVE.
+
+## Desvinculación puntual de cuenta de LIVE (6 octubre 2026 UTC)
+
+**Autorización del usuario:** resolver el vínculo que impedía borrar su cuenta en Supabase, sin borrar código. La UI de LIVE se revisará al llegar a ese bloque; el Feed aprobado y la identidad visual permanecen intactos.
+
+- Causa comprobada en Auth: `SQLSTATE 23503`, restricción `live_rooms_host_id_fkey`. La cuenta tenía una sala todavía marcada como activa y un único participante, su propio anfitrión. También existía el vínculo obligatorio `live_participants.user_id` al perfil. Cerrar sesión no elimina estas relaciones.
+- Auditoría previa: cero invitados y cero registros asociados de chat, invitaciones, solicitudes, moderación, mensajes fijados, Quiéreme, compartidos, bloqueos y Tap-Tap. La cuenta no tenía objetos propios en Storage. Se revisaron las restricciones y los triggers reales, y se comprobó que el cierre existente `live_finish_room` ya elimina la sala y sus relaciones temporales.
+- Operación administrativa puntual: se conservó una copia privada de los dos registros fuera del repositorio. La transacción bloqueó los registros revisados, comprobó que no hubieran cambiado y abortaría ante otro vínculo o contenido inesperado. Se probó primero con rollback y después se confirmó: se eliminó únicamente esa sala; su FK `ON DELETE CASCADE` existente retiró el único registro de anfitrión. No se modificaron constraints, funciones, políticas, tablas ni código de la aplicación; no se requiere una migración de esquema.
+- Verificación posterior independiente: sala y participante ausentes; usuario de Auth y perfil todavía presentes; cero referencias en las 14 columnas con FK `NO ACTION`/`RESTRICT` que podían impedir el borrado de esa cuenta. No se ejecutó el borrado del usuario: el usuario puede volver a intentarlo desde Authentication. Su resultado final sigue pendiente de comprobar.
+- Alcance: desvinculación de esta cuenta y sala, no una solución general para borrar cuentas con actividad LIVE. No se relajan las reglas de anfitrión obligatorio ni se transfiere la sala a otro usuario.
+- Git: esta auditoría es el único archivo cambiado en esta entrega. Se publica sobre la rama existente mediante el conector GitHub, con comprobación del árbol y protección de la referencia, sin force-push ni merge a `main`. La compilación Android del retorno al Feed sigue en curso, sin artifact disponible al comprobar este registro; la prueba en teléfono continúa pendiente.
+
+## Validación de APK #190 — Crear y salida del Perfil (6 octubre 2026 UTC)
+
+- APK #190, commit `13169d62e7ed13ab89eaeb88fa5b5c9463e68c0e`, terminó en success: run `37503468667`, artifact `11430984759`, SHA-256 del ZIP `2805796d1f26c546dfffc0105833350fa3f95c53227bb6307f5cb3a8588b2303`. El usuario informó que el botón central Crear estaba negro y que no veía el control de cerrar sesión.
+- Causa comprobada del gradiente: el botón de invitado usaba `LinearGradient`, pero el icono de Crear del usuario autenticado contenía un `View` transparente. Se restaura en esa rama el mismo gradiente horizontal `#00F2FE → #FE0979`, con los estilos, medidas, símbolo y acción existentes. No se modifica la distribución de la barra ni se rediseña el Feed.
+- Auditoría del Perfil: el control `log-out` y su confirmación de salida siguen presentes. El trigger vigente genera nombres de 47 caracteres (48 con `@`); el texto del encabezado no tenía límite de ancho y podía desplazar el control derecho. Se limita a una línea con elipsis, se asigna el espacio disponible al texto y se evita que los botones existentes se reduzcan. Se mantiene su tamaño de 40 × 40 y se añade la etiqueta de accesibilidad «Cerrar sesión». La identidad completa del usuario y la acción de cierre permanecen intactas.
+- La comparación entre la APK anterior (`a1103b0`) y #190 confirma que esos dos archivos no fueron modificados por la corrección del retorno al Feed. Los defectos se detectan al validar el estado autenticado; no se declara identificado en un dispositivo el motivo concreto del control ausente sin la comprobación del usuario.
+- Validación local: `git diff --check` aprobado y las nueve regresiones del retorno al Feed siguen pasando. El entorno no tiene instaladas las dependencias de React Native/TypeScript; el typecheck se comprobará en CI. Estas verificaciones no prueban el renderizado en teléfono. No hay migraciones nuevas ni modificaciones de datos o UI de LIVE.
+- Cierre físico pendiente: entrar con correo, comprobar los colores de Crear en el Feed autenticado, abrir el Perfil propio desde la barra inferior y verificar que el icono de salida sea visible y permita volver al estado invitado después de confirmar. La nueva APK y sus resultados se registrarán al finalizar la compilación.
+
+**Publicación y CI:** correcciones publicadas en `13aa70760cf626bb74fc79ba8451a5a205a23a95`, sobre `feature/onboarding-profile-interests`, sin force-push ni merge. Árbol Git local y remoto idéntico (`b1385cb80d188c28a5bf1a6f19fad6c64a1a224d`), exactamente los dos archivos de UI indicados y este documento. `main` conserva `acdb98ffff206553318d3c40b4622367f9d97fda`. CI de push `37525406850` y CI de PR `37525415800` terminaron en success: 20 pruebas aprobadas, cero fallos, typecheck completo y móvil y compilaciones web/API aprobados. Android APK **#191**, run `37525406881`, inició la compilación Gradle después de completar correctamente la verificación de configuración y las migraciones existentes. Sigue sin artifact al registrar esta verificación: no se declara disponible una APK corregida ni validado el renderizado o cierre de sesión en un teléfono físico.
+
+
+## Comentarios reales y ajuste del teclado — implementación (7 octubre 2026 UTC)
+
+**Autorización:** el usuario pidió implementar el concepto adjunto con sus medidas, funcionamiento real y sin mocks, placeholders de datos ni cambios al Feed aprobado. Se incluye el ajuste de Registro/Login que había pedido anotar: 12 dp sobre el teclado, área superior segura y scroll interno con X fija. Google, OTP de correo de ocho dígitos y SMS de seis dígitos conservan su lógica y retorno al video.
+
+- Auditoría inicial de TokVid: cero comentarios y cero videos en la base; un perfil existente. El Feed conserva sus videos de demostración previamente autorizados hasta el bloque posterior de contenido real. Los comentarios guardados se relacionan con el identificador del video actual, incluidos esos identificadores existentes y los UUID de videos reales. No se insertan videos ni usuarios demo en el servidor.
+- Se sustituyen el contador de demostración del panel, el borrado prematuro del borrador y los avatares externos de DiceBear. Se implementan identidad canónica del perfil, respuestas, likes persistidos, totales reales, paginación, reintentos idempotentes y aislamiento de respuestas tardías al cambiar video/cuenta.
+- Migraciones aplicadas y verificadas en TokVid: `20261007000120_real_feed_comments_threads_likes.sql` y `20261007000236_cover_feed_comment_thread_foreign_keys.sql`. La segunda corrige los índices compuestos señalados por el auditor. No se edita una migración ya aplicada ni se modifica LIVE.
+- Acceso del entorno: la CLI local de Supabase no está instalada y el proxy HTTP no responde. Las migraciones se aplicaron mediante el conector autorizado; los nombres/versiones de los archivos se tomaron del historial real generado por Supabase, sin inventar timestamps. Se versiona exactamente el SQL ejecutado para que el workflow GitHub existente reconozca esas versiones. No se declara ejecutado `supabase migration new` localmente.
+- RLS y grants: lectura pública de comentarios, escritura propia autenticada; la identidad se deriva del perfil en servidor y no del cliente. Likes visibles/editables únicamente para su dueño. Clientes no pueden alterar contadores, identidad ni enlaces de hilos. RPC de escritura SECURITY INVOKER; triggers de contadores internos no expuestos, sin EXECUTE para anon/authenticated y con search_path fijo.
+- Prueba SQL reproducible `scripts/tests/feed-comments.rollback.sql`: publicación canónica, reintento sin duplicados, colisión de identificador rechazada, respuesta/nested reply, conteos, límite Unicode de 300, texto vacío, aislamiento de videos, likes/unlikes repetidos, protección de contadores/autoría, compatibilidad de inserciones anteriores, incremento/reconciliación del contador de un video UUID real y ausencia de notificaciones a uno mismo, borrado de hilo con limpieza de likes y rechazo de escritura invitada. Pasó contra la base real en una transacción con ROLLBACK usando el perfil existente, sin iniciar sesión ni crear otra cuenta Auth. Verificación independiente posterior: cero comentarios, cero likes, un perfil, cero videos; Realtime habilitado para comments.
+- Auditores posteriores: ninguna nueva advertencia de seguridad para este bloque y ninguna FK de Comentarios sin índice. Persisten advertencias anteriores de funciones SECURITY DEFINER de LIVE/share/hashtag y protección de contraseñas, fuera del alcance: https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable y https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection. Los índices nuevos aparecen como no usados mientras no haya actividad real; no significa ausencia de índice. No se modifican los hallazgos anteriores de LIVE.
+- Comprobación local: 12 pruebas de geometría del teclado, servicios reales con respuestas controladas, paginación superior al límite de API, Unicode, envío confirmado, serialización, reintento, fallos visibles y descarte de lecturas tardías; nueve regresiones de Auth/retorno al Feed. 21 aprobadas, cero fallos. No sustituyen typecheck, CI ni renderizado en teléfono.
+- Validación física ya comunicada por el usuario: el OTP llega a Recibidos y al verificar regresa al Feed autenticado. APK #191 del ajuste de Crear/salida terminó en success, run `37525406881`, artifact `11442634761`, SHA-256 del ZIP `686b0fe0293b2632996d2ef58fd9f03b9c1d2da0855e08f28607152d3a1dea96`. Estas comprobaciones corresponden a entregas anteriores, no al panel nuevo.
+- Pendientes hasta publicación/verificación: CI/typecheck/build de este código, nueva APK y prueba física del panel/teclado. No se declara terminado el recorrido físico ni la integración del contenido real del Feed. `main` se conserva sin merge.
+
+**Primera publicación:** código `761a9afa0674a6734b8bb68870c84ea246c3d136`, árbol Git local/remoto idéntico `f7b6fbbfa8154e0b15f7a6653cd073ada75d142d`, 15 archivos del alcance. CI `37550336030` pasó las 32 pruebas (20 existentes + 12 nuevas), pero el typecheck detectó tres consumidores de CommentsSheet (liked-feed, saved-feed, tag) que aún suministran la propiedad antigua commentCount. Se conserva esa propiedad como entrada opcional de compatibilidad, ignorada para mostrar siempre el total real; no se modifica su navegación ni se adopta el contador demo.
+
+**Workflow de base:** run `37550335982`: enlace, `supabase db push` y verificación del historial terminaron en success; ambas migraciones locales/remotas coinciden y la base está al día. El workflow completo terminó en failure en el paso posterior `Configure and verify Seamless Auth`: GET de la configuración Auth respondió 403 para el token de Actions. Es el bloqueo de permisos ya documentado; no se ejecutó PATCH ni se cambió la configuración del correo. No se oculta este fallo ni se cambia ese workflow/Auth para hacerlo parecer aprobado. El bloque de Comentarios no necesita cambiar la configuración Auth. Se comprobarán CI y la compilación APK del ajuste de compatibilidad antes de entregar.
+
+**Revisión posterior:** `80319a0e97471c446319f7e2c6ce772085dadc19` corrigió la compatibilidad y pasó ambos CI (`37550509847`, `37550514211`). `2ef91fa0d8fc8aa3d31b1a05e4a5528b23b36562` limita la captura del worklet de Reanimated al valor numérico del padding seguro, evitando trasladar refs nativas/callbacks de la ventana a la animación. Los archivos SQL versionados de las dos primeras migraciones coinciden exactamente con las sentencias guardadas por Supabase (MD5 `c61240d00d90053f00bcd81e20a39714` y `195af241a66f9b15eede3991d7ce74c0`).
+
+**Notificación asociada al comentario:** revisión de la RPC detectó que una respuesta podía avisar al dueño del video con el texto «Respondió a tu comentario» aunque no fuera autor del comentario padre. La migración adicional `20261007001218_reconcile_feed_comment_notification_recipient.sql` diferencia ambos destinatarios, reúne receptores repetidos y conserva la exclusión del propio actor. Mantiene SECURITY INVOKER, grants y reintentos idempotentes. No envía emails/mensajes a personas durante la auditoría ni crea cuentas para probarlo. El script de rollback vuelve a verificar las operaciones y la exclusión de notificaciones a uno mismo; la entrega entre cuentas distintas requiere la prueba física posterior con cuentas reales. Los runs APK anteriores de este bloque se sustituyen al publicar el último ajuste; solo se entregará el artifact del código final comprobado.
+
+**Paginación con publicaciones concurrentes:** una prueba adicional dentro del caso existente de más de 1.000 filas reprodujo la repetición de una fila cuando llegaba un comentario entre dos bloques: 1.020 filas visibles, pero solo 1.019 IDs únicos. La consulta usa ahora el último timestamp/UUID como frontera entre bloques de hasta 500 filas, manteniendo su orden y el aislamiento por video/hilo. La misma prueba verifica 1.020 IDs distintos y pasa, junto con las otras 20 comprobaciones locales. El nuevo envío no modifica medidas, acciones ni migraciones; sustituye la compilación #195 para entregar esta corrección.
+
+## Entrega verificada de Comentarios — APK #196 (7 octubre 2026 UTC)
+
+- Código final: `6f0aca75214e5c9871734e6df99fbf0079c1417a`, árbol `2a51a53cfe291fc5c2d0dc296fc40563078d917c`. Publicado sobre la rama existente con lease, sin force-push ni merge. `main` conserva `acdb98ffff206553318d3c40b4622367f9d97fda` al cerrar esta comprobación. Los cambios corresponden al panel, sus servicios/teclado, conexión del contador, pruebas, tres migraciones y auditoría.
+- CI de push `37551762427` y CI de PR `37551767049`: **success**, 32 pruebas aprobadas, cero fallos, typecheck completo y móvil y builds web/API aprobados. La prueba de paginación concurrente ya está incluida en ese código. No hay dependencias añadidas.
+- Android APK **#196**, run `37551762466`, job `112568896834`: **success**. Gradle reportó `BUILD SUCCESSFUL in 26m 17s`. El workflow verificó configuración Supabase y la base al día antes de compilar.
+- Artifact `tokvid-android-release`, id `11453512896`, contiene `app-release.apk`. ZIP de 213899583 bytes; SHA-256 registrado por Actions y la API de artifacts: `9940d820a2bd5c1ea7a283f4551619c4d1463f29a177b122e2f81451727df16e`. El head_sha del artifact coincide con el código final indicado. Descarga: https://github.com/alexandermezad80-dev/TokVid/actions/runs/37551762466/artifacts/11453512896. Las compilaciones #192–#195 fueron sustituidas; esta es la entrega final del bloque implementado.
+- Auditoría del alcance: estilos de Feed/index y VideoCard idénticos a la base aprobada; lógica de Google/OTP de RegistrationSheet idéntica. Se modifica únicamente el contador de comentarios para obtener datos reales, el nuevo panel y la colocación/desplazamiento del registro frente al teclado. No hay escala/blur del Feed ni cambios de LIVE, perfil, tab bar o branding.
+- Las tres migraciones están aplicadas y sus sentencias coinciden exactamente con los SQL versionados. El último workflow separado de migraciones `37550796080` verificó push/historial, pero su paso posterior de configuración Auth sigue bloqueado por GET 403. El workflow completo queda **failure** por ese permiso anterior; no se ejecutó PATCH ni se modificó el correo. No se declara resuelto ese permiso ni se oculta el estado rojo del workflow.
+
+**Prueba física pendiente con la cuenta habitual:**
+
+1. Instalar `app-release.apk` de #196. Abrir comentarios, publicar texto, cerrar/reabrir el panel y comprobar persistencia y contador real.
+2. Responder a un comentario; comprobar el hilo y que Like/Quitar Like persistan al reabrir. Cambiar de video y verificar que no se mezclen comentarios. Con fallo de conexión, el texto debe conservarse y la aplicación debe informar el error; reintentar no debe duplicar el envío.
+3. Abrir/cerrar el teclado en Comentarios, Correo y Código: editor de comentarios visible sobre el teclado; registro a 12 dp, área superior segura y X accesible. Comprobar que el login conserva el retorno al mismo video y que el Feed mantiene posiciones, iconos, colores y gestos aprobados.
+
+La compilación, CI y base están verificadas; el renderizado, Realtime entre teléfonos y notificaciones entre cuentas distintas no se declaran probados físicamente. El bloque no se da por cerrado en teléfono hasta esa comprobación. La integración posterior del contenido real del Feed sigue pendiente y no se sustituye con datos ficticios.
+
+## Pendiente recordado por el usuario — Registro con teléfono (7 octubre 2026 UTC)
+
+El usuario indicó: «Anota falta lo del teléfono en registro». Queda pendiente completar y verificar el acceso real con número de teléfono y código SMS. La existencia de la opción y de su lógica de interfaz no confirma que el proveedor, el envío ni la verificación SMS estén operativos. No se da este método por terminado ni probado físicamente.
+
+Esta petición autoriza registrar el pendiente. Se espera la revisión del usuario de la APK #196 antes de continuar con cambios de implementación; no se modifica ahora la configuración Auth, el proveedor SMS ni el Feed.
+
+## Correcciones recopiladas durante la revisión física — Campo de comentarios (7 octubre 2026 UTC)
+
+Referencia del usuario: captura `1000169308.jpg`. El campo de escritura muestra tres líneas y demasiado espacio vacío. El usuario solicita ajustar su forma:
+
+- Reducir la altura y el espacio vacío para que el campo sea más delgado, conservando la escritura multilínea.
+- Darle apariencia de burbuja flotante sobre el teclado, con margen a izquierda y derecha y separación respecto del teclado.
+- Conservar los efectos, colores, animaciones y funcionamiento actuales; el ajuste solicitado corresponde a la forma y al espacio del campo.
+
+No se han acordado nuevas medidas numéricas. Esta corrección queda anotada mientras el usuario aporta los demás detalles de su revisión; todavía no se ha aplicado al código ni generado otra APK.
+
+### Indicador de respuesta como burbuja
+
+Referencia del usuario: captura `1000169258.jpg`.
+
+- Sustituir el texto visible «Respondiendo a @usuario» por únicamente «Respondiendo».
+- Mostrar el indicador como una pequeña burbuja encima del área de escritura de comentarios.
+- Usar el gradiente cian y magenta de TOKVID con mayor translucidez. El usuario aludió a un posible efecto de cristal; todavía no se han fijado desenfoque, opacidad ni medidas concretas.
+- Conservar la cancelación de respuesta y el destino real del comentario elegido. Ocultar el nombre en este indicador no cambia la relación entre comentario y respuesta ni los nombres mostrados dentro del hilo.
+
+Este ajuste también queda registrado para la próxima implementación, mientras se recopilan las observaciones del usuario. No se ha aplicado al código ni generado otra APK.
+
+### Contador, efecto sobre el video y altura del panel
+
+- En la misma captura `1000169258.jpg`, el usuario solicita aplicar el gradiente de TOKVID al elemento que muestra el contador de comentarios. Esto no define una acción nueva para el contador ni lo convierte por sí solo en un botón.
+- El usuario solicita explícitamente incorporar el efecto del documento para que el video se encoja al abrir comentarios. Esta petición autoriza esa excepción concreta a la conservación de tamaños del Feed: reducción temporal durante la apertura del panel y recuperación al cerrarlo. El modelo adjunto propone escala 0.95. No se ha aplicado todavía y no se infiere una autorización adicional para desenfoque del Feed u otros cambios de sus controles, posiciones o comportamiento.
+- El usuario considera demasiado alta la parte implementada y anuncia una imagen para señalar la altura que quiere corregir. El elemento preciso y la nueva altura quedan pendientes de esa referencia; no se fija una medida ni se modifica el panel por suposición.
+
+Se siguen recopilando estas correcciones antes de implementarlas. No se ha modificado el código ni generado otra APK con estos ajustes.
+
+### Referencia de altura y solicitud de diseño previo
+
+En la captura `1000169309.jpg`, el usuario identifica como demasiado alto el bloque completo de comentarios. Solicita una proporción equilibrada entre el video reducido y el panel, sin llevar ninguno a un extremo, y márgenes a ambos lados de toda el área de comentarios. Solicita ver un diseño antes de implementar estos ajustes. Las medidas nuevas se propondrán visualmente; todavía no están aprobadas ni aplicadas al código.
+
+### Revisión de la propuesta visual y cancelación de respuesta
+
+El usuario considera buena la idea del diseño presentado, pero observa que los bordes se ven demasiado redondeados. Se registra reducir ese redondeo; su mensaje no fija radios ni distingue de forma inequívoca cuáles de los contornos quiere ajustar, por lo que no se asignan medidas ni se declara aprobada una geometría definitiva.
+
+El usuario pregunta por la X de la burbuja «Respondiendo». Su función es cancelar el destino de respuesta seleccionado y ocultar esa burbuja, conservando el borrador y el panel de comentarios abierto. Si después envía el texto sin elegir otra respuesta, se publica como comentario general del video. La cancelación no envía ni elimina comentarios. Esta función ya existe en el código: la X solo borra el estado de respuesta, sin borrar el texto.
+
+### Márgenes laterales, X discreta y distribución con teclado
+
+- El usuario pide que la X de la burbuja de respuesta sea proporcionada y visualmente discreta, sin protagonismo excesivo. Conservar una zona táctil cómoda sin agrandar de forma innecesaria el icono visible.
+- Con el teclado cerrado, aumentar el margen a izquierda y derecha del panel completo de comentarios respecto de la propuesta mostrada, permitiendo ver el fondo de la aplicación/Feed a los lados. No se ha fijado el ancho exacto.
+- El usuario pregunta cómo quedarán el video reducido y el campo de escritura cuando aparezca el teclado. Se propone mantener una zona visible del video arriba, adaptar la altura de la lista de comentarios al espacio disponible y ubicar la burbuja compacta de escritura inmediatamente sobre el teclado con una pequeña separación. La burbuja «Respondiendo», cuando proceda, se coloca encima del campo. La lista conserva su desplazamiento; esta distribución debe respetar las áreas seguras y no ocultar el campo detrás del teclado.
+
+Esta explicación es una propuesta de distribución, no una afirmación de implementación ni de prueba física. Las nuevas proporciones y márgenes siguen pendientes de concretar en la revisión visual.
+
+### Corrección de las imágenes de propuesta
+
+El usuario rechazó las primeras imágenes porque no mostraban de forma clara el video reducido ni los márgenes laterales con y sin teclado. No deben tratarse como una geometría aprobada. Se presentó una nueva propuesta con el video vertical reducido y centrado arriba, márgenes visibles dentro de la pantalla a ambos lados de todo el panel y el campo separado del teclado. Referencia visual local: `/workspace/generated_images/exec-3931d739-bf88-48bf-9d21-a3890eb96101.png`. Es una imagen conceptual generada, no un render del código ni una comprobación de proporciones exactas. Queda pendiente la revisión del usuario; no se cambia el código ni se da por aprobada una escala o medida por esta imagen.
+
+### Burbuja sin X y aclaración de la proporción del video
+
+El usuario aprueba quitar la X de «Respondiendo» y cancelar la respuesta tocando la burbuja completa. Al cancelarla se oculta el indicador y se conserva el borrador; un envío posterior sin otro destino seleccionado será un comentario general. Esta aprobación sustituye el requisito anterior de una X discreta en esa burbuja, sin afectar la X de cierre del panel.
+
+Se propusieron orientativamente 130 dp de ancho y 28 dp de alto para el indicador, con texto de 12 dp. No son medidas extraídas de una imagen ni dimensiones ya aplicadas; la revisión posterior debe contemplar escala de texto y área táctil cómoda.
+
+El usuario pregunta si mostrar el video encima de comentarios y reducirlo más al abrir el teclado deformaría su presentación. Se aclara: conservar la relación de aspecto y ajustar el video completo al espacio disponible evita deformarlo. Un video vertical dentro de una zona horizontal se ve vertical y centrado con espacio a ambos lados; ocupar todo el ancho requeriría recortarlo o deformarlo. La primera propuesta visual mostraba un recorte ancho, no el video vertical completo. No se da por autorizada una deformación o un recorte por esta pregunta; la geometría definitiva sigue pendiente de concretar.
+
+### Aclaración posterior: vista compacta durante la escritura y ampliación
+
+El usuario aclara que se refiere al mismo video real en reproducción, no a una imagen o sustituto. Se explica la alternativa de una vista horizontal compacta mediante un recorte visual temporal, restaurando el encuadre vertical completo al salir de esa presentación, sin deformar el contenido.
+
+El usuario precisa que la vista compacta sirve para poder escribir comentarios/mensajes, no para obligar a mirar el video en pequeño durante toda la interacción. El comportamiento solicitado queda registrado así:
+
+- El mismo reproductor continúa reproduciendo mientras se usa la vista compacta.
+- La escritura dispone de espacio gracias a esa reducción temporal.
+- El usuario puede volver a ampliar el video cuando quiera verlo completo; recuperar la vista vertical completa y conservar el borrador del comentario y la posición de reproducción.
+- No se ha definido todavía el gesto concreto para ampliar ni el detalle de la transición del teclado/panel al hacerlo. No se introduce un gesto nuevo en el Feed por suposición.
+
+Esto amplía y precisa la propuesta de interacción recopilada, pero todavía no está implementado ni probado físicamente. Las imágenes generadas no verifican reproducción continua, encuadre ni conservación del estado.
+
+### Cierre del modal y restauración automática del Feed
+
+El usuario precisa el mecanismo de retorno: tocar la X de cierre del panel de comentarios o el fondo fuera del modal cierra el panel y devuelve automáticamente el mismo video a su presentación vertical completa en el Feed. Si el teclado está abierto, el cierre del modal lo descarta. Conservar la posición de reproducción y evitar reiniciar el video durante esta transición.
+
+Esta aclaración sustituye la interpretación anterior sobre definir un gesto adicional para ampliar el video. No se añade un botón o gesto nuevo de ampliación: la restauración se vincula al cierre del modal. La burbuja «Respondiendo» sigue sin X y tocarla cancela únicamente la respuesta seleccionada; no cierra el panel ni sustituye la X del modal.
+
+## Alcance final recopilado para el siguiente ajuste del Feed (7 octubre 2026 UTC)
+
+Tras preguntar por el documento adjunto, el usuario indica «que quede así con las mejoras que te dije». Se adopta como base el efecto descrito en `tokvid comentarios.md`: escala 0.95 del Feed de fondo y desenfoque de referencia 8 dp, conservando el formato del video. La sugerencia posterior de una ventana 4:3 y las imágenes de miniaturas horizontales no se consideran una aprobación del cambio de encuadre: quedan sustituidas por esta elección del efecto del documento. El cierre del modal con su X o tocando fuera restaura el Feed. La incorporación del efecto es la excepción solicitada a la protección previa del Feed; sus restantes posiciones, controles, gestos y branding siguen protegidos.
+
+Correcciones solicitadas para este bloque:
+
+- Campo de escritura más delgado, con menos espacio vacío, forma flotante y margen lateral e inferior sobre el teclado; conservar efectos y escritura multilínea. Panel completo con más margen lateral, menor altura y esquinas menos redondeadas. Las nuevas medidas exactas se deben concretar; no se declaran extraídas de las imágenes generadas.
+- Contador de comentarios con gradiente TOKVID. Burbuja translúcida «Respondiendo», sin nombre y sin X, que cancela la respuesta al tocarla sin perder el borrador.
+- Revisar/corregir el contador de Likes del Feed que el usuario reporta inmóvil. Auditoría del código actual: `VideoCard` muestra `video.likes`; `useVideoFeed.toggleLike` modifica la selección y escribe `video_likes`, pero no actualiza ese número mostrado. Los videos de prueba conservan cifras fijas. Lectura de la base real durante la auditoría: 7 registros en `video_likes`, 22 comentarios y cero videos publicados. No se insertaron ni borraron registros para obtener ese resultado.
+- Menú al tocar comentarios y respuestas propios para editar o eliminar. Edición requiere implementar validación y permisos: actualmente `comments` no concede UPDATE a clientes autenticados. Las respuestas ya usan el mismo Like real que los comentarios; conservar solo Like, sin manito/dislike. El usuario descarta por ahora el botón + y cualquier cambio del color del texto.
+- Integrar stickers reales en el mismo editor para comentarios y respuestas. Se consulta si deben proceder de un catálogo dentro de TOKVID o de la galería del teléfono; no se inventa un proveedor, un catálogo ni una API key.
+- Antes de implementar el borrado se consulta si debe conservar las respuestas de otras personas mostrando «Comentario eliminado» o borrar el hilo completo. La relación actual tiene cascada: no se asume que eliminar comentarios ajenos asociados sea la intención del usuario.
+
+Prueba física reportada por el usuario: instaló la aplicación también en el teléfono de su hija; ambos publicaron respuestas y recibieron notificaciones. El usuario confirma su recepción entre dispositivos, pero reporta que tocarlas no abre el comentario/video de destino. No equivale a una auditoría física completa de todos los casos.
+
+Orden solicitado al final de esta recopilación: terminar Feed/comentarios y comprobar su nueva presentación, continuar con armado de Perfil, y abordar más adelante mensajería privada, navegación de notificaciones por tipo y detalles de pulido. El centro de notificaciones deberá dirigir al destino real según el tipo; para mensajes privados, abrir la conversación correspondiente en pantalla completa. No se implementa ese bloque de mensajería durante este ajuste del Feed. El registro real por teléfono/SMS continúa como pendiente previamente anotado, no como función terminada.
+
+Estado de esta recopilación y auditoría inicial: cambios documentales locales y lecturas de código/base; todavía no se han aplicado los nuevos ajustes de código, migraciones ni generado otra APK. Las preguntas de selección de stickers y alcance del borrado siguen pendientes de respuesta.
+
+### Catálogo confirmado y avance independiente del Feed
+
+El usuario elige un catálogo de stickers dentro de TOKVID, compartido entre comentarios/respuestas y, cuando se aborde ese bloque, mensajería privada. La selección desde galería deja de ser la propuesta para este catálogo. La auditoría comprobó que todavía no existe una tabla de stickers ni un catálogo cargado. Se consulta la fuente del contenido real: pack propio de TOKVID o GIFs/memes de proveedor externo. La política de borrado de hilos con respuestas ajenas también sigue pendiente. No se inventan assets, proveedores, API keys ni permisos de borrado ajeno para completar esos puntos.
+
+Se preparan y verifican los cambios independientes mientras se resuelven esas preguntas:
+
+- Panel de comentarios: margen lateral 24 dp, altura de reposo 60% de pantalla y altura con teclado ajustada al espacio real disponible; radio 18 a 14 dp. Son medidas de implementación propuestas para las mejoras solicitadas, pendientes de comprobar en teléfono, no medidas extraídas de las imágenes generadas. Campo 52 a 88 dp, márgenes conservados al escribir y separación del panel de 8 dp respecto al teclado. Gradientes cian/magenta translúcidos en contador y «Respondiendo». El indicador omite usuario y X y cancela la respuesta al tocarlo, conservando el texto. Colores del texto de comentarios y lógica de publicación/hilos/likes de comentarios conservados.
+- Feed: escala temporal 1 a 0.95 al abrir comentarios, vuelta a 1 al cerrar. Mismo reproductor, sin remount ni seek añadido. BlurView se coloca después del contenido dinámico y usa el método Android `dimezisBlurView`. Se adapta la referencia de 8 dp a píxeles nativos con PixelRatio y factor de reducción 1; Android anterior a 12 tiene límite de radio 25 px. iOS usa intensidad 8 de su efecto nativo, sin declarar equivalencia matemática exacta de radio Gaussiano. `VideoView.surfaceType` se fija en `textureView`, no se cambia durante la transición: el vídeo debe poder participar en la composición del blur. Rendimiento y efecto reales pendientes de comprobación física. Estilos de Feed/index y VideoCard idénticos al HEAD previo, comprobados por comparación del bloque completo de StyleSheet; controles, iconos y gestos no se modifican.
+- Likes del Feed: servicio y hook independientes que leen y publican estados canónicos reales. El contador deja de usar los valores fijos de los demos en el Feed principal; lecturas desconocidas muestran carga y errores visibles. No hay incremento ficticio ni fallback a cero tras errores. Serialización por video, descarte de respuestas tardías tras cambiar de cuenta y recuperación al volver a la app/Realtime. Compatible con el Like aplicado por Registro/Login y los IDs de videos de prueba existentes, sin retirar esos videos ni integrar todavía contenido nuevo.
+- Migración aplicada y versionada desde el historial oficial: `20261007042903_real_feed_video_like_totals.sql`, MD5 `fbcbc98c971b6b248d47788d55c30fe1`. Tabla de totales públicos con RLS y SELECT exclusivamente; conteos derivados de los Likes ya existentes. Trigger privado no ejecutable por clientes, RPC de lectura público y RPC de estado deseado SECURITY INVOKER solo autenticado. No se exponen las identidades de quienes reaccionan. Conserva los triggers previos de contadores de videos/perfiles reales. Realtime publica únicamente la tabla nueva de totales.
+- Verificación de la base: 7 Likes existentes, repartidos entre los seis IDs de prueba, y cero discrepancias con los nuevos totales. Prueba SQL `feed-video-likes.rollback.sql`: Like/Unlike idempotentes, protección de totales, rechazo de autoría ajena, límite de lectura, lectura pública y bloqueo de escritura invitada, contador de video UUID real. Pasó en transacción revertida con cuenta existente, sin crear usuarios Auth. Verificación posterior: 22 comentarios, 7 Likes, cero videos publicados y cero filas de auditoría conservadas. No se borraron los comentarios o reacciones reales de las pruebas físicas.
+- Pruebas locales: 12 de comentarios/geometría, 6 nuevas de Likes del Feed y 9 de retorno Auth; 27 aprobadas. No se confunden con typecheck, CI ni renderizado físico. El proxy local sigue sin responder y no se instalaron dependencias ni CLI; la migración se aplicó por el conector, su versión se obtuvo del historial real y su SQL coincide exactamente con el archivo. No se declara ejecutado `supabase migration new` localmente.
+- Advisors posteriores: ningún hallazgo nuevo para esta tabla/RPC/trigger. Persisten los 25 SECURITY DEFINER autenticados de bloques anteriores y la protección de contraseñas filtradas deshabilitada; 13 FK sin índice y dos initplans de LIVE siguen fuera del alcance. Remediaciones de referencia: https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable y https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection.
+
+El catálogo, el menú Editar/Eliminar y la política de borrado no se declaran implementados en este avance independiente. Mensajería privada, navegación de notificaciones y armado de Perfil siguen en el orden acordado. No se declara cerrado el Feed ni entregada una APK nueva por estas pruebas; publicación y CI deben comprobarse después.
+
+**Publicación y verificación del avance independiente:** código `7b69542a8ea452e644691218d2f46be8de18b0fa`, árbol local/remoto idéntico `7bf71b26eff1c850da4f2370451cea004022988a`, exactamente 11 archivos de este ajuste y auditoría. Publicado en `feature/onboarding-profile-interests` con protección del SHA anterior, sin force-push ni merge; `main` conserva `acdb98ffff206553318d3c40b4622367f9d97fda`. CI de push `37572728218` y CI de PR `37572730750` terminaron en success: 38 pruebas, typecheck completo y móvil, compilación web/API y artifact web aprobados. Android APK **#197**, run `37572728205`, job `112634760042`, ya completó la verificación de configuración y la aplicación de migraciones, y está compilando Gradle al registrar este resultado. Todavía no se dispone de un artifact nuevo ni se entrega esta compilación como bloque completo.
+
+**Estado transparente del workflow de migraciones:** run `37572728266`, job `112634760233`, confirmó «Remote database is up to date» y coincidencia local/remota de `20261007042903`. El paso posterior `Configure and verify Seamless Auth` volvió a fallar en **GET 403**, como antes de estos cambios; no ejecutó PATCH ni cambió SMTP/Auth. El workflow completo figura failure por ese permiso pendiente, aunque push e historial de migraciones pasaron y el job Android pudo aplicar/verificar sus migraciones. No se ocultó ni se modificó ese paso para que apareciera verde.
+
+**APK #197 disponible para revisar el avance:** run `37572728205`, job `112634760042`, terminó en success; Gradle reportó `BUILD SUCCESSFUL in 18m 9s`. Artifact `11462016243`, nombre `tokvid-android-release`, contiene `app-release.apk`; ZIP 213903802 bytes, SHA-256 `26e2c25bfd0ffd7f6d8488fd211e407704998b61e03c082ae225b1017286dfc4`, no expirado al verificarlo. Su head_sha coincide con `7b69542a8ea452e644691218d2f46be8de18b0fa`. Descarga: https://github.com/alexandermezad80-dev/TokVid/actions/runs/37572728205/artifacts/11462016243. Contiene únicamente el avance de presentación/efecto del Feed y Likes reales; todavía no incorpora catálogo ni Editar/Eliminar. Se registra como revisión intermedia, sin dar por terminado el bloque solicitado.
+
+Validación física pendiente de #197: comprobar márgenes y altura con teclado abierto/cerrado, tres líneas sin espacio excesivo, cancelar «Respondiendo» tocando la burbuja y conservar el texto; cerrar por X/fondo y comprobar restauración de escala y reproducción sin reinicio; verificar que el blur afecte al video real y no genere fallos/rendimiento inadecuado; dar/quitar Like y reabrir para comprobar selección y contador persistentes. No se declara probado en teléfono por la compilación o los 38 tests.
+
+## Continuación: márgenes y acciones de comentarios (7 octubre 2026 UTC)
+
+El usuario reporta en la captura 1000169564.jpg que el panel se ve estrecho y pide continuar, reduciendo el espacio en las orillas. Se ajusta el margen exterior de 24 a 10 dp, el padding lateral de la lista de 16 a 12 dp, el margen del editor de 12 a 8 dp y la sangría de las respuestas de 42 a 28 dp. Con el teclado abierto, el editor pasa de 88 dp fijos a 56–80 dp según su contenido, con hasta tres líneas visibles y scroll para el resto. Se conservan el gradiente y la presentación del Feed existente.
+
+El usuario pide que, al eliminar lo suyo, la otra persona conserve sus mensajes, y solicita la recomendación de comportamiento. Para esta pantalla de comentarios públicos se comunica e implementa: «Eliminar mi comentario» retira el texto propio para todos y conserva las respuestas ajenas bajo «Comentario eliminado»; «Ocultar hilo para mí» quita el hilo completo de la vista de esa cuenta, sin borrar comentarios públicos. La acción «Mostrar» restaura los hilos ocultos del video. No se aplica el borrado en cascada de respuestas ajenas ni se cambia la mensajería privada.
+
+- Menú mediante el comentario o su botón de opciones. Editar/Eliminar únicamente para autoría propia activa; Ocultar hilo para la cuenta autenticada. La edición utiliza el mismo campo, permite cancelar y conserva el borrador previo. Errores y ausencia de confirmación del servidor no se presentan como éxito. Las respuestas tardías o confirmaciones de un video/cuenta anterior se descartan.
+- Auditoría de la base: las migraciones 20261007052405_feed_comment_owned_edit_and_safe_delete y 20261007053624_shared_original_tokvid_sticker_catalog ya estaban aplicadas, pero faltaban en la rama. Se recuperan sus versiones y sentencias del historial oficial y se incorporan para mantener alineado el despliegue. La interfaz utiliza las RPC de edición/borrado ya existentes; el catálogo preparado en servidor continúa como trabajo independiente de interfaz.
+- Preferencias personales: tabla hidden_feed_comment_threads con RLS y permisos SELECT/INSERT/DELETE limitados a la cuenta. Migración 20261007145405_personal_feed_comment_thread_visibility aplicada por el conector, sin CLI local disponible; versión obtenida del historial oficial. La migración adicional 20261007150237_keep_hidden_feed_thread_preferences_private evita publicar las claves privadas de preferencias mediante eventos DELETE de Realtime. Las preferencias se vuelven a leer al abrir el panel, regresar a la app y recargar.
+- Verificación local: 18 pruebas de comentarios aprobadas, incluidas confirmación de edición/borrado, errores, selección por cuenta/video, serialización y confirmación de borrado obsoleta.
+- Verificación SQL: scripts/tests/feed-comment-actions.rollback.sql pasó en transacción revertida con los dos perfiles existentes, sin crear cuentas ni conservar datos de prueba. Confirma edición propia, rechazo de edición/borrado ajenos, límite de 300 caracteres, conservación de respuestas ajenas, contadores activos, rechazo de DELETE directo, ocultación idempotente, restauración propia y privacidad entre cuentas.
+- Entrega verificada: commit 9a8f7caeb66cbc90d5aa614f47702208b4a8031e; CI #675/#676 en success, 44 pruebas, typecheck y builds web/API aprobados. APK #198, run 37642481361, artifact 11493483310, en success y con head_sha coincidente. El renderizado y la interacción final deben verificarse físicamente en teléfono; los tests no prueban la apariencia nativa.
+
+## Diagnóstico del bloqueo de Auth en GitHub Actions (7 octubre 2026 UTC)
+
+El usuario comparte el fallo de `Supabase migrations #190`, run 37642481270: GET de `/v1/projects/kvbppgofblldwnkkoscb/config/auth` devuelve 403. Los pasos Link, Push y Verify migration history sí pasaron; el servidor estaba actualizado. El fallo sucede antes de PATCH y no es un error de compilación de la APK.
+
+Se consultan los permisos actuales de la Management API: GET requiere `auth_config_read`; PATCH requiere `auth_config_write` y `project_admin_write`, que corresponden a Auth Config y Project Settings con Read-write. La contraseña de base de datos puede permitir `db push` sin conceder acceso a Auth. No se conoce el alcance del token almacenado en GitHub ni se puede sustituir ese secret desde los conectores disponibles.
+
+Se prepara la reparación del acceso mediante un repository secret opcional `SUPABASE_AUTH_ACCESS_TOKEN`, utilizado solamente por el paso Auth. Sin él se conserva el token anterior; las migraciones mantienen su credencial. El script incorpora un diagnóstico 401/403 con instrucciones y una lista cerrada de los tres permisos anteriores, sin imprimir respuestas ni secretos, y mantiene el fallo cuando el servidor deniega el acceso. No se declara resuelto el 403 hasta comprobar GET/PATCH/GET con una credencial autorizada.
+
+Instrucciones y enlaces: [docs/operations/supabase-auth-workflow.md](../operations/supabase-auth-workflow.md). El job no usa el environment production; el secret debe estar disponible como repository secret. La cuenta propietaria del token debe tener permiso real para modificar la configuración de TokVid.
+
+Verificación local: ocho pruebas del script aprobadas, incluido el punto de entrada CLI; cubren preservación de redirects/proveedores, denegación GET/PATCH, protección de secretos, credenciales inválidas y rechazo de falsa verificación. Pendiente: observar la ejecución publicada y registrar si el servidor informa permisos concretos faltantes.
+
+## Regla final y diseño de comentarios aprobados (7 octubre 2026 UTC)
+
+El usuario aclara que todos los usuarios deben poder editar y eliminar sus mensajes principales y respuestas, también al comentar en una publicación ajena. Al borrar su principal se elimina el hilo completo, incluidas respuestas de otras personas; borrar una respuesta afecta solo a esa respuesta. El dueño de una publicación puede moderar sus comentarios sin adquirir permiso para editar textos ajenos. Esta definición sustituye la conservación de respuestas bajo «Comentario eliminado» para el borrado principal de la nueva interfaz.
+
+Se presenta una propuesta visual de dos estados, se aclaran los permisos y las opciones Editar/Eliminar/Cancelar y, tras el «Sí» del usuario, se implementan las reglas y el diseño descritos previamente. El menú contextual se ancla al comentario seleccionado, con responder, editar propio, eliminar según permisos, ocultar para la cuenta y cancelar. Prefiere colocarse encima; si el espacio superior no basta, se ajusta junto al mensaje dentro de los límites seguros, con scroll para pantallas compactas y fuentes grandes. Se cierra al tocar fuera o Atrás, al desaparecer el mensaje, o al cambiar de video/cuenta. Medidas tardías no reabren una selección anterior.
+
+Panel de ancho completo con padding interior y áreas seguras; franja de encabezado translúcida en cian/magenta suaves, conservando el contador. En el Feed se reserva una banda translúcida sobre la tab bar inferior real: los iconos se ven detrás, mientras el Modal bloquea su interacción. El editor queda encima de esa banda o del teclado; no se crea una navegación duplicada. Los otros lectores de video utilizan el mismo panel sin reservar una barra que no existe en esas pantallas.
+
+Servidor: migración oficial 20261007170821_coherent_comment_thread_deletion_and_moderation aplicada y registrada. La nueva RPC remove_feed_comment valida autoría o propiedad de la publicación, toma el bloqueo del hilo y elimina la raíz con sus descendientes. Al eliminar una respuesta, sus hijos se enlazan al padre anterior antes de borrar esa respuesta, conservando textos, autores, likes y el resto del hilo. FKs/triggers mantienen likes, preferencias ocultas y contadores. No se borran datos existentes al desplegar. Se conserva la RPC anterior para clientes antiguos, cuyos diálogos describían otro comportamiento, y la nueva interfaz exige confirmación de eliminación completa del servidor.
+
+Validación local: 28 pruebas de comentarios aprobadas (10 nuevas), con autoría en publicaciones ajenas, moderación sin edición ajena, confirmaciones, limpieza del hilo, conservación de respuestas y geometría del popover. scripts/tests/coherent-comment-actions.rollback.sql pasó en una transacción revertida usando los dos perfiles existentes y videos/comentarios temporales; verifica edición propia, cascada, preservación de hijos/hermanas/likes al borrar una respuesta, rechazo de ajenos, moderación, contadores y permisos de invitado. No conserva los datos de prueba.
+
+Pendiente de entrega: CI/typecheck y APK del nuevo commit; la apariencia y la interacción nativas requieren revisión física. El 403 de configuración Auth sigue siendo un bloqueo independiente de credenciales de GitHub; no se modifica ni se oculta para presentar un éxito falso.
+
+Revisión de pantallas compactas: se limita la altura del popover al espacio real encima/debajo del mensaje, manteniendo visible el seleccionado; las opciones excedentes usan scroll. Regresión adicional aprobada. CI del primer commit 01004bc55c59a738923c644912b70f11f2d7faca pasó con 61 pruebas; esta corrección requiere el nuevo build final.

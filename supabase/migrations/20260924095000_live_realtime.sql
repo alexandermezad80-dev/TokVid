@@ -1,0 +1,10 @@
+alter publication supabase_realtime add table public.live_rooms;
+alter publication supabase_realtime add table public.live_participants;
+alter publication supabase_realtime add table public.live_invitations;
+alter publication supabase_realtime add table public.live_join_requests;
+alter publication supabase_realtime add table public.live_moderators;
+alter publication supabase_realtime add table public.live_chat_messages;
+alter publication supabase_realtime add table public.live_pinned_message;
+alter publication supabase_realtime add table public.live_quieme;
+alter publication supabase_realtime add table public.live_gifts;
+alter publication supabase_realtime add table public.live_shares;

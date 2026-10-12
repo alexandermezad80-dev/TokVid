@@ -1,0 +1,23 @@
+export interface CommentAnchor { x: number; y: number; width: number; height: number }
+
+// Prefer above the selected row. Short/rotated windows may require placing it
+// below; in either case it stays anchored to the row and inside the viewport.
+export function commentPopoverGeometry(anchor: CommentAnchor, {
+  width, availableHeight, safeTop, safeLeft = 0, safeRight = 0, menuHeight,
+}: { width: number; availableHeight: number; safeTop: number; safeLeft?: number; safeRight?: number; menuHeight: number }) {
+  const inset = 8;
+  const leftBound = safeLeft + inset;
+  const menuWidth = Math.max(0, Math.min(260, width - safeLeft - safeRight - inset * 2));
+  const left = Math.min(Math.max(leftBound, anchor.x + anchor.width - menuWidth), Math.max(leftBound, width - safeRight - inset - menuWidth));
+  const topBound = Math.min(safeTop + inset, Math.max(0, availableHeight - inset));
+  const bottomBound = Math.max(topBound, availableHeight - inset);
+  const aboveEdge = Math.max(topBound, Math.min(anchor.y - inset, bottomBound));
+  const belowEdge = Math.min(bottomBound, Math.max(topBound, anchor.y + anchor.height + inset));
+  const aboveSpace = aboveEdge - topBound;
+  const belowSpace = bottomBound - belowEdge;
+  const side = aboveSpace >= Math.min(menuHeight, 120) || aboveSpace >= belowSpace ? "above" : "below";
+  const height = Math.min(menuHeight, side === "above" ? aboveSpace : belowSpace);
+  const top = side === "above" ? aboveEdge - height : belowEdge;
+  const tip = Math.min(Math.max(18, anchor.x + anchor.width - 28 - left), Math.max(18, menuWidth - 18));
+  return { left, top, width: menuWidth, maxHeight: height, side, tip };
+}

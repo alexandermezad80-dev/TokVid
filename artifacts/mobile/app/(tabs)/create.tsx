@@ -28,11 +28,15 @@ export default function CreateScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 : insets.bottom;
-  const { user, profile } = useAuth();
+  const { user, profile, requireAuth } = useAuth();
 
   const player = useVideoPlayer(videoUri ?? "", (p) => { p.loop = true; });
 
   const pickVideo = async () => {
+    if (!user) {
+      await requireAuth();
+      return;
+    }
     setError(null);
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
@@ -52,7 +56,9 @@ export default function CreateScreen() {
   };
 
   const upload = async () => {
-    if (!videoUri || !user) return;
+    if (!videoUri) return;
+    const currentUser = user ?? await requireAuth();
+    if (!currentUser) return;
     setPhase("uploading");
     setProgress(0);
     setError(null);
@@ -65,7 +71,7 @@ export default function CreateScreen() {
       setProgress(40);
 
       const ext = videoUri.split(".").pop() ?? "mp4";
-      const fileName = `${user.id}/${Date.now()}.${ext}`;
+      const fileName = `${currentUser.id}/${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from("videos")
@@ -80,8 +86,8 @@ export default function CreateScreen() {
       const { data: inserted, error: insertError } = await supabase
         .from("videos")
         .insert({
-          user_id: user.id,
-          url: urlData.publicUrl,
+          user_id: currentUser.id,
+          video_url: urlData.publicUrl,
           caption: trimmedCaption,
         })
         .select("id")
@@ -96,7 +102,7 @@ export default function CreateScreen() {
           await saveVideoTags({
             videoId: inserted.id,
             caption: trimmedCaption,
-            authorId: user.id,
+            authorId: currentUser.id,
             authorName: profile?.username ?? "Alguien",
             authorAvatar: profile?.avatar_url ?? null,
           });
@@ -135,6 +141,11 @@ export default function CreateScreen() {
           </View>
           <Text style={styles.pickHeading}>Subí tu video</Text>
           <Text style={styles.pickSub}>Elegí un video de tu galería para compartir con tu comunidad</Text>
+
+          <TouchableOpacity style={styles.liveBtn} onPress={() => router.push("/live-create")}>
+            <Feather name="radio" size={20} color="#fff" />
+            <Text style={styles.pickBtnText}>Crear LIVE</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity style={styles.pickBtn} onPress={pickVideo}>
             <Feather name="image" size={20} color="#fff" />
@@ -281,6 +292,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   pickBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  liveBtn: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#1C1C1E", borderWidth: 1, borderColor: "#FE2C55", borderRadius: 14, paddingHorizontal: 28, paddingVertical: 14 },
   tipsBox: {
     backgroundColor: "#111", borderRadius: 14,
     padding: 16, gap: 10, width: "100%", marginTop: 8,

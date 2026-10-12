@@ -1,0 +1,9 @@
+CREATE INDEX IF NOT EXISTS comments_user_id_idx ON public.comments (user_id);
+CREATE INDEX IF NOT EXISTS conversations_user1_id_idx ON public.conversations (user1_id);
+CREATE INDEX IF NOT EXISTS conversations_user2_id_idx ON public.conversations (user2_id);
+CREATE INDEX IF NOT EXISTS messages_conversation_id_idx ON public.messages (conversation_id);
+CREATE INDEX IF NOT EXISTS messages_sender_id_idx ON public.messages (sender_id);
+CREATE INDEX IF NOT EXISTS notifications_actor_id_idx ON public.notifications (actor_id);
+CREATE INDEX IF NOT EXISTS notifications_user_id_idx ON public.notifications (user_id);
+CREATE INDEX IF NOT EXISTS video_hashtags_hashtag_id_idx ON public.video_hashtags (hashtag_id);
+CREATE INDEX IF NOT EXISTS videos_user_id_idx ON public.videos (user_id);

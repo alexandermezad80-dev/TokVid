@@ -1,3 +1,4 @@
+import Svg, { Path } from "react-native-svg";
 import React from "react";
 import {
   ActivityIndicator,
@@ -26,8 +27,12 @@ export default function GoogleButton({ onPress, loading, label = "Continuar con 
       ) : (
         <>
           <View style={styles.iconWrap}>
-            {/* Google G logo using colored squares */}
-            <Text style={styles.gLogo}>G</Text>
+            <Svg width={22} height={22} viewBox="0 0 48 48">
+              <Path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3A12 12 0 1 1 32.5 14l5.7-5.7A20 20 0 1 0 44 24c0-1.2-.1-2.4-.4-3.5Z" />
+              <Path fill="#FF3D00" d="m6.3 14.7 6.6 4.8A12 12 0 0 1 32.5 14l5.7-5.7A20 20 0 0 0 6.3 14.7Z" />
+              <Path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2A12 12 0 0 1 12.7 28l-6.6 5.1A20 20 0 0 0 24 44Z" />
+              <Path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3a12 12 0 0 1-4.1 5.6l6.2 5.2A20 20 0 0 0 44 24c0-1.2-.1-2.4-.4-3.5Z" />
+            </Svg>
           </View>
           <Text style={styles.label}>{label}</Text>
         </>
@@ -42,7 +47,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#fff",
-    borderRadius: 14,
+    borderRadius: 16,
+    minHeight: 56,
     paddingVertical: 14,
     paddingHorizontal: 20,
     gap: 12,
