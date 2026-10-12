@@ -1,8 +1,6 @@
-> **11 de octubre de 2026 — fase nueva autorizada en implementación.** El usuario confirmó recepción inmediata y contador/vista previa de Mensajes en #207. Solicitó nuevos menús, ajustes, privacidad, actividad agrupada, teclado, adaptación general y branding. Ver [registro de fase](https://github.com/alexandermezad80-dev/TokVid/blob/feature/feed-mini-video-avatar/docs/MESSAGING_PHASE_2.md). Último APK entregado continúa siendo #207 hasta registrar la nueva compilación. «Eliminar todos» oculta solo mis mensajes y solo para mí. El ZIP sí llegó a main y ya fue extraído.
-
 # TokVid — continuar desde aquí
 
-Actualizado: **9 de octubre de 2026 (UTC)**.
+Actualizado: **12 de octubre de 2026 (UTC)**.
 
 ## Regla del usuario
 
@@ -14,37 +12,41 @@ Conservar lo aprobado y limitar cambios a la necesidad autorizada. No volver a s
 
 - Repositorio: [alexandermezad80-dev/TokVid](https://github.com/alexandermezad80-dev/TokVid).
 - Rama: **`feature/feed-mini-video-avatar`**.
-- Código de la APK: **`5485c9961f7bd1869468c92d7b5ec25c81262425`**. Los commits documentales posteriores no cambian el binario.
-- [Descargar APK #207](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37886244472/artifacts/11597441070): extraer el ZIP e instalar `app-release.apk` en ambos teléfonos.
-- [Compilación #207](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37886244472): **124 pruebas aprobadas, 0 fallidas**, typecheck móvil aprobado y `BUILD SUCCESSFUL in 27m 29s`.
-- [Manifiesto y checksum](docs/continuity/APK_207_VERIFICATION.json). El SHA256 del APK difiere del ZIP de GitHub.
+- Código incorporado en la APK: **`dc04574d9b806ee73b2d75d8ba1036c1ac7475e3`**. Un cierre documental posterior no cambia el binario.
+- [Descargar APK #210](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38154309109/artifacts/11707879434): extraer el ZIP e instalar `app-release.apk` en ambos teléfonos.
+- [Compilación #210](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38154309109): **127 pruebas aprobadas, 0 fallidas**, TypeScript móvil aprobado y `BUILD SUCCESSFUL in 26m 36s`.
+- [Manifiesto y checksum](docs/continuity/APK_210_VERIFICATION.json). SHA256 del APK: `6d8910e865ea6de794061fce57220d74dee4c7876e9d09b9400b451fa0bc6292`. El checksum del ZIP es distinto.
 
-## Qué incluye esta actualización
+## Qué incluye esta fase
 
-- Inbox privado con conversaciones y no leídos, independiente de tocar notificaciones. Recepción dentro del chat abierto, canales sin reutilización y recuperación de eventos perdidos al reconectar/volver a la app.
-- Compositor ajustado al teclado/emojis. Popover flotante al tocar mensaje o las opciones del encabezado, submenú Burbujas desplazable y tonos/bordes más discretos, como pidió el usuario.
-- Seleccionar uno, varios o todos. Propios: **Eliminar para mí / Eliminar para todos**. Recibidos: solo para mí. RLS protege cada conversación y el servidor valida autoría; la prueba con un tercero fue rechazada.
-- Perfil propio unificado al tocar los avatares de su video; ocultación de Seguir en videos propios. Grillas de tres columnas con tamaños medidos y el diseño aprobado. Siguiendo/Seguidores/Amigos abren sus listas; Amigos requiere seguimiento mutuo.
-- Conserva las funciones de #206: publicación real por cámara/galería, búsqueda/Para ti/Siguiendo, foto de avatar, comentarios y video pequeño. Auth/OTP no se modificaron.
+- Popovers distintos para mensajes propios y recibidos, respuestas citadas, reenvío, copiar, anclar, denuncia, traducción local Android y barra de reacciones con emojis. Submenú compacto de ocho estilos, sin brillo de neón y con texto blanco legible.
+- Encabezado con volver, avatar/nombre, teléfono y menú; pantalla completa de detalles con buscar en conversación, perfil, grupo de texto, preferencias, silenciar y bloquear. Compositor con cámara, galería, audio y envío.
+- **Eliminar todos selecciona solo mis mensajes y los oculta solo para mí.** Eliminar para todos afecta al mensaje propio tocado. Cancelar envío exige que aún no esté leído. Ocultar una conversación desde Inbox afecta solo a mi cuenta; un mensaje nuevo la vuelve a mostrar.
+- Actividad agrupada por persona y tipo con contador y aviso dentro de la app. Medios privados con permisos por conversación; bloqueo comprobado en servidor.
+- Ajustes de teclado, áreas seguras, barra inferior y textos para dimensiones y escala del sistema; sin reglas específicas para una marca de teléfono.
+- Nuevo kit `identidad-visual-TV.zip` integrado: icono Android con margen adaptativo, splash, favicon y marca de agua. Los originales vectoriales y recursos de tiendas están conservados.
 
-## Base de datos
+El usuario **ya confirmó** en la base #207 la recepción inmediata en ambos sentidos y el contador/vista previa de Mensajes. Se conservó ese flujo. Auth/OTP, publicación y decisiones aprobadas de comentarios permanecen como base; no reiniciar su implementación.
 
-Aplicadas y registradas `20261009042214_private_chat_delivery_visibility_and_removal` y `20261009043643_atomic_private_message_sending`. No reaplicarlas ni editar su historial. No se eliminaron datos existentes: los tests SQL se revirtieron. La segunda migración quita solo el trigger/función de avisos creados por la primera y los reemplaza por envío atómico para evitar duplicaciones en clientes antiguos. Se conserva la migración de publicaciones `20261008010846_support_photo_and_video_publications`.
+## Base de datos y validación
+
+Las cinco migraciones de esta fase están aplicadas y registradas en [el detalle técnico](docs/MESSAGING_PHASE_2.md). No reaplicarlas ni editar su historial. La función `calls` v6 respeta silenciar llamadas manteniendo su autenticación interna. Pruebas SQL de privacidad, permisos, grupos, medios y actividad ejecutadas con rollback; no se borraron conversaciones, perfiles ni publicaciones existentes.
 
 ## Siguiente paso concreto
 
-**Probar #207 en ambos teléfonos:** intercambiar mensajes sin salir del chat y revisar Inbox sin tocar Actividad; comprobar teclado/emoji, menú discreto y borrado en sus dos modalidades. Después verificar el video ya subido en la grilla propia, los dos avatares del feed, ausencia de autofollow y listas de relaciones. [Lista exacta y límites](docs/PRIVATE_MESSAGES_PROFILE_VALIDATION.md#prueba-física-de-aceptación).
+**Probar #210 en los teléfonos:** primero teclado normal/emojis, compositor siempre visible, historial desplazable y barra inferior con navegación de tres botones/gestos y letra grande. Después menús/reacciones, borrados con sus alcances, adjuntos/audio, actividad agrupada y branding. [Lista y límites](docs/MESSAGING_PHASE_2.md#aceptación-física-pendiente).
 
-La compilación y las verificaciones automáticas están completas. **La aceptación física está pendiente**. No publicar mensajes/videos reales para simularla. Los datos de ejemplo de Para ti se conservan hasta autorización de retirarlos; grilla propia y Siguiendo usan contenido real. La transferencia sigue con reintento manual, sin presentar TUS como terminado.
+La compilación y las verificaciones automáticas están completas. **La aceptación física de #210 está pendiente**; no afirmar compatibilidad comprobada con todos los teléfonos. Grupos de esta fase son básicos de texto (hasta 200 mensajes recientes visibles); traducción local disponible en Android con descarga inicial del modelo. Esta entrega no completa otros bloques futuros del maestro.
 
 ## Documentos para retomar
 
-1. [Estado entre sesiones](docs/continuity/TOKVID_SESSION_HANDOFF.md), sección 14 vigente.
+1. [Estado entre sesiones](docs/continuity/TOKVID_SESSION_HANDOFF.md), sección 15 vigente.
 2. [Documento maestro](docs/requirements/TOKVID_MASTER_REQUIREMENTS.md).
-3. [Mensajería y perfil: evidencia y pruebas](docs/PRIVATE_MESSAGES_PROFILE_VALIDATION.md).
-4. [Publicación y comentarios de #206](docs/PUBLISHING_COMMENTS_VALIDATION.md).
-5. [Reglas para agentes](AGENTS.md).
+3. [Fase de mensajería, adaptación y branding](docs/MESSAGING_PHASE_2.md).
+4. [Base de mensajería y perfil #207](docs/PRIVATE_MESSAGES_PROFILE_VALIDATION.md).
+5. [Publicación y comentarios #206](docs/PUBLISHING_COMMENTS_VALIDATION.md).
+6. [Reglas para agentes](AGENTS.md).
 
 **Frase para otra sesión:**
 
-> Continuemos TokVid desde `feature/feed-mini-video-avatar`. Lee CONTINUAR_AQUI, el handoff y el maestro. Última entrega APK #207, código `5485c9961f7bd1869468c92d7b5ec25c81262425`. Mensajería/perfiles y SQL están implementados y verificados automáticamente; retoma desde mi prueba física con dos cuentas. Conserva lo aprobado.
+> Continuemos TokVid desde `feature/feed-mini-video-avatar`. Lee CONTINUAR_AQUI, el handoff y el maestro. Última entrega APK #210, código `dc04574d9b806ee73b2d75d8ba1036c1ac7475e3`. Las mejoras autorizadas de mensajería, adaptación y branding están compiladas y verificadas automáticamente. Retoma desde mi prueba física con dos cuentas. Conserva lo aprobado.

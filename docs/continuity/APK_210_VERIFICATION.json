@@ -1,0 +1,50 @@
+{
+  "commit": "dc04574d9b806ee73b2d75d8ba1036c1ac7475e3",
+  "tree": "4e30f2205e7d50ebd9b45e211e2b24957aeff362",
+  "branch": "feature/feed-mini-video-avatar",
+  "run_id": 38154309109,
+  "run_number": 210,
+  "run_attempt": 1,
+  "job_id": 114514004194,
+  "result": "success",
+  "tests_passed": 127,
+  "tests_failed": 0,
+  "mobile_typecheck": "passed",
+  "gradle": "BUILD SUCCESSFUL in 26m 36s",
+  "apk_sha256": "6d8910e865ea6de794061fce57220d74dee4c7876e9d09b9400b451fa0bc6292",
+  "apk_artifact": 11707879434,
+  "apk_download_url": "https://github.com/alexandermezad80-dev/TokVid/actions/runs/38154309109/artifacts/11707879434",
+  "apk_artifact_zip_bytes": 244212442,
+  "apk_artifact_zip_digest": "sha256:5ed325defead285ba6d8baa4125f666244f26b3938ee6ec74e512f68e4bb23b5",
+  "source_map_artifact": 11708725439,
+  "source_map_zip_bytes": 3380240,
+  "source_map_zip_digest": "sha256:72762e8a041cdf995da5e191e171dd83d5ce74f7eb437d30bc0fccdf9e0dc542",
+  "artifacts_expire_at": "2027-01-09T16:10:00Z",
+  "diagnostics": true,
+  "matching_source_map_verified": true,
+  "physical_device_verified": false,
+  "previous_user_confirmed_behavior": [
+    "instant private message delivery in both directions",
+    "single conversation with unread counter and latest message preview"
+  ],
+  "applied_migrations": [
+    "20261011154613_private_chat_tools_and_grouped_activity",
+    "20261011155643_private_chat_groups",
+    "20261011160329_private_share_activity",
+    "20261011160621_avoid_recursive_group_membership_policies",
+    "20261011160655_idempotent_private_profile_visit_events"
+  ],
+  "calls_edge_function_version": 6,
+  "sql_rollback_validation": "passed",
+  "sql_rollback_suites": [
+    "private-messages",
+    "chat-tools",
+    "chat-groups-activity",
+    "share-activity",
+    "chat-media-privacy"
+  ],
+  "chat_media_test_added_in_documentation_close": true,
+  "independent_preflight_run_id": 38154309195,
+  "brand_zip_blob": "8bc94f0534759378b460dc5228aa8ea200429c70",
+  "verified_on": "2026-10-12"
+}

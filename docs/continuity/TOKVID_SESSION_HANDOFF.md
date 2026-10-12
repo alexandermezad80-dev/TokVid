@@ -1,8 +1,6 @@
-> **11 de octubre de 2026 — fase nueva autorizada en implementación.** El usuario confirmó recepción inmediata y contador/vista previa de Mensajes en #207. Solicitó nuevos menús, ajustes, privacidad, actividad agrupada, teclado, adaptación general y branding. Ver [registro de fase](https://github.com/alexandermezad80-dev/TokVid/blob/feature/feed-mini-video-avatar/docs/MESSAGING_PHASE_2.md). Último APK entregado continúa siendo #207 hasta registrar la nueva compilación. «Eliminar todos» oculta solo mis mensajes y solo para mí. El ZIP sí llegó a main y ya fue extraído.
-
 # TokVid — estado y continuidad entre sesiones
 
-**Cierre funcional y documental: 9 de octubre de 2026 (UTC). Última entrega: [APK #207](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37886244472/artifacts/11597441070), código `5485c9961f7bd1869468c92d7b5ec25c81262425`. La sección 14 es vigente; las anteriores son históricas. 124 pruebas, typecheck y build Android aprobados; aceptación física pendiente.**
+**Cierre: 12 de octubre de 2026 (UTC). Última entrega: [APK #210](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38154309109/artifacts/11707879434), código `dc04574d9b806ee73b2d75d8ba1036c1ac7475e3`. La sección 15 es vigente; entregas anteriores son históricas. 127 pruebas, TypeScript y compilación Android aprobados. La aceptación física de #210 está pendiente; el usuario sí confirmó recepción inmediata y contador/vista previa de la base #207.**
 
 Este documento permite retomar sin depender del historial del chat. El usuario pidió documentar todo y conservar lo terminado salvo que necesite una actualización. Las instrucciones posteriores del usuario prevalecen sobre este registro.
 
@@ -12,7 +10,7 @@ Este documento permite retomar sin depender del historial del chat. El usuario p
 
 No rehacer el diseño, reemplazar flujos o volver a resolver decisiones aceptadas por iniciativa estética del agente. Para una actualización necesaria, explicar el problema y el alcance, respetar la autorización existente, aplicar un cambio puntual y registrar su validación. Si el usuario pide esperar antes de implementar, esperar. No solicitar de nuevo permisos para lo ya autorizado.
 
-Después de #206, el usuario probó publicación y chat en dos teléfonos y autorizó las correcciones de la sección 14. Confirmó borrar para mí/para todos y pidió tonos todavía más discretos. Esa autorización terminó la espera mientras enumeraba observaciones. La entrega #207 está verificada automáticamente; la aceptación física sigue pendiente.
+Después de #206, el usuario probó publicación y chat en dos teléfonos y autorizó las correcciones de la sección 14. Confirmó borrar para mí/para todos y pidió tonos todavía más discretos. Esa autorización terminó la espera mientras enumeraba observaciones. Después de #207 confirmó recepción inmediata y la bandeja; autorizó la fase nueva de la sección 15 con sus aclaraciones de borrado, diseño y branding.
 
 ## 2. Fuente de verdad y ubicación
 
@@ -20,8 +18,8 @@ Después de #206, el usuario probó publicación y chat en dos teléfonos y auto
 | --- | --- |
 | Repositorio | `alexandermezad80-dev/TokVid` |
 | Rama vigente | `feature/feed-mini-video-avatar` |
-| Código vigente APK #207 | `5485c9961f7bd1869468c92d7b5ec25c81262425` |
-| Árbol vigente | `881d419c7a1fa9a278cb4f08bd45fb1d619ddf17` |
+| Código vigente APK #210 | `dc04574d9b806ee73b2d75d8ba1036c1ac7475e3` |
+| Árbol vigente del binario | `4e30f2205e7d50ebd9b45e211e2b24957aeff362` |
 | Código histórico APK #204 | `a6e14783bbaede25f5f756f24250b7b62d9a85f0` |
 | Árbol de ese código | `3f52efddcc93abfd4aaaca0a0b68cd2a1ba4d9f1` |
 | Primer commit de los cuatro cambios | `619974503e9b3e0a7bfa4cd5a1e01d771871db36` |
@@ -31,9 +29,9 @@ Después de #206, el usuario probó publicación y chat en dos teléfonos y auto
 | Aplicación móvil | `artifacts/mobile` (Expo / React Native) |
 | Documento maestro | [TOKVID_MASTER_REQUIREMENTS.md](../requirements/TOKVID_MASTER_REQUIREMENTS.md) |
 
-Los cambios funcionales de esta entrega están en la rama vigente. No se afirma que se hayan fusionado a `main` o a la rama anterior. Verificar las referencias remotas si se retoma más adelante; no sobrescribir avances posteriores. Un commit documental posterior no cambia el commit incorporado en la APK #207.
+Los cambios funcionales de esta entrega están en la rama vigente. No se afirma que se hayan fusionado a `main` o a la rama anterior. Verificar las referencias remotas si se retoma más adelante; no sobrescribir avances posteriores. Un commit documental posterior no cambia el commit incorporado en la APK #210.
 
-## 3. Estado de los bloques de esta sesión
+## 3. Registro histórico de bloques anteriores (estado nuevo en sección 15)
 
 | Bloque | Estado vigente | Próxima comprobación |
 | --- | --- | --- |
@@ -237,7 +235,7 @@ La comprobación automática no sustituye galería, cámara, reproducción ni IM
 
 ## 14. Entrega #207 — mensajería y coherencia del perfil
 
-Esta sección sustituye como estado vigente los cierres anteriores. El usuario pidió continuar e implementar después de las observaciones; no queda una autorización pendiente para este bloque. Confirmó **Eliminar para mí / Eliminar para todos** y fondo/bordes aún más discretos que la imagen propuesta.
+Esta sección fue vigente al entregar #207; la sección 15 registra la entrega posterior y las aclaraciones del usuario. El usuario pidió continuar e implementar después de las observaciones; no queda una autorización pendiente para este bloque. Confirmó **Eliminar para mí / Eliminar para todos** y fondo/bordes aún más discretos que la imagen propuesta.
 
 Se corrigieron Inbox (join incorrecto), entrega en chat abierto (tablas fuera de Realtime), compositor Android, menús flotantes y selección/borrado. Se conectaron listas de relaciones, perfil propio único desde avatares/tab bar y ocultación del Follow propio. Grillas con tamaños explícitos conservan bordes, separación y marca de agua. [Detalle de archivos, decisiones, migraciones y pruebas](../PRIVATE_MESSAGES_PROFILE_VALIDATION.md).
 
@@ -263,3 +261,27 @@ El usuario preguntó qué se destruiría con SQL: se explicó el alcance anterio
 El archivo [APK_207_VERIFICATION.json](APK_207_VERIFICATION.json) registra identidades del binario y sus artefactos. El documento maestro y CONTINUAR_AQUI se actualizan con esta misma entrega; no recompilar por el cierre documental.
 
 **Pendiente real:** prueba física #207 en ambos teléfonos de recepción, teclado/emojis, opciones y borrado; confirmar grilla del video ya existente, rutas propias y relaciones. Pruebas automáticas no certifican esos gestos nativos. Continuar desde observaciones del usuario; no restaurar #206 ni rehacer funciones aprobadas.
+
+## 15. Entrega vigente #210 — mensajería, adaptación y branding
+
+El usuario autorizó implementar esta fase y confirmó que **«Eliminar todos» oculta solo sus enviados y solo de su vista**. No confundirlo con «Eliminar para todos» del mensaje propio tocado, ni con ocultar toda una conversación desde Inbox. Se preservó la recepción inmediata y bandeja que confirmó físicamente en #207. Su pausa mientras daba observaciones terminó con su autorización expresa; no volver a pedirla.
+
+Incluye popovers por autoría, respuestas/reenvío/copia/anclado/traducción, reacciones, estilos discretos y compactos, pantalla completa de detalles, medios/audio privados, grupos básicos de texto, preferencias/bloqueo, actividad agrupada, teclado/áreas seguras/escala y branding real. [Alcance, archivos, límites y aceptación](../MESSAGING_PHASE_2.md). El ZIP sí estaba en main: `identidad-visual-TV.zip`, blob `8bc94f0534759378b460dc5228aa8ea200429c70`. Se incorporó solo el kit, sin mezclar otras diferencias de main. Recursos vectoriales y tiendas conservados.
+
+| Evidencia | Valor |
+| --- | --- |
+| Código del binario | `dc04574d9b806ee73b2d75d8ba1036c1ac7475e3` |
+| Árbol | `4e30f2205e7d50ebd9b45e211e2b24957aeff362` |
+| CI | [Android APK #210](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38154309109), intento 1, success |
+| Job | `114514004194` |
+| Pruebas / TypeScript | 127 aprobadas, 0 fallidas / aprobado |
+| Compilación nativa | `BUILD SUCCESSFUL in 26m 36s` |
+| APK | [Descarga](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38154309109/artifacts/11707879434), artefacto `11707879434` |
+| ZIP | 244212442 bytes |
+| SHA256 del APK | `6d8910e865ea6de794061fce57220d74dee4c7876e9d09b9400b451fa0bc6292` |
+| Mapa de fuentes | Artefacto `11708725439`, del mismo código |
+| Retención | 9 de enero de 2027; comprobar disponibilidad futura |
+
+Las cinco migraciones de fase enumeradas en [el manifiesto](APK_210_VERIFICATION.json) están aplicadas; no reaplicarlas ni editar el historial. `calls` v6 agrega el respeto de silencio de llamadas y conserva su autenticación interna. Pruebas SQL de mensajería, herramientas, grupos, actividad y privacidad de medios aprobadas con rollback, sin borrar datos reales. Dos correcciones de RLS/idempotencia detectadas en esas pruebas están registradas como migraciones adicionales, no como una reescritura del historial.
+
+**Siguiente paso:** instalar #210 en ambos teléfonos y seguir la lista de aceptación física. No certificar teléfonos específicos ni todos los modelos por haber compilado. Traducción Android local, grupos de texto básicos (200 recientes), medios personales de hasta 50 MB y aviso superior dentro de la app tienen los límites descritos en el detalle. La entrega documental no requiere otro APK. Continuar con observaciones del usuario, sin iniciar automáticamente los demás bloques futuros del maestro.

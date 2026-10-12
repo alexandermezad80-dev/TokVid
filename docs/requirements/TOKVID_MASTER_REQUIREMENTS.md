@@ -1,20 +1,18 @@
-> **11 de octubre de 2026 — fase nueva autorizada en implementación.** El usuario confirmó recepción inmediata y contador/vista previa de Mensajes en #207. Solicitó nuevos menús, ajustes, privacidad, actividad agrupada, teclado, adaptación general y branding. Ver [registro de fase](https://github.com/alexandermezad80-dev/TokVid/blob/feature/feed-mini-video-avatar/docs/MESSAGING_PHASE_2.md). Último APK entregado continúa siendo #207 hasta registrar la nueva compilación. «Eliminar todos» oculta solo mis mensajes y solo para mí. El ZIP sí llegó a main y ya fue extraído.
-
 # TOKVID
 
-## Continuidad vigente — entrega del 9 de octubre de 2026
+## Continuidad vigente — entrega del 12 de octubre de 2026
 
-**Última entrega: [APK #207](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37886244472/artifacts/11597441070)**, rama `feature/feed-mini-video-avatar`, código `5485c9961f7bd1869468c92d7b5ec25c81262425`. [CI](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37886244472) verificada: **124 pruebas aprobadas, cero fallos, typecheck móvil y compilación Android correctos** (`BUILD SUCCESSFUL in 27m 29s`). La prueba física de esta versión está pendiente; no confundir validación automática con aprobación en teléfono.
+**Última entrega: [APK #210](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38154309109/artifacts/11707879434)**, rama `feature/feed-mini-video-avatar`, código `dc04574d9b806ee73b2d75d8ba1036c1ac7475e3`. [CI](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38154309109) aprobada: **127 pruebas, cero fallos, TypeScript móvil y compilación Android correctos** (`BUILD SUCCESSFUL in 26m 36s`). [Manifiesto](../continuity/APK_210_VERIFICATION.json). La aceptación física de #210 está pendiente. El usuario sí confirmó la recepción inmediata y bandeja/contador de la base #207.
 
-**Alcance autorizado y entregado:** bandeja privada independiente de Actividad, mensajes en el chat abierto, recuperación al reconectar, compositor sobre teclado/emojis, popover flotante y selector de burbujas con fondo/bordes más discretos. Selección individual/varios/todos; propios con **Eliminar para mí / Eliminar para todos**, recibidos solo para mí. Autoría y acceso por participantes verificados en servidor. Perfil propio unificado desde avatares/tab bar, sin Seguir en video propio, grilla medida y acceso a Siguiendo/Seguidores/Amigos mutuos. [Evidencia, migraciones y prueba física](../PRIVATE_MESSAGES_PROFILE_VALIDATION.md).
+**Alcance autorizado e implementado:** popovers por autoría y reacciones; respuestas, reenvío, copiar, anclar, traducción Android, denuncia y borrado con permisos; estilos compactos sin neón; detalles en pantalla completa, buscar en conversación, grupos de texto, preferencias y bloqueo; cámara/galería/audio en chat personal; Actividad agrupada por persona/tipo con contador; teclado, áreas seguras y escala general; kit real de branding integrado en icono/splash/favicon/marca de agua. [Decisiones, archivos, evidencia y límites](../MESSAGING_PHASE_2.md).
 
-El usuario autorizó implementar después de enumerar observaciones de #206 y confirmó las dos modalidades de borrado. La espera previa terminó; no volver a pedir permiso para ese alcance. Su petición de conservar lo aprobado continúa vigente. El video real ya existía y era visible para su propietario en la base; se corrigió el tamaño de la grilla sin volver a subir ni alterar contenido. No se borraron conversaciones, perfiles ni videos existentes. Las pruebas SQL se revirtieron; el `DROP` de la segunda migración reemplaza únicamente el trigger/función de aviso recién añadidos para evitar duplicaciones con clientes anteriores.
+**Aclaración vigente:** «Eliminar todos» selecciona únicamente mensajes que yo envié en esa conversación y los oculta **solo para mí**. «Eliminar para todos» afecta únicamente al mensaje propio tocado. Ocultar conversación desde Inbox quita su historial solo de mi vista; un mensaje nuevo la vuelve a mostrar. Esto sustituye interpretaciones previas de borrado masivo de ambos lados.
 
-**Leer primero [CONTINUAR_AQUI.md](../../CONTINUAR_AQUI.md) y [el estado entre sesiones](../continuity/TOKVID_SESSION_HANDOFF.md).** Conservar Auth/OTP de ocho dígitos, publicación real, diseño y permisos de comentarios y video pequeño al comentar. El borrado privado no reemplaza la cascada de comentarios públicos.
+Las cinco migraciones de fase están aplicadas; pruebas SQL revertidas sin borrar datos existentes. `calls` v6 respeta llamadas silenciadas. Auth/OTP, publicación, comentarios y video pequeño se conservan. El branding ya llegó: `identidad-visual-TV.zip` de main; no queda pendiente pedirlo.
 
-**Siguiente paso:** instalar #207 en ambos teléfonos, intercambiar mensajes manteniendo ambos chats abiertos y comprobar bandeja sin tocar Actividad; probar teclado/emojis, borrado privado/para todos, selector de burbujas, grilla propia, rutas del perfil y relaciones. Las APK #206 y anteriores son históricas. No marcar ninguna de estas pruebas físicas como completada hasta la confirmación del usuario.
+**Leer primero [CONTINUAR_AQUI.md](../../CONTINUAR_AQUI.md) y [handoff, sección 15](../continuity/TOKVID_SESSION_HANDOFF.md).** Siguiente paso: instalar #210 en ambos teléfonos y revisar teclado, escala/navegación Android, menús, adjuntos, actividad y branding. Adaptación implementada por dimensiones/insets; no afirmar pruebas en todos los teléfonos. Crear grupo es básico de texto; traducción local es Android; el aviso superior nuevo es dentro de la app. Detalle y lista de aceptación en el documento de fase.
 
-Este documento conserva requisitos futuros e historial; no autoriza iniciar otro bloque automáticamente. Los ejemplos de Para ti permanecen según la decisión previa; la grilla propia y Siguiendo muestran publicaciones reales.
+Las versiones anteriores y auditorías siguientes son historial; esta cabecera y las aclaraciones posteriores prevalecen. No iniciar otros bloques automáticamente ni rehacer lo confirmado.
 
 Documento maestro de requisitos y visión del proyecto
 
@@ -83,24 +81,18 @@ TokVid debe permitir:
 
 ## 5. MENSAJES PRIVADOS
 
-Sistema de mensajería privada entre usuarios.
+Mensajería privada entre participantes. La recepción inmediata en ambos sentidos y bandeja única con contador/vista previa fueron confirmadas por el usuario en #207. La fase #210 conserva esa base e implementa:
 
-Funciones:
+- Menú recibido: Responder, Reenviar, Anclar, Eliminar para mí, Denunciar.
+- Menú propio: Responder, Reenviar, Copiar, Anclar, Traducir, Estilo de burbuja, Eliminar para mí, Eliminar para todos, Eliminar todos, Cancelar envío antes de lectura.
+- Barra de reacciones nativas asociadas al mensaje; submenú compacto de estilos. Texto blanco legible y solo «Eliminar» con cian discreto.
+- «Eliminar todos»: selección de mis enviados, ocultación solo para mí. «Eliminar para todos»: solo el propio mensaje tocado. Cancelar envío exige que el destinatario no lo haya leído.
+- Menú de conversación en Inbox: ocultar perfil/historial solo para mí; un mensaje nuevo vuelve a mostrarla. No borra la cuenta de la persona.
+- Encabezado con volver, avatar/nombre, teléfono y tres líneas. Pantalla completa de detalles: grupo, perfil, buscar dentro del chat, burbujas, fondo, tono, silenciar mensajes/llamadas, denunciar; tres puntos para bloquear.
+- Compositor con cámara, texto, galería, micrófono/envío; visible sobre teclado con encabezado estable e historial desplazable.
+- Adjuntos privados personales y grupos básicos de texto, con los límites y validación de [MESSAGING_PHASE_2](../MESSAGING_PHASE_2.md).
 
-- Conversaciones.
-- Envío y recepción de mensajes.
-- Notificaciones.
-- Eliminar un mensaje individual.
-- Seleccionar varios mensajes y eliminarlos.
-- Eliminar todos los mensajes de una conversación de una vez.
-- Eliminar/vaciar una conversación.
-
-Definir claramente la diferencia entre:
-
-- Eliminar para mí.
-- Eliminar para todos, si TokVid decide habilitarlo.
-
-Las operaciones deben respetar privacidad, permisos y RLS.
+Autoría, privacidad, bloqueo y visibilidad se validan en servidor mediante permisos/RLS y RPC. No acceder a conversaciones ajenas. #210 está verificada automáticamente; aceptación física pendiente.
 
 ## 6. LLAMADAS Y VIDEOLLAMADAS
 
@@ -152,13 +144,13 @@ Reglas técnicas cerradas:
 
 - Un único componente reutilizable `Bubble`, parametrizado por variante, dirección (enviado/recibido) y posición dentro del grupo (single/first/middle/last).
 - La posición del grupo es un dato derivado en cliente; no se almacena en la base de datos.
-- La preferencia de estilo se conserva en almacenamiento local del usuario.
+- En #210 la preferencia de estilo por usuario y conversación se conserva en `chat_preferences`, protegida por RLS; sustituye la regla previa exclusivamente local.
 - Los estilos no crean nuevos tipos de mensajes ni modifican el modelo de `messages`.
 - La implementación usa los tokens visuales definidos en el catálogo Bubbles y los SVG entregados como referencia vectorial.
 - La selección se realiza desde el selector de Bubbles dentro de Messages.
-- No requiere migraciones ni cambios de esquema en Supabase.
+- La fase #210 añade preferencias privadas mediante la migración registrada de herramientas de chat; las burbujas siguen sin cambiar el tipo del mensaje.
 
-**Estado de implementación:** 🟢 integrado en el chat de la rama de trabajo.
+**Estado de implementación:** integrado en #210; ocho variantes conservadas, colores/bordes discretos, sin glow de texto y selector compacto. Aceptación física del nuevo aspecto pendiente.
 
 ## 8. LIVE
 
@@ -599,7 +591,7 @@ El objetivo es equilibrar:
 
 ## 20. NOTIFICACIONES
 
-Área propia de notificaciones.
+Área propia de notificaciones. En #210 Actividad agrupa por destinatario, persona y tipo con contador, en lugar de duplicar filas de una misma interacción. Mensajes mantiene su lista privada de conversaciones independiente. Likes, mensajes, compartidas y visitas usan grupos separados; aviso superior contextual dentro de la app. No confundir esta implementación con completar todos los tipos futuros de la lista siguiente.
 
 Debe contemplar:
 
@@ -3004,3 +2996,7 @@ El SQL de prueba se revirtió y no dejó publicaciones. La migración `202610080
 ## Cierre de entrega — 9 de octubre de 2026, APK #207
 
 La entrega vigente es #207, código `5485c9961f7bd1869468c92d7b5ec25c81262425`: 124 pruebas, typecheck y compilación Android aprobados. Las dos migraciones privadas están aplicadas y la prueba SQL se revirtió. [APK](https://github.com/alexandermezad80-dev/TokVid/actions/runs/37886244472/artifacts/11597441070), [manifiesto](../continuity/APK_207_VERIFICATION.json) y [validación/aceptación](../PRIVATE_MESSAGES_PROFILE_VALIDATION.md). La cabecera vigente y la sección 14 del handoff sustituyen estados anteriores de APK pendiente o #206 como última entrega. Falta únicamente la confirmación física del usuario con ambos teléfonos y sus nuevas observaciones; no rehacer lo aprobado ni cambiar Auth/OTP.
+
+## Cierre de entrega — 12 de octubre de 2026, APK #210
+
+La cabecera vigente, la sección 15 del handoff y MESSAGING_PHASE_2 sustituyen #207 como última entrega y toda nota previa de esta fase «en implementación». Código y binario verificados, 127 pruebas y TypeScript aprobados, SQL privado revertido aprobado y branding integrado. Pendiente la prueba física de esta versión; preservar las funciones ya confirmadas. El registro completo de artefactos y migraciones está en [APK_210_VERIFICATION.json](../continuity/APK_210_VERIFICATION.json).
