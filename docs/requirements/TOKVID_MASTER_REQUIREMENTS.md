@@ -3000,3 +3000,8 @@ La entrega vigente es #207, código `5485c9961f7bd1869468c92d7b5ec25c81262425`: 
 ## Cierre de entrega — 12 de octubre de 2026, APK #210
 
 La cabecera vigente, la sección 15 del handoff y MESSAGING_PHASE_2 sustituyen #207 como última entrega y toda nota previa de esta fase «en implementación». Código y binario verificados, 127 pruebas y TypeScript aprobados, SQL privado revertido aprobado y branding integrado. Pendiente la prueba física de esta versión; preservar las funciones ya confirmadas. El registro completo de artefactos y migraciones está en [APK_210_VERIFICATION.json](../continuity/APK_210_VERIFICATION.json).
+
+
+## Fase 3 — referencias autorizadas, 13 de octubre de 2026
+
+Ver [registro de fase 3](/docs/TOKVID_REFERENCE_DESIGNS_PHASE_3.md). El usuario confirmó Buscar puntual con teclado, y Saldo/Suscripción visibles y deshabilitados. Branding #210 aprobado; editor oculto de #210 NO resuelto físicamente. Se aplicaron los ZIP sobre la rama vigente y se están verificando para nueva APK. Borrado individual solo por autor; esta aclaración sustituye la moderación individual por propietario de publicación. Migración `20261013102948_comment_removal_author_only` aplicada, prueba revertida aprobada. Registrar artefactos y commit final antes de cerrar.

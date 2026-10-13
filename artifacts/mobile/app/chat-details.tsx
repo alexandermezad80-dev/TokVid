@@ -16,7 +16,7 @@ export default function ChatDetails(){
  const dark=useColorScheme()!=="light",colors=chatPalette(dark),styles=makeStyles(colors);
  const [wallpaper,setWallpaper]=useState("none"),[preview,setPreview]=useState<string|null>(null);
  const searchInput=useRef<TextInput>(null);
- useEffect(()=>{let active=true;if(user)void readChatWallpaper(user.id,conversationId).then(id=>{if(active)setWallpaper(id);});return()=>{active=false;};},[user?.id,conversationId]);
+ useEffect(()=>{let active=true;setWallpaper("none");if(user)void readChatWallpaper(user.id,conversationId).then(id=>{if(active)setWallpaper(id);}).catch(()=>{});return()=>{active=false;};},[user?.id,conversationId]);
  const [other,setOther]=useState<{id:string;username:string;avatar_url:string|null}|null>(null),[prefs,setPrefs]=useState(DEFAULT_CHAT_PREFERENCES),[busy,setBusy]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState("");
  const [section,setSection]=useState<"bubbles"|"background"|"tone"|"search"|null>(null),[overflow,setOverflow]=useState(false),[blocked,setBlocked]=useState(false),[query,setQuery]=useState(""),[results,setResults]=useState<PrivateMessage[]>([]);
  const fail=(e:unknown)=>Alert.alert("No se pudo completar",e instanceof Error?e.message:"Inténtalo de nuevo.");

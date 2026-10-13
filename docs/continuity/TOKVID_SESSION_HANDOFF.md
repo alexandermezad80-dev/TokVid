@@ -285,3 +285,8 @@ Incluye popovers por autoría, respuestas/reenvío/copia/anclado/traducción, re
 Las cinco migraciones de fase enumeradas en [el manifiesto](APK_210_VERIFICATION.json) están aplicadas; no reaplicarlas ni editar el historial. `calls` v6 agrega el respeto de silencio de llamadas y conserva su autenticación interna. Pruebas SQL de mensajería, herramientas, grupos, actividad y privacidad de medios aprobadas con rollback, sin borrar datos reales. Dos correcciones de RLS/idempotencia detectadas en esas pruebas están registradas como migraciones adicionales, no como una reescritura del historial.
 
 **Siguiente paso:** instalar #210 en ambos teléfonos y seguir la lista de aceptación física. No certificar teléfonos específicos ni todos los modelos por haber compilado. Traducción Android local, grupos de texto básicos (200 recientes), medios personales de hasta 50 MB y aviso superior dentro de la app tienen los límites descritos en el detalle. La entrega documental no requiere otro APK. Continuar con observaciones del usuario, sin iniciar automáticamente los demás bloques futuros del maestro.
+
+
+## Fase 3 — referencias autorizadas, 13 de octubre de 2026
+
+Ver [registro de fase 3](/docs/TOKVID_REFERENCE_DESIGNS_PHASE_3.md). El usuario confirmó Buscar puntual con teclado, y Saldo/Suscripción visibles y deshabilitados. Branding #210 aprobado; editor oculto de #210 NO resuelto físicamente. Se aplicaron los ZIP sobre la rama vigente y se están verificando para nueva APK. Borrado individual solo por autor; esta aclaración sustituye la moderación individual por propietario de publicación. Migración `20261013102948_comment_removal_author_only` aplicada, prueba revertida aprobada. Registrar artefactos y commit final antes de cerrar.

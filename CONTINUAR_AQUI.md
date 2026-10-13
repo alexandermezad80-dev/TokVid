@@ -50,3 +50,8 @@ La compilación y las verificaciones automáticas están completas. **La aceptac
 **Frase para otra sesión:**
 
 > Continuemos TokVid desde `feature/feed-mini-video-avatar`. Lee CONTINUAR_AQUI, el handoff y el maestro. Última entrega APK #210, código `dc04574d9b806ee73b2d75d8ba1036c1ac7475e3`. Las mejoras autorizadas de mensajería, adaptación y branding están compiladas y verificadas automáticamente. Retoma desde mi prueba física con dos cuentas. Conserva lo aprobado.
+
+
+## Fase 3 — referencias autorizadas, 13 de octubre de 2026
+
+Ver [registro de fase 3](/docs/TOKVID_REFERENCE_DESIGNS_PHASE_3.md). El usuario confirmó Buscar puntual con teclado, y Saldo/Suscripción visibles y deshabilitados. Branding #210 aprobado; editor oculto de #210 NO resuelto físicamente. Se aplicaron los ZIP sobre la rama vigente y se están verificando para nueva APK. Borrado individual solo por autor; esta aclaración sustituye la moderación individual por propietario de publicación. Migración `20261013102948_comment_removal_author_only` aplicada, prueba revertida aprobada. Registrar artefactos y commit final antes de cerrar.

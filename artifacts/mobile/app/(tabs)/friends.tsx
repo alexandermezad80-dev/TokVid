@@ -1,6 +1,7 @@
 import {useMyConnections} from "../../hooks/useMyConnections";
 import {openPrivateConversation} from "../../lib/features/messages/services/private-messages";
 import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
+import {LinearGradient} from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -54,19 +55,20 @@ function FollowAction({ person }: { person: Person }) {
 
   return (
     <TouchableOpacity
-      style={[styles.followButton, following && styles.followingButton]}
+      style={styles.followButton}
       onPress={() => toggleFollow(person.id)}
       disabled={loading}
       activeOpacity={0.8}
     >
+      <LinearGradient pointerEvents="none" colors={["#25989D","#BA6B92"]} start={{x:0,y:0}} end={{x:1,y:1}} style={[StyleSheet.absoluteFill,{borderRadius:16}]}/><View pointerEvents="none" style={[StyleSheet.absoluteFill,{margin:1,borderRadius:15,backgroundColor:following?"#161823":"#284349"}]}/>
       {loading ? (
-        <ActivityIndicator size="small" color={following ? "#FE0979" : "#fff"} />
+        <ActivityIndicator size="small" color="#FFF" />
       ) : (
         <>
           <Feather
             name={following ? "check" : "user-plus"}
             size={14}
-            color={following ? "#FE0979" : "#fff"}
+            color="#FFF"
           />
           <Text style={[styles.followButtonText, following && styles.followingButtonText]}>
             {following ? "Siguiendo" : "Seguir"}
@@ -215,7 +217,7 @@ export default function FriendsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+      <View style={[styles.header, { paddingTop: insets.top,height:insets.top+52 }]}>
         <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
           <Feather name="arrow-left" size={22} color="#fff" />
         </TouchableOpacity>
@@ -302,10 +304,10 @@ export default function FriendsScreen() {
             >
               <Image source={{ uri: getAvatar(person) }} style={styles.avatar} />
               <View style={styles.personInfo}>
-                <Text style={styles.username} numberOfLines={1}>
+                <Text maxFontSizeMultiplier={1.2} style={styles.username} numberOfLines={1}>
                   {person.username}
                 </Text>
-                <Text style={styles.secondaryText} numberOfLines={1}>
+                <Text maxFontSizeMultiplier={1.2} style={styles.secondaryText} numberOfLines={1}>
                   @{person.username}
                 </Text>
               </View>
@@ -330,7 +332,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
-    paddingBottom: 12,
+    paddingBottom: 0,
     borderBottomWidth: 1,
     borderBottomColor: "#2C2C2E",
   },
@@ -345,30 +347,30 @@ const styles = StyleSheet.create({
   headerSubtitle: { color: "#8A8B97", fontSize: 11, marginTop: 2 },
   tabs: {
     flexDirection: "row",
-    margin: 12,
-    padding: 3,
+    marginHorizontal:16,marginVertical:12,
+    height:44,padding:0,
     borderRadius: 12,
     backgroundColor: "#161823",
   },
   tab: {
     flex: 1,
-    minHeight: 42,
+    minHeight: 44,
     borderRadius: 10,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 5,
   },
-  tabActive: { backgroundColor: "#FE0979" },
+  tabActive: { backgroundColor: "#253C43" },
   tabText: { color: "#8A8B97", fontSize: 12, fontWeight: "700" },
   tabTextActive: { color: "#fff" },
   searchBox: {
     flexDirection: "row",
     alignItems: "center",
-    marginHorizontal: 12,
+    marginHorizontal: 16,
     marginBottom: 8,
     paddingHorizontal: 13,
-    height: 44,
+    height: 40,
     borderRadius: 12,
     backgroundColor: "#161823",
     borderWidth: 1,
@@ -381,18 +383,18 @@ const styles = StyleSheet.create({
     marginLeft: 9,
     paddingVertical: 0,
   },
-  list: { flex: 1, paddingHorizontal: 12 },
+  list: { flex: 1, paddingHorizontal: 16 },
   personRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 10,
+    minHeight:64,paddingVertical:10,
     borderBottomWidth: 1,
     borderBottomColor: "#1C1C1E",
   },
   avatar: {
     width: 44,
     height: 44,
-    borderRadius: 26,
+    borderRadius: 22,
     backgroundColor: "#161823",
     borderWidth: 1,
     borderColor: "#2C2C2E",
@@ -401,7 +403,7 @@ const styles = StyleSheet.create({
   username: { color: "#fff", fontSize: 15, fontWeight: "700" },
   secondaryText: { color: "#8A8B97", fontSize: 12.5, marginTop: 3 },
   followButton: {
-    minWidth: 105,
+    minWidth: 96,
     height: 32,
     paddingHorizontal: 12,
     borderRadius: 10,
@@ -417,7 +419,7 @@ const styles = StyleSheet.create({
     borderColor: "#FE0979",
   },
   followButtonText: { color: "#fff", fontSize: 12, fontWeight: "800" },
-  followingButtonText: { color: "#FE0979" },
+  followingButtonText: { color: "#FFFFFF" },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10 },
   centerText: { color: "#8A8B97", fontSize: 13 },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 35, gap: 10 },

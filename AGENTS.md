@@ -13,7 +13,7 @@
 - Conservar las funciones, diseños, permisos y decisiones aprobados. No rediseñar ni reescribir bloques terminados sin una necesidad concreta.
 - Una actualización puede proceder de una petición del usuario, de un defecto comprobado o de un requisito técnico necesario para el trabajo autorizado. Explicar su motivo y alcance antes de implementarla y limitar el cambio a esa necesidad.
 - Respetar las autorizaciones de la conversación. No volver a pedir autorización para el mismo trabajo ya autorizado. Si el usuario pide esperar antes de implementar un nuevo cambio, esperar.
-- No reabrir decisiones resueltas: borrado principal en cascada, edición exclusiva del autor, moderación sin edición ajena, panel de comentarios de ancho completo, popovers flotantes y video pequeño vertical al comentar.
+- No reabrir decisiones resueltas: borrado principal en cascada, edición exclusiva del autor, borrado individual exclusivo del autor (la aclaración de fase 3 sustituye la moderación ajena), panel de comentarios de ancho completo, popovers flotantes y video pequeño vertical al comentar.
 - Conservar el registro por correo y OTP de ocho dígitos, que el usuario confirmó que funcionaba. Un fallo del feed después de Google no justifica cambiar ese registro ni recrear tokens.
 - No marcar una función como probada en teléfono por haber pasado tests o generado una APK.
 - No sustituir secretos ni modificar Auth, proveedores o migraciones por una tarea exclusivamente documental.

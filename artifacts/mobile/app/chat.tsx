@@ -32,7 +32,7 @@ export default function ChatScreen(){
  const [focused,setFocused]=useState(false),[text,setText]=useState(""),[prefs,setPrefs]=useState<ChatPreferences>(DEFAULT_CHAT_PREFERENCES);
  const keyboardLayout=useOverlayKeyboard(focused);
  const [wallpaper,setWallpaper]=useState("none");
- useFocusEffect(useCallback(()=>{let active=true;if(user)void readChatWallpaper(user.id,conversationId).then(id=>{if(active)setWallpaper(id);});return()=>{active=false;};},[user?.id,conversationId]));
+ useFocusEffect(useCallback(()=>{let active=true;setWallpaper("none");if(user)void readChatWallpaper(user.id,conversationId).then(id=>{if(active)setWallpaper(id);}).catch(()=>{});return()=>{active=false;};},[user?.id,conversationId]));
  const [composerHeight,setComposerHeight]=useState(70);
  const [anchor,setAnchor]=useState<Anchor|null>(null),[target,setTarget]=useState<string|null>(null),[page,setPage]=useState<MessageMenuPage>("options");
  const [reply,setReply]=useState<PrivateMessage|null>(null),[busy,setBusy]=useState(false),[keyboard,setKeyboard]=useState(false);
