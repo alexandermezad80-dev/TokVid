@@ -22,6 +22,7 @@ import {
 import { supabase } from "../../lib/supabase";
 import CommentsSheet from "../../components/CommentsSheet";
 import Toast from "../../components/Toast";
+import VideoShareSheet from "../../components/VideoShareSheet";
 import VideoCard from "../../components/VideoCard";
 import { useAuth } from "../../context/AuthContext";
 import { useFollow } from "../../context/FollowContext";
@@ -39,6 +40,8 @@ export default function FeedScreen() {
   const [commentVideo, setCommentVideo] = useState<VideoItem | null>(null);
   const [previewFrame, setPreviewFrame] = useState<VideoPreviewFrame | null>(null);
   const closeComments = useCallback(() => { setCommentVideo(null); setPreviewFrame(null); }, []);
+  const [shareVideo,setShareVideo]=useState<VideoItem|null>(null);
+  const [hiddenVideos,setHiddenVideos]=useState<Set<string>>(new Set());
   const [shareOverrides, setShareOverrides] = useState<Record<string, number>>({});
   const [toastMsg, setToastMsg] = useState("");
   const [toastVisible, setToastVisible] = useState(false);
@@ -237,7 +240,7 @@ ${item.uri}`,
             }
             setCommentVideo(item);
           }}
-          onShare={() => handleShare(item)}
+          onShare={() => {if(!user)requestRegistration();else setShareVideo(item);}}
           onSave={() => !user ? registerFor("favorite", item) : (clearApplied("favorite", item.id), toggleSave(item.id))}
           onDelete={() => handleDelete(item)}
           isGuest={isGuest}
@@ -264,20 +267,20 @@ ${item.uri}`,
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityState={{ selected: feedMode === "forYou" }}
-            style={{flex:1,minHeight:44,justifyContent:"center",alignItems:"center"}}
+            style={{minHeight:44,paddingHorizontal:8,justifyContent:"center",alignItems:"center"}}
             accessibilityLabel="Para ti"
           >
-            <Text numberOfLines={1} maxFontSizeMultiplier={1.6} style={feedMode === "forYou" ? styles.feedModeActive : styles.feedModeInactive}>Para ti</Text>
+            <Text numberOfLines={1} maxFontSizeMultiplier={1.2} style={feedMode === "forYou" ? styles.feedModeActive : styles.feedModeInactive}>Para ti</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => selectFeed("following")}
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityState={{ selected: feedMode === "following" }}
-            style={{flex:1,minHeight:44,justifyContent:"center",alignItems:"center"}}
+            style={{minHeight:44,paddingHorizontal:8,justifyContent:"center",alignItems:"center"}}
             accessibilityLabel="Siguiendo"
           >
-            <Text numberOfLines={1} maxFontSizeMultiplier={1.6} style={feedMode === "following" ? styles.feedModeActive : styles.feedModeInactive}>Siguiendo</Text>
+            <Text numberOfLines={1} maxFontSizeMultiplier={1.2} style={feedMode === "following" ? styles.feedModeActive : styles.feedModeInactive}>Siguiendo</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => router.push("/search")}
@@ -293,7 +296,7 @@ ${item.uri}`,
 
       <FlatList
           ref={flatListRef}
-          data={videos}
+          data={videos.filter(v=>!hiddenVideos.has(v.id))}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           pagingEnabled
@@ -335,6 +338,7 @@ ${item.uri}`,
           windowSize={3}
         />
       </View>
+      <VideoShareSheet video={shareVideo} onClose={()=>setShareVideo(null)} onShare={handleShare} onDelete={handleDelete} onHide={id=>setHiddenVideos(prev=>new Set([...prev,id]))}/>
       <CommentsSheet
         overTabBar
         showVideoPreview
@@ -372,11 +376,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     flex: 1,
-    maxWidth: 420,
+    justifyContent:"center",
+    paddingRight:44,
   },
   feedModeActive: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "800",
     textShadowColor: "rgba(0,0,0,0.65)",
     textShadowOffset: { width: 0, height: 1 },
@@ -384,7 +389,7 @@ const styles = StyleSheet.create({
   },
   feedModeInactive: {
     color: "rgba(255,255,255,0.68)",
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: "600",
     textShadowColor: "rgba(0,0,0,0.65)",
     textShadowOffset: { width: 0, height: 1 },
@@ -395,7 +400,7 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: 2,
+    position:"absolute",right:0,
   },
   errorBanner: {
     position: "absolute",

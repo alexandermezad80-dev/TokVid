@@ -3,6 +3,7 @@ import { useVideoPlayer, VideoView } from "expo-video";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Dimensions,
+  useWindowDimensions,
   Image,
   Text,
   ActivityIndicator,
@@ -13,7 +14,7 @@ import {
 import { VideoItem, formatCount } from "../hooks/useVideoFeed";
 import VideoActions from "./VideoActions";
 import VideoInfo from "./VideoInfo";
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing } from "react-native-reanimated";
 import type { VideoPreviewFrame } from "../lib/commentVideoLayout";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -62,6 +63,7 @@ export default function VideoCard({
   onAvatarPress,
   isGuest, suspended, commentCue, commentCount, likeCount, previewFrame, followPending, onPosition, registerPlayback, restorePosition, restorePaused, restoreRequest,
 }: Props) {
+  const {width:SCREEN_WIDTH,height:SCREEN_HEIGHT}=useWindowDimensions();
   const isImage = video.mediaType === "image";
   const [paused, setPaused] = useState(false);
   const [playbackError, setPlaybackError] = useState(false);
@@ -80,14 +82,14 @@ export default function VideoCard({
     if (previewFrame && isActive) {
       containerRef.current?.measureInWindow((x, y) => {
         if (!active) return;
-        videoFrame.value = withSpring({ left: previewFrame.x - x, top: previewFrame.y - y,
-          width: previewFrame.width, height: previewFrame.height, borderRadius: 16 }, { damping: 22, stiffness: 150 });
+        videoFrame.value = withTiming({ left: previewFrame.x - x, top: previewFrame.y - y,
+          width: previewFrame.width, height: previewFrame.height, borderRadius: 20 }, { duration:220,easing:Easing.out(Easing.cubic) });
       });
     } else {
-      videoFrame.value = withSpring({ left: 0, top: 0, width: SCREEN_WIDTH, height: SCREEN_HEIGHT, borderRadius: 0 }, { damping: 22, stiffness: 150 });
+      videoFrame.value = withTiming({ left: 0, top: 0, width: SCREEN_WIDTH, height: SCREEN_HEIGHT, borderRadius: 0 }, { duration:220,easing:Easing.out(Easing.cubic) });
     }
     return () => { active = false; };
-  }, [previewFrame?.x, previewFrame?.y, previewFrame?.width, previewFrame?.height, isActive, videoFrame]);
+  }, [previewFrame?.x, previewFrame?.y, previewFrame?.width, previewFrame?.height, isActive, videoFrame,SCREEN_WIDTH,SCREEN_HEIGHT]);
 
   const player = useVideoPlayer(isImage ? null : video.uri, (p) => {
     p.loop = true;
@@ -153,7 +155,7 @@ export default function VideoCard({
   }, []);
 
   return (
-    <Pressable ref={containerRef} onPress={handleTap} style={styles.container}>
+    <Pressable ref={containerRef} onPress={handleTap} style={[styles.container,{width:SCREEN_WIDTH,height:SCREEN_HEIGHT}]}>
       <Animated.View style={[styles.videoSurface, videoPresentation]}>
       {isImage ? <Image source={{ uri: video.uri }} style={styles.video} resizeMode="contain" /> : <VideoView
         player={player}

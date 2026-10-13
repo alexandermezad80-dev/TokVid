@@ -390,8 +390,8 @@ const styles = StyleSheet.create({
     borderBottomColor: "#1C1C1E",
   },
   avatar: {
-    width: 52,
-    height: 52,
+    width: 44,
+    height: 44,
     borderRadius: 26,
     backgroundColor: "#161823",
     borderWidth: 1,
@@ -399,10 +399,10 @@ const styles = StyleSheet.create({
   },
   personInfo: { flex: 1, marginHorizontal: 12, minWidth: 0 },
   username: { color: "#fff", fontSize: 15, fontWeight: "700" },
-  secondaryText: { color: "#8A8B97", fontSize: 12, marginTop: 3 },
+  secondaryText: { color: "#8A8B97", fontSize: 12.5, marginTop: 3 },
   followButton: {
     minWidth: 105,
-    height: 36,
+    height: 32,
     paddingHorizontal: 12,
     borderRadius: 10,
     backgroundColor: "#FE0979",
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     width: 36,
-    height: 36,
+    height: 32,
     borderRadius: 18,
     backgroundColor: "#1C1C1E",
     alignItems: "center",

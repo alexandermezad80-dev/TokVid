@@ -85,15 +85,26 @@ type BubbleProps = {
   groupPosition?: BubbleGroupPosition;
   styleVariant?: BubbleStyleVariant;
   timestamp?: string;
+  dark?: boolean;
+  preview?: boolean;
   onLongPress?: () => void;
   onPress?: () => void;
 };
 
 export default function Bubble({
   text, direction, groupPosition = "single", styleVariant = "classic",
-  timestamp, onLongPress, onPress,
+  timestamp, onLongPress, onPress, dark = true, preview = false,
 }: BubbleProps) {
-  const token = T[styleVariant][direction];
+  const token = {...T[styleVariant][direction]};
+  if(direction==="received"){token.bg=dark?"#1C1C1E":"#FFFFFF";token.color=dark?"#FFFFFF":"#0A0A0A";token.border=dark?"#2C2C2E":"#E5E5E5";}
+  else {token.bg="#7A64BE";token.color="#FFFFFF";token.border=undefined;
+    if(styleVariant==="minimal"){token.bg="transparent";token.border="#7A64BE";token.color=dark?"#FFFFFF":"#513C92";}
+    if(styleVariant==="glass"){token.bg="#7A64BE33";token.border="#7A64BE80";token.color=dark?"#FFFFFF":"#513C92";}
+    if(styleVariant==="neon"){token.bg="#7A64BE1F";token.border="#7A64BE99";token.color=dark?"#FFFFFF":"#513C92";}
+    if(styleVariant==="elegant"){token.bg=dark?"#FFFFFF":"#0A0A0A";token.color=dark?"#0A0A0A":"#FFFFFF";}
+  }
+  if(preview){token.px=15;token.py=8;token.fs=styleVariant==="compact"?12.5:14;token.lh=18;token.maxWidth="100%";}
+
   const [topLeft, topRight, bottomRight, bottomLeft] = radius(token, direction, groupPosition);
   const base: ViewStyle = {
     borderTopLeftRadius: topLeft,
@@ -109,6 +120,7 @@ export default function Bubble({
 
   const textNode = (
     <Text
+      maxFontSizeMultiplier={1.2}
       accessibilityLabel={(direction === "sent" ? "Enviado: " : "Recibido: ") + text + (timestamp ? ", " + timestamp : "")}
       style={[styles.text, { color: token.color, fontSize: token.fs, lineHeight: token.lh, fontWeight: token.fw }]}
     >
@@ -118,24 +130,8 @@ export default function Bubble({
 
   let visual: React.ReactNode = <View style={[styles.bubble, base]}>{textNode}</View>;
 
-  if (styleVariant === "glass") {
-    visual = <BlurView intensity={18} tint="dark" style={[styles.bubble, base]}>{textNode}</BlurView>;
-  }
-
-  if ((styleVariant === "classic" || styleVariant === "gradient") && direction === "sent") {
-    visual = (
-      <LinearGradient colors={["#304C56", "#493A4F"]} start={{x:0,y:0}} end={{x:1,y:1}} style={[styles.bubble, base]}>
-        {textNode}
-      </LinearGradient>
-    );
-  }
-
-  if (styleVariant === "gradient" && direction === "received") {
-    visual = (
-      <LinearGradient colors={["#30323F", "#28252F"]} start={{x:0,y:0}} end={{x:1,y:1}} style={[styles.bubble, base]}>
-        {textNode}
-      </LinearGradient>
-    );
+  if (styleVariant === "gradient" && direction === "sent") {
+    visual = <LinearGradient colors={["#208F9C", "#7A64BE"]} start={{x:0,y:0}} end={{x:1,y:1}} style={[styles.bubble, base]}>{textNode}</LinearGradient>;
   }
 
   return (

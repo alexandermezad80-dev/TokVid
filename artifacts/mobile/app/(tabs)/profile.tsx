@@ -8,6 +8,9 @@ import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
+  Modal,
+  Pressable,
+  useWindowDimensions,
   ActivityIndicator,
   Image,
   Platform,
@@ -30,9 +33,11 @@ function avatarUrl(user: any, profile: any): string {
 }
 
 export default function ProfileScreen() {
-  const gridLayout=usePublicationGrid();
+  const {width}=useWindowDimensions();
+  const gridLayout={onLayout:()=>{},tile:{width:(width-4)/3,height:(width-4)/3*4/3}};
+  const [expanded,setExpanded]=useState(false),[menu,setMenu]=useState(false);
   const connections=useMyConnections();
-  const [tab, setTab] = useState<"videos" | "liked" | "saved">("videos");
+  const [tab, setTab] = useState<"videos" | "stories" | "gallery" | "liked" | "saved">("videos");
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const { user, profile, signOut, refreshProfile } = useAuth();
@@ -84,78 +89,39 @@ export default function ProfileScreen() {
     n >= 1_000 ? `${(n / 1_000).toFixed(1)}K` : String(n);
 
   return (
-    <ScrollView onLayout={gridLayout.onLayout} style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={[styles.header, { paddingTop: topPad + 10 }]}>
-        <TouchableOpacity style={styles.menuBtn}>
-          <Feather name="menu" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.handle} numberOfLines={1} ellipsizeMode="tail">{handle}</Text>
-        <TouchableOpacity style={styles.menuBtn} onPress={handleSignOut} accessibilityRole="button" accessibilityLabel="Cerrar sesión">
-          <Feather name="log-out" size={22} color="#fff" />
-        </TouchableOpacity>
+    <View style={styles.container}>
+      <View style={[styles.header,{paddingTop:topPad,height:topPad+48}]}>
+        <TouchableOpacity style={styles.menuBtn} onPress={()=>setMenu(true)} accessibilityLabel="Recursos"><Feather name="menu" size={24} color="#FFF"/></TouchableOpacity>
+        <TouchableOpacity style={styles.menuBtn} onPress={()=>router.push({pathname:"/(tabs)/friends",params:{tab:"friends"}})} accessibilityLabel="Amigos"><Feather name="users" size={22} color="#FFF"/></TouchableOpacity>
+        <View style={{flex:1}}/><TouchableOpacity style={styles.menuBtn} onPress={()=>setMenu(true)} accessibilityLabel="Opciones del perfil"><Feather name="more-horizontal" size={24} color="#FFF"/></TouchableOpacity>
       </View>
-
       <View style={styles.profileSection}>
-        <TouchableOpacity style={styles.avatarWrap} onPress={() => router.push("/edit-profile")} accessibilityRole="button" accessibilityLabel="Cambiar foto de perfil">
-          {avatarUrl(user, profile) ? <Image source={{ uri: avatarUrl(user, profile) }} style={styles.avatar} /> : <View style={[styles.avatar, { backgroundColor: "#555", alignItems: "center", justifyContent: "center" }]}><Feather name="user" size={46} color="#bbb" /></View>}
-          <View style={styles.editBadge}>
-            <Feather name="edit-2" size={12} color="#fff" />
-          </View>
-        </TouchableOpacity>
-
-        <Text style={styles.displayName}>{displayName}</Text>
-        <Text style={styles.email}>{user?.email}</Text>
-        <Text style={styles.bio}>{bio}</Text>
-
-        <View style={styles.stats}>
-          {[
-            { value: connections.loading ? "…" : fmtCount(connections.following.length), label: "Siguiendo", target:"following" },
-            { value: connections.loading ? "…" : fmtCount(connections.followers.length), label: "Seguidores", target:"followers" },
-            { value: connections.loading ? "…" : fmtCount(connections.friends.length), label: "Amigos", target:"friends" },
-            { value: fmtCount(likes), label: "Me gusta", target:"liked" },
-          ].map((s) => (
-            <TouchableOpacity key={s.label} style={styles.stat} accessibilityRole="button" accessibilityLabel={`Ver ${s.label}`} onPress={()=>s.target==="liked"?setTab("liked"):router.push({pathname:"/(tabs)/friends",params:{tab:s.target}})}>
-              <Text style={styles.statValue}>{s.value}</Text>
-              <Text style={styles.statLabel}>{s.label}</Text>
-            </TouchableOpacity>
-          ))}
+        <View style={{width:88,gap:8}}>
+          <TouchableOpacity style={styles.avatarWrap} onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})} accessibilityLabel="Ver mis historias">
+            {avatarUrl(user,profile)?<Image source={{uri:avatarUrl(user,profile)}} style={styles.avatar}/>:<View style={[styles.avatar,{alignItems:"center",justifyContent:"center"}]}><Feather name="user" size={36} color="#AAA"/></View>}
+            <TouchableOpacity style={styles.editBadge} onPress={()=>router.push("/story-create")} accessibilityLabel="Añadir historia"><Feather name="plus" size={18} color="#FFF"/></TouchableOpacity>
+          </TouchableOpacity>
+          <Pressable disabled accessibilityState={{disabled:true}} style={styles.accountButton}><Text style={styles.accountLabel}>Saldo</Text></Pressable>
+          <Pressable disabled accessibilityState={{disabled:true}} style={styles.accountButton}><Text style={styles.accountLabel}>Suscripción</Text></Pressable>
         </View>
-
-        {!!connections.error&&<TouchableOpacity onPress={()=>void connections.refresh()}><Text style={{color:"#E7ACBF",fontSize:12}}>{connections.error}</Text></TouchableOpacity>}
-        <View style={styles.actions}>
-          <TouchableOpacity style={styles.editBtn} onPress={() => router.push("/edit-profile")}>
-            <Text style={styles.editBtnText}>Editar perfil</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.shareBtn}>
-            <Feather name="share" size={16} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.shareBtn} onPress={()=>router.push({pathname:"/(tabs)/friends",params:{tab:"friends"}})}>
-            <Feather name="user-plus" size={16} color="#fff" />
-          </TouchableOpacity>
+        <View style={{flex:1,minWidth:0,gap:8}}>
+          <Text maxFontSizeMultiplier={1.2} numberOfLines={1} style={styles.displayName}>{handle}</Text>
+          <View style={styles.stats}>{[
+            {value:fmtCount(likes),label:"Me gusta",target:"liked"},
+            {value:connections.loading?"…":fmtCount(connections.following.length),label:"Siguiendo",target:"following"},
+            {value:connections.loading?"…":fmtCount(connections.followers.length),label:"Seguidores",target:"followers"},
+          ].map(stat=><TouchableOpacity key={stat.target} style={styles.stat} onPress={()=>stat.target==="liked"?setTab("liked"):router.push({pathname:"/(tabs)/friends",params:{tab:stat.target}})}><Text maxFontSizeMultiplier={1.2} style={styles.statValue}>{stat.value}</Text><Text maxFontSizeMultiplier={1.2} numberOfLines={1} style={styles.statLabel}>{stat.label}</Text></TouchableOpacity>)}</View>
+          <Text maxFontSizeMultiplier={1.2} style={styles.bio} numberOfLines={expanded?undefined:3}>{bio}</Text>
+          {!!bio&&<TouchableOpacity onPress={()=>setExpanded(!expanded)}><Text style={styles.bioMore}>{expanded?"Ver menos":"Ver más"}</Text></TouchableOpacity>}
+          {!!connections.error&&<TouchableOpacity onPress={()=>void connections.refresh()}><Text style={{color:"#E7ACBF",fontSize:12}}>{connections.error}</Text></TouchableOpacity>}
         </View>
       </View>
-
-      <View style={styles.tabBar}>
-        {([
-          { key: "videos", icon: "grid" },
-          { key: "liked",  icon: "heart" },
-          { key: "saved",  icon: "bookmark" },
-        ] as const).map(({ key, icon }) => (
-          <TouchableOpacity
-            key={key}
-            onPress={() => setTab(key)}
-            style={[styles.tabItem, tab === key && styles.tabItemActive]}
-          >
-            <Feather
-              name={icon}
-              size={20}
-              color={tab === key ? "#fff" : "#555"}
-            />
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {tab === "saved" ? (
+      <View style={styles.tabBar}>{([
+        {key:"videos",icon:"grid",label:"Videos"},{key:"stories",icon:"clock",label:"Historias"},{key:"gallery",icon:"image",label:"Galería"},{key:"liked",icon:"heart",label:"Me gusta"},{key:"saved",icon:"bookmark",label:"Guardados"},{key:"more",icon:"more-horizontal",label:"Más"},
+      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>item.key==="more"?setMenu(true):setTab(item.key)} style={[styles.tabItem,tab===item.key&&styles.tabItemActive]}><Feather name={item.icon} size={22} color={tab===item.key?"#FFF":"#8A8B97"}/></TouchableOpacity>)}</View>
+      <ScrollView style={{flex:1}} showsVerticalScrollIndicator={false}>
+      {tab==="stories"?<View style={styles.emptyState}><TouchableOpacity onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})}><Text style={styles.emptyTitle}>Ver mis historias</Text></TouchableOpacity><TouchableOpacity onPress={()=>router.push("/story-create")}><Text style={styles.bioMore}>Añadir historia</Text></TouchableOpacity></View>:
+      tab === "saved" ? (
         savedVideos.length === 0 ? (
           <View style={styles.emptyState}>
             <Feather name="bookmark" size={40} color="#333" />
@@ -210,17 +176,20 @@ export default function ProfileScreen() {
           {publications.loading && publications.items.length === 0 ? <ActivityIndicator color="#85D5DB" style={{ padding: 24 }} /> : null}
           {!!publications.error && <TouchableOpacity onPress={() => void publications.refresh()} style={styles.emptyState}><Text style={styles.emptyText}>{publications.error}</Text><Text style={{color:"#9CDEE1"}}>Reintentar</Text></TouchableOpacity>}
           {!publications.loading && !publications.error && publications.items.length === 0 && <TouchableOpacity style={styles.emptyState} onPress={() => router.push("/(tabs)/create")}><Feather name="plus-circle" size={36} color="#8DCBD0" /><Text style={styles.emptyTitle}>Tu primera publicación</Text><Text style={styles.emptyText}>Comparte una foto o un video desde Galería.</Text></TouchableOpacity>}
-          <View style={styles.grid}>{publications.items.map(item => <TouchableOpacity key={item.id} style={[styles.gridItem,gridLayout.tile]} accessibilityRole="button" accessibilityLabel={`Abrir publicación: ${item.caption || "Sin descripción"}`} onPress={() => router.push({ pathname:"/publication", params:{id:item.id} })}><PublicationThumbnail item={item} /></TouchableOpacity>)}</View>
+          <View style={styles.grid}>{publications.items.filter(item=>tab!=="gallery"||item.mediaType==="image").map(item => <TouchableOpacity key={item.id} style={[styles.gridItem,gridLayout.tile]} accessibilityRole="button" accessibilityLabel={`Abrir publicación: ${item.caption || "Sin descripción"}`} onPress={() => router.push({ pathname:"/publication", params:{id:item.id} })}><PublicationThumbnail item={item} /></TouchableOpacity>)}</View>
           {publications.hasMore && <TouchableOpacity onPress={() => void publications.loadMore()} disabled={publications.loading} style={{padding:20,alignItems:"center"}}><Text style={{color:"#A6E1E5"}}>{publications.loading ? "Cargando…" : "Ver más"}</Text></TouchableOpacity>}
         </View>
       )}
 
       <View style={{ height: Platform.OS === "web" ? 34 : insets.bottom + 80 }} />
-    </ScrollView>
+      </ScrollView>
+      <Modal visible={menu} transparent animationType="fade" onRequestClose={()=>setMenu(false)}><Pressable style={{flex:1,backgroundColor:"#0008"}} onPress={()=>setMenu(false)}><View style={{position:"absolute",top:topPad+48,right:16,width:240,padding:8,borderRadius:16,backgroundColor:"#1C1C1E"}}>{[{title:"Editar perfil",run:()=>router.push("/edit-profile")},{title:"Ver foto",run:()=>router.push({pathname:"/profile-photo",params:{uri:avatarUrl(user,profile)}})},{title:"Amigos",run:()=>router.push("/(tabs)/friends")},{title:"Cerrar sesión",run:handleSignOut}].map(action=><Pressable key={action.title} style={{minHeight:48,paddingHorizontal:12,justifyContent:"center"}} onPress={()=>{setMenu(false);action.run();}}><Text style={{color:"#FFF",fontSize:15}}>{action.title}</Text></Pressable>)}</View></Pressable></Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  accountButton:{width:88,minHeight:34,borderRadius:8,backgroundColor:"#1C1C1E",alignItems:"center",justifyContent:"center",opacity:0.55},accountLabel:{color:"#FFF",fontSize:11},bioMore:{color:"#A3C9CC",fontSize:12},
   container: { flex: 1, backgroundColor: "#000" },
   header: {
     flexDirection: "row",
@@ -238,16 +207,16 @@ const styles = StyleSheet.create({
   },
   handle: { flex: 1, minWidth: 0, textAlign: "center", color: "#fff", fontSize: 17, fontWeight: "700" },
   profileSection: {
-    alignItems: "center",
-    paddingVertical: 16,
+    flexDirection:"row",
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    gap: 8,
+    gap: 16,
   },
   avatarWrap: { position: "relative" },
   avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 88,
+    height: 88,
+    borderRadius: 16,
     borderWidth: 3,
     borderColor: "#FE2C55",
     backgroundColor: "#1C1C1E",
@@ -256,8 +225,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     right: 0,
-    width: 26,
-    height: 26,
+    width: 28,
+    height: 28,
     borderRadius: 13,
     backgroundColor: "#FE2C55",
     alignItems: "center",
@@ -265,13 +234,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#000",
   },
-  displayName: { color: "#fff", fontSize: 20, fontWeight: "700" },
+  displayName: { color: "#fff", fontSize: 16, fontWeight: "700" },
   email: { color: "#555", fontSize: 13 },
-  bio: { color: "#aaa", fontSize: 14, textAlign: "center", paddingHorizontal: 20 },
-  stats: { flexDirection: "row", gap: 32, marginTop: 4 },
-  stat: { alignItems: "center", gap: 2 },
-  statValue: { color: "#fff", fontSize: 18, fontWeight: "800" },
-  statLabel: { color: "#888", fontSize: 13 },
+  bio: { color: "#B0B0BB", fontSize: 12,lineHeight:16 },
+  stats: { flexDirection: "row",gap:4,marginTop:12,marginBottom:4 },
+  stat: { flex:1,alignItems: "center",gap:2 },
+  statValue: { color: "#fff", fontSize: 16, fontWeight: "800" },
+  statLabel: { color: "#8A8B97", fontSize: 10.5 },
   actions: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 8 },
   editBtn: {
     backgroundColor: "#1C1C1E",
@@ -293,10 +262,10 @@ const styles = StyleSheet.create({
   },
   tabItem: { flex: 1, alignItems: "center", paddingVertical: 12 },
   tabItemActive: { borderBottomWidth: 2, borderBottomColor: "#fff" },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 6, paddingHorizontal: 10, paddingVertical: 10 },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 2, paddingHorizontal: 0, paddingVertical: 2 },
   gridItem: {
     width: "32%",
-    aspectRatio: 0.64, borderRadius: 10,
+    aspectRatio: 0.75, borderRadius: 0,
     backgroundColor: "#111",
     overflow: "hidden",
   },

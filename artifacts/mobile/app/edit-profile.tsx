@@ -1,3 +1,4 @@
+import ProfilePhotoCrop from "../components/ProfilePhotoCrop";
 import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -7,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Modal,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -37,6 +39,8 @@ export default function EditProfileScreen() {
 
   const insets = useSafeAreaInsets();
 
+  const [photoMenu,setPhotoMenu]=useState(false),[cropUri,setCropUri]=useState<string|null>(null);
+  const [fullName,setFullName]=useState(profile?.full_name??"");
   const [username, setUsername] = useState(profile?.username ?? "");
   const [bio, setBio] = useState(profile?.bio ?? "");
   const [selectedPhoto, setSelectedPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
@@ -48,22 +52,24 @@ export default function EditProfileScreen() {
 
   useEffect(() => {
     if (profile) {
+      setFullName(profile.full_name??"");
       setUsername(profile.username ?? "");
       setBio(profile.bio ?? "");
     }
   }, [profile]);
 
-  const pickImage = async () => {
+  const pickImage = async (camera=false) => {
     if (savingRef.current) return;
     setError(null);
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      setPhotoMenu(false);
+      const { status } = camera?await ImagePicker.requestCameraPermissionsAsync():await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
         Alert.alert("Permiso requerido", "Necesitamos acceso a tu galería para cambiar la foto.");
         return;
       }
 
-      const result = await ImagePicker.launchImageLibraryAsync({
+      const result = await (camera?ImagePicker.launchCameraAsync:ImagePicker.launchImageLibraryAsync)({
         mediaTypes: ["images"],
         allowsEditing: true,
         aspect: [1, 1],
@@ -108,7 +114,7 @@ export default function EditProfileScreen() {
       const updates = {
         username: username.trim(),
         bio: bio.trim(),
-        full_name: profile?.full_name ?? username.trim(),
+        full_name: fullName.trim() || username.trim(),
         ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
       };
       if (username.trim() !== profile?.username) {
@@ -131,7 +137,7 @@ export default function EditProfileScreen() {
   };
 
   if (!user) return null;
-  const currentAvatar = selectedPhoto?.uri ?? avatarPlaceholder(user, profile);
+  const currentAvatar = selectedPhoto?.uri ?? profile?.avatar_url ?? "";
 
   return (
     <KeyboardAvoidingView
@@ -166,20 +172,11 @@ export default function EditProfileScreen() {
       >
         {/* Avatar picker */}
         <View style={styles.avatarSection}>
-          <Pressable onPress={pickImage} style={styles.avatarWrap} disabled={saving} accessibilityRole="button" accessibilityLabel="Seleccionar foto de perfil">
-            <Image source={{ uri: currentAvatar }} style={styles.avatar} />
-            <View style={styles.avatarOverlay}>
-              {uploadingPhoto ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <>
-                  <Feather name="camera" size={22} color="#fff" />
-                  <Text style={styles.avatarOverlayText}>Cambiar foto</Text>
-                </>
-              )}
-            </View>
+          <Pressable onPress={()=>setPhotoMenu(true)} style={styles.avatarWrap} disabled={saving} accessibilityLabel="Opciones de foto de perfil">
+            {!!currentAvatar&&<Image source={{uri:currentAvatar}} style={styles.avatar}/>}
+            <View style={currentAvatar?styles.cameraBadge:styles.avatarOverlay}>{uploadingPhoto?<ActivityIndicator color="#FFF"/>:<Feather name="camera" size={currentAvatar?18:28} color="#FFF"/>}</View>
           </Pressable>
-          <Text style={styles.avatarHint}>Tocá para cambiar tu foto de perfil</Text>
+          <View style={{flex:1,gap:10}}><TouchableOpacity onPress={handleSave} disabled={saving} style={styles.saveBtn}>{saving?<ActivityIndicator color="#FFF"/>:<Text style={styles.saveBtnText}>Guardar</Text>}</TouchableOpacity><Pressable onPress={()=>setPhotoMenu(true)} disabled={saving} style={styles.photoAction}><Feather name="camera" size={16} color="#A9CBCD"/><Text style={styles.photoActionText}>Cambiar foto</Text></Pressable><Pressable disabled={!currentAvatar||saving} style={styles.photoAction} onPress={()=>setCropUri(currentAvatar)}><Feather name="crop" size={16} color="#A9CBCD"/><Text style={styles.photoActionText}>Recortar foto</Text></Pressable></View>
         </View>
 
         {error && (
@@ -190,7 +187,7 @@ export default function EditProfileScreen() {
         )}
 
         {/* Fields */}
-        <View style={styles.section}>
+        <View style={styles.section}><View style={styles.field}><Text style={styles.label}>Nombre completo</Text><TextInput value={fullName} onChangeText={setFullName} maxLength={80} editable={!saving} style={styles.input}/></View>
           <View style={styles.field}>
             <Text style={styles.label}>Nombre de usuario</Text>
             <View style={styles.inputWrap}>
@@ -215,14 +212,14 @@ export default function EditProfileScreen() {
             <TextInput
               value={bio}
               editable={!saving}
-              onChangeText={setBio}
+              onChangeText={t=>setBio(Array.from(t.split("\n").slice(0,3).join("\n")).slice(0,200).join(""))}
               placeholder="Contá algo sobre vos..."
               placeholderTextColor="#555"
               multiline
-              maxLength={150}
+              maxLength={200}
               style={[styles.input, styles.bioInput]}
             />
-            <Text style={styles.hint}>{150 - bio.length} caracteres restantes</Text>
+            <Text style={styles.hint}>{200 - Array.from(bio).length} caracteres restantes</Text>
           </View>
 
           <View style={styles.field}>
@@ -236,11 +233,14 @@ export default function EditProfileScreen() {
           </View>
         </View>
       </ScrollView>
+      <Modal visible={photoMenu} transparent animationType="slide" onRequestClose={()=>setPhotoMenu(false)}><View style={{flex:1,justifyContent:"flex-end",backgroundColor:"#0008"}}><Pressable style={StyleSheet.absoluteFill} onPress={()=>setPhotoMenu(false)}/><View style={{backgroundColor:"#161823",borderTopLeftRadius:20,borderTopRightRadius:20,padding:20,paddingBottom:insets.bottom+20}}>{[{title:"Cargar foto",icon:"image" as const,run:()=>pickImage(false)},{title:"Tomar foto",icon:"camera" as const,run:()=>pickImage(true)},{title:"Ver foto",icon:"maximize" as const,run:()=>{setPhotoMenu(false);router.push({pathname:"/profile-photo",params:{uri:currentAvatar}});}}].map(a=><Pressable key={a.title} accessibilityLabel={a.title} onPress={a.run} style={{minHeight:54,flexDirection:"row",gap:14,alignItems:"center"}}><Feather name={a.icon} color="#FFF" size={22}/><Text style={{color:"#FFF",fontSize:16}}>{a.title}</Text></Pressable>)}</View></View></Modal>
+      <ProfilePhotoCrop uri={cropUri} onClose={()=>setCropUri(null)} onSave={photo=>setSelectedPhoto({uri:photo.uri,width:photo.initWidth,height:photo.initHeight,base64:photo.base64,mimeType:"image/jpeg",type:"image"})}/>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  cameraBadge:{position:"absolute",bottom:6,right:6,width:30,height:30,borderRadius:15,backgroundColor:"#161823DD",alignItems:"center",justifyContent:"center"},photoAction:{minHeight:36,flexDirection:"row",alignItems:"center",gap:8},photoActionText:{color:"#FFF",fontSize:13},
   root: { flex: 1, backgroundColor: "#000" },
   header: {
     flexDirection: "row",
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   headerBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
   headerTitle: { color: "#fff", fontSize: 17, fontWeight: "700" },
   saveBtn: {
-    backgroundColor: "#FE2C55",
+    backgroundColor: "#7A64BE",
     borderRadius: 10,
     paddingHorizontal: 18,
     paddingVertical: 8,
@@ -264,11 +264,11 @@ const styles = StyleSheet.create({
   saveBtnDisabled: { opacity: 0.6 },
   saveBtnText: { color: "#fff", fontWeight: "800", fontSize: 14 },
   container: { paddingHorizontal: 20, paddingTop: 24, gap: 24 },
-  avatarSection: { alignItems: "center", gap: 10 },
+  avatarSection: { flexDirection:"row",alignItems: "center",gap:20 },
   avatarWrap: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
+    width: 128,
+    height: 128,
+    borderRadius: 20,
     overflow: "hidden",
     borderWidth: 3,
     borderColor: "#FE2C55",

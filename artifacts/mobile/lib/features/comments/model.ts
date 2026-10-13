@@ -42,6 +42,6 @@ export function commentCapabilities(comment: FeedComment, userId?: string, publi
   return {
     canReply: !!userId && !comment.deleted_at,
     canEdit: own && !comment.deleted_at,
-    canDelete: !!userId && (own || publicationOwnerId === userId),
+    canDelete: own,
   };
 }

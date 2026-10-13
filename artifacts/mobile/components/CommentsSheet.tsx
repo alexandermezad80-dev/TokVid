@@ -5,13 +5,13 @@ import { router } from "expo-router";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Image, Keyboard, Modal, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing } from "react-native-reanimated";
 import CommentActionsPopover, { CommentAction } from "./CommentActionsPopover";
 import { CommentAnchor, commentPopoverGeometry } from "../lib/commentPopoverGeometry";
 import { useRegistration } from "../context/RegistrationContext";
 import { useAuth } from "../context/AuthContext";
 import { useFeedComments } from "../hooks/useFeedComments";
-import { useKeyboardSheetViewport } from "../hooks/useKeyboardSheetViewport";
+import { useOverlayKeyboard } from "../hooks/useOverlayKeyboard";
 import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
 import { COMMENT_LIMIT, FeedComment, commentCapabilities, commentLength, commentTime } from "../lib/features/comments/model";
 import { commentVideoLayout, VideoPreviewFrame } from "../lib/commentVideoLayout";
@@ -47,9 +47,10 @@ function CommentsPanel({ visible, onClose, videoId, overTabBar = false, showVide
   const { user, profile } = useAuth();
   const { tabBarHeight } = useRegistration();
   const { width, fontScale } = useWindowDimensions();
-  const viewport = useKeyboardSheetViewport(visible);
+  const viewport = useOverlayKeyboard(visible);
   const comments = useFeedComments(visible, videoId);
   const [text, setText] = useState("");
+  const [composerHeight,setComposerHeight]=useState(60);
   const [inputContentHeight, setInputContentHeight] = useState(36);
   const [reply, setReply] = useState<FeedComment | null>(null);
   const [editing, setEditing] = useState<FeedComment | null>(null);
@@ -64,9 +65,9 @@ function CommentsPanel({ visible, onClose, videoId, overTabBar = false, showVide
   const context = `${videoId}:${user?.id ?? "guest"}`;
   useEffect(() => { selectionSequence.current++; setText(""); setReply(null); setInputContentHeight(36); setEditing(null); setActionComment(null); setActionAnchor(null); savedDraft.current = null; }, [context]);
   useEffect(() => { if (!visible) { selectionSequence.current++; setActionComment(null); setActionAnchor(null); } }, [visible]);
-  useEffect(() => { phase.value = withSpring(viewport.keyboardVisible ? 1 : 0, spring); }, [viewport.keyboardVisible, phase]);
-  const sheetShape = useAnimatedStyle(() => { const p = Math.max(0, Math.min(1, phase.value)); return { borderTopLeftRadius: 18 - 4 * p, borderTopRightRadius: 18 - 4 * p }; });
-  const editorShape = useAnimatedStyle(() => { const p = Math.max(0, Math.min(1, phase.value)); return { borderRadius: 16 - 4 * p, height: 52 + (inputContentHeight + 20 - 52) * p }; });
+  useEffect(() => { phase.value = withTiming(viewport.keyboardVisible ? 1 : 0, {duration:220,easing:Easing.out(Easing.cubic)}); }, [viewport.keyboardVisible, phase]);
+  const sheetShape = useAnimatedStyle(() => { const p = Math.max(0, Math.min(1, phase.value)); return { borderTopLeftRadius: 20, borderTopRightRadius: 20 }; });
+  const editorShape = useAnimatedStyle(() => { const p = Math.max(0, Math.min(1, phase.value)); return { borderRadius: 22, height: 44 + (inputContentHeight + 20 - 44) * p }; });
   const composerShape = useAnimatedStyle(() => { const p = Math.max(0, Math.min(1, phase.value)); return { paddingTop: 10 - 4 * p }; });
   const dismissActions = () => { selectionSequence.current++; setActionComment(null); setActionAnchor(null); };
   const close = () => { dismissActions(); Keyboard.dismiss(); onClose(); };
@@ -131,17 +132,13 @@ function CommentsPanel({ visible, onClose, videoId, overTabBar = false, showVide
   const confirmDelete = (row: FeedComment) => {
     dismissActions();
     const root = !row.parent_id;
-    Alert.alert(root ? "Eliminar hilo" : "Eliminar respuesta", root
-      ? "Se eliminarán este comentario y todas sus respuestas para todos. Esta acción no se puede deshacer."
-      : "Se eliminará esta respuesta para todos. Las demás respuestas del hilo se conservarán.", [
-      { text: "Cancelar", style: "cancel" },
-      { text: "Eliminar", style: "destructive", onPress: () => { void (async () => {
-        const confirmed = await comments.remove(row);
-        if (!confirmed) return;
-        if (editing && (editing.id === row.id || (root && editing.root_id === row.id))) cancelEdit();
-        if (reply && (reply.id === row.id || (root && reply.root_id === row.id))) setReply(null);
-      })(); } },
-    ]);
+    if(busy||row.user_id!==user?.id)return;
+    void (async()=>{
+      const confirmed=await comments.remove(row);
+      if(!confirmed)return;
+      if(editing&&(editing.id===row.id||(root&&editing.root_id===row.id)))cancelEdit();
+      if(reply&&(reply.id===row.id||(root&&reply.root_id===row.id)))setReply(null);
+    })();
   };
   const capabilities = actionComment ? commentCapabilities(actionComment, user?.id, comments.publicationOwnerId) : null;
   const actions: CommentAction[] = actionComment && capabilities ? [
@@ -156,12 +153,11 @@ function CommentsPanel({ visible, onClose, videoId, overTabBar = false, showVide
     safeLeft: viewport.insets.left, safeRight: viewport.insets.right,
     menuHeight: Math.max(actionMenuHeight, actions.length * 48 * Math.max(1, fontScale) + 8),
   }) : null;
-  const navigationHeight = overTabBar && !viewport.keyboardVisible ? Math.max(tabBarHeight, viewport.insets.bottom + 52) : 0;
-  const bottomPadding = viewport.keyboardVisible ? 8 : navigationHeight ? 0 : viewport.insets.bottom;
-  const desiredSheetHeight = Math.min(viewport.commentsHeight + navigationHeight, Math.max(0, viewport.availableHeight - Math.max(0, viewport.insets.top - viewport.viewportTop) - 12));
-  const previewLayout = commentVideoLayout({ width, availableHeight: viewport.availableHeight,
-    safeTop: Math.max(0, viewport.insets.top - viewport.viewportTop), safeLeft: viewport.insets.left, safeRight: viewport.insets.right,
-    bottomPadding, desiredSheetHeight, keyboardVisible: viewport.keyboardVisible });
+  const bottomPadding=viewport.keyboardVisible?0:viewport.insets.bottom;
+  const desiredSheetHeight=Math.max(0,viewport.fullHeight-Math.max(0,viewport.insets.top-viewport.viewportTop)-12);
+  const previewLayout=commentVideoLayout({width,availableHeight:viewport.fullHeight,
+    safeTop:Math.max(0,viewport.insets.top-viewport.viewportTop),safeLeft:viewport.insets.left,safeRight:viewport.insets.right,
+    bottomPadding:0,desiredSheetHeight,keyboardVisible:false});
   const sheetHeight = showVideoPreview ? previewLayout.sheetHeight : desiredSheetHeight;
   const preview = previewLayout.preview;
   useEffect(() => {
@@ -198,7 +194,7 @@ function CommentsPanel({ visible, onClose, videoId, overTabBar = false, showVide
       </View>
     </View>;
   };
-  return <View ref={viewport.viewportRef} collapsable={false} onLayout={viewport.onLayout} style={[styles.viewport, showVideoPreview && { backgroundColor: "transparent" }, { paddingBottom: viewport.keyboardInset + bottomPadding }]}>
+  return <View ref={viewport.viewportRef} collapsable={false} onLayout={viewport.onLayout} style={[styles.viewport, showVideoPreview && { backgroundColor: "transparent" }, { height:viewport.fullHeight,flex:0 }]}>
       <Pressable accessibilityLabel="Cerrar comentarios" onPress={close} style={StyleSheet.absoluteFill} />
       {showVideoPreview && preview.height > 0 && <Pressable accessibilityRole="button" accessibilityLabel="Volver al video completo" onPress={close}
         style={[styles.videoPreview, { left: preview.x, top: preview.y, width: preview.width, height: preview.height }]}>
@@ -214,10 +210,10 @@ function CommentsPanel({ visible, onClose, videoId, overTabBar = false, showVide
         </View>
         {!!comments.error && <View style={styles.errorRow}><Text accessibilityRole="alert" style={styles.error}>{comments.error}</Text><Pressable accessibilityRole="button" onPress={() => { void comments.refresh(); }} style={styles.retry}><Text style={styles.link}>Recargar</Text></Pressable></View>}
         {comments.hiddenThreads.size > 0 && <Pressable accessibilityRole="button" accessibilityLabel="Mostrar mensajes ocultos" disabled={busy} onPress={() => { void comments.restoreThreads(); }} style={styles.hiddenNotice}><LinearGradient colors={["rgba(0,242,254,0.20)", "rgba(254,9,121,0.20)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.showBadge}><Feather name="eye" size={15} color="#fff" /><Text style={styles.showLabel}>Mostrar</Text></LinearGradient></Pressable>}
-        <FlatList<ListRow> data={rows} keyExtractor={row => row.kind === "comment" ? row.comment.id : row.kind === "thread" ? `thread:${row.root.id}` : `more:${row.rootId}`} renderItem={renderRow} style={styles.list} onScrollBeginDrag={dismissActions} contentContainerStyle={[rows.length ? styles.listContent : styles.emptyContainer, { paddingLeft: 12 + viewport.insets.left, paddingRight: 12 + viewport.insets.right }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} refreshing={comments.loading} onRefresh={() => { void comments.refresh(); }}
+        <FlatList<ListRow> data={rows} keyExtractor={row => row.kind === "comment" ? row.comment.id : row.kind === "thread" ? `thread:${row.root.id}` : `more:${row.rootId}`} renderItem={renderRow} style={styles.list} onScrollBeginDrag={dismissActions} contentContainerStyle={[rows.length ? styles.listContent : styles.emptyContainer, { paddingLeft: 16 + viewport.insets.left, paddingRight: 16 + viewport.insets.right,paddingBottom:composerHeight+viewport.keyboardInset+12 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} refreshing={comments.loading} onRefresh={() => { void comments.refresh(); }}
           ListEmptyComponent={comments.loading ? <ActivityIndicator color="#00F2FE" /> : comments.total === 0 || comments.hiddenThreads.size > 0 ? <View style={styles.empty}><Feather name="message-circle" size={32} color="#666" /><Text style={styles.emptyText}>{comments.total === 0 ? "Sé el primero en comentar" : "No hay hilos visibles en esta página"}</Text></View> : null}
           ListFooterComponent={comments.hasMore ? <Pressable disabled={comments.paging} onPress={() => { void comments.loadMore(); }} style={styles.more}><Text style={styles.link}>{comments.paging ? "Cargando…" : "Cargar más comentarios"}</Text></Pressable> : null} />
-        <Animated.View style={[styles.composer, composerShape, { paddingLeft: 8 + viewport.insets.left, paddingRight: 8 + viewport.insets.right }]}>
+        <Animated.View onLayout={e=>setComposerHeight(e.nativeEvent.layout.height)} style={[styles.composer, composerShape, {position:"absolute",left:0,right:0,bottom:viewport.keyboardInset,paddingBottom:bottomPadding+4,backgroundColor:"#15151BF2", paddingLeft: 8 + viewport.insets.left, paddingRight: 8 + viewport.insets.right }]}>
           {editing && <Pressable accessibilityRole="button" accessibilityLabel="Cancelar edición" disabled={busy} onPress={cancelEdit} style={styles.editIndicator}><Text style={styles.link}>Editando comentario · Cancelar</Text></Pressable>}
           {reply && <Pressable accessibilityRole="button" accessibilityLabel="Cancelar respuesta" disabled={busy} onPress={() => setReply(null)} hitSlop={8} style={styles.replyIndicator}><LinearGradient colors={["rgba(0,242,254,0.22)", "rgba(254,9,121,0.22)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.replyBubble}><Text style={styles.replyLabel}>Respondiendo</Text></LinearGradient></Pressable>}
           <Animated.View style={[styles.editor, editorShape]}>
@@ -231,9 +227,7 @@ function CommentsPanel({ visible, onClose, videoId, overTabBar = false, showVide
           </Animated.View>
         </Animated.View>
         </View>
-        {navigationHeight > 0 && <View onStartShouldSetResponder={() => true} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.navigationGlass, { height: navigationHeight }]}>
-          <LinearGradient pointerEvents="none" colors={["rgba(0,242,254,0.035)", "rgba(254,9,121,0.035)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
-        </View>}
+
       </Animated.View>
       {actionComment && placement && <CommentActionsPopover key={actionComment.id} placement={placement} actions={actions} onClose={dismissActions} onContentHeight={setActionMenuHeight} />}
     </View>
@@ -242,14 +236,14 @@ function CommentsPanel({ visible, onClose, videoId, overTabBar = false, showVide
 
 const styles = StyleSheet.create({
   viewport: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.28)" },
-  videoPreview: { position: "absolute", borderRadius: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.24)", overflow: "hidden" },
-  expandVideo: { position: "absolute", top: 5, right: 5, width: 24, height: 24, borderRadius: 12, backgroundColor: "rgba(0,0,0,0.38)", alignItems: "center", justifyContent: "center" },
+  videoPreview: { position: "absolute", borderRadius: 20, borderWidth: 1, borderColor: "rgba(255,255,255,0.24)", overflow: "hidden" },
+  expandVideo: { position: "absolute", top: 5, right: 5, width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(0,0,0,0.38)", alignItems: "center", justifyContent: "center" },
   sheet: { width: "100%", overflow: "hidden", borderTopWidth: 1, borderColor: "rgba(0,242,254,0.28)" },
   panelBody: { flex: 1, backgroundColor: "#15151B" },
   headerGlass: { overflow: "hidden", borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "rgba(255,255,255,0.08)" },
   navigationGlass: { backgroundColor: "rgba(21,21,27,0.08)", borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: "rgba(255,255,255,0.08)" },
-  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: "#55555E", alignSelf: "center", marginTop: 10 },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingLeft: 12, paddingRight: 4, minHeight: 52 },
+  handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: "#55555E", alignSelf: "center", marginTop: 6 },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingLeft: 12, paddingRight: 4, minHeight: 44 },
   countBadge: { borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7, flexShrink: 1, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
   title: { color: "#fff", fontSize: 15, fontWeight: "700", flexShrink: 1 }, close: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   hiddenNotice: { alignSelf: "flex-start", marginLeft: 12, marginTop: 8, marginBottom: 6 },
@@ -263,9 +257,9 @@ const styles = StyleSheet.create({
   optionsButton: { width: 24, height: 24, alignItems: "center", justifyContent: "center" },
   list: { flex: 1 }, listContent: { paddingHorizontal: 12, paddingBottom: 12 }, emptyContainer: { flexGrow: 1, alignItems: "center", justifyContent: "center" },
   empty: { alignItems: "center", gap: 12 }, emptyText: { color: "#9999A4", fontSize: 14 },
-  comment: { flexDirection: "row", gap: 10, paddingVertical: 12, paddingHorizontal: 4, borderWidth: 1, borderColor: "transparent", borderRadius: 12 }, selectedComment: { backgroundColor: "rgba(0,242,254,0.055)", borderColor: "rgba(0,242,254,0.25)" }, nested: { marginLeft: 28 },
+  comment: { flexDirection: "row", gap: 12, paddingVertical: 7, paddingHorizontal: 4, borderWidth: 1, borderColor: "transparent", borderRadius: 12 }, selectedComment: { backgroundColor: "rgba(0,242,254,0.055)", borderColor: "rgba(0,242,254,0.25)" }, nested: { marginLeft: 44 },
   avatar: { width: 32, height: 32, borderRadius: 16 }, initialAvatar: { backgroundColor: "#292933", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#FE0979" }, initial: { color: "#fff", fontSize: 14, fontWeight: "600" },
-  body: { flex: 1, minWidth: 0, gap: 4 }, username: { color: "#A9A9B4", fontSize: 12, fontWeight: "600" }, commentText: { color: "#fff", fontSize: 14, lineHeight: 20 }, replyTo: { color: "#00F2FE", fontSize: 11 },
+  body: { flex: 1, minWidth: 0, gap: 4 }, username: { color: "#A9A9B4", fontSize: 12, fontWeight: "600" }, commentText: { color: "#fff", fontSize: 15, lineHeight: 20 }, replyTo: { color: "#00F2FE", fontSize: 11 },
   metaRow: { flexDirection: "row", gap: 18, marginTop: 4 }, meta: { color: "#92929D", fontSize: 11 }, like: { alignItems: "center", justifyContent: "flex-start", gap: 4, minWidth: 36, paddingVertical: 4 },
   threadAction: { marginLeft: 42, paddingVertical: 12 }, link: { color: "#00F2FE", fontSize: 12 }, more: { padding: 16, alignItems: "center" },
   errorRow: { paddingHorizontal: 16, paddingBottom: 8, flexDirection: "row", alignItems: "center", gap: 8 }, error: { color: "#ff8dab", fontSize: 12, flex: 1 }, retry: { padding: 8 },

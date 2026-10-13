@@ -219,9 +219,9 @@ test('authors retain edit and deletion rights in somebody else\'s publication', 
     assert.equal(caps.canEdit, true); assert.equal(caps.canDelete, true); assert.equal(caps.canReply, true);
   }
 });
-test('publication moderation never grants editing another person\'s text', () => {
+test('publication ownership never grants deletion or editing of another author comment', () => {
   const foreign = row('foreign', { user_id: 'u2' });
-  assert.equal(model.commentCapabilities(foreign, 'u1', 'u1').canDelete, true);
+  assert.equal(model.commentCapabilities(foreign, 'u1', 'u1').canDelete, false);
   assert.equal(model.commentCapabilities(foreign, 'u1', 'u1').canEdit, false);
   assert.equal(model.commentCapabilities(foreign, 'u1', 'u3').canDelete, false);
   const guest = model.commentCapabilities(foreign, undefined, 'u1');
@@ -275,7 +275,7 @@ test('confirmed individual reply removal preserves and reattaches its loaded chi
   assert.match(h.rt.output.error, /Reload failed/);
   h.rt.unmount();
 });
-test('publication owners may moderate a foreign message but cannot edit it', async () => {
+test('publication owners cannot remove or edit a foreign comment', async () => {
   let h;
   h = hookHarness({
     readPublicationOwner: async () => 'u1',
@@ -284,7 +284,8 @@ test('publication owners may moderate a foreign message but cannot edit it', asy
   h.state.roots = [row('foreign', { user_id: 'u2' })];
   await h.rt.flush();
   assert.equal(await h.rt.output.edit(h.state.roots[0], 'Changed'), null);
-  assert.equal((await h.rt.output.remove(h.state.roots[0])).removed, true);
+  assert.equal(await h.rt.output.remove(h.state.roots[0]), null);
+  assert.equal(h.state.roots.length,1);
   h.rt.unmount();
 });
 

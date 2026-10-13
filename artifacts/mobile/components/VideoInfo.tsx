@@ -1,8 +1,9 @@
+import { useRegistration } from "../context/RegistrationContext";
 import { useAuth } from "../context/AuthContext";
 import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Image,
@@ -23,12 +24,12 @@ async function goToMention(username: string) {
 }
 
 /** Renders a caption with clickable blue #hashtags and @mentions. */
-function CaptionText({ caption }: { caption: string }) {
+function CaptionText({ caption,expanded }: { caption: string;expanded:boolean }) {
   const { user } = useAuth();
   if (!caption) return null;
   const parts = caption.split(/([#@]\w+)/g);
   return (
-    <Text style={styles.caption} numberOfLines={2}>
+    <Text maxFontSizeMultiplier={1.2} style={styles.caption} numberOfLines={expanded?undefined:2}>
       {parts.map((part, i) => {
         if (/^#\w+$/.test(part)) {
           const tag = part.slice(1).toLowerCase();
@@ -81,6 +82,9 @@ export default function VideoInfo({
   onFollow,
   onAvatarPress,
 }: Props) {
+  const {tabBarHeight}=useRegistration();
+  const [expanded,setExpanded]=useState(false);
+  useEffect(()=>setExpanded(false),[caption]);
   const slideX = useRef(new Animated.Value(-20)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const scrollX = useRef(new Animated.Value(0)).current;
@@ -106,23 +110,16 @@ export default function VideoInfo({
 
   return (
     <Animated.View
-      style={[styles.container, { transform: [{ translateX: slideX }], opacity }]}
+      style={[styles.container, {paddingBottom:tabBarHeight+16, transform: [{ translateX: slideX }], opacity }]}
     >
       <View style={styles.creator}>
-        <TouchableOpacity onPress={onAvatarPress} activeOpacity={0.85}>
-          <Image source={{ uri: creatorAvatar }} style={styles.avatar} />
-        </TouchableOpacity>
         <TouchableOpacity style={{flex:1,minWidth:0}} onPress={onAvatarPress} activeOpacity={0.85}>
           <Text numberOfLines={1} style={styles.creatorName}>{creatorHandle}</Text>
         </TouchableOpacity>
-        {!isOwner && (
-          <TouchableOpacity disabled={followPending} onPress={onFollow} style={styles.followBtn}>
-            <Text numberOfLines={1} maxFontSizeMultiplier={1.4} style={[styles.followText, isFollowing && { color: "#00F2FE" }]}>{isFollowing ? "Siguiendo" : "Seguir"}</Text>
-          </TouchableOpacity>
-        )}
+
       </View>
 
-      <CaptionText caption={caption} />
+      <CaptionText caption={caption} expanded={expanded}/>{!!caption&&<TouchableOpacity accessibilityRole="button" onPress={()=>setExpanded(!expanded)}><Text style={[styles.caption,{fontWeight:"700"}]}>{expanded?"menos":"más…"}</Text></TouchableOpacity>}
 
       <View style={styles.songRow}>
         <Feather name="music" size={14} color="#fff" />
@@ -142,16 +139,16 @@ export default function VideoInfo({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingLeft: 14,
+    paddingLeft: 16,
     paddingBottom: 100,
     paddingRight: 80,
     justifyContent: "flex-end",
-    gap: 10,
+    gap: 8,
   },
   creator: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 8,
   },
   avatar: {
     width: 44,
@@ -162,7 +159,7 @@ const styles = StyleSheet.create({
   },
   creatorName: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700",
     textShadowColor: "rgba(0,0,0,0.6)",
     textShadowOffset: { width: 0, height: 1 },
@@ -185,8 +182,8 @@ const styles = StyleSheet.create({
   },
   caption: {
     color: "#fff",
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18,
     textShadowColor: "rgba(0,0,0,0.5)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
@@ -208,7 +205,7 @@ const styles = StyleSheet.create({
   },
   songText: {
     color: "#fff",
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "500",
     width: 600,
   },

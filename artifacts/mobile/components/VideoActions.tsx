@@ -1,3 +1,4 @@
+import { useRegistration } from "../context/RegistrationContext";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
@@ -32,29 +33,7 @@ interface Props {
   commentCue?: boolean;
 }
 
-function SpinningRecord({ avatar }: { avatar: string }) {
-  const spin = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const anim = Animated.loop(
-      Animated.timing(spin, {
-        toValue: 1,
-        duration: 4000,
-        useNativeDriver: true,
-      })
-    );
-    anim.start();
-    return () => anim.stop();
-  }, []);
-
-  const rotate = spin.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] });
-
-  return (
-    <Animated.View style={[styles.recordOuter, { transform: [{ rotate }] }]}>
-      <Image source={{ uri: avatar }} style={styles.recordInner} />
-    </Animated.View>
-  );
-}
+function CreatorAvatar({avatar}:{avatar:string}){return <View style={styles.recordOuter}><Image source={{uri:avatar}} style={styles.recordInner}/></View>;}
 
 export default function VideoActions({
   likes,
@@ -71,6 +50,7 @@ export default function VideoActions({
   creatorAvatar,
   isGuest, isFollowing = false, followPending = false, onFollow, onAvatarPress, commentCue,
 }: Props) {
+  const {tabBarHeight}=useRegistration();
   const heartScale = useRef(new Animated.Value(1)).current;
   const shareScale = useRef(new Animated.Value(1)).current;
   const saveScale = useRef(new Animated.Value(1)).current;
@@ -113,7 +93,7 @@ export default function VideoActions({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container,{paddingBottom:tabBarHeight+16}]}>
       <View style={[styles.action, styles.profileAction]}>
         <TouchableOpacity
           onPress={onAvatarPress}
@@ -126,7 +106,7 @@ export default function VideoActions({
               <MaterialCommunityIcons name="account-outline" size={30} color="#fff" />
             </View>
           ) : (
-            <SpinningRecord avatar={creatorAvatar} />
+            <CreatorAvatar avatar={creatorAvatar} />
           )}
         </TouchableOpacity>
         {(isGuest || (!isOwner && !isFollowing)) && onFollow ? (
@@ -153,34 +133,30 @@ export default function VideoActions({
 
       <TouchableOpacity onPress={isGuest ? onLike : handleLike} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Me gusta">
         <Animated.View style={{ transform: [{ scale: heartScale }] }}>
-          <MaterialCommunityIcons name={isLiked && !isGuest ? "heart" : "heart-outline"} size={34} color={isLiked && !isGuest ? "#FF304F" : "#fff"} />
+          <Feather name="heart" size={32} color={isLiked && !isGuest ? "#FF304F" : "#fff"} />
         </Animated.View>
         <Text style={styles.count}>{likes}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={onComment} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Comentarios">
-        <MaterialCommunityIcons name="comment-outline" size={34} color={commentCue ? "#00F2FE" : "#fff"} />
+        <Feather name="message-circle" size={32} color={commentCue ? "#00F2FE" : "#fff"} />
         <Text style={styles.count}>{comments}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={isGuest ? onShare : handleShare} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Compartir">
         <Animated.View style={{ transform: [{ scale: shareScale }] }}>
-          <MaterialCommunityIcons name="share-variant-outline" size={34} color="#fff" />
+          <Feather name="corner-up-right" size={32} color="#fff" />
         </Animated.View>
         <Text style={styles.count}>{shares}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={isGuest ? onSave : handleSave} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Guardar">
         <Animated.View style={{ transform: [{ scale: saveScale }] }}>
-          <MaterialCommunityIcons name={isSaved && !isGuest ? "bookmark" : "bookmark-outline"} size={34} color={isSaved && !isGuest ? "#FE0979" : "#fff"} />
+          <Feather name="bookmark" size={32} color={isSaved && !isGuest ? "#FE0979" : "#fff"} />
         </Animated.View>
       </TouchableOpacity>
 
-      {isOwner && (
-        <TouchableOpacity onPress={onDelete} style={styles.action}>
-          <Feather name="more-horizontal" size={34} color="#fff" />
-        </TouchableOpacity>
-      )}
+
     </View>
   );
 }
@@ -190,7 +166,7 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
     paddingRight: 12,
     alignItems: "center",
-    gap: 16,
+    gap: 18,
   },
   action: {
     alignItems: "center",
@@ -198,7 +174,7 @@ const styles = StyleSheet.create({
   },
   count: {
     color: "#fff",
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "600",
     textShadowColor: "rgba(0,0,0,0.6)",
     textShadowOffset: { width: 0, height: 1 },
@@ -214,9 +190,9 @@ const styles = StyleSheet.create({
     marginTop: -2,
   },
   profileBadge: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     borderWidth: 2,
     borderColor: "#fff",
     backgroundColor: "rgba(0,0,0,0.34)",
@@ -225,9 +201,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   recordOuter: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     borderWidth: 3,
     borderColor: "#333",
     backgroundColor: "#000",

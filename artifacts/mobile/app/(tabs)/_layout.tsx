@@ -100,7 +100,7 @@ function ClassicTabLayout() {
   const insets = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
   const bottomInset = Math.max(insets.bottom, isWeb ? 12 : 0);
-  const barBody = Math.max(60, 36 + 16 * fontScale);
+  const barBody = 64;
   const { setTabBarHeight } = useRegistration();
 
   return (
@@ -108,6 +108,7 @@ function ClassicTabLayout() {
       safeAreaInsets={{ bottom: bottomInset }}
       screenOptions={{
         tabBarLabelPosition: "below-icon",
+        tabBarAllowFontScaling:false,
         tabBarItemStyle: { minHeight: barBody, paddingVertical: 4 },
         tabBarActiveTintColor: PRIMARY,
         tabBarInactiveTintColor: "#8A8B97",
