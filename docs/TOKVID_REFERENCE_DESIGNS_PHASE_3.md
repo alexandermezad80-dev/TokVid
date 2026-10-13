@@ -60,3 +60,9 @@ Los advisors no señalaron la función modificada. Persisten avisos generales en
 - **Pendiente físico**: teclado normal/emojis en chat y comentarios, barra inferior con botones/gestos, texto grande, selección de fondos y búsqueda, foto/cámara/recorte, feed y comentarios entre dos cuentas. No hay prueba en todos los modelos de teléfono ni captura renderizada nativa de esta fase.
 
 Esta fase no activa las funciones económicas ni los editores avanzados citados arriba. Conservar esta distinción en futuras entregas; no describir botones o capturas de referencia como funciones probadas.
+
+## Aclaración visual posterior — Información de perfil
+
+El usuario comparó la captura con Alexander y la referencia con Raúl. Aprobó funciones, iconos y medidas, pero rechazó la composición del formulario de nombre, usuario, descripción y correo. El formulario anterior conservaba cajas grandes que no correspondían a la referencia. Se sustituye exclusivamente esa presentación por nombre inline, usuario y descripción sin cajas, contador usado/200 a la derecha, separadores de ancho completo y una franja de correo legible no editable. La descripción crece para evitar recortar el texto. Se conserva espacio libre debajo, sin texto ficticio de futuras funciones. Guardar, selección/subida/recorte de foto, validación y persistencia permanecen iguales. No extrapolar esta corrección a rediseñar iconos o medidas aprobados.
+
+La APK #216 terminó correctamente (127 pruebas, TypeScript, prebuild y Android). Su [manifiesto](continuity/APK_216_VERIFICATION.json) corresponde al código previo a esta aclaración. La nueva presentación requiere la siguiente APK y comprobación física; no describir #216 como si ya incorporase esta corrección.

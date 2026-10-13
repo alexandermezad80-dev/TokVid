@@ -173,50 +173,62 @@ export default function EditProfileScreen() {
           </View>
         )}
 
-        {/* Fields */}
-        <View style={styles.section}><View style={styles.field}><Text style={styles.label}>Nombre completo</Text><TextInput value={fullName} onChangeText={setFullName} maxLength={80} editable={!saving} style={styles.input}/></View>
-          <View style={styles.field}>
-            <Text style={styles.label}>Nombre de usuario</Text>
-            <View style={styles.inputWrap}>
-              <Text style={styles.atSign}>@</Text>
-              <TextInput
-                value={username}
-                editable={!saving}
-                onChangeText={(t) => setUsername(t.replace(/\s/g, ""))}
-                placeholder="tunombre"
-                placeholderTextColor="#555"
-                autoCapitalize="none"
-                autoCorrect={false}
-                maxLength={30}
-                style={styles.inputInner}
-              />
-            </View>
-            <Text style={styles.hint}>{30 - username.length} caracteres restantes</Text>
+        {/* Compact, editable profile information follows the supplied reference. */}
+        <View style={styles.section}>
+          <View style={styles.nameRow}>
+            <Text style={styles.label}>Nombre:</Text>
+            <TextInput
+              accessibilityLabel="Nombre completo"
+              value={fullName}
+              onChangeText={setFullName}
+              maxLength={80}
+              editable={!saving}
+              placeholder="Tu nombre"
+              placeholderTextColor="#85858D"
+              style={[styles.inlineInput, styles.nameInput]}
+            />
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>Biografía</Text>
+            <Text style={styles.label}>Nombre de usuario</Text>
+            <View style={styles.usernameRow}>
+              <Text style={styles.usernamePrefix}>@</Text>
+              <TextInput
+                accessibilityLabel="Nombre de usuario"
+                value={username}
+                editable={!saving}
+                onChangeText={(t) => setUsername(t.replace(/\s/g, ""))}
+                placeholder="usuario"
+                placeholderTextColor="#85858D"
+                autoCapitalize="none"
+                autoCorrect={false}
+                maxLength={30}
+                style={styles.inlineInput}
+              />
+            </View>
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>Descripción</Text>
             <TextInput
+              accessibilityLabel="Descripción del perfil"
               value={bio}
               editable={!saving}
               onChangeText={t=>setBio(Array.from(t.split("\n").slice(0,3).join("\n")).slice(0,200).join(""))}
               placeholder="Contá algo sobre vos..."
-              placeholderTextColor="#555"
+              placeholderTextColor="#85858D"
               multiline
+              scrollEnabled={false}
               maxLength={200}
-              style={[styles.input, styles.bioInput]}
+              style={styles.bioInput}
             />
-            <Text style={styles.hint}>{200 - Array.from(bio).length} caracteres restantes</Text>
+            <Text style={styles.counter}>{Array.from(bio).length}/200</Text>
           </View>
+        </View>
 
-          <View style={styles.field}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              value={user?.email ?? ""}
-              editable={false}
-              style={[styles.input, styles.disabledInput]}
-            />
-            <Text style={styles.hint}>El email no se puede cambiar</Text>
+        <View style={styles.emailSection}>
+          <View style={styles.emailBox} accessibilityLabel={`Correo: ${user.email ?? ""}. No editable.`}>
+            <Text selectable style={styles.emailText}>Correo: {user.email ?? ""}</Text>
           </View>
         </View>
       </ScrollView>
@@ -228,7 +240,7 @@ export default function EditProfileScreen() {
 
 const styles = StyleSheet.create({
   cameraBadge:{position:"absolute",bottom:6,right:6,width:30,height:30,borderRadius:15,backgroundColor:"#161823DD",alignItems:"center",justifyContent:"center"},photoAction:{minHeight:36,flexDirection:"row",alignItems:"center",gap:8},photoActionText:{color:"#FFF",fontSize:13},
-  root: { flex: 1, backgroundColor: "#000" },
+  root: { flex: 1, backgroundColor: "#101012" },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -250,7 +262,7 @@ const styles = StyleSheet.create({
   },
   saveBtnDisabled: { opacity: 0.6 },
   saveBtnText: { color: "#fff", fontWeight: "800", fontSize: 14 },
-  container: { paddingHorizontal: 20, paddingTop: 0, gap: 20 },
+  container: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 0, gap: 20 },
   avatarSection: { flexDirection:"row",alignItems: "center",gap:20 },
   avatarWrap: {
     width: 128,
@@ -281,37 +293,56 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   errorText: { color: "#FE2C55", fontSize: 13, flex: 1 },
-  section: { gap: 20 },
-  field: { gap: 8 },
-  label: { color: "#aaa", fontSize: 13, fontWeight: "600" },
-  input: {
-    backgroundColor: "#1C1C1E",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    color: "#fff",
-    fontSize: 15,
-    borderWidth: 1,
-    borderColor: "#2C2C2E",
+  section: {
+    marginHorizontal: -20,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: "#303036",
+    gap: 12,
   },
-  inputWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#1C1C1E",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#2C2C2E",
-    paddingHorizontal: 16,
-  },
-  atSign: { color: "#555", fontSize: 15, paddingRight: 2 },
-  inputInner: {
+  field: { gap: 2 },
+  label: { color: "#939399", fontSize: 14, lineHeight: 20 },
+  nameRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+  usernameRow: { flexDirection: "row", alignItems: "center" },
+  usernamePrefix: { color: "#F3F3F5", fontSize: 15, fontWeight: "700" },
+  inlineInput: {
     flex: 1,
-    color: "#fff",
+    minWidth: 0,
+    color: "#F3F3F5",
     fontSize: 15,
-    paddingVertical: 14,
+    lineHeight: 21,
+    fontWeight: "700",
+    paddingHorizontal: 0,
+    paddingVertical: 2,
+    backgroundColor: "transparent",
   },
-  bioInput: { height: 100, textAlignVertical: "top", paddingTop: 14 },
-  disabledInput: { opacity: 0.4 },
-  hint: { color: "#555", fontSize: 11 },
+  nameInput: { minHeight: 28 },
+  bioInput: {
+    color: "#F3F3F5",
+    fontSize: 15,
+    lineHeight: 21,
+    fontWeight: "700",
+    minHeight: 80,
+    paddingHorizontal: 0,
+    paddingTop: 2,
+    paddingBottom: 4,
+    textAlignVertical: "top",
+    backgroundColor: "transparent",
+  },
+  counter: { alignSelf: "flex-end", color: "#939399", fontSize: 12, marginTop: 2 },
+  emailSection: { marginTop: -8 },
+  emailBox: {
+    minHeight: 48,
+    justifyContent: "center",
+    backgroundColor: "#16161C",
+    borderWidth: 1,
+    borderColor: "#2B2B32",
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  emailText: { color: "#9898A2", fontSize: 15, lineHeight: 21, fontWeight: "600", flexShrink: 1 },
 });
-
