@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  useWindowDimensions,
   FlatList,
   RefreshControl,
   Share,
@@ -35,6 +36,7 @@ import type { VideoPreviewFrame } from "../../lib/commentVideoLayout";
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 export default function FeedScreen() {
+  const {height:SCREEN_HEIGHT}=useWindowDimensions();
   const insets=useSafeAreaInsets();
   const [activeIndex, setActiveIndex] = useState(0);
   const [commentVideo, setCommentVideo] = useState<VideoItem | null>(null);
@@ -212,7 +214,7 @@ ${item.uri}`,
         : item;
       const isOwner = !!user && user.id === item.creatorId;
       return (
-        <VideoCard
+        <VideoCard bottomInset={registration.tabBarHeight}
           video={{ ...videoWithShares, creatorAvatar: isOwner && profile?.avatar_url ? profile.avatar_url : item.creatorAvatar,
             isFollowing: videoWithShares.isFollowing || !!applied.follow?.has(item.creatorId) }}
           previewFrame={commentVideo?.id === item.id ? previewFrame : null}
@@ -254,7 +256,7 @@ ${item.uri}`,
         />
       );
     },
-    [activeIndex, isFocused, likedIds, savedIds, shareOverrides, commentCounts, likeCounts, user, profile?.avatar_url, commentVideo?.id, previewFrame, loadingIds, toggleLike, toggleFollow, toggleSave, handleShare, handleDelete, registration.visible, registration.setFeedContext, registerFor, applied, restored, commentCue]
+    [activeIndex, isFocused, likedIds, savedIds, shareOverrides, commentCounts, likeCounts, user, profile?.avatar_url, commentVideo?.id, previewFrame, loadingIds, toggleLike, toggleFollow, toggleSave, handleShare, handleDelete, registration.visible, registration.tabBarHeight, registration.setFeedContext, registerFor, applied, restored, commentCue]
   );
 
   return (
@@ -338,7 +340,7 @@ ${item.uri}`,
           windowSize={3}
         />
       </View>
-      <VideoShareSheet video={shareVideo} onClose={()=>setShareVideo(null)} onShare={handleShare} onDelete={handleDelete} onHide={id=>setHiddenVideos(prev=>new Set([...prev,id]))}/>
+      <VideoShareSheet video={shareVideo} onClose={()=>setShareVideo(null)} onShare={handleShare} onDelete={handleDelete} onHide={id=>{setHiddenVideos(prev=>new Set([...prev,id]));setActiveIndex(0);flatListRef.current?.scrollToOffset({offset:0,animated:false});}}/>
       <CommentsSheet
         overTabBar
         showVideoPreview

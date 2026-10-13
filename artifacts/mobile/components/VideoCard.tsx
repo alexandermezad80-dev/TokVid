@@ -21,6 +21,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 interface Props {
   video: VideoItem;
+  bottomInset?:number;
   isActive: boolean;
   isLiked: boolean;
   isSaved: boolean;
@@ -48,7 +49,7 @@ interface Props {
 }
 
 export default function VideoCard({
-  video,
+  video, bottomInset=0,
   isActive,
   isLiked,
   isSaved,
@@ -75,7 +76,7 @@ export default function VideoCard({
   const singleTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<View>(null);
-  const videoFrame = useSharedValue({ left: 0, top: 0, width: SCREEN_WIDTH, height: SCREEN_HEIGHT, borderRadius: 0 });
+  const videoFrame = useSharedValue({ left: 0, top: 0, width: SCREEN_WIDTH, height: Math.max(1,SCREEN_HEIGHT-bottomInset), borderRadius: 0 });
   const videoPresentation = useAnimatedStyle(() => ({ ...videoFrame.value }));
   useEffect(() => {
     let active = true;
@@ -86,10 +87,10 @@ export default function VideoCard({
           width: previewFrame.width, height: previewFrame.height, borderRadius: 20 }, { duration:220,easing:Easing.out(Easing.cubic) });
       });
     } else {
-      videoFrame.value = withTiming({ left: 0, top: 0, width: SCREEN_WIDTH, height: SCREEN_HEIGHT, borderRadius: 0 }, { duration:220,easing:Easing.out(Easing.cubic) });
+      videoFrame.value = withTiming({ left: 0, top: 0, width: SCREEN_WIDTH, height: Math.max(1,SCREEN_HEIGHT-bottomInset), borderRadius: 0 }, { duration:220,easing:Easing.out(Easing.cubic) });
     }
     return () => { active = false; };
-  }, [previewFrame?.x, previewFrame?.y, previewFrame?.width, previewFrame?.height, isActive, videoFrame,SCREEN_WIDTH,SCREEN_HEIGHT]);
+  }, [previewFrame?.x, previewFrame?.y, previewFrame?.width, previewFrame?.height, isActive, videoFrame,SCREEN_WIDTH,SCREEN_HEIGHT,bottomInset]);
 
   const player = useVideoPlayer(isImage ? null : video.uri, (p) => {
     p.loop = true;

@@ -70,10 +70,17 @@ BEGIN
     RAISE EXCEPTION 'Moderator edited foreign text';
   EXCEPTION WHEN insufficient_privilege THEN NULL; END;
   IF (SELECT user_id FROM public.get_feed_comment_owner(foreign_video::text))<>owner_id THEN RAISE EXCEPTION 'Publication owner check failed'; END IF;
+  BEGIN
+    PERFORM public.remove_feed_comment(moderated);
+    RAISE EXCEPTION 'Publication owner removed a foreign author comment';
+  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+  IF NOT EXISTS(SELECT 1 FROM public.comments WHERE id=moderated) THEN RAISE EXCEPTION 'Foreign comment disappeared'; END IF;
+  PERFORM set_config('request.jwt.claim.sub',author_id::text,true);
   PERFORM public.remove_feed_comment(moderated);
   PERFORM public.remove_feed_comment(moderated);
   IF EXISTS(SELECT 1 FROM public.comments WHERE video_id=foreign_video::text) OR (SELECT comments_count FROM public.videos WHERE id=foreign_video)<>0 THEN RAISE EXCEPTION 'Moderation cascade/count failed'; END IF;
 END;
 $verify$;
 ROLLBACK;
-SELECT 'Author edit/delete anywhere, root cascade, individual reply preservation, moderation, counters and privileges passed; transaction rolled back' AS verification;
+SELECT 'Author edit/delete anywhere, root cascade, individual reply preservation, author-only permissions, counters and privileges passed; transaction rolled back' AS verification;
+

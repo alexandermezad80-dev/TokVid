@@ -81,7 +81,7 @@ function CommentsPanel({ visible, onClose, videoId, overTabBar = false, showVide
   const rows = useMemo<ListRow[]>(() => comments.roots.flatMap(root => {
     if (comments.hiddenThreads.has(root.id)) return [];
     const result: ListRow[] = [{ kind: "comment", comment: root, nested: false }];
-    if (root.reply_count > 0 || comments.expanded.has(root.id)) result.push({ kind: "thread", root });
+
     if (comments.expanded.has(root.id)) {
       const thread = comments.threads[root.id];
       for (const row of thread?.rows ?? []) result.push({ kind: "comment", comment: row, nested: true });
@@ -181,10 +181,10 @@ function CommentsPanel({ visible, onClose, videoId, overTabBar = false, showVide
     return <View ref={view => { if (view) rowViews.current.set(row.id, view); else rowViews.current.delete(row.id); }} collapsable={false} style={[styles.comment, item.nested && styles.nested, actionComment?.id === row.id && styles.selectedComment]}>
       <Pressable accessibilityRole="button" accessibilityLabel={`Ver perfil de ${row.username}`} onPress={() => openProfile(row.user_id)} hitSlop={6}><Avatar uri={row.avatar_url} username={row.username} /></Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel={`Opciones del comentario de ${row.username}`} onPress={() => openActions(row)} onLongPress={() => openActions(row)} style={styles.body}>
-        <View style={styles.commentHeader}><Text numberOfLines={1} ellipsizeMode="tail" style={[styles.username, styles.usernameHeading]}>@{row.username}</Text><Pressable accessibilityRole="button" accessibilityLabel="Opciones del comentario" disabled={busy || comments.pendingLikes.has(row.id)} onPress={event => { event.stopPropagation(); openActions(row); }} hitSlop={10} style={styles.optionsButton}><Feather name="more-horizontal" size={18} color="#92929D" /></Pressable></View>
+        <View style={styles.commentHeader}><Text numberOfLines={1} ellipsizeMode="tail" style={[styles.username, styles.usernameHeading]}>@{row.username}</Text><Text style={styles.meta}>{commentTime(row.created_at)}{row.edited_at?" · editado":""}</Text><Pressable accessibilityRole="button" accessibilityLabel="Opciones del comentario" disabled={busy || comments.pendingLikes.has(row.id)} onPress={event => { event.stopPropagation(); openActions(row); }} hitSlop={10} style={styles.optionsButton}><Feather name="more-horizontal" size={18} color="#92929D" /></Pressable></View>
         {row.parent_id && !!row.reply_to_username && <Text numberOfLines={1} style={styles.replyTo}>↳ @{row.reply_to_username}</Text>}
         <Text style={[styles.commentText, !!row.deleted_at && styles.deletedText]}>{row.deleted_at ? "Comentario eliminado" : row.text}</Text>
-        <View style={styles.metaRow}><Text style={styles.meta}>{commentTime(row.created_at)}{!row.deleted_at && row.edited_at ? " · editado" : ""}</Text>{!row.deleted_at && <Pressable accessibilityRole="button" disabled={busy || !!editing} onPress={event => { event.stopPropagation(); startReply(row); }} hitSlop={8}><Text style={styles.meta}>Responder</Text></Pressable>}</View>
+        <View style={styles.metaRow}>{!row.deleted_at && <Pressable accessibilityRole="button" disabled={busy || !!editing} onPress={event => { event.stopPropagation(); startReply(row); }} hitSlop={8}><Text style={styles.meta}>Responder</Text></Pressable>}{!item.nested&&(row.reply_count>0||comments.expanded.has(row.id))&&<Pressable onPress={event=>{event.stopPropagation();void comments.toggleThread(row.id);}}><Text style={styles.link}>{comments.expanded.has(row.id)?"Ocultar respuestas":`Ver respuestas (${row.reply_count})`}</Text></Pressable>}</View>
       </Pressable>
       <View style={styles.like}>
       {!row.deleted_at && <Pressable accessibilityRole="button" accessibilityLabel={liked ? "Quitar Me gusta" : "Me gusta"} accessibilityState={{ selected: liked, disabled: comments.pendingLikes.has(row.id) || busy }} disabled={comments.pendingLikes.has(row.id) || busy} onPress={() => { if (requireUser()) void comments.like(row); }} style={styles.likeButton}>
@@ -213,6 +213,10 @@ function CommentsPanel({ visible, onClose, videoId, overTabBar = false, showVide
         <FlatList<ListRow> data={rows} keyExtractor={row => row.kind === "comment" ? row.comment.id : row.kind === "thread" ? `thread:${row.root.id}` : `more:${row.rootId}`} renderItem={renderRow} style={styles.list} onScrollBeginDrag={dismissActions} contentContainerStyle={[rows.length ? styles.listContent : styles.emptyContainer, { paddingLeft: 16 + viewport.insets.left, paddingRight: 16 + viewport.insets.right,paddingBottom:composerHeight+viewport.keyboardInset+12 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} refreshing={comments.loading} onRefresh={() => { void comments.refresh(); }}
           ListEmptyComponent={comments.loading ? <ActivityIndicator color="#00F2FE" /> : comments.total === 0 || comments.hiddenThreads.size > 0 ? <View style={styles.empty}><Feather name="message-circle" size={32} color="#666" /><Text style={styles.emptyText}>{comments.total === 0 ? "Sé el primero en comentar" : "No hay hilos visibles en esta página"}</Text></View> : null}
           ListFooterComponent={comments.hasMore ? <Pressable disabled={comments.paging} onPress={() => { void comments.loadMore(); }} style={styles.more}><Text style={styles.link}>{comments.paging ? "Cargando…" : "Cargar más comentarios"}</Text></Pressable> : null} />
+
+        </View>
+
+      </Animated.View>
         <Animated.View onLayout={e=>setComposerHeight(e.nativeEvent.layout.height)} style={[styles.composer, composerShape, {position:"absolute",left:0,right:0,bottom:viewport.keyboardInset,paddingBottom:bottomPadding+4,backgroundColor:"#15151BF2", paddingLeft: 8 + viewport.insets.left, paddingRight: 8 + viewport.insets.right }]}>
           {editing && <Pressable accessibilityRole="button" accessibilityLabel="Cancelar edición" disabled={busy} onPress={cancelEdit} style={styles.editIndicator}><Text style={styles.link}>Editando comentario · Cancelar</Text></Pressable>}
           {reply && <Pressable accessibilityRole="button" accessibilityLabel="Cancelar respuesta" disabled={busy} onPress={() => setReply(null)} hitSlop={8} style={styles.replyIndicator}><LinearGradient colors={["rgba(0,242,254,0.22)", "rgba(254,9,121,0.22)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.replyBubble}><Text style={styles.replyLabel}>Respondiendo</Text></LinearGradient></Pressable>}
@@ -226,9 +230,6 @@ function CommentsPanel({ visible, onClose, videoId, overTabBar = false, showVide
             </Pressable>
           </Animated.View>
         </Animated.View>
-        </View>
-
-      </Animated.View>
       {actionComment && placement && <CommentActionsPopover key={actionComment.id} placement={placement} actions={actions} onClose={dismissActions} onContentHeight={setActionMenuHeight} />}
     </View>
   ;
@@ -259,7 +260,7 @@ const styles = StyleSheet.create({
   empty: { alignItems: "center", gap: 12 }, emptyText: { color: "#9999A4", fontSize: 14 },
   comment: { flexDirection: "row", gap: 12, paddingVertical: 7, paddingHorizontal: 4, borderWidth: 1, borderColor: "transparent", borderRadius: 12 }, selectedComment: { backgroundColor: "rgba(0,242,254,0.055)", borderColor: "rgba(0,242,254,0.25)" }, nested: { marginLeft: 44 },
   avatar: { width: 32, height: 32, borderRadius: 16 }, initialAvatar: { backgroundColor: "#292933", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#FE0979" }, initial: { color: "#fff", fontSize: 14, fontWeight: "600" },
-  body: { flex: 1, minWidth: 0, gap: 4 }, username: { color: "#A9A9B4", fontSize: 12, fontWeight: "600" }, commentText: { color: "#fff", fontSize: 15, lineHeight: 20 }, replyTo: { color: "#00F2FE", fontSize: 11 },
+  body: { flex: 1, minWidth: 0, gap: 4 }, username: { color: "#A9A9B4", fontSize: 13, fontWeight: "600" }, commentText: { color: "#fff", fontSize: 15, lineHeight: 20 }, replyTo: { color: "#00F2FE", fontSize: 11 },
   metaRow: { flexDirection: "row", gap: 18, marginTop: 4 }, meta: { color: "#92929D", fontSize: 11 }, like: { alignItems: "center", justifyContent: "flex-start", gap: 4, minWidth: 36, paddingVertical: 4 },
   threadAction: { marginLeft: 42, paddingVertical: 12 }, link: { color: "#00F2FE", fontSize: 12 }, more: { padding: 16, alignItems: "center" },
   errorRow: { paddingHorizontal: 16, paddingBottom: 8, flexDirection: "row", alignItems: "center", gap: 8 }, error: { color: "#ff8dab", fontSize: 12, flex: 1 }, retry: { padding: 8 },

@@ -147,24 +147,11 @@ export default function EditProfileScreen() {
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn} disabled={saving}>
-          <Feather name="x" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Editar perfil</Text>
-        <TouchableOpacity
-          onPress={handleSave}
-          style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
-          disabled={saving}
-          accessibilityRole="button"
-          accessibilityLabel="Guardar perfil"
-        >
-          {saving ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.saveBtnText}>Guardar</Text>
-          )}
+          <Feather name="arrow-left" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
 
+      <Text style={[styles.headerTitle,{paddingHorizontal:20,marginVertical:16}]}>Información de perfil</Text>
       <ScrollView
         contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 24 }]}
         keyboardShouldPersistTaps="handled"
@@ -176,7 +163,7 @@ export default function EditProfileScreen() {
             {!!currentAvatar&&<Image source={{uri:currentAvatar}} style={styles.avatar}/>}
             <View style={currentAvatar?styles.cameraBadge:styles.avatarOverlay}>{uploadingPhoto?<ActivityIndicator color="#FFF"/>:<Feather name="camera" size={currentAvatar?18:28} color="#FFF"/>}</View>
           </Pressable>
-          <View style={{flex:1,gap:10}}><TouchableOpacity onPress={handleSave} disabled={saving} style={styles.saveBtn}>{saving?<ActivityIndicator color="#FFF"/>:<Text style={styles.saveBtnText}>Guardar</Text>}</TouchableOpacity><Pressable onPress={()=>setPhotoMenu(true)} disabled={saving} style={styles.photoAction}><Feather name="camera" size={16} color="#A9CBCD"/><Text style={styles.photoActionText}>Cambiar foto</Text></Pressable><Pressable disabled={!currentAvatar||saving} style={styles.photoAction} onPress={()=>setCropUri(currentAvatar)}><Feather name="crop" size={16} color="#A9CBCD"/><Text style={styles.photoActionText}>Recortar foto</Text></Pressable></View>
+          <View style={{flex:1,gap:10}}><TouchableOpacity accessibilityLabel="Guardar perfil" onPress={handleSave} disabled={saving} style={styles.saveBtn}>{saving?<ActivityIndicator color="#FFF"/>:<Text style={styles.saveBtnText}>Guardar</Text>}</TouchableOpacity><Pressable onPress={()=>setPhotoMenu(true)} disabled={saving} style={styles.photoAction}><Feather name="camera" size={16} color="#A9CBCD"/><Text style={styles.photoActionText}>Cambiar foto</Text></Pressable><Pressable disabled={!currentAvatar||saving} style={styles.photoAction} onPress={()=>setCropUri(currentAvatar)}><Feather name="crop" size={16} color="#A9CBCD"/><Text style={styles.photoActionText}>Recortar foto</Text></Pressable></View>
         </View>
 
         {error && (
@@ -233,7 +220,7 @@ export default function EditProfileScreen() {
           </View>
         </View>
       </ScrollView>
-      <Modal visible={photoMenu} transparent animationType="slide" onRequestClose={()=>setPhotoMenu(false)}><View style={{flex:1,justifyContent:"flex-end",backgroundColor:"#0008"}}><Pressable style={StyleSheet.absoluteFill} onPress={()=>setPhotoMenu(false)}/><View style={{backgroundColor:"#161823",borderTopLeftRadius:20,borderTopRightRadius:20,padding:20,paddingBottom:insets.bottom+20}}>{[{title:"Cargar foto",icon:"image" as const,run:()=>pickImage(false)},{title:"Tomar foto",icon:"camera" as const,run:()=>pickImage(true)},{title:"Ver foto",icon:"maximize" as const,run:()=>{setPhotoMenu(false);router.push({pathname:"/profile-photo",params:{uri:currentAvatar}});}}].map(a=><Pressable key={a.title} accessibilityLabel={a.title} onPress={a.run} style={{minHeight:54,flexDirection:"row",gap:14,alignItems:"center"}}><Feather name={a.icon} color="#FFF" size={22}/><Text style={{color:"#FFF",fontSize:16}}>{a.title}</Text></Pressable>)}</View></View></Modal>
+      <Modal visible={photoMenu} transparent animationType="slide" onRequestClose={()=>setPhotoMenu(false)}><View style={{flex:1,justifyContent:"flex-end",backgroundColor:"#0008"}}><Pressable style={StyleSheet.absoluteFill} onPress={()=>setPhotoMenu(false)}/><View style={{backgroundColor:"#161823",borderTopLeftRadius:20,borderTopRightRadius:20,padding:20,paddingBottom:insets.bottom+32}}>{[{title:"Cargar foto",icon:"image" as const,run:()=>pickImage(false)},{title:"Tomar foto",icon:"camera" as const,run:()=>pickImage(true)},{title:"Ver foto",icon:"maximize" as const,run:()=>{setPhotoMenu(false);router.push({pathname:"/profile-photo",params:{uri:currentAvatar}});}}].map(a=><Pressable key={a.title} accessibilityLabel={a.title} onPress={a.run} style={{minHeight:54,flexDirection:"row",gap:14,alignItems:"center"}}><Feather name={a.icon} color="#FFF" size={22}/><Text style={{color:"#FFF",fontSize:16}}>{a.title}</Text></Pressable>)}</View></View></Modal>
       <ProfilePhotoCrop uri={cropUri} onClose={()=>setCropUri(null)} onSave={photo=>setSelectedPhoto({uri:photo.uri,width:photo.initWidth,height:photo.initHeight,base64:photo.base64,mimeType:"image/jpeg",type:"image"})}/>
     </KeyboardAvoidingView>
   );
@@ -257,13 +244,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#7A64BE",
     borderRadius: 10,
     paddingHorizontal: 18,
-    paddingVertical: 8,
+    height:36,justifyContent:"center",
     minWidth: 80,
     alignItems: "center",
   },
   saveBtnDisabled: { opacity: 0.6 },
   saveBtnText: { color: "#fff", fontWeight: "800", fontSize: 14 },
-  container: { paddingHorizontal: 20, paddingTop: 24, gap: 24 },
+  container: { paddingHorizontal: 20, paddingTop: 0, gap: 20 },
   avatarSection: { flexDirection:"row",alignItems: "center",gap:20 },
   avatarWrap: {
     width: 128,

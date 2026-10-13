@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingBottom: 10,
+    paddingBottom: 0,
   },
   menuBtn: {
     width: 40,
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   handle: { flex: 1, minWidth: 0, textAlign: "center", color: "#fff", fontSize: 17, fontWeight: "700" },
   profileSection: {
     flexDirection:"row",
-    paddingVertical: 12,
+    paddingTop:4,paddingBottom:12,
     paddingHorizontal: 16,
     gap: 16,
   },
