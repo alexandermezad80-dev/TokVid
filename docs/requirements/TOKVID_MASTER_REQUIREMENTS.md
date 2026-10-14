@@ -1,16 +1,14 @@
 # TOKVID
 
-## Estado vigente — corrección visual de Información de perfil
+## Continuidad vigente — APK #217, 13 de octubre de 2026
 
-Código actual: `306c29db53ccadcaf025f5cf574033cf5a3e250e`, rama `feature/feed-mini-video-avatar`. [APK #217 en compilación](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38485133390), aún sin entrega verificada. [Comprobación automática](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38485133507) aprobada: 127 pruebas, TypeScript y prebuild Android.
+[APK #217](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38485133390/artifacts/11859633718), código `306c29db53ccadcaf025f5cf574033cf5a3e250e`, rama `feature/feed-mini-video-avatar`. [CI](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38485133390) aprobada: 127 pruebas, TypeScript y compilación Android. [Manifiesto](../continuity/APK_217_VERIFICATION.json) y [diseños, medidas, funciones y límites](../TOKVID_REFERENCE_DESIGNS_PHASE_3.md).
 
-El usuario confirmó que las funciones, iconos y medidas le parecen correctos, pero señaló que nombre/usuario/descripción/correo no reproducían su referencia. Se retiraron las cajas grandes, se compactó la información editable, se pusieron separadores, contador usado/200 y una única franja de correo no editable legible. La descripción puede crecer; se conserva el espacio libre inferior. Guardado, validaciones, selección/subida/recorte de foto y sus modales no cambiaron. No confundir esta validación funcional del usuario con una aprobación del diseño nuevo, aún pendiente física.
+Buscar puntual con teclado, Saldo/Suscripción visibles deshabilitados y borrado individual exclusivo del autor son decisiones expresas vigentes. Eliminar el principal propio conserva la cascada del hilo; eliminar una respuesta propia conserva las ajenas. El permiso anterior de moderación individual por dueño de publicación queda sustituido. Branding aprobado se conserva; el editor oculto de #210 motivó esta corrección, aún pendiente física en #217.
 
-La APK #216 de fase 3 finalizó correctamente; [manifiesto](../continuity/APK_216_VERIFICATION.json). No contiene esta última corrección visual. Registrar el artefacto, checksum y mapa de fuentes de #217 cuando termine; sustituir esta cabecera pendiente por la entrega verificada. Las decisiones Buscar puntual con teclado y Saldo/Suscripción visibles deshabilitados permanecen vigentes.
+La adaptación usa dimensiones e insets reales. No se afirma prueba en todos los teléfonos. Fondos por cuenta/conversación locales. Funciones económicas y editores avanzados descritos como pendientes en el registro no están activos. Leer [CONTINUAR_AQUI](../../CONTINUAR_AQUI.md) antes del historial siguiente.
 
-El historial de #210 de abajo no es el estado actual.
-
-## Continuidad vigente — entrega del 12 de octubre de 2026
+## Historial — entrega del 12 de octubre de 2026
 
 **Última entrega: [APK #210](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38154309109/artifacts/11707879434)**, rama `feature/feed-mini-video-avatar`, código `dc04574d9b806ee73b2d75d8ba1036c1ac7475e3`. [CI](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38154309109) aprobada: **127 pruebas, cero fallos, TypeScript móvil y compilación Android correctos** (`BUILD SUCCESSFUL in 26m 36s`). [Manifiesto](../continuity/APK_210_VERIFICATION.json). La aceptación física de #210 está pendiente. El usuario sí confirmó la recepción inmediata y bandeja/contador de la base #207.
 
@@ -3015,3 +3013,7 @@ La cabecera vigente, la sección 15 del handoff y MESSAGING_PHASE_2 sustituyen #
 ## Fase 3 — referencias autorizadas, 13 de octubre de 2026
 
 Ver [registro de fase 3](../TOKVID_REFERENCE_DESIGNS_PHASE_3.md). El usuario confirmó Buscar puntual con teclado, y Saldo/Suscripción visibles y deshabilitados. Branding #210 aprobado; editor oculto de #210 NO resuelto físicamente. Se aplicaron los ZIP sobre la rama vigente y se están verificando para nueva APK. Borrado individual solo por autor; esta aclaración sustituye la moderación individual por propietario de publicación. Migración `20261013102948_comment_removal_author_only` aplicada, prueba revertida aprobada. Registrar artefactos y commit final antes de cerrar.
+
+### Presentación de Información de perfil en APK #217
+
+El usuario aprobó funciones, iconos y medidas de la app y rechazó el formulario de cajas grandes. Se compactan nombre/usuario/descripción, se muestran separadores y contador usado/200, y correo en una franja legible de solo lectura. Guardado, validación y foto se conservan. Esta aclaración está incluida en el binario y sustituye la presentación de #216. La aprobación funcional no equivale a aprobación visual de este ajuste, aún pendiente física.

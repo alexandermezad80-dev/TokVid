@@ -4,7 +4,7 @@
 
 1. Leer `CONTINUAR_AQUI.md` y `docs/continuity/TOKVID_SESSION_HANDOFF.md`.
 2. Consultar `docs/requirements/TOKVID_MASTER_REQUIREMENTS.md` para el alcance y las decisiones del producto. Su historial no equivale a tareas pendientes actuales: aplicar las aclaraciones posteriores del usuario.
-3. Comprobar la rama y el HEAD remotos antes de editar o publicar. La línea vigente al cierre del 12 de octubre de 2026 es `feature/feed-mini-video-avatar`; el código de la APK #210 es `dc04574d9b806ee73b2d75d8ba1036c1ac7475e3`. Consultar `CONTINUAR_AQUI.md` por si hay una entrega posterior.
+3. Comprobar la rama y el HEAD remotos antes de editar o publicar. La línea vigente al cierre del 13 de octubre de 2026 es `feature/feed-mini-video-avatar`; el código de la APK #217 es `306c29db53ccadcaf025f5cf574033cf5a3e250e`. Consultar `CONTINUAR_AQUI.md` por si hay una entrega posterior.
 
 ## Regla explícita del usuario
 
