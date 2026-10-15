@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/brand-kit/identidad-visual-TV/3d/app-icon-1024.png",
     "scheme": "mobile",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/brand-kit/identidad-visual-TV/3d/logo-3d-transparente-1024.png",
