@@ -14,7 +14,7 @@ export default function LiveChatScreen() {
 
   if (!user) {
     return (
-      <View style={{ flex: 1, backgroundColor: palette.input, alignItems: "center", justifyContent: "center" }}>
+      <View style={{ flex: 1, backgroundColor: palette.background, alignItems: "center", justifyContent: "center" }}><StatusBar style="dark"/>
         <ActivityIndicator color="#FE2C55" />
       </View>
     );

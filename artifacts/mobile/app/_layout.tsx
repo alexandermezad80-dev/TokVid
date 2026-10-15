@@ -37,7 +37,7 @@ function RootLayoutNav() {
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: palette.background, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator color="#FE2C55" size="large" />
+        <StatusBar style="dark"/><ActivityIndicator color="#FE2C55" size="large" />
       </View>
     );
   }

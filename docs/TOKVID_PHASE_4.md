@@ -79,3 +79,12 @@ Excepciones deliberadas de la misma lógica: reproductores Feed/guardados/likes/
 Las medidas, funciones y tipografías aprobadas no se sustituyen para aplicar colores. El badge de pestaña Actividad se ajusta a17dp/11sp del PDF; los contadores de filas permanecen20dp/12sp. El mock visual del test de retorno Auth recibe la paleta nueva; sus comprobaciones de navegación y restauración no cambian.
 
 Verificación local inicial:132 archivos TypeScript/TSX analizados sin errores sintácticos y24 pruebas focalizadas aprobadas. La suite completa y TypeScript reales se ejecutan en CI; no confundir el adaptador Babel local con un typecheck real. Pendiente registrar el resultado de CI y binario final. La comprobación física de colores, safe areas y teclado sigue pendiente.
+
+
+### Verificación de la paleta antes de compilar
+
+Preflight307261ee8f8525338977eb9f6dfb7b1a3f9a0c80: [CI38741012970](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38741012970),132 pruebas aprobadas, TypeScript móvil y prebuild Android correctos. La primera pasada requirió cargar la paleta real en el entorno de prueba de llamadas; la segunda señaló comparaciones de estado redundantes en estilos de publicación, corregidas sin cambiar el flujo. Revisión final: iconos de estado oscuros sobre superficies blancas de carga, controles de medios blancos sobre oscuro y safe areas de Efectos. La nueva APK vuelve a ejecutar las132 pruebas y TypeScript.
+
+Contraste medido de los tokens de texto sobre sus fondos: texto principal19.66:1, secundario7.73:1, placeholder sobre campo4.75:1, enlace turquesa4.97:1, texto de botón18.10:1, error4.94:1. Estas comprobaciones no sustituyen revisión visual en teléfono. El degradado de referencia conserva sus colores originales.
+
+`app.json` fija presentación clara para los diálogos nativos de la app. No cambia el tema de Android ni instala un teclado. Los fondos de medios permanecen definidos explícitamente en negro.

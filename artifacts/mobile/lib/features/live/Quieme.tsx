@@ -117,7 +117,7 @@ export default function Quieme({ roomId, userId, onClose }: Props) {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color="#fff" />
+        <ActivityIndicator color={palette.teal} />
       </View>
     );
   }

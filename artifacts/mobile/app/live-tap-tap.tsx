@@ -14,7 +14,7 @@ export default function LiveTapTapRoute() {
 
   if (!roomId || !user?.id) {
     return (
-      <View style={{ flex: 1, backgroundColor: palette.input, alignItems: "center", justifyContent: "center" }}>
+      <View style={{ flex: 1, backgroundColor: palette.background, alignItems: "center", justifyContent: "center" }}><StatusBar style="dark"/>
         <Text style={{ color: palette.text }}>LIVE room y sesión requeridos.</Text>
       </View>
     );
