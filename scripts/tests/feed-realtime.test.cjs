@@ -63,7 +63,7 @@ function harness(file, name, args) {
   const helper = load('lib/realtimeSubscriptions.ts', ['createDatabaseChannel'], { supabase: client });
   const model = load('lib/features/comments/model.ts', ['COMMENT_PAGE_SIZE', 'REPLY_PAGE_SIZE', 'commentCapabilities', 'mergeComments']);
   const hooks = load(file, [name], {
-    supabase: client, ...helper, ...model,
+    supabase: client, ...helper, ...model, ...load('constants/palette.ts', ['palette']),
     useState: initial => [typeof initial === 'function' ? initial() : initial, () => stateWrites++],
     createContext: () => ({ Provider: 'Provider' }), createElement: () => null, jsx: () => null, jsxs: () => null, StyleSheet: { create: value => value },
     useRef: current => ({ current }), useCallback: callback => callback,

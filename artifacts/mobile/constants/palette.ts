@@ -8,7 +8,7 @@ export const palette = {
   input: '#F2F3F5',
   text: '#0B0B0D',
   secondary: '#52525B',
-  muted: '#73737D',
+  muted: '#6B6B75',
   border: '#E5E5E5',
   button: '#161616',
   onButton: '#FFFFFF',
