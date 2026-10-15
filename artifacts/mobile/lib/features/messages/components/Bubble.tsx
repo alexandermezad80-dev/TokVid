@@ -1,14 +1,14 @@
 import React from 'react';
 import {Pressable,StyleSheet,Text,View,type ViewStyle} from 'react-native';
 import {LinearGradient} from 'expo-linear-gradient';
-import {BUBBLE_TOKENS,normalizeBubbleStyle,type BubbleStyleVariant} from '../bubbleStyles';
-export {BUBBLE_VARIANTS,BUBBLE_VARIANT_NAMES,type BubbleStyleVariant} from '../bubbleStyles';
+import {BUBBLE_TOKENS,normalizeBubbleStyle,type BubbleStyleVariant,type BubbleToken} from '../bubbleStyles';
+export {BUBBLE_VARIANTS,BUBBLE_VARIANT_NAMES,type BubbleStyleVariant,type BubbleToken} from '../bubbleStyles';
 export type BubbleDirection='sent'|'received';
 export type BubbleGroupPosition='single'|'first'|'middle'|'last';
 type Props={text:string;direction:BubbleDirection;groupPosition?:BubbleGroupPosition;styleVariant?:BubbleStyleVariant;timestamp?:string;dark?:boolean;preview?:boolean;onPress?:()=>void;onLongPress?:()=>void};
 export default function Bubble({text,direction,groupPosition='single',styleVariant='classic',timestamp,dark=false,preview=false,onPress,onLongPress}:Props){
  const variant=normalizeBubbleStyle(styleVariant),compact=variant==='compact';
- const token=direction==='received'?{background:dark?'#202B34':'#FFFFFF',color:dark?'#FFFFFF':'#101010',border:dark?'#3F4D59':'#DDE2E6',radius:16}:BUBBLE_TOKENS[variant];
+ const token:BubbleToken=direction==='received'?{background:dark?'#202B34':'#FFFFFF',color:dark?'#FFFFFF':'#101010',border:dark?'#3F4D59':'#DDE2E6',radius:16}:BUBBLE_TOKENS[variant];
  const top=groupPosition==='middle'||groupPosition==='last',bottom=groupPosition==='middle'||groupPosition==='first';
  const shape:ViewStyle={borderRadius:token.radius,borderWidth:token.border?1:0,borderColor:token.border,backgroundColor:token.background,
   borderTopRightRadius:direction==='sent'&&top?6:token.radius,borderBottomRightRadius:direction==='sent'&&(bottom||variant==='elegant')?6:token.radius,

@@ -93,7 +93,7 @@ for (const [file, name, args, expectedBindings, globalSubscription] of [
   ['hooks/useFeedCommentCounts.ts', 'useFeedCommentCounts', [['v1']], 1],
   ['hooks/useFeedComments.ts', 'useFeedComments', [true, 'v1'], 3],
   ['hooks/useFeedVideoLikes.ts', 'useFeedVideoLikes', [['v1']], 1],
-  ['context/NotificationsContext.tsx', 'NotificationsProvider', [{}], 1, true],
+  ['context/NotificationsContext.tsx', 'NotificationsProvider', [{}], 2, true],
   ['components/IncomingCallListener.tsx', 'IncomingCallListener', [], 2, true],
 ]) {
   test(`${name} reconnects before previous cleanup finishes and keeps the replacement alive`, async () => {

@@ -13,7 +13,7 @@ export async function saveProfileVisibility(userId:string,value:ProfileVisibilit
 export async function readProfileActivity(userId:string,kind:'liked'|'shared',offset=0){
  const {data,error}=await supabase.rpc('profile_activity_ids',{p_user:userId,p_kind:kind,p_offset:offset});
  if(error)throw new Error('No se pudieron cargar estas publicaciones.');
- const ids=(data??[]).map((r:{video_id:string})=>r.video_id).filter((id:string)=>/^[0-9a-f-]{36}$/i.test(id));
+ const ids:string[]=(data??[]).map((r:{video_id:string})=>r.video_id).filter((id:string)=>/^[0-9a-f-]{36}$/i.test(id));
  if(!ids.length)return {items:[],hasMore:(data?.length??0)===60};
  // Reapply the caller's publication RLS: an interaction never grants access to a video.
  const result=await supabase.from('videos').select('*').in('id',ids);
