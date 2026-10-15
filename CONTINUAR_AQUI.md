@@ -1,51 +1,47 @@
-> **Ampliación vigente (15 octubre2026):** aplicar la misma lógica de colores a todas las UI, solicitada durante esta sesión. APK220 del bloque funcional terminó correctamente; la paleta global está en verificación y requiere una APK posterior. Conservar funciones/estructura y fondos oscuros de medios. Ver `docs/TOKVID_PHASE_4.md`, sección final. No afirmar prueba física.
-
-> **Fase4 en verificación (15 octubre2026):** el usuario autorizó implementar todas las referencias posteriores y confirmó visualmente el contenido compacto de Información de perfil de APK217. El teclado de chat seguía fallando y NO se considera validado físicamente. Ver [registro de fase4](docs/TOKVID_PHASE_4.md). Preflight27a677a aprobado:132 pruebas, TypeScript/prebuild. Migración20261015005124 aplicada, pruebas revertidas aprobadas. La APK nueva todavía está pendiente; conservar217 como última entregada hasta registrar el binario nuevo.
-
 # TokVid — continuar desde aquí
 
-Actualizado: **13 de octubre de 2026 (UTC)**.
-
-## Regla del usuario
-
-> «Lo que está hecho no se toca a no ser que necesite una actualización».
-
-Conservar lo aprobado. No volver a pedir decisiones o permisos ya dados. Las aclaraciones posteriores prevalecen sobre documentos y ZIP.
+Actualizado: **15 de octubre de2026 (UTC)**. Este estado sustituye las notas anteriores de fase4 «en implementación», APK pendiente y APK217 como última entrega.
 
 ## Entrega vigente
 
 - Repositorio: [alexandermezad80-dev/TokVid](https://github.com/alexandermezad80-dev/TokVid).
-- Rama: **`feature/feed-mini-video-avatar`**.
-- Código de la APK: **`306c29db53ccadcaf025f5cf574033cf5a3e250e`**. El cierre documental posterior no cambia el binario.
-- [Descargar APK #217](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38485133390/artifacts/11859633718): extraer el ZIP e instalar `app-release.apk`.
-- [Compilación #217](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38485133390): **127 pruebas, cero fallos**, TypeScript y Android aprobados; `BUILD SUCCESSFUL in 17m 33s`.
-- [Manifiesto/checksum](docs/continuity/APK_217_VERIFICATION.json). SHA256 del APK: `f41fefeaa196444d06d895052733585b2a76647c512bd0c11955002ec9929388`. El checksum del ZIP es diferente.
-- [Mapa de fuentes del mismo binario](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38485133390/artifacts/11859303878). Usar siempre el mapa correspondiente a esta APK.
+- Rama: **feature/feed-mini-video-avatar**. No volver a main ni al snapshot de onboarding para continuar.
+- Código del binario: **`e7f8309ca1d820d467f8ad8fee7dde8e2b468dbb`**. Un cierre documental posterior no cambia el código incorporado en esta APK.
+- [Descargar APK#224](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38741386976/artifacts/11976997023): extraer el ZIP e instalar `app-release.apk`.
+- [Compilación#224](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38741386976): **132 pruebas aprobadas, cero fallos**, TypeScript móvil y Android correctos; `BUILD SUCCESSFUL in 19m 38s`.
+- [Manifiesto/checksum](docs/continuity/APK_224_VERIFICATION.json). SHA256 del APK, distinto del ZIP: `e052dc935bfc5543723f84890b4918fa2a8de23800de3b578852d65eb5635eb9`.
+- [Mapa de fuentes de esta misma APK](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38741386976/artifacts/11977006949). Diagnóstico y commit verificados dentro del bundle. No usar el mapa de una APK anterior.
 
-## Decisiones de esta entrega
+## Regla del usuario
 
-Se aplicaron los diseños de Feed/comentarios, Perfil/Amigos, Detalles y fondos. [Registro completo](docs/TOKVID_REFERENCE_DESIGNS_PHASE_3.md).
+«Lo que está hecho no se toca a no ser que necesite una actualización». Conservar lo aprobado y las funciones actuales. No repetir permisos ya concedidos ni interpretar una compilación como prueba física.
 
-**Buscar** no permanece visible: al tocarlo en Detalles aparece el campo y se levanta el teclado. **Saldo y Suscripción** visibles y deshabilitados, confirmados expresamente. Branding de #210 aprobado y conservado. Mensajería inmediata y vista previa/contador de Inbox aprobados y conservados.
+El usuario autorizó «ahora sí implementa y documenta estos cambios» y después amplió el alcance: usar la misma lógica de colores en todas las UI. [Registro completo de fase4](docs/TOKVID_PHASE_4.md). La última ampliación es visual, sin sustituir flujos, servicios ni dimensiones aprobadas.
 
-El teclado de #210 seguía ocultando el editor, según la captura del usuario. Esta entrega modifica ese comportamiento, pendiente de verificación física; no afirmar que ya fue aprobado en teléfono. Chat/comentarios mantienen escena estable y editor superpuesto al teclado. El video pequeño no cambia de tamaño al escribir y el modal cubre la tab bar inferior.
+## Decisiones vigentes
 
-Solo el autor elimina individualmente su comentario/respuesta. El principal propio elimina todo su hilo; una respuesta propia conserva las demás respuestas y sus descendientes. Se quita la confirmación extra en comentarios. Esto sustituye la anterior autorización de moderación individual al dueño de la publicación.
+- Paleta común gris–turquesa, superficies blancas, texto oscuro, botones negros y acentos cian/magenta. Medios/cámara/reproductores conservan fondo oscuro; tab bar negra y zonas negras superior/correo de Información se mantienen según la referencia. Fondos y burbujas elegidos conservan colores propios.
+- Perfil propio/público alineados. Puntos propios abren Información directamente; hamburguesa abre herramientas a pantalla completa. Visitante: Mensajes/Suscripción, sin controles privados; relaciones públicas accesibles. Dueño elige visibilidad de Me gusta/Compartidos.
+- Información mantiene el contenido compacto que el usuario aprobó en217; nueva paleta y comportamiento de teclado pendientes de prueba física. Chat usa compositor en flujo y controlador nativo, sin doble cálculo manual. Último mensaje y campo deben quedar visibles. No afirmar aprobación física de estos cambios.
+- «Solange» solo como placeholder de su propia cuenta, ligada al ID estable; desaparece al escribir. Otros usuarios ven «Mensaje…». Campo rectangular con borde suave.
+- Burbuja Redonda eliminada del catálogo, preferencia anterior normalizada a Clásica. Diez estilos compartidos entre detalles y modal inferior contextual; incluye magenta, cristal grafito y azul.
+- Fondos: composición completa sin deformar, mismo componente en chat/miniatura/vista previa; prioridad a ver las olas/sol completos. Nuevos gris y azul.
+- Buscar solo muestra campo/teclado al tocarlo en Detalles. Compartir Android muestra iconos del sistema de apps compatibles e intenta abrir esa app directamente. Compartir genérico conserva selector por elección.
+- Actividad: fila abre acción concreta/publicación/comentario; avatar de interacciones abre galería blanca independiente. Mensajes abre chat, su contador se limpia al leer y cuenta lo nuevo. No aplicar galería a mensajes.
+- Borrar desde Inbox oculta historial solo a esa cuenta, incluidos grupos, con corte temporal del servidor; los mensajes nuevos vuelven a aparecer. No borra conversaciones del otro usuario.
+- Comentarios: individual solo autor, principal propio borra hilo completo, respuesta propia conserva ajenas; sin confirmación extra. Modal cubre tab bar y mantiene video pequeño. No reabrir permisos.
+- Registro/correo/OTP de ocho dígitos y retorno al feed conservados. No cambiar Auth por defectos visuales.
 
-La regla anterior de chat privado sigue vigente: Eliminar todos oculta solo mis mensajes y solo de mi vista. Eliminar para todos afecta el mensaje propio tocado. Ocultar conversación desde Inbox no borra el historial del otro participante.
+## Opciones preparadas y límites
 
-## Datos y límites
+Saldo muestra0.00 provisional sin operaciones financieras; Suscripción visible/deshabilitada; QR y eliminación de cuenta preparados, sin servicio activo. Cambiar cuenta/cerrar sesión usan el cierre de sesión existente. Privacidad y Centro de actividades están conectados.
 
-Migración `20261013102948_comment_removal_author_only` aplicada y registrada; prueba SQL revertida aprobada. La migración no ejecutó borrados de datos existentes. No volver a aplicarla ni inventar otra versión. No cambiar Auth/OTP o Live por esta fase visual.
+Fondo guardado por cuenta/conversación en este dispositivo. Abrir una app externa no permite demostrar que se terminó de compartir dentro de ella. Los diseños y flujos de cámara/video se conservan.
 
-Los ocho fondos originales están incorporados y la selección se guarda localmente por cuenta/conversación, sin sincronización entre dispositivos. Saldo/Suscripción no están activos. Los editores avanzados de Dúo/Pegar/GIF/sticker de las capturas de ejemplo no forman parte de las acciones funcionales entregadas; Compartir dispone de los servicios detallados en el registro de fase.
+Migración **20261015005124_profile_visibility_activity_and_personal_inbox** aplicada y registrada. Pruebas SQL revertidas aprobadas antes/después, sin datos de prueba persistentes. No repetir migración ni inventar otra versión. Migración previa20261013102948 de comentarios también aplicada. Ningún cambio de políticas Auth/OTP por la paleta global.
 
-## Siguiente paso
+## Siguiente paso concreto
 
-Probar esta APK en los teléfonos del usuario: teclado normal/emojis en chat y comentarios; fuente grande y navegación por botones/gestos; Buscar, fondos y vista previa; foto/cámara/recorte; grilla/relaciones y permisos de comentarios entre dos cuentas. No marcar `physical_device_verified` como verdadero sin confirmación. Registrar las nuevas observaciones antes de otra fase; no rehacer funciones aprobadas.
+Prueba física del usuario en Android: teclado normal/emojis en chat y edición de perfil, fuente grande, gestos/botones y áreas seguras; colores y contraste en pantallas/modales; compartir directo con apps instaladas; contadores/lecturas entre dos cuentas; tocar notificación versus avatar y privacidad de perfil visitante. Registrar observaciones sin rehacer funciones aprobadas. **physical_device_verified=false** hasta confirmación expresa.
 
-Consultar también [requisitos](docs/requirements/TOKVID_MASTER_REQUIREMENTS.md), [handoff](docs/continuity/TOKVID_SESSION_HANDOFF.md) y [AGENTS.md](AGENTS.md). La rama `feature/onboarding-profile-interests` se usó como referencia de ZIP, no como base de código.
-
-### Presentación de Información de perfil en APK #217
-
-El usuario aprobó funciones, iconos y medidas de la app y rechazó el formulario de cajas grandes. Se compactan nombre/usuario/descripción, se muestran separadores y contador usado/200, y correo en una franja legible de solo lectura. Guardado, validación y foto se conservan. Esta aclaración está incluida en el binario y sustituye la presentación de #216. La aprobación funcional no equivale a aprobación visual de este ajuste, aún pendiente física.
+Consultar [handoff](docs/continuity/TOKVID_SESSION_HANDOFF.md), [requisitos](docs/requirements/TOKVID_MASTER_REQUIREMENTS.md) y [AGENTS.md](AGENTS.md). APK220 fue una compilación intermedia sin la ampliación global de colores; APK#224 la sustituye.

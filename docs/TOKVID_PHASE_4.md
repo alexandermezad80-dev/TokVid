@@ -1,6 +1,6 @@
 # TokVid — fase 4 autorizada, 14 de octubre de 2026
 
-Estado: bloque funcional compilado en APK220; ampliación de paleta global en verificación. No hay prueba física de esta fase. Base remota `0e217d8cbc6ce668677bc66613d77b33c826bf03`, rama `feature/feed-mini-video-avatar`. El usuario autorizó «ahora sí implementa y documenta estos cambios» después de aportar referencias. Las aclaraciones aquí registradas prevalecen sobre fases anteriores.
+Estado: implementado y compilado en APK224, código `e7f8309ca1d820d467f8ad8fee7dde8e2b468dbb`. Verificación automática aprobada; prueba física pendiente. Base remota `0e217d8cbc6ce668677bc66613d77b33c826bf03`, rama `feature/feed-mini-video-avatar`. El usuario autorizó «ahora sí implementa y documenta estos cambios» después de aportar referencias. Las aclaraciones aquí registradas prevalecen sobre fases anteriores.
 
 ## Decisiones que conservar
 
@@ -88,3 +88,12 @@ Preflight307261ee8f8525338977eb9f6dfb7b1a3f9a0c80: [CI38741012970](https://githu
 Contraste medido de los tokens de texto sobre sus fondos: texto principal19.66:1, secundario7.73:1, placeholder sobre campo4.75:1, enlace turquesa4.97:1, texto de botón18.10:1, error4.94:1. Estas comprobaciones no sustituyen revisión visual en teléfono. El degradado de referencia conserva sus colores originales.
 
 `app.json` fija presentación clara para los diálogos nativos de la app. No cambia el tema de Android ni instala un teclado. Los fondos de medios permanecen definidos explícitamente en negro.
+
+
+## Entrega final — APK#224
+
+[Descargar APK](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38741386976/artifacts/11976997023) · [Compilación](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38741386976) · [Manifiesto](continuity/APK_224_VERIFICATION.json).
+
+Código `e7f8309ca1d820d467f8ad8fee7dde8e2b468dbb`, rama `feature/feed-mini-video-avatar`. **132 pruebas, cero fallos**, TypeScript y Android correctos. `BUILD SUCCESSFUL in 19m 38s`. Diagnóstico y mapa de fuentes corresponden al mismo binario. SHA256 del APK: `e052dc935bfc5543723f84890b4918fa2a8de23800de3b578852d65eb5635eb9`. Incluye el bloque completo y la ampliación de paleta global; sustituye220 como candidato de esta fase. Las notas previas de APK pendiente quedan cerradas por esta entrega.
+
+La migración y las pruebas SQL figuran arriba; no hay otra migración por unificar colores. Sin validación física todavía. Herramientas financieras, QR y eliminación de cuenta mantienen el alcance de pantallas preparadas; no se presentan como servicios activos.

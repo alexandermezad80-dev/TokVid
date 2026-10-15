@@ -1,3 +1,5 @@
+> **Última entrega —15 octubre2026: APK#224.** Fase4 y ampliación de colores implementadas/documentadas. [Estado vigente](../../CONTINUAR_AQUI.md) y [registro](../TOKVID_PHASE_4.md) prevalecen sobre estados de entrega antiguos en este historial.132 pruebas, TypeScript y compilación Android aprobados; prueba física pendiente.
+
 # TOKVID
 
 ## Continuidad vigente — APK #217, 13 de octubre de 2026
@@ -3022,3 +3024,10 @@ El usuario aprobó funciones, iconos y medidas de la app y rechazó el formulari
 ## Aclaraciones autorizadas de fase4 — 15 octubre2026
 
 El [registro de fase4](../TOKVID_PHASE_4.md) reúne las capturas, cuatro documentos de medidas y decisiones posteriores. Sustituye las presentaciones antiguas en perfiles/Inbox/chat, el submenú lateral de burbujas, el fondo estirado y el menú intermedio de los tres puntos. El contenido compacto de Información fue aprobado; su teclado recibe la corrección solicitada. «Solange» solo en su propia cuenta. Nuevas herramientas financieras, QR y eliminación de cuenta quedan preparadas según el alcance, sin afirmar servicios activos. No reabrir permisos de comentarios ni Auth. Ver el registro para implementación, pruebas y límites físicos.
+
+
+## Ampliación global de colores y cierre de fase4 —15 octubre2026
+
+El usuario pidió usar la misma lógica de colores en todas las UI de TokVid. Se unifican superficies blancas, texto oscuro, botones negros, encabezados gris–turquesa y acentos de marca; fondos de medios, tab bar y zonas negras explícitamente aprobadas se conservan. No cambia Auth/OTP, servicios LIVE, rutas ni acciones por este ajuste visual. Ver la matriz de pantallas y límites en [fase4](../TOKVID_PHASE_4.md).
+
+Entrega APK#224, commit `e7f8309ca1d820d467f8ad8fee7dde8e2b468dbb`. Las opciones preparadas siguen sin servicios financieros/QR/eliminación de cuenta activos. El texto «Solange» solo corresponde a su cuenta, no a todos los usuarios. El contenido compacto anterior fue aprobado; esta APK y el teclado requieren confirmación física. [Manifiesto](../continuity/APK_224_VERIFICATION.json).
