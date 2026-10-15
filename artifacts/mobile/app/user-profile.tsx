@@ -1,3 +1,8 @@
+import {LinearGradient} from "expo-linear-gradient";
+import {StatusBar} from "expo-status-bar";
+import BrandAvatar from "../components/reference/BrandAvatar";
+import {readProfileActivity,readProfileVisibility,type ProfileVisibility} from "../lib/features/profile/visibility";
+import type {VideoItem} from "../hooks/useVideoFeed";
 import {publicationId} from "../lib/features/publishing/model";
 import {usePublicationGrid} from "../hooks/usePublicationGrid";
 import {openPrivateConversation} from "../lib/features/messages/services/private-messages";
@@ -5,7 +10,7 @@ import PublicationThumbnail from "../components/PublicationThumbnail";
 import { usePublishedMedia } from "../hooks/usePublishedMedia";
 import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
-import { Redirect, router, useLocalSearchParams } from "expo-router";
+import { Redirect, router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState, useRef } from "react";
 import {
   ActivityIndicator,
@@ -98,7 +103,12 @@ export default function UserProfileScreen() {
   const videos = publications.items;
   const videosLoading = publications.loading;
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"videos" | "liked">("videos");
+  const [tab, setTab] = useState<'videos'|'liked'|'shared'>('videos');
+  const [expanded,setExpanded]=useState(false),[visibility,setVisibility]=useState<ProfileVisibility>({show_likes:false,show_shares:false});
+  const [activity,setActivity]=useState<VideoItem[]>([]),[activityLoading,setActivityLoading]=useState(false),[activityError,setActivityError]=useState(''),[activityMore,setActivityMore]=useState(false),[activityOffset,setActivityOffset]=useState(0);
+  useFocusEffect(useCallback(()=>{let active=true;setVisibility({show_likes:false,show_shares:false});void readProfileVisibility(userId).then(v=>{if(active){setVisibility(v);setTab(current=>current==='liked'&&!v.show_likes||current==='shared'&&!v.show_shares?'videos':current);}}).catch(()=>{});return()=>{active=false;};},[userId]));
+  useEffect(()=>{setActivity([]);setActivityOffset(0);},[userId,tab]);
+  useEffect(()=>{let active=true;if(tab==='videos')return;setActivityLoading(true);void readProfileActivity(userId,tab,activityOffset).then(page=>{if(active){setActivity(old=>activityOffset?[...old,...page.items.filter(v=>!old.some(o=>o.id===v.id))]:page.items);setActivityMore(page.hasMore);setActivityError('');}}).catch(e=>{if(active)setActivityError(e.message);}).finally(()=>{if(active)setActivityLoading(false);});return()=>{active=false;};},[userId,tab,activityOffset]);
   const [msgLoading, setMsgLoading] = useState(false);
 
   const openChat = async () => {
@@ -129,259 +139,31 @@ export default function UserProfileScreen() {
   if (!user) return null;
   if(user.id===userId) return <Redirect href="/(tabs)/profile"/>;
 
-  const isOwnProfile = user?.id === userId;
-
-  return (
-    <View onLayout={gridLayout.onLayout} style={[styles.container]}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: topPad + 6 }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Feather name="arrow-left" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>
-          {profile ? `@${profile.username}` : "Perfil"}
-        </Text>
-        <View style={styles.backBtn} />
-      </View>
-
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color="#FE2C55" size="large" />
-        </View>
-      ) : !profile ? (
-        <View style={styles.center}>
-          <View style={styles.emptyIcon}>
-            <Feather name="user-x" size={32} color="#333" />
-          </View>
-          <Text style={styles.emptyTitle}>Usuario no encontrado</Text>
-          <TouchableOpacity style={styles.retryBtn} onPress={() => router.back()}>
-            <Text style={styles.retryText}>Volver</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Profile section */}
-          <View style={styles.profileSection}>
-            <Image source={{ uri: avatarUrl(profile) }} style={styles.avatar} />
-            <Text style={styles.displayName}>{profile.username}</Text>
-            {profile.bio ? (
-              <Text style={styles.bio}>{profile.bio}</Text>
-            ) : null}
-
-            {/* Stats */}
-            <View style={styles.stats}>
-              {[
-                { value: fmtCount(profile.following_count), label: "Siguiendo" },
-                { value: fmtCount(profile.followers_count), label: "Seguidores" },
-                { value: fmtCount(profile.likes_count), label: "Me gusta" },
-              ].map((s) => (
-                <View key={s.label} style={styles.stat}>
-                  <Text style={styles.statValue}>{s.value}</Text>
-                  <Text style={styles.statLabel}>{s.label}</Text>
-                </View>
-              ))}
-            </View>
-
-            {/* Actions */}
-            {isOwnProfile ? (
-              <TouchableOpacity
-                style={styles.editBtn}
-                onPress={() => router.push("/edit-profile")}
-              >
-                <Text style={styles.editBtnText}>Editar perfil</Text>
-              </TouchableOpacity>
-            ) : (
-              <View style={styles.actions}>
-                <FollowButton userId={profile.id} />
-                <TouchableOpacity style={styles.msgBtn} onPress={openChat} disabled={msgLoading}>
-                  {msgLoading ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <>
-                      <Feather name="message-circle" size={18} color="#fff" />
-                      <Text style={styles.msgBtnText}>Mensaje</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-
-          {/* Tab bar */}
-          <View style={styles.tabBar}>
-            {(["videos", "liked"] as const).map((t) => (
-              <TouchableOpacity
-                key={t}
-                style={[styles.tabItem, tab === t && styles.tabItemActive]}
-                onPress={() => setTab(t)}
-              >
-                <Feather
-                  name={t === "videos" ? "grid" : "heart"}
-                  size={20}
-                  color={tab === t ? "#fff" : "#555"}
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {tab === "videos" ? (
-            videosLoading ? (
-              <View style={styles.gridState}>
-                <ActivityIndicator color="#FE2C55" size="small" />
-              </View>
-            ) : publications.error ? (<TouchableOpacity style={styles.gridState} onPress={() => void publications.refresh()}><Text style={styles.gridStateText}>{publications.error}</Text><Text style={{color:"#99DFE3"}}>Reintentar</Text></TouchableOpacity>) : videos.length === 0 ? (
-              <View style={styles.gridState}>
-                <Feather name="video-off" size={28} color="#555" />
-                <Text style={styles.gridStateTitle}>Todavía no hay publicaciones</Text>
-                <Text style={styles.gridStateText}>
-                  Sus fotos y videos aparecerán aquí.
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.grid}>
-                {videos.map((video) => (
-                  <TouchableOpacity key={video.id} style={[styles.gridItem,gridLayout.tile]} onPress={() => router.push({ pathname: "/publication", params: { id: video.id } })}>
-                    <PublicationThumbnail item={video} />
-                    <View style={styles.viewsBadge}>
-                      <Feather name="play" size={10} color="#fff" />
-                      <Text style={styles.viewsText}>
-                        {video.likes} Me gusta
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )
-          ) : (
-            <View style={styles.gridState}>
-              <Feather name="heart" size={28} color="#555" />
-              <Text style={styles.gridStateTitle}>Me gusta</Text>
-              <Text style={styles.gridStateText}>
-                Los videos que le gustan a este usuario no se muestran públicamente.
-              </Text>
-            </View>
-          )}
-
-          <View style={{ height: Platform.OS === "web" ? 34 : insets.bottom + 40 }} />
-        </ScrollView>
-      )}
-    </View>
-  );
+  const shown=tab==='videos'?videos:activity;
+  const error=tab==='videos'?publications.error:activityError;
+  const isLoading=tab==='videos'?videosLoading:activityLoading;
+  const connections=(kind:'following'|'followers')=>router.push({pathname:'/profile-connections',params:{userId,kind}});
+  return <View onLayout={gridLayout.onLayout} style={styles.container}><StatusBar style="light"/>
+   <View style={[styles.header,{paddingTop:topPad}]}><TouchableOpacity style={styles.backBtn} onPress={()=>router.back()} accessibilityLabel="Volver"><Feather name="arrow-left" size={24} color="#FFF"/></TouchableOpacity><TouchableOpacity style={styles.backBtn} onPress={()=>connections('followers')} accessibilityLabel="Amigos y seguidores"><Feather name="users" size={22} color="#FFF"/></TouchableOpacity><View style={{flex:1}}/></View>
+   {loading?<View style={styles.center}><ActivityIndicator color="#2F9A9F"/></View>:!profile?<View style={styles.center}><Text style={styles.gridStateTitle}>Usuario no encontrado</Text></View>:<ScrollView showsVerticalScrollIndicator={false}>
+    <LinearGradient colors={['#727C87','#36969B']} start={{x:0,y:0}} end={{x:1,y:.36}} style={styles.profileSection}>
+     <View style={{width:88,gap:8}}><TouchableOpacity onPress={()=>profile.avatar_url&&router.push({pathname:'/profile-photo',params:{uri:profile.avatar_url}})} accessibilityLabel="Ver foto de perfil"><BrandAvatar uri={profile.avatar_url}/></TouchableOpacity>
+      <TouchableOpacity style={styles.accountButton} onPress={openChat} disabled={msgLoading}>{msgLoading?<ActivityIndicator color="#FFF"/>:<Text style={styles.accountLabel}>Mensajes</Text>}</TouchableOpacity>
+      <TouchableOpacity style={styles.accountButton} disabled accessibilityState={{disabled:true}}><Text style={styles.accountLabel}>Suscripción</Text></TouchableOpacity>
+     </View>
+     <View style={{flex:1,gap:8,minWidth:0}}><Text numberOfLines={1} style={styles.displayName}>@{profile.username}</Text>
+      <View style={styles.stats}><View style={styles.stat}><Text style={styles.statValue}>{fmtCount(profile.likes_count)}</Text><Text style={styles.statLabel}>Me gusta</Text></View><TouchableOpacity style={styles.stat} onPress={()=>connections('following')}><Text style={styles.statValue}>{fmtCount(profile.following_count)}</Text><Text style={styles.statLabel}>Siguiendo</Text></TouchableOpacity><TouchableOpacity style={styles.stat} onPress={()=>connections('followers')}><Text style={styles.statValue}>{fmtCount(profile.followers_count)}</Text><Text style={styles.statLabel}>Seguidores</Text></TouchableOpacity></View>
+      {!!profile.bio&&<><Text numberOfLines={expanded?undefined:3} style={styles.bio}>{profile.bio}</Text><TouchableOpacity onPress={()=>setExpanded(!expanded)}><Text style={styles.more}>{expanded?'Ver menos':'Ver más'}</Text></TouchableOpacity></>}
+      <FollowButton userId={profile.id}/>
+     </View>
+    </LinearGradient>
+    <View style={styles.tabBar}>{(['videos',...(visibility.show_likes?['liked']:[]),...(visibility.show_shares?['shared']:[])] as ('videos'|'liked'|'shared')[]).map(t=><TouchableOpacity key={t} onPress={()=>setTab(t)} accessibilityLabel={t==='videos'?'Publicaciones':t==='liked'?'Me gusta':'Compartidos'} accessibilityState={{selected:tab===t}} style={[styles.tabItem,tab===t&&styles.tabItemActive]}><Feather name={t==='videos'?'grid':t==='liked'?'heart':'share-2'} size={22} color={tab===t?'#FFF':'#9AA5AE'}/></TouchableOpacity>)}</View>
+    {!!error&&<Text style={styles.gridStateText}>{error}</Text>}
+    <View style={styles.grid}>{shown.map(v=><TouchableOpacity key={v.id} style={[styles.gridItem,gridLayout.tile]} onPress={()=>router.push({pathname:'/publication',params:{id:v.id}})}><PublicationThumbnail item={v}/></TouchableOpacity>)}</View>
+    {isLoading?<ActivityIndicator style={{margin:24}} color="#2F9A9F"/>:!shown.length&&!error?<View style={styles.center}><Text style={styles.gridStateText}>Todavía no hay publicaciones en esta sección.</Text></View>:null}
+    {(tab==='videos'?publications.hasMore:activityMore)&&<TouchableOpacity disabled={isLoading} style={{padding:20}} onPress={()=>tab==='videos'?void publications.loadMore():setActivityOffset(n=>n+60)}><Text style={[styles.gridStateText,{color:'#2F777B'}]}>Ver más</Text></TouchableOpacity>}
+    <View style={{height:insets.bottom+24}}/>
+   </ScrollView>}
+  </View>;
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000" },
-
-  // Header
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 12,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#111",
-  },
-  backBtn: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
-  headerTitle: { color: "#fff", fontSize: 16, fontWeight: "700", flex: 1, textAlign: "center" },
-
-  // Center states
-  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16, paddingHorizontal: 40 },
-  emptyIcon: {
-    width: 72, height: 72, borderRadius: 36,
-    backgroundColor: "#111", alignItems: "center", justifyContent: "center",
-  },
-  emptyTitle: { color: "#fff", fontSize: 18, fontWeight: "700" },
-  retryBtn: {
-    backgroundColor: "#FE2C55", borderRadius: 10,
-    paddingHorizontal: 28, paddingVertical: 10,
-  },
-  retryText: { color: "#fff", fontWeight: "700", fontSize: 14 },
-
-  // Profile
-  profileSection: { alignItems: "center", paddingVertical: 24, paddingHorizontal: 16, gap: 10 },
-  avatar: {
-    width: 96, height: 96, borderRadius: 48,
-    borderWidth: 3, borderColor: "#FE2C55", backgroundColor: "#1C1C1E",
-  },
-  displayName: { color: "#fff", fontSize: 20, fontWeight: "700" },
-  bio: { color: "#aaa", fontSize: 14, textAlign: "center", paddingHorizontal: 20, lineHeight: 20 },
-
-  // Stats
-  stats: { flexDirection: "row", gap: 32, marginTop: 4 },
-  stat: { alignItems: "center", gap: 2 },
-  statValue: { color: "#fff", fontSize: 18, fontWeight: "800" },
-  statLabel: { color: "#888", fontSize: 13 },
-
-  // Actions
-  actions: { flexDirection: "row", gap: 10, marginTop: 4 },
-  followBtn: {
-    backgroundColor: "#FE2C55",
-    borderRadius: 10,
-    paddingHorizontal: 40,
-    paddingVertical: 10,
-    minWidth: 120,
-    alignItems: "center",
-  },
-  followBtnActive: {
-    backgroundColor: "transparent",
-    borderWidth: 1.5,
-    borderColor: "#FE2C55",
-  },
-  followBtnText: { color: "#fff", fontWeight: "700", fontSize: 15 },
-  followBtnTextActive: { color: "#FE2C55" },
-  msgBtn: {
-    backgroundColor: "#1C1C1E",
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  msgBtnText: { color: "#fff", fontWeight: "600", fontSize: 14 },
-  editBtn: {
-    backgroundColor: "#1C1C1E",
-    borderRadius: 10,
-    paddingHorizontal: 52,
-    paddingVertical: 10,
-    marginTop: 4,
-  },
-  editBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
-
-  // Tab bar
-  tabBar: {
-    flexDirection: "row",
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: "#1C1C1E",
-  },
-  tabItem: { flex: 1, alignItems: "center", paddingVertical: 12 },
-  tabItemActive: { borderBottomWidth: 2, borderBottomColor: "#fff" },
-
-  // Grid
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 6, paddingHorizontal: 10, paddingVertical: 10 },
-  gridState: {
-    minHeight: 180,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingHorizontal: 28,
-  },
-  gridStateTitle: { color: "#fff", fontSize: 16, fontWeight: "700" },
-  gridStateText: { color: "#777", fontSize: 13, textAlign: "center", lineHeight: 19 },
-  gridItem: { width: "32%", aspectRatio: 0.64, borderRadius: 10, backgroundColor: "#111", overflow: "hidden" },
-  viewsBadge: {
-    position: "absolute", bottom: 6, left: 6,
-    flexDirection: "row", alignItems: "center", gap: 3,
-  },
-  viewsText: {
-    color: "#fff", fontSize: 11, fontWeight: "700",
-    textShadowColor: "rgba(0,0,0,0.9)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-});
-
+const styles=StyleSheet.create({container:{flex:1,backgroundColor:'#FFF'},header:{backgroundColor:'#000',flexDirection:'row',alignItems:'center',paddingHorizontal:12},backBtn:{width:44,height:44,alignItems:'center',justifyContent:'center'},center:{minHeight:180,justifyContent:'center',alignItems:'center',padding:24},profileSection:{flexDirection:'row',paddingHorizontal:16,paddingTop:8,paddingBottom:12,gap:16},accountButton:{width:88,minHeight:34,borderRadius:8,backgroundColor:'#161616',alignItems:'center',justifyContent:'center'},accountLabel:{color:'#FFF',fontSize:11},displayName:{color:'#FFF',fontSize:16,fontWeight:'700'},stats:{flexDirection:'row',gap:4,marginTop:12,marginBottom:4},stat:{flex:1,alignItems:'center',gap:2},statValue:{color:'#FFF',fontSize:16,fontWeight:'800'},statLabel:{color:'#F1F3F5',fontSize:10.5},bio:{color:'#FFF',fontSize:12,lineHeight:16},more:{color:'#FFF',fontSize:12,textDecorationLine:'underline'},followBtn:{alignSelf:'flex-start',backgroundColor:'#161616',borderRadius:8,paddingHorizontal:20,minHeight:32,justifyContent:'center'},followBtnActive:{backgroundColor:'#FFFFFF24',borderWidth:1,borderColor:'#FFFFFF88'},followBtnText:{color:'#FFF',fontSize:12,fontWeight:'600'},followBtnTextActive:{color:'#FFF'},tabBar:{flexDirection:'row',backgroundColor:'#232F39'},tabItem:{flex:1,paddingVertical:12,alignItems:'center'},tabItemActive:{borderBottomWidth:2,borderBottomColor:'#25F4EE'},grid:{flexDirection:'row',flexWrap:'wrap',gap:6,paddingHorizontal:10,paddingVertical:10},gridItem:{aspectRatio:.75,borderRadius:8,overflow:'hidden'},gridStateTitle:{fontSize:18,color:'#101010',fontWeight:'600'},gridStateText:{fontSize:14,color:'#737373',textAlign:'center',padding:16}});

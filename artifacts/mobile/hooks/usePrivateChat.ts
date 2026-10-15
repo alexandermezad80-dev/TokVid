@@ -30,6 +30,7 @@ export function usePrivateChat(conversationId:string,userId?:string) {
       if(gen!==generation.current||request!==sequence.current)return;
       setMessages(mergePrivateMessages([],rows));setHasOlder(page.length===200);setError(null);setLoading(false);
       const unread=rows.filter(row=>row.sender_id!==userId&&!row.read_by_other).map(row=>row.id);
+      await supabase.rpc("read_chat_activity",{p_conversation_id:conversationId});
       if(unread.length)await supabase.from("messages").update({read_by_other:true}).in("id",unread).eq("conversation_id",conversationId).neq("sender_id",userId);
     }catch(e){if(gen===generation.current&&request===sequence.current){setError(e instanceof Error?e.message:"No se pudo cargar el chat.");setLoading(false);}}
   },[conversationId,userId]);

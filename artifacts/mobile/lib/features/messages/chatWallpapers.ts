@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { ImageSourcePropType } from 'react-native';
 
-export const CHAT_WALLPAPERS: {id:string; name:string; source:ImageSourcePropType|null}[] = [
+export const CHAT_WALLPAPERS: {id:string; name:string; source:ImageSourcePropType|null; colors?:readonly [string,string]; fill?:string}[] = [
   {id:'aurora',name:'Aurora',source:require('../../../assets/chat-backgrounds/01-aurora.jpg')},
   {id:'atardecer',name:'Atardecer',source:require('../../../assets/chat-backgrounds/02-atardecer.jpg')},
   {id:'menta',name:'Menta y olas',source:require('../../../assets/chat-backgrounds/03-menta-olas.jpg')},
@@ -10,6 +10,8 @@ export const CHAT_WALLPAPERS: {id:string; name:string; source:ImageSourcePropTyp
   {id:'confeti',name:'Confeti',source:require('../../../assets/chat-backgrounds/06-confeti.jpg')},
   {id:'doodles',name:'Doodles',source:require('../../../assets/chat-backgrounds/07-doodles.jpg')},
   {id:'cielo',name:'Cielo',source:require('../../../assets/chat-backgrounds/08-cielo.jpg')},
+  {id:'gris',name:'Gris sereno',source:null,colors:['#E2E5E9','#B2BCC7']},
+  {id:'azul',name:'Azul profundo',source:null,colors:['#D7E6F1','#8DA9C2']},
   {id:'none',name:'Sin fondo',source:null},
 ];
 const key=(userId:string,conversationId:string)=>`tokvid:wallpaper:v1:${userId}:${conversationId}`;

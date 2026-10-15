@@ -1,0 +1,50 @@
+Herramientas de usuario y pantalla de Saldo
+Medidas en dp. Pantalla de referencia: 390 x 844. Fuente: Outfit.
+
+1. Fila "Herramientas de usuario" en el menú de cuenta
+
+ Posición                                 De y = 160 a y = 216, entre las filas Saldo (104 a 160) y Centro de
+                                          actividades (216 a 272).
+
+ Alto y ancho                             Alto 56. Ancho completo (390), con 20 de margen a cada lado.
+
+ Icono                                    22, a 20 del borde izquierdo, trazo de 1.8, negro #0A0A0A.
+
+ Texto                                    Letra de 17, peso medio, negro #0A0A0A, a 14 del icono.
+
+ Flecha de la derecha                     18, gris #8A8B97, a 20 del borde derecho.
+
+ Fondo                                    Blanco #FFFFFF.
+
+
+2. Pantalla donde dice Saldo: cabecera
+
+ Posición y alto                          De y = 0 a y = 96. Ancho completo (390).
+
+ Fondo                                    Gradiente a 110°, de #6B7885 a #1FA5A9. Esquinas de abajo con
+                                          radio 20.
+
+ Flecha de volver                         Botón de 44 x 44 a 12 del borde izquierdo, centrado en y = 64.
+                                          Icono de 26, blanco.
+
+ Título "Herramientas de usuario"         Letra de 19, negrita, blanco #FFFFFF, a 4 de la flecha, centrado
+                                          con ella.
+
+
+3. Pantalla donde dice Saldo: tarjeta
+
+ Posición                                 Empieza en y = 116 (20 debajo de la cabecera). Margen izquierdo
+                                          y derecho 20. Ancho 350.
+
+ Alto                                     106 aproximado (relleno de 20 arriba y abajo).
+
+ Forma y colores                          Radio 16. Fondo #F9F9F9. Borde de 1 en #E5E5E5.
+
+ Etiqueta "Saldo"                         Letra de 15, gris #737373, a 20 del borde izquierdo y del de arriba
+                                          de la tarjeta.
+
+ Monto                                    Letra de 32, negrita, negro #0A0A0A, a 6 debajo de la etiqueta. El
+                                          valor 0.00 es un marcador.
+
+ Fondo de la pantalla                     Blanco #FFFFFF. Vacío debajo de la tarjeta.
+

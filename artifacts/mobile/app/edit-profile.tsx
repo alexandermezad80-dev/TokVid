@@ -1,3 +1,6 @@
+import {LinearGradient} from "expo-linear-gradient";
+import {StatusBar} from "expo-status-bar";
+import {KeyboardAwareScrollViewCompat} from "../components/KeyboardAwareScrollViewCompat";
 import ProfilePhotoCrop from "../components/ProfilePhotoCrop";
 import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
@@ -140,32 +143,32 @@ export default function EditProfileScreen() {
   const currentAvatar = selectedPhoto?.uri ?? profile?.avatar_url ?? "";
 
   return (
-    <KeyboardAvoidingView
-      style={styles.root}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
+    <View style={styles.root}><StatusBar style="light"/>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 6 }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn} disabled={saving}>
           <Feather name="arrow-left" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
 
-      <Text style={[styles.headerTitle,{paddingHorizontal:20,marginVertical:16}]}>Información de perfil</Text>
-      <ScrollView
+      <KeyboardAwareScrollViewCompat
+        bottomOffset={6}
         contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 24 }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        <LinearGradient colors={["#788B96","#2BAAAF"]} start={{x:0,y:0}} end={{x:1,y:.36}} style={{paddingHorizontal:20,paddingTop:16,paddingBottom:16}}><Text style={[styles.headerTitle,{marginBottom:16}]}>Información de perfil</Text>
         {/* Avatar picker */}
         <View style={styles.avatarSection}>
           <Pressable onPress={()=>setPhotoMenu(true)} style={styles.avatarWrap} disabled={saving} accessibilityLabel="Opciones de foto de perfil">
+            <LinearGradient colors={["#25DAD6","#D64A7F"]} style={StyleSheet.absoluteFill}/>
             {!!currentAvatar&&<Image source={{uri:currentAvatar}} style={styles.avatar}/>}
             <View style={currentAvatar?styles.cameraBadge:styles.avatarOverlay}>{uploadingPhoto?<ActivityIndicator color="#FFF"/>:<Feather name="camera" size={currentAvatar?18:28} color="#FFF"/>}</View>
           </Pressable>
-          <View style={{flex:1,gap:10}}><TouchableOpacity accessibilityLabel="Guardar perfil" onPress={handleSave} disabled={saving} style={styles.saveBtn}>{saving?<ActivityIndicator color="#FFF"/>:<Text style={styles.saveBtnText}>Guardar</Text>}</TouchableOpacity><Pressable onPress={()=>setPhotoMenu(true)} disabled={saving} style={styles.photoAction}><Feather name="camera" size={16} color="#A9CBCD"/><Text style={styles.photoActionText}>Cambiar foto</Text></Pressable><Pressable disabled={!currentAvatar||saving} style={styles.photoAction} onPress={()=>setCropUri(currentAvatar)}><Feather name="crop" size={16} color="#A9CBCD"/><Text style={styles.photoActionText}>Recortar foto</Text></Pressable></View>
+          <View style={{flex:1,gap:10}}><TouchableOpacity accessibilityLabel="Guardar perfil" onPress={handleSave} disabled={saving} style={styles.saveBtn}>{saving?<ActivityIndicator color="#FFF"/>:<Text style={styles.saveBtnText}>Guardar</Text>}</TouchableOpacity><Pressable onPress={()=>setPhotoMenu(true)} disabled={saving} style={styles.photoAction}><Feather name="camera" size={16} color="#0B0B0D"/><Text style={styles.photoActionText}>Cambiar foto</Text></Pressable><Pressable disabled={!currentAvatar||saving} style={styles.photoAction} onPress={()=>setCropUri(currentAvatar)}><Feather name="crop" size={16} color="#0B0B0D"/><Text style={styles.photoActionText}>Recortar foto</Text></Pressable></View>
         </View>
 
+        </LinearGradient>
         {error && (
           <View style={styles.errorBox}>
             <Feather name="alert-circle" size={14} color="#FE2C55" />
@@ -231,29 +234,28 @@ export default function EditProfileScreen() {
             <Text selectable style={styles.emailText}>Correo: {user.email ?? ""}</Text>
           </View>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollViewCompat>
       <Modal visible={photoMenu} transparent animationType="slide" onRequestClose={()=>setPhotoMenu(false)}><View style={{flex:1,justifyContent:"flex-end",backgroundColor:"#0008"}}><Pressable style={StyleSheet.absoluteFill} onPress={()=>setPhotoMenu(false)}/><View style={{backgroundColor:"#161823",borderTopLeftRadius:20,borderTopRightRadius:20,padding:20,paddingBottom:insets.bottom+32}}>{[{title:"Cargar foto",icon:"image" as const,run:()=>pickImage(false)},{title:"Tomar foto",icon:"camera" as const,run:()=>pickImage(true)},{title:"Ver foto",icon:"maximize" as const,run:()=>{setPhotoMenu(false);router.push({pathname:"/profile-photo",params:{uri:currentAvatar}});}}].map(a=><Pressable key={a.title} accessibilityLabel={a.title} onPress={a.run} style={{minHeight:54,flexDirection:"row",gap:14,alignItems:"center"}}><Feather name={a.icon} color="#FFF" size={22}/><Text style={{color:"#FFF",fontSize:16}}>{a.title}</Text></Pressable>)}</View></View></Modal>
       <ProfilePhotoCrop uri={cropUri} onClose={()=>setCropUri(null)} onSave={photo=>setSelectedPhoto({uri:photo.uri,width:photo.initWidth,height:photo.initHeight,base64:photo.base64,mimeType:"image/jpeg",type:"image"})}/>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  cameraBadge:{position:"absolute",bottom:6,right:6,width:30,height:30,borderRadius:15,backgroundColor:"#161823DD",alignItems:"center",justifyContent:"center"},photoAction:{minHeight:36,flexDirection:"row",alignItems:"center",gap:8},photoActionText:{color:"#FFF",fontSize:13},
-  root: { flex: 1, backgroundColor: "#101012" },
+  cameraBadge:{position:"absolute",bottom:6,right:6,width:30,height:30,borderRadius:15,backgroundColor:"#161823DD",alignItems:"center",justifyContent:"center"},photoAction:{minHeight:36,flexDirection:"row",alignItems:"center",gap:8},photoActionText:{color:"#0B0B0D",fontSize:13},
+  root: { flex: 1, backgroundColor: "#0B0B0D" },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#1C1C1E",
+    backgroundColor:"#0B0B0D",borderBottomLeftRadius:20,borderBottomRightRadius:20,zIndex:2,
   },
   headerBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
-  headerTitle: { color: "#fff", fontSize: 17, fontWeight: "700" },
+  headerTitle: { color: "#0B0B0D", fontSize: 17, fontWeight: "700" },
   saveBtn: {
-    backgroundColor: "#7A64BE",
+    backgroundColor: "#161616",
     borderRadius: 10,
     paddingHorizontal: 18,
     height:36,justifyContent:"center",
@@ -262,17 +264,16 @@ const styles = StyleSheet.create({
   },
   saveBtnDisabled: { opacity: 0.6 },
   saveBtnText: { color: "#fff", fontWeight: "800", fontSize: 14 },
-  container: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 0, gap: 20 },
+  container: { flexGrow: 1, paddingTop: 0 },
   avatarSection: { flexDirection:"row",alignItems: "center",gap:20 },
   avatarWrap: {
     width: 128,
     height: 128,
     borderRadius: 20,
     overflow: "hidden",
-    borderWidth: 3,
-    borderColor: "#FE2C55",
+    padding:1,
   },
-  avatar: { width: "100%", height: "100%", backgroundColor: "#1C1C1E" },
+  avatar: { width: "100%", height: "100%",borderRadius:19, backgroundColor: "#1C1C1E" },
   avatarOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -294,24 +295,24 @@ const styles = StyleSheet.create({
   },
   errorText: { color: "#FE2C55", fontSize: 13, flex: 1 },
   section: {
-    marginHorizontal: -20,
+    backgroundColor:"#FFFFFF",
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 16,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: "#303036",
+    borderColor: "#E0E3E5",
     gap: 12,
   },
   field: { gap: 2 },
-  label: { color: "#939399", fontSize: 14, lineHeight: 20 },
+  label: { color: "#737373", fontSize: 14, lineHeight: 20 },
   nameRow: { flexDirection: "row", alignItems: "center", gap: 4 },
   usernameRow: { flexDirection: "row", alignItems: "center" },
-  usernamePrefix: { color: "#F3F3F5", fontSize: 15, fontWeight: "700" },
+  usernamePrefix: { color: "#0B0B0D", fontSize: 15, fontWeight: "700" },
   inlineInput: {
     flex: 1,
     minWidth: 0,
-    color: "#F3F3F5",
+    color: "#0B0B0D",
     fontSize: 15,
     lineHeight: 21,
     fontWeight: "700",
@@ -321,7 +322,7 @@ const styles = StyleSheet.create({
   },
   nameInput: { minHeight: 28 },
   bioInput: {
-    color: "#F3F3F5",
+    color: "#0B0B0D",
     fontSize: 15,
     lineHeight: 21,
     fontWeight: "700",
@@ -333,14 +334,14 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   counter: { alignSelf: "flex-end", color: "#939399", fontSize: 12, marginTop: 2 },
-  emailSection: { marginTop: -8 },
+  emailSection: { paddingHorizontal:20,paddingTop:13,flex:1,backgroundColor:"#0B0B0D" },
   emailBox: {
-    minHeight: 48,
+    minHeight: 46,
     justifyContent: "center",
-    backgroundColor: "#16161C",
+    backgroundColor: "#161823",
     borderWidth: 1,
-    borderColor: "#2B2B32",
-    borderRadius: 14,
+    borderColor: "#2C2C2E",
+    borderRadius: 13,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },

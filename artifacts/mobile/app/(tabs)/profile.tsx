@@ -1,3 +1,6 @@
+import {LinearGradient} from "expo-linear-gradient";
+import {StatusBar} from "expo-status-bar";
+import BrandAvatar from "../../components/reference/BrandAvatar";
 import {usePublicationGrid} from "../../hooks/usePublicationGrid";
 import {useMyConnections} from "../../hooks/useMyConnections";
 import PublicationThumbnail from "../../components/PublicationThumbnail";
@@ -89,19 +92,19 @@ export default function ProfileScreen() {
     n >= 1_000 ? `${(n / 1_000).toFixed(1)}K` : String(n);
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header,{paddingTop:topPad,height:topPad+48}]}>
-        <TouchableOpacity style={styles.menuBtn} onPress={()=>setMenu(true)} accessibilityLabel="Recursos"><Feather name="menu" size={24} color="#FFF"/></TouchableOpacity>
+    <View style={styles.container}><StatusBar style="light"/>
+      <View style={[styles.header,{paddingTop:topPad,height:topPad+44}]}>
+        <TouchableOpacity style={styles.menuBtn} onPress={()=>router.push("/user-tools")} accessibilityLabel="Herramientas de usuario"><Feather name="menu" size={24} color="#FFF"/></TouchableOpacity>
         <TouchableOpacity style={styles.menuBtn} onPress={()=>router.push({pathname:"/(tabs)/friends",params:{tab:"friends"}})} accessibilityLabel="Amigos"><Feather name="users" size={22} color="#FFF"/></TouchableOpacity>
-        <View style={{flex:1}}/><TouchableOpacity style={styles.menuBtn} onPress={()=>setMenu(true)} accessibilityLabel="Opciones del perfil"><Feather name="more-horizontal" size={24} color="#FFF"/></TouchableOpacity>
+        <View style={{flex:1}}/><TouchableOpacity style={styles.menuBtn} onPress={()=>router.push("/edit-profile")} accessibilityLabel="Información de perfil"><Feather name="more-horizontal" size={24} color="#FFF"/></TouchableOpacity>
       </View>
-      <View style={styles.profileSection}>
+      <LinearGradient colors={["#727C87","#36969B"]} start={{x:0,y:0}} end={{x:1,y:.36}} style={styles.profileSection}>
         <View style={{width:88,gap:8}}>
           <TouchableOpacity style={styles.avatarWrap} onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})} accessibilityLabel="Ver mis historias">
-            {avatarUrl(user,profile)?<Image source={{uri:avatarUrl(user,profile)}} style={styles.avatar}/>:<View style={[styles.avatar,{alignItems:"center",justifyContent:"center"}]}><Feather name="user" size={36} color="#AAA"/></View>}
+            <BrandAvatar uri={avatarUrl(user,profile)}/>
             <TouchableOpacity style={styles.editBadge} onPress={()=>router.push("/story-create")} accessibilityLabel="Añadir historia"><Feather name="plus" size={18} color="#FFF"/></TouchableOpacity>
           </TouchableOpacity>
-          <Pressable disabled accessibilityState={{disabled:true}} style={styles.accountButton}><Text style={styles.accountLabel}>Saldo</Text></Pressable>
+          <Pressable onPress={()=>router.push({pathname:"/user-tools",params:{section:"balance"}})} style={styles.accountButton}><Text style={styles.accountLabel}>Saldo</Text></Pressable>
           <Pressable disabled accessibilityState={{disabled:true}} style={styles.accountButton}><Text style={styles.accountLabel}>Suscripción</Text></Pressable>
         </View>
         <View style={{flex:1,minWidth:0,gap:8}}>
@@ -115,10 +118,10 @@ export default function ProfileScreen() {
           {!!bio&&<TouchableOpacity onPress={()=>setExpanded(!expanded)}><Text style={styles.bioMore}>{expanded?"Ver menos":"Ver más"}</Text></TouchableOpacity>}
           {!!connections.error&&<TouchableOpacity onPress={()=>void connections.refresh()}><Text style={{color:"#E7ACBF",fontSize:12}}>{connections.error}</Text></TouchableOpacity>}
         </View>
-      </View>
+      </LinearGradient>
       <View style={styles.tabBar}>{([
         {key:"videos",icon:"grid",label:"Videos"},{key:"stories",icon:"clock",label:"Historias"},{key:"gallery",icon:"image",label:"Galería"},{key:"liked",icon:"heart",label:"Me gusta"},{key:"saved",icon:"bookmark",label:"Guardados"},{key:"more",icon:"more-horizontal",label:"Más"},
-      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>item.key==="more"?setMenu(true):setTab(item.key)} style={[styles.tabItem,tab===item.key&&styles.tabItemActive]}><Feather name={item.icon} size={22} color={tab===item.key?"#FFF":"#8A8B97"}/></TouchableOpacity>)}</View>
+      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>item.key==="more"?router.push("/user-tools"):setTab(item.key)} style={[styles.tabItem,tab===item.key&&styles.tabItemActive]}><Feather name={item.icon} size={22} color={tab===item.key?"#FFF":"#8A8B97"}/></TouchableOpacity>)}</View>
       <ScrollView style={{flex:1}} showsVerticalScrollIndicator={false}>
       {tab==="stories"?<View style={styles.emptyState}><TouchableOpacity onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})}><Text style={styles.emptyTitle}>Ver mis historias</Text></TouchableOpacity><TouchableOpacity onPress={()=>router.push("/story-create")}><Text style={styles.bioMore}>Añadir historia</Text></TouchableOpacity></View>:
       tab === "saved" ? (
@@ -183,20 +186,20 @@ export default function ProfileScreen() {
 
       <View style={{ height: Platform.OS === "web" ? 34 : insets.bottom + 80 }} />
       </ScrollView>
-      <Modal visible={menu} transparent animationType="fade" onRequestClose={()=>setMenu(false)}><Pressable style={{flex:1,backgroundColor:"#0008"}} onPress={()=>setMenu(false)}><View style={{position:"absolute",top:topPad+48,right:16,width:240,padding:8,borderRadius:16,backgroundColor:"#1C1C1E"}}>{[{title:"Editar perfil",run:()=>router.push("/edit-profile")},{title:"Ver foto",run:()=>router.push({pathname:"/profile-photo",params:{uri:avatarUrl(user,profile)}})},{title:"Amigos",run:()=>router.push("/(tabs)/friends")},{title:"Cerrar sesión",run:handleSignOut}].map(action=><Pressable key={action.title} style={{minHeight:48,paddingHorizontal:12,justifyContent:"center"}} onPress={()=>{setMenu(false);action.run();}}><Text style={{color:"#FFF",fontSize:15}}>{action.title}</Text></Pressable>)}</View></Pressable></Modal>
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  accountButton:{width:88,minHeight:34,borderRadius:8,backgroundColor:"#1C1C1E",alignItems:"center",justifyContent:"center",opacity:0.55},accountLabel:{color:"#FFF",fontSize:11},bioMore:{color:"#A3C9CC",fontSize:12},
-  container: { flex: 1, backgroundColor: "#000" },
+  accountButton:{width:88,minHeight:34,borderRadius:8,backgroundColor:"#161616",alignItems:"center",justifyContent:"center",opacity:1},accountLabel:{color:"#FFF",fontSize:11},bioMore:{color:"#FFFFFF",fontSize:12},
+  container: { flex: 1, backgroundColor: "#FFFFFF" },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingBottom: 0,
+    paddingBottom: 0,backgroundColor:"#000000",
   },
   menuBtn: {
     width: 40,
@@ -236,11 +239,11 @@ const styles = StyleSheet.create({
   },
   displayName: { color: "#fff", fontSize: 16, fontWeight: "700" },
   email: { color: "#555", fontSize: 13 },
-  bio: { color: "#B0B0BB", fontSize: 12,lineHeight:16 },
+  bio: { color: "#FFFFFF", fontSize: 12,lineHeight:16 },
   stats: { flexDirection: "row",gap:4,marginTop:12,marginBottom:4 },
   stat: { flex:1,alignItems: "center",gap:2 },
   statValue: { color: "#fff", fontSize: 16, fontWeight: "800" },
-  statLabel: { color: "#8A8B97", fontSize: 10.5 },
+  statLabel: { color: "#F1F3F5", fontSize: 10.5 },
   actions: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 8 },
   editBtn: {
     backgroundColor: "#1C1C1E",
@@ -255,13 +258,14 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   tabBar: {
+    backgroundColor:"#232F39",
     flexDirection: "row",
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: "#1C1C1E",
   },
   tabItem: { flex: 1, alignItems: "center", paddingVertical: 12 },
-  tabItemActive: { borderBottomWidth: 2, borderBottomColor: "#fff" },
+  tabItemActive: { borderBottomWidth: 2, borderBottomColor: "#25F4EE" },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 2, paddingHorizontal: 0, paddingVertical: 2 },
   gridItem: {
     width: "32%",
@@ -297,7 +301,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   emptyTitle: {
-    color: "#fff",
+    color: "#101010",
     fontSize: 18,
     fontWeight: "700",
   },

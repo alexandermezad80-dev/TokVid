@@ -1,0 +1,138 @@
+Inbox: medidas
+Medidas en dp. Pantalla de referencia: 390 x 869. Incluye Mensajes, Actividad y el modal de los tres
+puntos.
+
+1. Cabecera (Mensajes y Actividad)
+
+ Posición y alto                 De y = 0 a y = 76. Ancho completo. Esquinas de arriba cuadradas, las de
+                                 abajo con radio 20.
+
+ Degradado                       110 grados: #5F6A74 al 0%, #76818B al 50%, #2F9A9F al 100%.
+
+ Zona de iconos de Android       De 0 a 38. Margen de 12 a la izquierda y 14 a la derecha. Todo en blanco.
+
+ Título "Inbox"                  A 15 del borde izquierdo y 40 de arriba. Alto 28. Letra de 22, negrita, blanco.
+
+ "Marcar todo leído" (solo       A 225 del borde izquierdo y 40 de arriba. Ancho 150, alto 28. Letra de 14,
+ Actividad)                      peso 600, blanco, alineada a la derecha.
+
+
+2. Barra de pestañas
+
+ Fondo                           Gris pizarra #232F39, hasta y = 118. Empieza detrás de la cabecera (en y =
+                                 56) para que se vea la curva.
+
+ Pestañas                        Centros en x = 85.5 (Actividad) y x = 292.5 (Mensajes). Fila de y = 80 a 116,
+                                 alto 36. Letra de 16.
+
+ Pestaña activa                  Blanco, peso 600. La otra va en #9AA5AE, peso 500.
+
+ Globito de Actividad            Círculo de 17, fondo #FE2C55, número de 11 en negrita, blanco. A 6 del
+                                 texto.
+
+ Línea indicadora                97 x 2, color #25F4EE, en y = 115. En x = 49 (Actividad) o x = 244
+                                 (Mensajes).
+
+ Línea de abajo                  1 de alto en y = 117.5, color #3A3A3C.
+
+
+3. Lista de Mensajes
+
+ Fondo                           Blanco #FFFFFF, de y = 118 hasta y = 785.5.
+
+ Filas                           Cada fila mide 90. Centros en y = 167 y y = 257.
+
+ Avatar                          Círculo de 48 x 48, a 15 del borde izquierdo, centrado en la fila.
+
+ Nombre                          A 74 del borde izquierdo, 24 arriba del centro de la fila. Alto 20. Letra de 15,
+                                 negrita, negro.
+
+ Mensaje                         A 74 del borde izquierdo, 3 arriba del centro. Ancho 270, una sola línea con
+                                 puntos suspensivos. Letra de 14, #3F3F46.
+ Hora                        A 74 del borde izquierdo, 19 abajo del centro. Alto 18. Letra de 13,
+                             #8A8B97.
+
+ Tres puntos                 Área de 32 x 28 a 338 del borde izquierdo, centrada en la fila. Icono de 22,
+                             #737373.
+
+
+4. Lista de Actividad
+
+ Filas                       Cada fila mide 90. El centro de la primera está en y = 167.5, y las demás
+                             cada 90.
+
+ Fila sin leer               Fondo #FFF1F3, de lado a lado, alto 90.
+
+ Avatar y textos             Igual que en Mensajes. Ancho del texto 260.
+
+ Avatar con iniciales        Círculo de 48, fondo #FE2C55, letras de 22 en blanco.
+
+ Fila sin nombre ("Llamada   El mensaje va 12 arriba del centro y la hora 10 abajo.
+ perdida")
+
+ Iconito sobre el avatar     Círculo de 20, a 42 del borde izquierdo y 4 abajo del centro. Borde de 1.5 en
+                             blanco. Icono de 11. Colores: gris #8A8B97 (campana y mensaje), cian
+                             #25C9C3 (seguidor), naranja #F5A623 (comentario), rosa #FE2C55
+                             (corazón).
+
+ Globito con número          A 12 del borde derecho, centrado en la fila. Alto 20, ancho mínimo 20,
+                             relleno de 6. Fondo #FE2C55, número de 12 en negrita, blanco.
+
+
+5. Barra de abajo (en las dos pestañas)
+
+ Posición                    De y = 785.5 hasta el final (869). Fondo negro, con una línea de 1 en
+                             #2C2C2E arriba.
+
+ Botones                     Cada uno de 70 de ancho, empezando en y = 796. Centros en x = 39,
+                             117.5, 273 y 351. Icono de 21 y letra de 10, a 3 de distancia.
+
+ Colores                     Activo (Mensajes) #FE2C55. Los demás #8A8B97.
+
+ Botón +                     49 x 30, a 170.5 del borde izquierdo y 791 de arriba. Radio 9. Gradiente de
+                             #25F4EE a #FE2C55. Icono de 22.
+
+ Globito de Mensajes         Círculo de 14, a 284 del borde izquierdo y 792 de arriba. Letra de 9.
+
+
+6. Modal de los tres puntos
+
+ Fondo oscurecido            Negro al 50% sobre toda la pantalla.
+
+ Tarjeta                     A 71 del borde izquierdo y 181 de arriba. Ancho 304, alto 161. Queda a 15
+                             del borde derecho. Blanca, radio 16. Sombra: 0 8 24, negro al 35%.
+Nombre              Letra de 14, peso 600, #737373. Relleno de 16 a los lados y arriba, 10
+                    abajo.
+
+Líneas divisorias   1 de alto, #E5E5E5.
+
+Opciones            Dos filas de 56: "Eliminar para mí" y "Eliminar todos los mensajes". Relleno
+                    de 16 a los lados. Icono de 20, a 12 del texto. Letra de 16, peso 500, color
+                    #E5393A.
+7. Confirmación de "Eliminar todos los mensajes"
+Medidas en dp. Pantalla de referencia: 390 x 869.
+ Fondo oscurecido               Negro al 50% sobre toda la pantalla, igual que en el modal de los tres
+                                puntos.
+
+ Tarjeta                        Ancho 310, a 40 del borde izquierdo y del derecho, y a 300 de arriba.
+                                Blanca, radio 20. Relleno de 24 arriba y 20 a los lados y abajo. Sombra: 0 8
+                                24, negro al 35%.
+
+ Círculo del icono              48 x 48, fondo #FDECEC, centrado.
+
+ Icono                          Basurero de 24, línea de 1.8, color #E5393A.
+
+ Título                         "¿Eliminar todos los mensajes?". Letra de 18, negrita, #0A0A0A, centrado, a
+                                14 debajo del icono.
+
+ Texto                          "Se borrarán todas las conversaciones de tu bandeja de mensajes. Esta
+                                acción no se puede deshacer." Letra de 14, #3F3F46, interlineado 20,
+                                centrado, a 8 debajo del título.
+
+ Botones                        Dos botones del mismo ancho, alto 46, radio 12, separados 12. A 20 debajo
+                                del texto.
+
+ Botón Cancelar                 Izquierda. Fondo #F2F2F2, letra de 16, peso 600, #0A0A0A.
+
+ Botón Eliminar                 Derecha. Fondo #E5393A, letra de 16, peso 600, blanco.
+

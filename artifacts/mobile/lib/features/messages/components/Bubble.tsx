@@ -1,153 +1,25 @@
-import React from "react";
-import { Pressable, StyleSheet, Text, View, type ViewStyle } from "react-native";
-import { BlurView } from "expo-blur";
-import { LinearGradient } from "expo-linear-gradient";
-
-export type BubbleStyleVariant =
-  | "classic" | "minimal" | "rounded" | "glass"
-  | "gradient" | "neon" | "elegant" | "compact";
-
-export type BubbleDirection = "sent" | "received";
-export type BubbleGroupPosition = "single" | "first" | "middle" | "last";
-
-type Token = {
-  radius: [number, number, number, number];
-  tight: number;
-  bg: string;
-  color: string;
-  border?: string;
-  px: number;
-  py: number;
-  fs: number;
-  lh: number;
-  fw: "400" | "500";
-  maxWidth: `${number}%`;
-};
-
-const T: Record<BubbleStyleVariant, Record<BubbleDirection, Token>> = {
-  classic: {
-    sent: { radius: [18,18,18,18], tight: 6, bg: "#304B55", color: "#FFFFFF", px:14, py:10, fs:15, lh:21, fw:"400", maxWidth:"78%" },
-    received: { radius: [18,18,18,18], tight: 6, bg: "#304B55", color: "#F5F5F7", px:14, py:10, fs:15, lh:21, fw:"400", maxWidth:"78%" },
-  },
-  minimal: {
-    sent: { radius: [10,10,10,10], tight: 6, bg:"transparent", color:"#FFFFFF", border:"#668B95", px:12, py:8, fs:14, lh:20, fw:"400", maxWidth:"78%" },
-    received: { radius: [10,10,10,10], tight: 6, bg:"transparent", color:"#F5F5F7", border:"#FFFFFF", px:12, py:8, fs:14, lh:20, fw:"400", maxWidth:"78%" },
-  },
-  rounded: {
-    sent: { radius: [999,999,999,999], tight: 20, bg:"#493B4C", color:"#FFFFFF", px:20, py:12, fs:15, lh:21, fw:"500", maxWidth:"76%" },
-    received: { radius: [999,999,999,999], tight: 20, bg:"#24242E", color:"#F5F5F7", px:20, py:12, fs:15, lh:21, fw:"500", maxWidth:"76%" },
-  },
-  glass: {
-    sent: { radius: [16,16,16,16], tight: 8, bg:"rgba(255,255,255,0.10)", color:"#F5F5F7", border:"rgba(255,255,255,0.20)", px:14, py:10, fs:15, lh:21, fw:"400", maxWidth:"78%" },
-    received: { radius: [16,16,16,16], tight: 8, bg:"rgba(255,255,255,0.10)", color:"#F5F5F7", border:"rgba(255,255,255,0.20)", px:14, py:10, fs:15, lh:21, fw:"400", maxWidth:"78%" },
-  },
-  gradient: {
-    sent: { radius: [20,20,20,20], tight: 8, bg:"#304B55", color:"#FFFFFF", px:15, py:11, fs:15, lh:21, fw:"500", maxWidth:"78%" },
-    received: { radius: [20,20,20,20], tight: 8, bg:"#24212E", color:"#F5F5F7", px:15, py:11, fs:15, lh:21, fw:"400", maxWidth:"78%" },
-  },
-  neon: {
-    sent: { radius: [14,14,14,14], tight: 6, bg:"rgba(255,44,138,0.10)", color:"#F3F5F7", border:"#796A7A", px:14, py:10, fs:14.5, lh:20, fw:"400", maxWidth:"78%" },
-    received: { radius: [14,14,14,14], tight: 6, bg:"rgba(0,194,255,0.08)", color:"#F3F5F7", border:"#668B95", px:14, py:10, fs:14.5, lh:20, fw:"400", maxWidth:"78%" },
-  },
-  elegant: {
-    sent: { radius: [22,22,22,22], tight: 8, bg:"#1B1B22", color:"#F0E9DC", border:"#827D70", px:18, py:13, fs:15, lh:23, fw:"400", maxWidth:"76%" },
-    received: { radius: [22,22,22,22], tight: 8, bg:"#14141A", color:"#E8E4DC", border:"rgba(255,255,255,0.14)", px:18, py:13, fs:15, lh:23, fw:"400", maxWidth:"76%" },
-  },
-  compact: {
-    sent: { radius: [8,8,8,8], tight: 4, bg:"#345158", color:"#F3F5F7", px:10, py:6, fs:13, lh:17, fw:"400", maxWidth:"84%" },
-    received: { radius: [8,8,8,8], tight: 4, bg:"#1D1D24", color:"#F5F5F7", px:10, py:6, fs:13, lh:17, fw:"400", maxWidth:"84%" },
-  },
-};
-
-export const BUBBLE_VARIANTS = Object.keys(T) as BubbleStyleVariant[];
-export const BUBBLE_VARIANT_NAMES: Record<BubbleStyleVariant, string> = {
-  classic:"Clásica", minimal:"Minimalista", rounded:"Redonda", glass:"Cristal",
-  gradient:"Degradado", neon:"Borde suave", elegant:"Elegante", compact:"Compacta",
-};
-
-function radius(token: Token, direction: BubbleDirection, position: BubbleGroupPosition) {
-  const r = [...token.radius] as [number,number,number,number];
-  const top = position === "middle" || position === "last";
-  const bottom = position === "first" || position === "middle";
-  if (direction === "sent") {
-    if (top) r[1] = token.tight;
-    if (bottom) r[2] = token.tight;
-  } else {
-    if (top) r[0] = token.tight;
-    if (bottom) r[3] = token.tight;
-  }
-  return r;
+import React from 'react';
+import {Pressable,StyleSheet,Text,View,type ViewStyle} from 'react-native';
+import {LinearGradient} from 'expo-linear-gradient';
+import {BUBBLE_TOKENS,normalizeBubbleStyle,type BubbleStyleVariant} from '../bubbleStyles';
+export {BUBBLE_VARIANTS,BUBBLE_VARIANT_NAMES,type BubbleStyleVariant} from '../bubbleStyles';
+export type BubbleDirection='sent'|'received';
+export type BubbleGroupPosition='single'|'first'|'middle'|'last';
+type Props={text:string;direction:BubbleDirection;groupPosition?:BubbleGroupPosition;styleVariant?:BubbleStyleVariant;timestamp?:string;dark?:boolean;preview?:boolean;onPress?:()=>void;onLongPress?:()=>void};
+export default function Bubble({text,direction,groupPosition='single',styleVariant='classic',timestamp,dark=false,preview=false,onPress,onLongPress}:Props){
+ const variant=normalizeBubbleStyle(styleVariant),compact=variant==='compact';
+ const token=direction==='received'?{background:dark?'#202B34':'#FFFFFF',color:dark?'#FFFFFF':'#101010',border:dark?'#3F4D59':'#DDE2E6',radius:16}:BUBBLE_TOKENS[variant];
+ const top=groupPosition==='middle'||groupPosition==='last',bottom=groupPosition==='middle'||groupPosition==='first';
+ const shape:ViewStyle={borderRadius:token.radius,borderWidth:token.border?1:0,borderColor:token.border,backgroundColor:token.background,
+  borderTopRightRadius:direction==='sent'&&top?6:token.radius,borderBottomRightRadius:direction==='sent'&&(bottom||variant==='elegant')?6:token.radius,
+  borderTopLeftRadius:direction==='received'&&top?6:token.radius,borderBottomLeftRadius:direction==='received'&&bottom?6:token.radius,
+  paddingHorizontal:preview?0:compact?10:14,paddingVertical:preview?0:compact?7:10,
+  ...(preview?{width:compact?60:84,height:compact?32:40,alignItems:'center',justifyContent:'center'}:{})};
+ const content=<Text numberOfLines={preview?1:undefined} maxFontSizeMultiplier={preview?1.15:1.5} accessibilityLabel={(direction==='sent'?'Enviado: ':'Recibido: ')+text+(timestamp?', '+timestamp:'')} style={{color:token.color,fontSize:preview?(compact?15:17):(compact?14:15),lineHeight:preview?22:21,includeFontPadding:false}}>{text}</Text>;
+ return <View style={[s.row,{alignItems:direction==='sent'?'flex-end':'flex-start'}]}>
+  <Pressable style={{maxWidth:preview?'100%':'82%'}} disabled={!onPress&&!onLongPress} onPress={onPress} onLongPress={onLongPress} accessibilityRole={onPress?'button':'text'}>
+   {token.gradient?<LinearGradient colors={token.gradient} start={{x:0,y:0}} end={{x:1,y:1}} style={[s.bubble,shape]}>{content}</LinearGradient>:<View style={[s.bubble,shape]}>{content}</View>}
+  </Pressable>{timestamp&&<Text style={s.time}>{timestamp}</Text>}
+ </View>;
 }
-
-type BubbleProps = {
-  text: string;
-  direction: BubbleDirection;
-  groupPosition?: BubbleGroupPosition;
-  styleVariant?: BubbleStyleVariant;
-  timestamp?: string;
-  dark?: boolean;
-  preview?: boolean;
-  onLongPress?: () => void;
-  onPress?: () => void;
-};
-
-export default function Bubble({
-  text, direction, groupPosition = "single", styleVariant = "classic",
-  timestamp, onLongPress, onPress, dark = true, preview = false,
-}: BubbleProps) {
-  const token = {...T[styleVariant][direction]};
-  if(direction==="received"){token.bg=dark?"#1C1C1E":"#FFFFFF";token.color=dark?"#FFFFFF":"#0A0A0A";token.border=dark?"#2C2C2E":"#E5E5E5";}
-  else {token.bg="#7A64BE";token.color="#FFFFFF";token.border=undefined;
-    if(styleVariant==="minimal"){token.bg="transparent";token.border="#7A64BE";token.color=dark?"#FFFFFF":"#513C92";}
-    if(styleVariant==="glass"){token.bg="#7A64BE33";token.border="#7A64BE80";token.color=dark?"#FFFFFF":"#513C92";}
-    if(styleVariant==="neon"){token.bg="#7A64BE1F";token.border="#7A64BE99";token.color=dark?"#FFFFFF":"#513C92";}
-    if(styleVariant==="elegant"){token.bg=dark?"#FFFFFF":"#0A0A0A";token.color=dark?"#0A0A0A":"#FFFFFF";}
-  }
-  if(preview){token.px=15;token.py=8;token.fs=styleVariant==="compact"?12.5:14;token.lh=18;token.maxWidth="100%";}
-
-  const [topLeft, topRight, bottomRight, bottomLeft] = radius(token, direction, groupPosition);
-  const base: ViewStyle = {
-    borderTopLeftRadius: topLeft,
-    borderTopRightRadius: topRight,
-    borderBottomRightRadius: bottomRight,
-    borderBottomLeftRadius: bottomLeft,
-    backgroundColor: token.bg,
-    borderWidth: token.border ? 1 : 0,
-    borderColor: token.border,
-    paddingHorizontal: token.px,
-    paddingVertical: token.py,
-  };
-
-  const textNode = (
-    <Text
-      maxFontSizeMultiplier={1.2}
-      accessibilityLabel={(direction === "sent" ? "Enviado: " : "Recibido: ") + text + (timestamp ? ", " + timestamp : "")}
-      style={[styles.text, { color: token.color, fontSize: token.fs, lineHeight: token.lh, fontWeight: token.fw }]}
-    >
-      {text}
-    </Text>
-  );
-
-  let visual: React.ReactNode = <View style={[styles.bubble, base]}>{textNode}</View>;
-
-  if (styleVariant === "gradient" && direction === "sent") {
-    visual = <LinearGradient colors={["#208F9C", "#7A64BE"]} start={{x:0,y:0}} end={{x:1,y:1}} style={[styles.bubble, base]}>{textNode}</LinearGradient>;
-  }
-
-  return (
-    <View style={[styles.row, { alignItems: direction === "sent" ? "flex-end" : "flex-start" }]}>
-      <Pressable style={{maxWidth:token.maxWidth}} disabled={!onLongPress && !onPress} onPress={onPress} onLongPress={onLongPress} accessibilityRole={onPress ? "button" : "text"}>
-        {visual}
-      </Pressable>
-      {timestamp ? <Text style={styles.time}>{timestamp}</Text> : null}
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  row: { width:"100%", marginVertical:2 },
-  bubble: { overflow:"hidden" },
-  text: { includeFontPadding:false },
-  time: { color:"#A6ABB5", fontSize:11, marginTop:4, paddingHorizontal:2 },
-});
-
+const s=StyleSheet.create({row:{width:'100%',marginVertical:2},bubble:{overflow:'hidden'},time:{fontSize:11,color:'#8A8B97',marginTop:4,paddingHorizontal:2}});

@@ -1,0 +1,56 @@
+Estilo de burbuja: medidas y colores
+Medidas en dp. Pantalla de referencia: 390 x 844. Son 7 burbujas, cada una con un color distinto.
+
+1. Medidas de la hoja (modal)
+Posición                      Sube desde abajo. Ocupa de y = 256 a y = 844. Ancho completo (390), alto 588.
+
+Fondo y forma                 Blanco #FFFFFF. Esquinas de arriba con radio 24, las de abajo cuadradas.
+
+Fondo detrás (chat)           Oscurecido con negro al 50% (rgba 0,0,0,0.5).
+
+Cabecera                      Alto 64. Gradiente a 110°: #5F6A74 en 0%, #76818B en 50%, #2F9A9F en 100%.
+
+Barra de arrastre             60 x 4, radio 2, a 8 del borde de arriba, centrada. Blanco al 55%.
+
+Flecha de volver              Botón de 44 x 44 a 8 del borde izquierdo y 14 de arriba. Icono de 24, blanco.
+
+Título                        "Estilo de burbuja", letra de 19, negrita, blanco. A 56 del borde izquierdo.
+
+Botón de cerrar (X)           Botón de 44 x 44 a 338 del borde izquierdo y 14 de arriba. Icono de 22, blanco.
+
+Filas                         Empiezan a 76 del borde de arriba de la hoja. Margen izquierdo y derecho 12, ancho 366,
+                              alto 64, separación entre filas 4 (cada 68). Radio 14. Relleno 16 a la izquierda y 12 a la
+                              derecha.
+
+Texto de la fila              Letra de 17, peso medio, negro #0A0A0A.
+
+Burbuja de ejemplo            Alineada a la derecha, en un espacio de 84 de ancho. Letra de 17, con "Hola" siempre en
+                              una sola línea.
+
+Check de elegida              Espacio de 24 a la derecha, a 12 de la burbuja. Icono de 20, color #1F8A8F.
+
+Fila elegida                  Fondo #F1FAFA, borde de 1.5 en #2F9A9F.
+
+Espacio de abajo              Quedan 36 libres debajo de la última fila, para el gesto de Android.
+
+
+2. Colores de las burbujas
+Burbuja             Fondo                       Borde                 Letra          Tamaño              Radio
+
+Clásica             #7A64BE                     ninguno               #FFFFFF        84 x 40             20
+
+Minimalista         #FFFFFF                     1.5 en #2B4A8B        #0A0A0A        84 x 40             8
+
+Cristal             #E6E9EC                     1 en #C3C9CF          #0A0A0A        84 x 40             14
+
+Degradado           Gradiente 110°: #5F6A74     ninguno               #FFFFFF        84 x 40             20
+                    a #2F9A9F
+
+Borde suave         #FFF6E5                     1.5 en #E8B04B        #0A0A0A        84 x 40             14
+
+Elegante            #161616                     ninguno               #FFFFFF        84 x 40             20 (esquina inferior
+                                                                                                         derecha 6)
+
+Compacta            #1F8A5B                     ninguno               #FFFFFF        60 x 32 (letra      8
+                                                                                     de 15)
+

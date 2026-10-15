@@ -18,6 +18,7 @@ import { commentVideoLayout, VideoPreviewFrame } from "../lib/commentVideoLayout
 
 interface Props {
   visible: boolean; onClose: () => void; videoId: string;
+  focusCommentId?:string;
   /** Legacy callers may pass this label; the panel always reads the real server total. */
   commentCount?: string;
   overTabBar?: boolean;
@@ -43,12 +44,13 @@ export default function CommentsSheet(props: Props) {
   </Modal>;
 }
 
-function CommentsPanel({ visible, onClose, videoId, overTabBar = false, showVideoPreview = false, onPreviewFrame, backHandler }: Props & { backHandler: React.MutableRefObject<() => void> }) {
+function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar = false, showVideoPreview = false, onPreviewFrame, backHandler }: Props & { backHandler: React.MutableRefObject<() => void> }) {
   const { user, profile } = useAuth();
   const { tabBarHeight } = useRegistration();
   const { width, fontScale } = useWindowDimensions();
   const viewport = useOverlayKeyboard(visible);
-  const comments = useFeedComments(visible, videoId);
+  const comments = useFeedComments(visible, videoId,undefined,focusCommentId);
+  const listRef=useRef<FlatList<ListRow>>(null),focusScrolled=useRef<string|null>(null);
   const [text, setText] = useState("");
   const [composerHeight,setComposerHeight]=useState(60);
   const [inputContentHeight, setInputContentHeight] = useState(36);
@@ -89,6 +91,8 @@ function CommentsPanel({ visible, onClose, videoId, overTabBar = false, showVide
     }
     return result;
   }), [comments.roots, comments.threads, comments.expanded, comments.hiddenThreads]);
+  const focusIndex=rows.findIndex(r=>r.kind==='comment'&&r.comment.id===focusCommentId);
+  useEffect(()=>{if(!visible){focusScrolled.current=null;return;}if(focusIndex<0||comments.loading||!focusCommentId||focusScrolled.current===focusCommentId)return;const timer=setTimeout(()=>{listRef.current?.scrollToIndex({index:focusIndex,viewPosition:.25,animated:true});focusScrolled.current=focusCommentId;},200);return()=>clearTimeout(timer);},[visible,focusCommentId,focusIndex,comments.loading]);
   const requireUser = () => { if (user) return true; close(); requestRegistration(); return false; };
   const busy = comments.sending || comments.mutating;
   const cancelEdit = () => {
@@ -210,7 +214,7 @@ function CommentsPanel({ visible, onClose, videoId, overTabBar = false, showVide
         </View>
         {!!comments.error && <View style={styles.errorRow}><Text accessibilityRole="alert" style={styles.error}>{comments.error}</Text><Pressable accessibilityRole="button" onPress={() => { void comments.refresh(); }} style={styles.retry}><Text style={styles.link}>Recargar</Text></Pressable></View>}
         {comments.hiddenThreads.size > 0 && <Pressable accessibilityRole="button" accessibilityLabel="Mostrar mensajes ocultos" disabled={busy} onPress={() => { void comments.restoreThreads(); }} style={styles.hiddenNotice}><LinearGradient colors={["rgba(0,242,254,0.20)", "rgba(254,9,121,0.20)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.showBadge}><Feather name="eye" size={15} color="#fff" /><Text style={styles.showLabel}>Mostrar</Text></LinearGradient></Pressable>}
-        <FlatList<ListRow> data={rows} keyExtractor={row => row.kind === "comment" ? row.comment.id : row.kind === "thread" ? `thread:${row.root.id}` : `more:${row.rootId}`} renderItem={renderRow} style={styles.list} onScrollBeginDrag={dismissActions} contentContainerStyle={[rows.length ? styles.listContent : styles.emptyContainer, { paddingLeft: 16 + viewport.insets.left, paddingRight: 16 + viewport.insets.right,paddingBottom:composerHeight+viewport.keyboardInset+12 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} refreshing={comments.loading} onRefresh={() => { void comments.refresh(); }}
+        <FlatList<ListRow> ref={listRef} onScrollToIndexFailed={info=>{listRef.current?.scrollToOffset({offset:info.averageItemLength*info.index,animated:false});setTimeout(()=>{if(focusIndex>=0)listRef.current?.scrollToIndex({index:focusIndex,viewPosition:.25,animated:true});},200);}} data={rows} keyExtractor={row => row.kind === "comment" ? row.comment.id : row.kind === "thread" ? `thread:${row.root.id}` : `more:${row.rootId}`} renderItem={renderRow} style={styles.list} onScrollBeginDrag={dismissActions} contentContainerStyle={[rows.length ? styles.listContent : styles.emptyContainer, { paddingLeft: 16 + viewport.insets.left, paddingRight: 16 + viewport.insets.right,paddingBottom:composerHeight+viewport.keyboardInset+12 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} refreshing={comments.loading} onRefresh={() => { void comments.refresh(); }}
           ListEmptyComponent={comments.loading ? <ActivityIndicator color="#00F2FE" /> : comments.total === 0 || comments.hiddenThreads.size > 0 ? <View style={styles.empty}><Feather name="message-circle" size={32} color="#666" /><Text style={styles.emptyText}>{comments.total === 0 ? "Sé el primero en comentar" : "No hay hilos visibles en esta página"}</Text></View> : null}
           ListFooterComponent={comments.hasMore ? <Pressable disabled={comments.paging} onPress={() => { void comments.loadMore(); }} style={styles.more}><Text style={styles.link}>{comments.paging ? "Cargando…" : "Cargar más comentarios"}</Text></Pressable> : null} />
 

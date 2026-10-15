@@ -5,7 +5,7 @@ import {useAuth} from "./AuthContext";
 import {createDatabaseChannel} from "../lib/realtimeSubscriptions";
 export interface AppNotification{
  id:string;user_id:string;actor_id:string|null;actor_name:string|null;actor_avatar:string|null;
- type:"like"|"comment"|"follow"|"mention"|"system"|"message"|"share"|"profile_visit";
+ type:"like"|"comment"|"follow"|"mention"|"system"|"message"|"share"|"profile_visit"|"comment_like"|"favorite";
  message:string;data:Record<string,unknown>;read:boolean;created_at:string;event_count?:number;unread_count?:number;
 }
 interface NotificationsContextValue{notifications:AppNotification[];unreadCount:number;loading:boolean;markRead:(id:string)=>Promise<void>;markAllRead:()=>Promise<void>;refresh:()=>Promise<void>;banner:AppNotification|null;dismissBanner:()=>void;error:string|null;}
@@ -19,7 +19,7 @@ export function NotificationsProvider({children}:{children:React.ReactNode}){
   if(!active)return;void fetchNotifications();const incoming=payload.new as AppNotification;
   if(AppState.currentState!=="active"||lastBanner.current===incoming.id)return;lastBanner.current=incoming.id;
   void(async()=>{if(incoming.type==="message"&&typeof incoming.data?.conversationId==="string"){const {data}=await supabase.from("chat_preferences").select("mute_messages").eq("user_id",user.id).eq("conversation_id",incoming.data.conversationId).maybeSingle();if(data?.mute_messages)return;}if(active)setBanner(incoming);})();
- }).subscribe(status=>{if(active&&status==="SUBSCRIBED")void fetchNotifications();});
+ }).on("postgres_changes",{event:"UPDATE",schema:"public",table:"notifications",filter:`user_id=eq.${user.id}`},()=>{if(active)void fetchNotifications();}).subscribe(status=>{if(active&&status==="SUBSCRIBED")void fetchNotifications();});
  const listener=AppState.addEventListener("change",state=>{if(active&&state==="active")void fetchNotifications();});
  return()=>{active=false;++generation.current;++sequence.current;listener.remove();void supabase.removeChannel(channel);};
  },[user?.id,fetchNotifications]);

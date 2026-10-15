@@ -186,7 +186,7 @@ export default function VideoCard({
           onFollow={onFollow}
           onAvatarPress={onAvatarPress}
         />
-        <VideoActions
+        <VideoActions videoId={video.id}
           likes={likeCount === null ? "…" : formatCount(likeCount ?? video.likes)}
           comments={commentCount === null ? "…" : formatCount(commentCount ?? video.comments)}
           shares={formatCount(video.shares)}

@@ -1,3 +1,4 @@
+import {activityPublication} from "../lib/features/messages/activity";
 import {useAudioPlayer} from "expo-audio";
 import {supabase} from "../lib/supabase";
 import {useAuth} from "../context/AuthContext";
@@ -8,8 +9,9 @@ import {router,useGlobalSearchParams,usePathname} from "expo-router";
 import {Feather} from "@expo/vector-icons";
 import {useNotifications,type AppNotification} from "../context/NotificationsContext";
 export function openActivity(n:AppNotification){
+ const target=activityPublication(n);
  if(n.type==="message"&&typeof n.data?.conversationId==="string")router.push({pathname:"/chat",params:{conversationId:n.data.conversationId}});
- else if(typeof n.data?.videoId==="string")router.push({pathname:"/publication",params:{id:n.data.videoId}});
+ else if(target.videoId)router.push({pathname:"/publication",params:{id:target.videoId,...(target.commentId?{commentId:target.commentId}:{}),...(n.type==="comment"||n.type==="comment_like"?{comments:"1"}:{})}});
  else if(n.actor_id)router.push({pathname:"/user-profile",params:{userId:n.actor_id}});
 }
 export function ActivityBanner(){const {banner,dismissBanner,markRead}=useNotifications(),insets=useSafeAreaInsets(),path=usePathname(),params=useGlobalSearchParams();

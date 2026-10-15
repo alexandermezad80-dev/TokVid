@@ -1,5 +1,5 @@
 import { supabase } from "../../../supabase";
-import type { BubbleStyleVariant } from "../components/Bubble";
+import {normalizeBubbleStyle,type BubbleStyleVariant} from "../bubbleStyles";
 export type Attachment={path:string;kind:"image"|"video"|"audio";mime:string;duration?:number};
 export type MessageDetail={message_id:string;reply_to:string|null;forwarded:boolean;attachment:Attachment|null};
 export type Reaction={message_id:string;user_id:string;emoji:string};
@@ -9,7 +9,7 @@ export const CHAT_BACKGROUNDS={slate:["#121820","#181720"],teal:["#112326","#172
 function fail(error:unknown,fallback:string):asserts error is null|undefined {if(error)throw new Error(fallback);}
 export async function readChatPreferences(userId:string,conversationId:string):Promise<ChatPreferences>{
  const {data,error}=await supabase.from("chat_preferences").select("bubble_style,background,tone,mute_messages,mute_calls").eq("user_id",userId).eq("conversation_id",conversationId).maybeSingle();
- fail(error,"No se pudieron cargar los ajustes.");return {...DEFAULT_CHAT_PREFERENCES,...data};
+ fail(error,"No se pudieron cargar los ajustes.");return {...DEFAULT_CHAT_PREFERENCES,...data,bubble_style:normalizeBubbleStyle(data?.bubble_style)};
 }
 export async function saveChatPreferences(userId:string,conversationId:string,changes:Partial<ChatPreferences>){
  const existing=await readChatPreferences(userId,conversationId);

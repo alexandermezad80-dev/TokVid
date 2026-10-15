@@ -1,0 +1,48 @@
+Encabezado: Detalles del chat y Chat
+Medidas en dp. Pantalla de referencia: 390 x 869. El encabezado es el mismo en las dos pantallas; solo
+cambia lo que lleva adentro.
+
+1. Encabezado y degradado (igual en las dos)
+
+ Posición y alto                De y = 0 a y = 90.5. Ancho completo (390). Alto total 90.5.
+
+ Zona de iconos de Android      De 0 a 38. Margen de 12 a la izquierda y 14 a la derecha. Todo en blanco.
+
+ Fila del encabezado            De 38 a 90.5 (alto 52.5).
+
+ Esquinas                       Las de arriba cuadradas. Las de abajo con radio 20.
+
+ Degradado                      Dirección 110 grados. #5F6A74 en 0%, #76818B en 50%, #2F9A9F en
+                                100%.
+
+ Color de letras e iconos       Blanco #FFFFFF.
+
+
+2. Detalles del chat
+
+ Flecha de volver               Botón de 44 x 44, a 12 del borde izquierdo y 42 de arriba. Icono de 26, trazo
+                                de 2.
+
+ Título "Detalles del chat"     A 58 del borde izquierdo y 52 de arriba. Alto 24. Letra de 18, negrita.
+
+ Tres puntos                    Botón de 44 x 44, a 334 del borde izquierdo y 42 de arriba. Icono de 26.
+
+ Debajo del encabezado          El avatar empieza en y = 99. No hay línea de separación.
+
+
+3. Chat
+
+ Flecha de volver               Botón de 44 x 44, a 2 del borde izquierdo y 42 de arriba. Icono de 24, trazo
+                                de 2.
+
+ Foto del contacto              Círculo de 34 x 34, a 45.5 del borde izquierdo y 47 de arriba. Borde de 1.5
+                                en blanco al 80%.
+
+ Nombre "@Marian_Ram"           A 88 del borde izquierdo y 48 de arriba. Alto 32. Letra de 17, peso 600.
+
+ Teléfono                       Botón de 44 x 44, a 301 del borde izquierdo y 42 de arriba. Icono de 22.
+
+ Menú (tres rayitas)            Botón de 44 x 44, a 338 del borde izquierdo y 42 de arriba. Icono de 24.
+
+ Debajo del encabezado          La fecha queda en y = 111 y la burbuja de mensaje en y = 143.5.
+

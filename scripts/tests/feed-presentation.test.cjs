@@ -57,6 +57,7 @@ test('the authenticated creator + follows only other unfollowed users and is dis
   const animation = () => ({ start() {}, stop() {} });
   const Actions = component('components/VideoActions.tsx', {
     react: { ...rt.hooks, createElement: element }, 'react-native': { ...native, Animated: { Value: class {}, View: 'AnimatedView', timing: animation, sequence: animation, loop: animation } },
+    './reference/BrandAvatar':{__esModule:true,default:'BrandAvatar'},'../hooks/useVideoSaveCount':{useVideoSaveCount:()=>3},
     '../context/RegistrationContext':{useRegistration:()=>({tabBarHeight:88})},'@expo/vector-icons': { Feather: 'Feather', MaterialCommunityIcons: 'Icon' }, 'expo-linear-gradient': { LinearGradient: 'Gradient' }, 'expo-haptics': {},
   });
   const props = { isGuest: false, isOwner: false, isFollowing: false, onFollow: () => follows++ };
@@ -73,6 +74,7 @@ test('photo selection is retained on upload failure, saved explicitly on retry a
   const Edit = component('app/edit-profile.tsx', {
     react: { ...rt.hooks, createElement: element }, 'react-native': native, '@expo/vector-icons': { Feather: 'Feather' },
     'expo-router': { router: { back: () => backs++ } }, 'react-native-safe-area-context': { useSafeAreaInsets: () => ({ top: 24, bottom: 24 }) },
+    'expo-linear-gradient':{LinearGradient:'Gradient'},'expo-status-bar':{StatusBar:'StatusBar'},'../components/KeyboardAwareScrollViewCompat':{KeyboardAwareScrollViewCompat:'ScrollView'},
     '../components/ProfilePhotoCrop':{__esModule:true,default:'PhotoCrop'},
     '../context/AuthContext': { useAuth: () => ({ user: state.user, profile, refreshProfile: async confirm => { assert.equal(confirm, true); refreshes++; } }) },
     '../lib/features/auth/services/registrationBridge': { requestRegistration() {} }, '../lib/supabase': { supabase: { auth: { updateUser() { throw new Error('An avatar change should not modify auth metadata'); } } } },

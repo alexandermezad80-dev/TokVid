@@ -17,6 +17,7 @@ function harness(inbox = false) {
   let si = 0, ri = 0, focus, appListener, api, reads = 0, serial = 0;
   let rows = [], read = async () => rows, send = async draft => ({ ...draft, created_at: '2026-10-09T00:00:01Z' });
   const db = {
+    rpc:async(name,args)=>{assert.equal(name,"read_chat_activity");assert.equal(args.p_conversation_id,"room");return {error:null};},
     from(table) {
       const query = { select() { return this; }, eq() { return this; }, in() { return this; }, neq() { return this; }, update() { return this; },
         single: async () => ({ data: { id: 'room', user1_id: 'actor', user2_id: 'recipient' } }),

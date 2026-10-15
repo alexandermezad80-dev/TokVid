@@ -1,0 +1,18 @@
+import React,{useEffect,useState} from 'react';
+import {ActivityIndicator,Alert,Image,Pressable,ScrollView,StyleSheet,Text,View} from 'react-native';
+import {Feather} from '@expo/vector-icons';
+import {router,useLocalSearchParams} from 'expo-router';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import ReferenceHeader from '../components/reference/ReferenceHeader';
+import {useFollow} from '../context/FollowContext';
+import {useAuth} from '../context/AuthContext';
+import {supabase} from '../lib/supabase';
+type Person={id:string;username:string;avatar_url:string|null};
+export default function ProfileConnections(){
+ const {userId,kind:initial}=useLocalSearchParams<{userId:string;kind?:string}>(),{user}=useAuth(),follow=useFollow(),insets=useSafeAreaInsets();
+ const [kind,setKind]=useState(initial==='following'?'following':'followers'),[rows,setRows]=useState<Person[]>([]),[offset,setOffset]=useState(0),[more,setMore]=useState(false),[loading,setLoading]=useState(false),[error,setError]=useState('');
+ useEffect(()=>{setRows([]);setOffset(0);},[userId,kind]);
+ useEffect(()=>{let active=true;setLoading(true);void supabase.rpc('profile_connections',{p_user:userId,p_kind:kind,p_offset:offset}).then(({data,error})=>{if(!active)return;if(error)setError('No se pudieron cargar las relaciones.');else{setRows(old=>offset?[...old,...(data??[])]:data??[]);setMore(data?.length===60);setError('');}setLoading(false);});return()=>{active=false;};},[userId,kind,offset]);
+ return <View style={{flex:1,backgroundColor:'#FFF',paddingBottom:insets.bottom}}><ReferenceHeader title="Amigos y seguidores" left={<Pressable style={s.back} accessibilityLabel="Volver" onPress={()=>router.back()}><Feather name="arrow-left" size={24} color="#FFF"/></Pressable>}/><View style={s.tabs}>{(['followers','following'] as const).map(t=><Pressable style={{flex:1,padding:16}} key={t} onPress={()=>setKind(t)}><Text style={{textAlign:'center',color:kind===t?'#101010':'#8A8B97',fontWeight:'600'}}>{t==='followers'?'Seguidores':'Siguiendo'}</Text></Pressable>)}</View><ScrollView>{rows.map(p=><View style={s.row} key={p.id}><Pressable style={s.person} onPress={()=>router.push({pathname:'/user-profile',params:{userId:p.id}})}>{p.avatar_url?<Image source={{uri:p.avatar_url}} style={s.avatar}/>:<View style={[s.avatar,{backgroundColor:'#E6E9EC',alignItems:'center',justifyContent:'center'}]}><Feather name="user" size={24} color="#737373"/></View>}<Text style={s.name} numberOfLines={1}>@{p.username}</Text></Pressable>{user?.id!==p.id&&<Pressable disabled={follow.loadingIds.has(p.id)} style={s.follow} onPress={()=>void follow.toggleFollow(p.id)}><Text style={{color:'#FFF',fontSize:13}}>{follow.isFollowing(p.id)?'Siguiendo':'Seguir'}</Text></Pressable>}</View>)}{!!error&&<Text style={s.empty}>{error}</Text>}{loading?<ActivityIndicator style={{margin:24}}/>:!rows.length?<Text style={s.empty}>No hay usuarios en esta lista.</Text>:null}{more&&!loading&&<Pressable onPress={()=>setOffset(v=>v+60)}><Text style={s.empty}>Ver más</Text></Pressable>}</ScrollView></View>;
+}
+const s=StyleSheet.create({back:{width:44,height:44,alignItems:'center',justifyContent:'center'},tabs:{flexDirection:'row',borderBottomWidth:1,borderBottomColor:'#E5E5E5'},row:{minHeight:80,paddingHorizontal:16,flexDirection:'row',alignItems:'center',gap:12},person:{flex:1,flexDirection:'row',alignItems:'center',gap:12},avatar:{width:48,height:48,borderRadius:24},name:{flex:1,color:'#101010',fontWeight:'600',fontSize:15},follow:{backgroundColor:'#161616',paddingHorizontal:14,minHeight:36,alignItems:'center',justifyContent:'center',borderRadius:8},empty:{color:'#737373',textAlign:'center',padding:24}});

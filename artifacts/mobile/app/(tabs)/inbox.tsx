@@ -1,3 +1,6 @@
+import ReferenceHeader from "../../components/reference/ReferenceHeader";
+import ClearInboxDialog from "../../lib/features/messages/components/ClearInboxDialog";
+import {activityCounter,activityHasGallery} from "../../lib/features/messages/activity";
 import {useGroupInbox} from "../../hooks/useGroupInbox";
 import ConversationMenu from "../../lib/features/messages/components/ConversationMenu";
 import {hideConversation} from "../../lib/features/messages/services/chat-tools";
@@ -7,7 +10,7 @@ import { requestRegistration } from "../../lib/features/auth/services/registrati
 import { Feather } from "@expo/vector-icons";
 import { formatDistanceToNowStrict } from "date-fns";
 import { es } from "date-fns/locale";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -45,7 +48,9 @@ interface ConversationRow {
 
 function iconForType(type: string) {
   switch (type) {
-    case "like": return "heart";
+    case "like": case "comment_like": return "heart";
+    case "favorite":return "bookmark";
+    case "share":return "share-2";
     case "follow": return "user-plus";
     case "comment": return "message-circle";
     case "mention": return "at-sign";
@@ -56,7 +61,7 @@ function iconForType(type: string) {
 
 function colorForType(type: string) {
   switch (type) {
-    case "like": return "#FE2C55";
+    case "like": case "comment_like": case "favorite": return "#FE2C55";
     case "follow": return "#25F4EE";
     case "comment": return "#FFAE3B";
     case "mention": return "#A78BFA";
@@ -87,18 +92,18 @@ function NotifItem({ notif, onPress }: { notif: AppNotification; onPress: () => 
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <View style={styles.avatarWrap}>
+      <Pressable style={styles.avatarWrap} accessibilityLabel={activityHasGallery(notif)?`Ver publicaciones de la actividad de ${notif.actor_name??"este usuario"}`:"Abrir actividad"} onPress={e=>{e.stopPropagation();if(activityHasGallery(notif))router.push({pathname:"/activity-publications",params:{actorId:notif.actor_id!,type:notif.type}});else onPress();}}>
         <Image source={{ uri: avatarUri }} style={styles.avatar} />
         <View style={[styles.iconBadge, { backgroundColor: colorForType(notif.type) }]}>
           <Feather name={iconForType(notif.type) as any} size={10} color="#fff" />
         </View>
-      </View>
+      </Pressable>
       <View style={styles.notifBody}>
         {notif.actor_name && <Text style={styles.notifUser}>{notif.actor_name}</Text>}
-        <Text style={styles.notifText}>{notif.message}</Text>
+        <Text style={styles.notifText} numberOfLines={1}>{notif.message}</Text>
         <Text style={styles.notifTime}>{timeAgo(notif.created_at)}</Text>
       </View>
-      <View style={styles.badge}><Text style={styles.badgeText}>{notif.event_count??1}</Text></View>
+      {activityCounter(notif)>0&&<View style={styles.badge}><Text style={styles.badgeText}>{activityCounter(notif)}</Text></View>}
     </TouchableOpacity>
   );
 }
@@ -125,7 +130,7 @@ function ConvoItem({ convo, onOptions }: { convo: ConversationRow; onOptions:(co
         <Text style={styles.notifTime}>{timeAgo(convo.last_message_at)}</Text>
       </View>
       {!!convo.unread_count && <View style={styles.badge}><Text style={styles.badgeText}>{convo.unread_count}</Text></View>}
-      <Pressable accessibilityLabel={`Opciones de ${convo.other_username}`} onPress={options} style={{minWidth:44,minHeight:44,alignItems:"center",justifyContent:"center"}}><Feather name="more-horizontal" size={20} color="#AABAC5" /></Pressable>
+      <Pressable accessibilityLabel={`Opciones de ${convo.other_username}`} onPress={options} style={{minWidth:44,minHeight:44,alignItems:"center",justifyContent:"center"}}><Feather name="more-horizontal" size={22} color="#737373" /></Pressable>
     </TouchableOpacity></View>
   );
 }
@@ -137,13 +142,15 @@ export default function InboxScreen() {
   const [menu,setMenu]=useState<{convo:ConversationRow;anchor:{x:number;y:number;width:number;height:number}}|null>(null);
   const [removing,setRemoving]=useState(false);
   const [tab, setTab] = useState<"activity" | "messages">("activity");
-  useEffect(()=>{if(params.tab==="messages")setTab("messages");},[params.tab]);
+  useEffect(()=>{if(params.tab==="messages"||params.tab==="activity")setTab(params.tab);},[params.tab]);
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const { notifications, unreadCount, loading: notifLoading, markRead, markAllRead, refresh } = useNotifications();
   const [refreshing, setRefreshing] = useState(false);
   const { user } = useAuth();
-  const groups=useGroupInbox(user?.id);
+  const [groupRevision,setGroupRevision]=useState(0),[clearBefore,setClearBefore]=useState<string|null>(null);
+  const groups=useGroupInbox(user?.id,groupRevision);
+  useFocusEffect(useCallback(()=>{void refresh();},[refresh]));
 
   useEffect(() => {
     if (!user) requestRegistration();
@@ -160,15 +167,15 @@ export default function InboxScreen() {
   if (!user) return null;
 
   return (
-    <View style={[styles.container, { paddingTop: topPad }]}>
-      <View style={styles.header}>
+    <View style={styles.container}>
+      <ReferenceHeader compact style={{paddingHorizontal:7}}>
         <Text style={styles.pageTitle}>Inbox</Text>
         {tab === "activity" && unreadCount > 0 && (
           <TouchableOpacity style={styles.markAllBtn} onPress={markAllRead}>
             <Text style={styles.markAllText}>Marcar todo leído</Text>
           </TouchableOpacity>
         )}
-      </View>
+      </ReferenceHeader>
 
       <View style={styles.tabs}>
         {(["activity", "messages"] as const).map((t) => (
@@ -243,7 +250,8 @@ export default function InboxScreen() {
           </ScrollView>
         )
       )}
-      {menu&&<ConversationMenu anchor={menu.anchor} name={menu.convo.other_username} busy={removing} onClose={()=>setMenu(null)} onDelete={()=>Alert.alert("Eliminar conversación para mí","Se ocultará esta conversación con todos sus mensajes y su contador solo de tu vista. La otra persona conserva su historial.",[{text:"Cancelar",style:"cancel"},{text:"Eliminar",onPress:()=>{setRemoving(true);void hideConversation(menu.convo.id).then(async()=>{setMenu(null);await loadConvos();}).catch(e=>Alert.alert("No se pudo eliminar",e.message)).finally(()=>setRemoving(false));}}])}/>}
+      {menu&&<ConversationMenu anchor={menu.anchor} name={menu.convo.other_username} busy={removing} onClose={()=>setMenu(null)} onDelete={()=>{setRemoving(true);void hideConversation(menu.convo.id).then(async()=>{setMenu(null);await loadConvos();}).catch(e=>Alert.alert('No se pudo eliminar',e.message)).finally(()=>setRemoving(false));}} onDeleteAll={()=>{setRemoving(true);void supabase.rpc('inbox_clear_boundary').then(({data,error})=>{if(error||!data)Alert.alert('No se pudo preparar la selección','Inténtalo de nuevo.');else{setMenu(null);setClearBefore(data);}setRemoving(false);});}}/>}
+      <ClearInboxDialog visible={clearBefore!==null} busy={removing} onCancel={()=>setClearBefore(null)} onConfirm={()=>{if(!clearBefore||removing)return;setRemoving(true);void supabase.rpc('clear_own_inbox',{p_before:clearBefore}).then(async({error})=>{if(error)Alert.alert('No se pudo eliminar','No se confirmó el borrado. Inténtalo de nuevo.');else{setClearBefore(null);setGroupRevision(n=>n+1);await Promise.all([loadConvos(),refresh()]);}setRemoving(false);});}}/>
     </View>
   );
 }
@@ -251,52 +259,53 @@ export default function InboxScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000" },
+  container: { flex: 1, backgroundColor: "#FFFFFF" },
   header: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     paddingHorizontal: 16, marginBottom: 16,
   },
-  pageTitle: { color: "#fff", fontSize: 22, fontWeight: "700" },
+  pageTitle: { flex:1,color: "#fff", fontSize: 22, fontWeight: "700" },
   markAllBtn: { paddingVertical: 6, paddingHorizontal: 12 },
-  markAllText: { color: "#FE2C55", fontSize: 13, fontWeight: "600" },
+  markAllText: { color: "#FFFFFF", fontSize: 14, fontWeight: "600" },
   tabs: {
+    backgroundColor:"#232F39",marginTop:-20,paddingTop:24,minHeight:62,
     flexDirection: "row",
     borderBottomWidth: 1, borderBottomColor: "#1C1C1E",
-    marginBottom: 4,
+    marginBottom: 0,
   },
-  tabBtn: { flex: 1, alignItems: "center", paddingBottom: 12 },
+  tabBtn: { flex: 1, alignItems: "center", paddingBottom: 8 },
   tabLabelRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  tabText: { color: "#555", fontSize: 15, fontWeight: "600" },
+  tabText: { color: "#9AA5AE", fontSize: 16, fontWeight: "600" },
   tabTextActive: { color: "#fff" },
   tabIndicator: {
     position: "absolute", bottom: 0,
-    height: 2, width: "50%", backgroundColor: "#FE2C55",
+    height: 2, width: 97, backgroundColor: "#25F4EE",
   },
   badge: {
     backgroundColor: "#FE2C55", borderRadius: 10,
     paddingHorizontal: 6, paddingVertical: 1,
-    minWidth: 18, alignItems: "center",
+    minWidth: 20,minHeight:20,justifyContent:"center", alignItems: "center",
   },
-  badgeText: { color: "#fff", fontSize: 10, fontWeight: "800" },
+  badgeText: { color: "#fff", fontSize: 12, fontWeight: "700" },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   list: { flex: 1 },
   notif: {
     flexDirection: "row", alignItems: "center",
-    paddingHorizontal: 16, paddingVertical: 14, gap: 12,
+    paddingHorizontal: 15, paddingVertical: 12, gap: 11,minHeight:90,
   },
-  notifUnread: { backgroundColor: "rgba(254,44,85,0.05)" },
+  notifUnread: { backgroundColor: "#FFF1F3" },
   avatarWrap: { position: "relative" },
-  avatar: { width: 50, height: 50, borderRadius: 25 },
+  avatar: { width: 48, height: 48, borderRadius: 24 },
   iconBadge: {
     position: "absolute", bottom: -2, right: -2,
     width: 20, height: 20, borderRadius: 10,
     alignItems: "center", justifyContent: "center",
-    borderWidth: 2, borderColor: "#000",
+    borderWidth: 1.5, borderColor: "#FFFFFF",
   },
   notifBody: { flex: 1 },
-  notifUser: { color: "#fff", fontWeight: "700", fontSize: 14 },
-  notifText: { color: "#ccc", fontSize: 14, lineHeight: 20 },
-  notifTime: { color: "#555", fontSize: 12, marginTop: 3 },
+  notifUser: { color: "#101010", fontWeight: "700", fontSize: 15 },
+  notifText: { color: "#3F3F46", fontSize: 14, lineHeight: 20 },
+  notifTime: { color: "#8A8B97", fontSize: 13, marginTop: 3 },
   unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#FE2C55" },
   emptyState: {
     flex: 1, alignItems: "center", justifyContent: "center",
@@ -306,7 +315,7 @@ const styles = StyleSheet.create({
     width: 80, height: 80, borderRadius: 40,
     backgroundColor: "#111", alignItems: "center", justifyContent: "center",
   },
-  emptyTitle: { color: "#fff", fontSize: 18, fontWeight: "700" },
+  emptyTitle: { color: "#101010", fontSize: 18, fontWeight: "700" },
   emptyText: { color: "#555", fontSize: 14, textAlign: "center", lineHeight: 20 },
 });
 

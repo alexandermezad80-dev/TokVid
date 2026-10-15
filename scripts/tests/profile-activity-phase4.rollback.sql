@@ -1,0 +1,45 @@
+begin;
+select set_config('tokvid.test.a',(select id::text from public.profiles order by created_at limit 1),true);
+select set_config('tokvid.test.b',(select id::text from public.profiles where id::text<>current_setting('tokvid.test.a') order by created_at limit 1),true);
+select set_config('request.jwt.claim.sub',current_setting('tokvid.test.b'),true);
+set local role authenticated;
+do $test$
+declare a uuid:=current_setting('tokvid.test.a')::uuid;b uuid:=auth.uid();v uuid;c uuid;room uuid;mid uuid:=gen_random_uuid();cutoff timestamptz;affected integer;count_before integer;
+begin
+ insert into public.videos(user_id,video_url,thumbnail_url,media_type,caption) values(b,'https://example.invalid/p4.jpg','https://example.invalid/p4.jpg','image','__rollback_phase4__') returning id into v;
+ select id into c from public.create_feed_comment(v::text,'phase4 original',null,gen_random_uuid()::text);
+ perform set_config('request.jwt.claim.sub',a::text,true);
+ perform public.set_feed_comment_like(c,true);perform public.set_feed_comment_like(c,true);
+ insert into public.saved_videos(user_id,video_id) values(a,v::text);
+ if (select saves_count from public.videos where id=v)<>1 then raise exception 'Saved count missing';end if;
+ perform public.set_feed_video_like(v::text,true);
+ perform public.record_video_share(v,gen_random_uuid());
+ insert into public.profile_visibility(user_id,show_likes,show_shares) values(a,false,false) on conflict(user_id) do update set show_likes=false,show_shares=false;
+ perform set_config('request.jwt.claim.sub',b::text,true);
+ if exists(select 1 from public.profile_activity_ids(a,'liked') where video_id=v::text) or exists(select 1 from public.profile_activity_ids(a,'shared') where video_id=v::text) then raise exception 'Private profile activity leaked';end if;
+ update public.profile_visibility set show_likes=true where user_id=a;get diagnostics affected=row_count;if affected<>0 then raise exception 'Visitor changed owner privacy';end if;
+ if (select count(*) from public.notifications where type='comment_like' and data->>'commentId'=c::text)<>1 then raise exception 'Comment-like retry generated duplicate';end if;
+ if (select count(*) from public.notifications where type='favorite' and data->>'videoId'=v::text)<>1 then raise exception 'Favorite notification missing';end if;
+ perform set_config('request.jwt.claim.sub',a::text,true);
+ update public.profile_visibility set show_likes=true,show_shares=true where user_id=a;
+ delete from public.saved_videos where user_id=a and video_id=v::text;
+ if (select saves_count from public.videos where id=v)<>0 then raise exception 'Saved count not decremented';end if;
+ perform set_config('request.jwt.claim.sub',b::text,true);
+ if not exists(select 1 from public.profile_activity_ids(a,'liked') where video_id=v::text) or not exists(select 1 from public.profile_activity_ids(a,'shared') where video_id=v::text) then raise exception 'Public choices not honored';end if;
+ -- Real message API, recipient receipt, personal-only clearing.
+ perform set_config('request.jwt.claim.sub',a::text,true);
+ room:=public.open_private_conversation(b);
+ perform public.send_private_message(mid,room,'__rollback_p4_message__');
+ perform set_config('request.jwt.claim.sub',b::text,true);
+ update public.messages set read_by_other=true where id=mid;
+ if exists(select 1 from public.notifications where data->>'messageId'=mid::text and not read) then raise exception 'Read chat retained unread activity';end if;
+ cutoff:=public.inbox_clear_boundary();perform public.clear_own_inbox(cutoff);
+ if exists(select 1 from public.visible_private_messages where id=mid) then raise exception 'Own clear failed';end if;
+ perform set_config('request.jwt.claim.sub',a::text,true);
+ if not exists(select 1 from public.visible_private_messages where id=mid) then raise exception 'Clearing deleted the other account history';end if;
+ -- An invalid future cutoff must not be accepted.
+ begin perform public.clear_own_inbox(clock_timestamp()+interval '1 day');raise exception 'Future cutoff accepted';exception when insufficient_privilege then null;end;
+end $test$;
+reset role;
+select 'phase4 privacy, counts, notifications, receipt and private clear passed' result;
+rollback;

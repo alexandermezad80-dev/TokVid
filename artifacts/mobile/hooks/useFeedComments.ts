@@ -3,7 +3,7 @@ import { AppState } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
 import { createDatabaseChannel } from "../lib/realtimeSubscriptions";
-import { COMMENT_PAGE_SIZE, FeedComment, REPLY_PAGE_SIZE, commentCapabilities, mergeComments } from "../lib/features/comments/model";
+import { COMMENT_PAGE_SIZE, COMMENT_FIELDS, FeedComment, REPLY_PAGE_SIZE, commentCapabilities, mergeComments } from "../lib/features/comments/model";
 import { createComment, deleteComment, editComment, hideCommentThread, readComments, readHiddenThreads, readOwnCommentLikes, readPublicationOwner, readReplies, restoreCommentThreads, setCommentLike } from "../lib/features/comments/services";
 
 interface ThreadPage { rows: FeedComment[]; hasMore: boolean }
@@ -15,7 +15,7 @@ interface State {
 const emptyState = (key: string): State => ({ key, roots: [], threads: {}, liked: new Set(), hiddenThreads: new Set(), total: null, hasMore: false, publicationOwnerId: null });
 const errorText = (error: unknown) => error instanceof Error ? error.message : "No se pudo completar la operación. Inténtalo de nuevo.";
 
-export function useFeedComments(visible: boolean, videoId: string, onCountChange?: (videoId: string, total: number) => void) {
+export function useFeedComments(visible: boolean, videoId: string, onCountChange?: (videoId: string, total: number) => void, focusCommentId?:string) {
   const { user } = useAuth();
   const key = `${videoId}:${user?.id ?? "guest"}`;
   const [state, setState] = useState<State>(() => emptyState(key));
@@ -36,6 +36,7 @@ export function useFeedComments(visible: boolean, videoId: string, onCountChange
   const mutationLock = useRef(false);
   const likeLocks = useRef(new Set<string>());
   const pendingSend = useRef<{ payload: string; id: string } | null>(null);
+  const focusRevealed=useRef<string|null>(null);
   const countCallback = useRef(onCountChange);
   const currentContext = useRef({ key, visible });
   currentContext.current = { key, visible };
@@ -53,7 +54,22 @@ export function useFeedComments(visible: boolean, videoId: string, onCountChange
         readPublicationOwner(videoId),
       ]);
       const threads = Object.fromEntries(pages);
-      const ids = [...roots.rows, ...pages.flatMap(([, page]) => page.rows)].map(row => row.id);
+      if(focusCommentId){
+        const found=await supabase.from('comments').select(COMMENT_FIELDS).eq('video_id',videoId).eq('id',focusCommentId).is('deleted_at',null).maybeSingle();
+        if(found.error)throw found.error;
+        const target=found.data as unknown as FeedComment|null;
+        if(target){
+          const rootId=target.root_id??target.id;
+          if(!roots.rows.some(r=>r.id===rootId)){
+            const root=await supabase.from('comments').select(COMMENT_FIELDS).eq('video_id',videoId).eq('id',rootId).is('deleted_at',null).maybeSingle();
+            if(root.error)throw root.error;
+            if(root.data)roots.rows=mergeComments(roots.rows,[root.data as unknown as FeedComment]);
+          }
+          if(target.parent_id){const page=threads[rootId]??await readReplies(videoId,rootId,REPLY_PAGE_SIZE);threads[rootId]={...page,rows:mergeComments(page.rows,[target])};}
+          if(epoch.current===currentEpoch&&focusRevealed.current!==focusCommentId){focusRevealed.current=focusCommentId;if(target.parent_id)setExpanded(previous=>new Set(previous).add(rootId));}
+        }else if(epoch.current===currentEpoch){setOperationError('Este comentario ya no está disponible.');}
+      }
+      const ids = [...roots.rows, ...Object.values(threads).flatMap(page => page.rows)].map(row => row.id);
       const [liked, hiddenThreads] = await Promise.all([readOwnCommentLikes(user?.id, ids), readHiddenThreads(user?.id, videoId)]);
       if (epoch.current !== currentEpoch || requestSequence.current !== sequence) return;
       setState({ key, roots: roots.rows, threads, liked, hiddenThreads, total: roots.total, hasMore: roots.hasMore, publicationOwnerId });
@@ -64,13 +80,13 @@ export function useFeedComments(visible: boolean, videoId: string, onCountChange
     } finally {
       if (epoch.current === currentEpoch && requestSequence.current === sequence) setLoading(false);
     }
-  }, [visible, videoId, user?.id, key]);
+  }, [visible, videoId, user?.id, key,focusCommentId]);
 
   useEffect(() => {
     epoch.current++;
     requestSequence.current++;
     rootsLimit.current = COMMENT_PAGE_SIZE;
-    threadLimits.current.clear();
+    threadLimits.current.clear();focusRevealed.current=null;
     pendingSend.current = null;
     sendLock.current = false;
     pagingLock.current = false;
