@@ -1,3 +1,4 @@
+import {palette} from '../../../constants/palette';
 import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { supabase } from "../../supabase";
@@ -161,20 +162,20 @@ export default function Quieme({ roomId, userId, onClose }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
+    backgroundColor: palette.background,
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
   },
   center: {
     flex: 1,
-    backgroundColor: "#000",
+    backgroundColor: palette.input,
     alignItems: "center",
     justifyContent: "center",
   },
-  title: { color: "#fff", fontSize: 28, fontWeight: "900" },
-  count: { color: "#fff", fontSize: 48, fontWeight: "900", marginTop: 8 },
-  subtitle: { color: "#999", fontSize: 13, marginBottom: 28 },
+  title: { color: palette.text, fontSize: 28, fontWeight: "900" },
+  count: { color: palette.text, fontSize: 48, fontWeight: "900", marginTop: 8 },
+  subtitle: { color: palette.secondary, fontSize: 13, marginBottom: 28 },
   button: {
     minWidth: 190,
     minHeight: 74,
@@ -182,18 +183,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#222",
+    backgroundColor: palette.button,
     borderWidth: 2,
-    borderColor: "#fff",
+    borderColor: palette.border,
     flexDirection: "row",
     gap: 10,
   },
   buttonDone: { opacity: 0.65 },
   buttonPressed: { transform: [{ scale: 0.97 }] },
   heart: { fontSize: 26 },
-  buttonText: { color: "#fff", fontSize: 19, fontWeight: "900" },
-  note: { color: "#aaa", fontSize: 12, textAlign: "center", marginTop: 18 },
-  error: { color: "#ff8080", fontSize: 12, textAlign: "center", marginTop: 18 },
+  buttonText: { color: palette.onButton, fontSize: 19, fontWeight: "900" },
+  note: { color: palette.secondary, fontSize: 12, textAlign: "center", marginTop: 18 },
+  error: { color: palette.destructive, fontSize: 12, textAlign: "center", marginTop: 18 },
   close: { marginTop: 28, padding: 10 },
-  closeText: { color: "#bbb", fontSize: 14 },
+  closeText: { color: palette.secondary, fontSize: 14 },
 });
+

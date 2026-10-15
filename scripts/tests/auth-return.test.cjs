@@ -162,6 +162,7 @@ test('the real Google callback uses the same Feed destination after a profile en
     useLocalSearchParams: () => ({ code: 'pkce-code' }),
     Linking: { useURL: () => null, createURL: () => 'mobile:///auth/callback' },
     Platform: { OS: 'android' },
+    palette: {background:'#FFFFFF',secondary:'#52525B'}, // visual boundary only
     StyleSheet: { create: styles => styles },
     completeAuthCallback: async () => state.authenticate('google-user'),
   });
@@ -173,3 +174,4 @@ test('the real Google callback uses the same Feed destination after a profile en
   assert.equal(state.runtime.output.completed.videoId, 'google-video');
   assert.equal(state.runtime.output.completed.position, 27.25);
 });
+

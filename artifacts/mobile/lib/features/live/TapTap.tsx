@@ -1,3 +1,4 @@
+import {palette} from '../../../constants/palette';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -227,26 +228,27 @@ export default function TapTap({ roomId, userId }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000", alignItems: "center", justifyContent: "center", padding: 24 },
-  label: { color: "#aaa", fontSize: 14, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1 },
-  count: { color: "#fff", fontSize: 48, fontWeight: "900", marginTop: 4 },
-  sub: { color: "#888", fontSize: 12 },
+  container: { flex: 1, backgroundColor: palette.background, alignItems: "center", justifyContent: "center", padding: 24 },
+  label: { color: palette.secondary, fontSize: 14, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1 },
+  count: { color: palette.text, fontSize: 48, fontWeight: "900", marginTop: 4 },
+  sub: { color: palette.secondary, fontSize: 12 },
   personal: { color: "#ddd", fontSize: 14, marginTop: 8, fontWeight: "600" },
   preview: { height: 56, alignItems: "center", justifyContent: "center" },
   animation: { fontSize: 46 },
-  button: { width: 190, height: 190, borderRadius: 95, alignItems: "center", justifyContent: "center", backgroundColor: "#222", borderWidth: 2, borderColor: "#fff" },
+  button: { width: 190, height: 190, borderRadius: 95, alignItems: "center", justifyContent: "center", backgroundColor: palette.button, borderWidth: 2, borderColor: palette.selectedBorder },
   pressed: { transform: [{ scale: 0.96 }] },
   buttonFigure: { fontSize: 40 },
-  buttonText: { color: "#fff", fontSize: 28, fontWeight: "900", marginTop: 2 },
-  hint: { color: "#aaa", fontSize: 11, marginTop: 8, textAlign: "center", paddingHorizontal: 24 },
-  selectorTitle: { color: "#bbb", fontSize: 13, fontWeight: "700", marginTop: 26, marginBottom: 10 },
+  buttonText: { color: palette.onButton, fontSize: 28, fontWeight: "900", marginTop: 2 },
+  hint: { color: palette.mediaMuted, fontSize: 11, marginTop: 8, textAlign: "center", paddingHorizontal: 24 },
+  selectorTitle: { color: palette.secondary, fontSize: 13, fontWeight: "700", marginTop: 26, marginBottom: 10 },
   row: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 8, maxWidth: 330 },
-  option: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", backgroundColor: "#171717", borderWidth: 1, borderColor: "#333" },
-  selected: { borderColor: "#fff", backgroundColor: "#292929" },
+  option: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", backgroundColor: palette.input, borderWidth: 1, borderColor: palette.border },
+  selected: { borderColor: palette.selectedBorder, backgroundColor: palette.selected },
   emoji: { fontSize: 22 },
   activityPanel: { width: "100%", marginTop: 24, gap: 6 },
-  activityTitle: { color: "#fff", fontSize: 16, fontWeight: "800", marginBottom: 4 },
-  activityRow: { flexDirection: "row", justifyContent: "space-between", backgroundColor: "#151515", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
+  activityTitle: { color: palette.text, fontSize: 16, fontWeight: "800", marginBottom: 4 },
+  activityRow: { flexDirection: "row", justifyContent: "space-between", backgroundColor: palette.input, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
   activityUser: { color: "#ddd", fontSize: 12 },
-  activityCount: { color: "#fff", fontWeight: "800" },
+  activityCount: { color: palette.text, fontWeight: "800" },
 });
+

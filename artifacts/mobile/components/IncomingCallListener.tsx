@@ -1,3 +1,4 @@
+import {palette} from '../constants/palette';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -59,9 +60,9 @@ export function IncomingCallListener() {
 }
 const styles = StyleSheet.create({
   overlay: { position: "absolute", top: 0, left: 0, right: 0, zIndex: 1000, paddingHorizontal: 12, paddingTop: 54 },
-  card: { minHeight: 76, borderRadius: 18, backgroundColor: "#1C1C1E", flexDirection: "row", alignItems: "center", paddingHorizontal: 14, borderWidth: 1, borderColor: "#2C2C2E" },
-  icon: { width: 46, height: 46, borderRadius: 23, backgroundColor: "#2C2C2E", alignItems: "center", justifyContent: "center" },
-  info: { flex: 1, marginLeft: 12 }, title: { color: "#fff", fontSize: 15, fontWeight: "700" }, subtitle: { color: "#999", fontSize: 12, marginTop: 3 },
+  card: { minHeight: 76, borderRadius: 18, backgroundColor: palette.background, flexDirection: "row", alignItems: "center", paddingHorizontal: 14, borderWidth: 1, borderColor: palette.border },
+  icon: { width: 46, height: 46, borderRadius: 23, backgroundColor: palette.button, alignItems: "center", justifyContent: "center" },
+  info: { flex: 1, marginLeft: 12 }, title: { color: palette.text, fontSize: 15, fontWeight: "700" }, subtitle: { color: palette.secondary, fontSize: 12, marginTop: 3 },
   actions: { flexDirection: "row", gap: 10 }, action: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
-  reject: { backgroundColor: "#d7193f" }, accept: { backgroundColor: "#20a464" },
+  reject: { backgroundColor: "#d7193f" }, accept: { backgroundColor: palette.input },
 });

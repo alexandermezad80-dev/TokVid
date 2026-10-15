@@ -1,3 +1,5 @@
+> **Ampliación vigente (15 octubre2026):** aplicar la misma lógica de colores a todas las UI, solicitada durante esta sesión. APK220 del bloque funcional terminó correctamente; la paleta global está en verificación y requiere una APK posterior. Conservar funciones/estructura y fondos oscuros de medios. Ver `docs/TOKVID_PHASE_4.md`, sección final. No afirmar prueba física.
+
 > **Fase4 en verificación (15 octubre2026):** el usuario autorizó implementar todas las referencias posteriores y confirmó visualmente el contenido compacto de Información de perfil de APK217. El teclado de chat seguía fallando y NO se considera validado físicamente. Ver [registro de fase4](../TOKVID_PHASE_4.md). Preflight27a677a aprobado:132 pruebas, TypeScript/prebuild. Migración20261015005124 aplicada, pruebas revertidas aprobadas. La APK nueva todavía está pendiente; conservar217 como última entregada hasta registrar el binario nuevo.
 
 # TokVid — estado y continuidad entre sesiones

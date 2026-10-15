@@ -1,3 +1,4 @@
+import {palette} from '../constants/palette';
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -35,14 +36,14 @@ function RootLayoutNav() {
   const { loading } = useAuth();
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#000", alignItems: "center", justifyContent: "center" }}>
+      <View style={{ flex: 1, backgroundColor: palette.background, alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator color="#FE2C55" size="large" />
       </View>
     );
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={{ headerShown: false, contentStyle:{backgroundColor:palette.background} }}>
       <>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="story-viewer" options={{ presentation: "fullScreenModal", animation: "fade" }} />
@@ -71,7 +72,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
-          <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#000" }}>
+          <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.background }}>
             <KeyboardProvider statusBarTranslucent navigationBarTranslucent>
               <AuthProvider>
                 <RegistrationProvider><FollowProvider>

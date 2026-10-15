@@ -1,3 +1,5 @@
+import HeaderSurface from '../components/reference/HeaderSurface';
+import {palette} from '../constants/palette';
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -313,7 +315,7 @@ export default function LiveManage() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <HeaderSurface safeTop style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.headerButton}>
           <Text style={styles.headerButtonText}>Atrás</Text>
         </Pressable>
@@ -321,7 +323,7 @@ export default function LiveManage() {
         <Pressable onPress={() => void refresh()} style={styles.headerButton}>
           <Text style={styles.headerButtonText}>Actualizar</Text>
         </Pressable>
-      </View>
+      </HeaderSurface>
 
       <ScrollView contentContainerStyle={styles.content}>
         {can("invite_guests") ? (
@@ -331,7 +333,7 @@ export default function LiveManage() {
               value={username}
               onChangeText={setUsername}
               placeholder="username exacto"
-              placeholderTextColor="#777"
+              placeholderTextColor={palette.muted}
               autoCapitalize="none"
               style={styles.input}
             />
@@ -590,72 +592,72 @@ export default function LiveManage() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000" },
+  container: { flex: 1, backgroundColor: palette.background },
   header: {
-    paddingTop: 52,
+    paddingTop: 12,
     paddingHorizontal: 12,
     paddingBottom: 12,
-    backgroundColor: "#0d0d0d",
+    backgroundColor: palette.input,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   headerButton: { padding: 8 },
-  headerButtonText: { color: "#fff", fontWeight: "700" },
-  title: { color: "#fff", fontSize: 18, fontWeight: "800" },
+  headerButtonText: { color: palette.headerText, fontWeight: "700" },
+  title: { color: palette.headerText, fontSize: 18, fontWeight: "800" },
   content: { padding: 12, gap: 12 },
   card: {
-    backgroundColor: "#111",
+    backgroundColor: palette.input,
     borderRadius: 14,
     padding: 14,
     gap: 10,
     borderWidth: 1,
-    borderColor: "#242424",
+    borderColor: palette.border,
   },
-  sectionTitle: { color: "#fff", fontSize: 16, fontWeight: "800" },
+  sectionTitle: { color: palette.text, fontSize: 16, fontWeight: "800" },
   subTitle: { color: "#ddd", fontSize: 13, fontWeight: "700", marginTop: 8 },
-  muted: { color: "#999", fontSize: 12 },
+  muted: { color: palette.secondary, fontSize: 12 },
   input: {
-    color: "#fff",
-    backgroundColor: "#1a1a1a",
+    color: palette.text,
+    backgroundColor: palette.input,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 11,
     borderWidth: 1,
-    borderColor: "#333",
+    borderColor: palette.border,
   },
   primaryButton: {
-    backgroundColor: "#FE2C55",
+    backgroundColor: palette.button,
     borderRadius: 10,
     paddingVertical: 11,
     alignItems: "center",
   },
   smallPrimary: {
-    backgroundColor: "#FE2C55",
+    backgroundColor: palette.button,
     borderRadius: 9,
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
   smallSecondary: {
-    backgroundColor: "#252525",
+    backgroundColor: palette.button,
     borderRadius: 9,
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
-  buttonText: { color: "#fff", fontSize: 12, fontWeight: "700" },
+  buttonText: { color: palette.onButton, fontSize: 12, fontWeight: "700" },
   row: {
     paddingVertical: 8,
     gap: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#222",
+    borderBottomColor: palette.border,
   },
   participant: {
     padding: 10,
-    backgroundColor: "#181818",
+    backgroundColor: palette.input,
     borderRadius: 10,
     gap: 8,
   },
-  rowTitle: { color: "#fff", fontSize: 12, fontWeight: "700", flex: 1 },
+  rowTitle: { color: palette.text, fontSize: 12, fontWeight: "700", flex: 1 },
   rowActions: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
   rowBetween: {
     flexDirection: "row",
@@ -665,9 +667,10 @@ const styles = StyleSheet.create({
   },
   permissionList: { gap: 5 },
   permissionRow: {
-    backgroundColor: "#202020",
+    backgroundColor: palette.input,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
 });
+

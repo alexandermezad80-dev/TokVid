@@ -1,3 +1,5 @@
+import HeaderSurface from '../components/reference/HeaderSurface';
+import {palette} from '../constants/palette';
 import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -45,18 +47,18 @@ export default function CallHistoryScreen() {
   }, [conversationId]);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
+    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+      <HeaderSurface safeTop style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.back}>
           <Feather name="arrow-left" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Historial de llamadas</Text>
-      </View>
+      </HeaderSurface>
       {loading ? (
         <View style={styles.center}><ActivityIndicator color="#FE2C55" /></View>
       ) : error ? (
         <View style={styles.center}>
-          <Feather name="alert-circle" size={38} color="#777" />
+          <Feather name="alert-circle" size={38} color={palette.secondary} />
           <Text style={styles.error}>{error}</Text>
           <TouchableOpacity
             style={styles.retry}
@@ -78,7 +80,7 @@ export default function CallHistoryScreen() {
         </View>
       ) : calls.length === 0 ? (
         <View style={styles.center}>
-          <Feather name="phone" size={38} color="#444" />
+          <Feather name="phone" size={38} color={palette.secondary} />
           <Text style={styles.empty}>No hay llamadas todavía.</Text>
         </View>
       ) : (
@@ -106,19 +108,20 @@ export default function CallHistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000" },
-  header: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderBottomWidth: 1, borderBottomColor: "#151515" },
+  container: { flex: 1, backgroundColor: palette.background },
+  header: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderBottomWidth: 1, borderBottomColor: palette.border },
   back: { padding: 4 },
-  title: { color: "#fff", fontSize: 18, fontWeight: "700" },
+  title: { color: palette.headerText, fontSize: 18, fontWeight: "700" },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 14, paddingHorizontal: 24 },
-  empty: { color: "#666", fontSize: 14 },
-  error: { color: "#aaa", fontSize: 14, textAlign: "center" },
-  retry: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 10, backgroundColor: "#1c1c1e" },
-  retryText: { color: "#fff", fontSize: 14, fontWeight: "600" },
+  empty: { color: palette.secondary, fontSize: 14 },
+  error: { color: palette.secondary, fontSize: 14, textAlign: "center" },
+  retry: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 10, backgroundColor: palette.button },
+  retryText: { color: palette.onButton, fontSize: 14, fontWeight: "600" },
   list: { paddingVertical: 8 },
-  row: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: "#111" },
-  icon: { width: 42, height: 42, borderRadius: 21, backgroundColor: "#1c1c1e", alignItems: "center", justifyContent: "center" },
+  row: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: palette.border },
+  icon: { width: 42, height: 42, borderRadius: 21, backgroundColor: palette.button, alignItems: "center", justifyContent: "center" },
   info: { flex: 1 },
-  status: { color: "#fff", fontSize: 15, fontWeight: "600" },
-  meta: { color: "#777", fontSize: 12, marginTop: 4 },
+  status: { color: palette.text, fontSize: 15, fontWeight: "600" },
+  meta: { color: palette.secondary, fontSize: 12, marginTop: 4 },
 });
+

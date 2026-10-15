@@ -1,3 +1,4 @@
+import {palette} from '../constants/palette';
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
@@ -208,25 +209,25 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
         <View accessibilityElementsHidden={!!actionComment} importantForAccessibility={actionComment ? "no-hide-descendants" : "auto"} style={styles.panelBody}>
         <View style={styles.headerGlass}>
           <BlurView pointerEvents="none" intensity={16} tint="dark" experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />
-          <LinearGradient pointerEvents="none" colors={["rgba(0,242,254,0.13)", "rgba(254,9,121,0.12)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
+          <LinearGradient pointerEvents="none" colors={palette.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
           <View style={styles.handle} />
         <View style={[styles.header, { paddingLeft: 12 + viewport.insets.left, paddingRight: 4 + viewport.insets.right }]}><LinearGradient colors={["rgba(0,242,254,0.24)", "rgba(254,9,121,0.24)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.countBadge}><Text style={styles.title}>{comments.total === null ? "Comentarios" : `${comments.total} comentarios`}</Text></LinearGradient><Pressable onPress={close} accessibilityLabel="Cerrar comentarios" accessibilityRole="button" style={styles.close}><Feather name="x" size={22} color="#fff" /></Pressable></View>
         </View>
         {!!comments.error && <View style={styles.errorRow}><Text accessibilityRole="alert" style={styles.error}>{comments.error}</Text><Pressable accessibilityRole="button" onPress={() => { void comments.refresh(); }} style={styles.retry}><Text style={styles.link}>Recargar</Text></Pressable></View>}
-        {comments.hiddenThreads.size > 0 && <Pressable accessibilityRole="button" accessibilityLabel="Mostrar mensajes ocultos" disabled={busy} onPress={() => { void comments.restoreThreads(); }} style={styles.hiddenNotice}><LinearGradient colors={["rgba(0,242,254,0.20)", "rgba(254,9,121,0.20)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.showBadge}><Feather name="eye" size={15} color="#fff" /><Text style={styles.showLabel}>Mostrar</Text></LinearGradient></Pressable>}
+        {comments.hiddenThreads.size > 0 && <Pressable accessibilityRole="button" accessibilityLabel="Mostrar mensajes ocultos" disabled={busy} onPress={() => { void comments.restoreThreads(); }} style={styles.hiddenNotice}><LinearGradient colors={["rgba(0,242,254,0.20)", "rgba(254,9,121,0.20)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.showBadge}><Feather name="eye" size={15} color={palette.text} /><Text style={styles.showLabel}>Mostrar</Text></LinearGradient></Pressable>}
         <FlatList<ListRow> ref={listRef} onScrollToIndexFailed={info=>{listRef.current?.scrollToOffset({offset:info.averageItemLength*info.index,animated:false});setTimeout(()=>{if(focusIndex>=0)listRef.current?.scrollToIndex({index:focusIndex,viewPosition:.25,animated:true});},200);}} data={rows} keyExtractor={row => row.kind === "comment" ? row.comment.id : row.kind === "thread" ? `thread:${row.root.id}` : `more:${row.rootId}`} renderItem={renderRow} style={styles.list} onScrollBeginDrag={dismissActions} contentContainerStyle={[rows.length ? styles.listContent : styles.emptyContainer, { paddingLeft: 16 + viewport.insets.left, paddingRight: 16 + viewport.insets.right,paddingBottom:composerHeight+viewport.keyboardInset+12 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} refreshing={comments.loading} onRefresh={() => { void comments.refresh(); }}
-          ListEmptyComponent={comments.loading ? <ActivityIndicator color="#00F2FE" /> : comments.total === 0 || comments.hiddenThreads.size > 0 ? <View style={styles.empty}><Feather name="message-circle" size={32} color="#666" /><Text style={styles.emptyText}>{comments.total === 0 ? "Sé el primero en comentar" : "No hay hilos visibles en esta página"}</Text></View> : null}
+          ListEmptyComponent={comments.loading ? <ActivityIndicator color={palette.teal} /> : comments.total === 0 || comments.hiddenThreads.size > 0 ? <View style={styles.empty}><Feather name="message-circle" size={32} color="#666" /><Text style={styles.emptyText}>{comments.total === 0 ? "Sé el primero en comentar" : "No hay hilos visibles en esta página"}</Text></View> : null}
           ListFooterComponent={comments.hasMore ? <Pressable disabled={comments.paging} onPress={() => { void comments.loadMore(); }} style={styles.more}><Text style={styles.link}>{comments.paging ? "Cargando…" : "Cargar más comentarios"}</Text></Pressable> : null} />
 
         </View>
 
       </Animated.View>
-        <Animated.View onLayout={e=>setComposerHeight(e.nativeEvent.layout.height)} style={[styles.composer, composerShape, {position:"absolute",left:0,right:0,bottom:viewport.keyboardInset,paddingBottom:bottomPadding+4,backgroundColor:"#15151BF2", paddingLeft: 8 + viewport.insets.left, paddingRight: 8 + viewport.insets.right }]}>
+        <Animated.View onLayout={e=>setComposerHeight(e.nativeEvent.layout.height)} style={[styles.composer, composerShape, {position:"absolute",left:0,right:0,bottom:viewport.keyboardInset,paddingBottom:bottomPadding+4,backgroundColor:palette.background, paddingLeft: 8 + viewport.insets.left, paddingRight: 8 + viewport.insets.right }]}>
           {editing && <Pressable accessibilityRole="button" accessibilityLabel="Cancelar edición" disabled={busy} onPress={cancelEdit} style={styles.editIndicator}><Text style={styles.link}>Editando comentario · Cancelar</Text></Pressable>}
           {reply && <Pressable accessibilityRole="button" accessibilityLabel="Cancelar respuesta" disabled={busy} onPress={() => setReply(null)} hitSlop={8} style={styles.replyIndicator}><LinearGradient colors={["rgba(0,242,254,0.22)", "rgba(254,9,121,0.22)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.replyBubble}><Text style={styles.replyLabel}>Respondiendo</Text></LinearGradient></Pressable>}
           <Animated.View style={[styles.editor, editorShape]}>
             {!viewport.keyboardVisible && <Avatar uri={profile?.avatar_url} username={profile?.username} />}
-            <View style={styles.editorBody}><TextInput ref={input} value={text} editable={!busy} onChangeText={value => setText(Array.from(value).slice(0, COMMENT_LIMIT).join(""))} onContentSizeChange={event => setInputContentHeight(Math.max(36, Math.min(60, event.nativeEvent.contentSize.height)))} style={[styles.input, viewport.keyboardVisible && [styles.expandedInput, { height: inputContentHeight }]]} placeholder="Agregar un comentario…" placeholderTextColor="#8A8A96" selectionColor="#00F2FE" accessibilityLabel="Escribe tu comentario" multiline scrollEnabled maxLength={COMMENT_LIMIT * 2} textAlignVertical={viewport.keyboardVisible ? "top" : "center"} />
+            <View style={styles.editorBody}><TextInput ref={input} value={text} editable={!busy} onChangeText={value => setText(Array.from(value).slice(0, COMMENT_LIMIT).join(""))} onContentSizeChange={event => setInputContentHeight(Math.max(36, Math.min(60, event.nativeEvent.contentSize.height)))} style={[styles.input, viewport.keyboardVisible && [styles.expandedInput, { height: inputContentHeight }]]} placeholder="Agregar un comentario…" placeholderTextColor={palette.muted} selectionColor="#00F2FE" accessibilityLabel="Escribe tu comentario" multiline scrollEnabled maxLength={COMMENT_LIMIT * 2} textAlignVertical={viewport.keyboardVisible ? "top" : "center"} />
               {viewport.keyboardVisible && <Text style={styles.counter}>{commentLength(text)}/{COMMENT_LIMIT}</Text>}
             </View>
             <Pressable accessibilityRole="button" accessibilityLabel={editing ? "Guardar cambios" : "Publicar comentario"} disabled={!text.trim() || busy} onPress={() => { void send(); }} style={styles.send}>
@@ -244,31 +245,31 @@ const styles = StyleSheet.create({
   videoPreview: { position: "absolute", borderRadius: 20, borderWidth: 1, borderColor: "rgba(255,255,255,0.24)", overflow: "hidden" },
   expandVideo: { position: "absolute", top: 5, right: 5, width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(0,0,0,0.38)", alignItems: "center", justifyContent: "center" },
   sheet: { width: "100%", overflow: "hidden", borderTopWidth: 1, borderColor: "rgba(0,242,254,0.28)" },
-  panelBody: { flex: 1, backgroundColor: "#15151B" },
+  panelBody: { flex: 1, backgroundColor: palette.background },
   headerGlass: { overflow: "hidden", borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "rgba(255,255,255,0.08)" },
   navigationGlass: { backgroundColor: "rgba(21,21,27,0.08)", borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: "rgba(255,255,255,0.08)" },
-  handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: "#55555E", alignSelf: "center", marginTop: 6 },
+  handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: palette.tabInactive, alignSelf: "center", marginTop: 6 },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingLeft: 12, paddingRight: 4, minHeight: 44 },
   countBadge: { borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7, flexShrink: 1, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
-  title: { color: "#fff", fontSize: 15, fontWeight: "700", flexShrink: 1 }, close: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  title: { color: palette.headerText, fontSize: 15, fontWeight: "700", flexShrink: 1 }, close: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   hiddenNotice: { alignSelf: "flex-start", marginLeft: 12, marginTop: 8, marginBottom: 6 },
   showBadge: { minHeight: 44, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1, borderColor: "rgba(255,255,255,0.10)", flexDirection: "row", alignItems: "center", gap: 8 },
-  showLabel: { color: "#fff", fontSize: 13, fontWeight: "600" },
+  showLabel: { color: palette.text, fontSize: 13, fontWeight: "600" },
   editIndicator: { alignSelf: "center", paddingVertical: 6 },
-  deletedText: { color: "#92929D", fontStyle: "italic" },
+  deletedText: { color: palette.secondary, fontStyle: "italic" },
   likeButton: { alignItems: "center", gap: 4, minHeight: 36 },
   commentHeader: { flexDirection: "row", alignItems: "center", gap: 4 },
   usernameHeading: { flex: 1 },
   optionsButton: { width: 24, height: 24, alignItems: "center", justifyContent: "center" },
   list: { flex: 1 }, listContent: { paddingHorizontal: 12, paddingBottom: 12 }, emptyContainer: { flexGrow: 1, alignItems: "center", justifyContent: "center" },
-  empty: { alignItems: "center", gap: 12 }, emptyText: { color: "#9999A4", fontSize: 14 },
+  empty: { alignItems: "center", gap: 12 }, emptyText: { color: palette.secondary, fontSize: 14 },
   comment: { flexDirection: "row", gap: 12, paddingVertical: 7, paddingHorizontal: 4, borderWidth: 1, borderColor: "transparent", borderRadius: 12 }, selectedComment: { backgroundColor: "rgba(0,242,254,0.055)", borderColor: "rgba(0,242,254,0.25)" }, nested: { marginLeft: 44 },
-  avatar: { width: 32, height: 32, borderRadius: 16 }, initialAvatar: { backgroundColor: "#292933", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#FE0979" }, initial: { color: "#fff", fontSize: 14, fontWeight: "600" },
-  body: { flex: 1, minWidth: 0, gap: 4 }, username: { color: "#A9A9B4", fontSize: 13, fontWeight: "600" }, commentText: { color: "#fff", fontSize: 15, lineHeight: 20 }, replyTo: { color: "#00F2FE", fontSize: 11 },
-  metaRow: { flexDirection: "row", gap: 18, marginTop: 4 }, meta: { color: "#92929D", fontSize: 11 }, like: { alignItems: "center", justifyContent: "flex-start", gap: 4, minWidth: 36, paddingVertical: 4 },
-  threadAction: { marginLeft: 42, paddingVertical: 12 }, link: { color: "#00F2FE", fontSize: 12 }, more: { padding: 16, alignItems: "center" },
-  errorRow: { paddingHorizontal: 16, paddingBottom: 8, flexDirection: "row", alignItems: "center", gap: 8 }, error: { color: "#ff8dab", fontSize: 12, flex: 1 }, retry: { padding: 8 },
-  composer: { paddingTop: 10, paddingHorizontal: 8, paddingBottom: 8 }, replyIndicator: { alignSelf: "center", marginBottom: 6 }, replyBubble: { minWidth: 130, minHeight: 28, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }, replyLabel: { color: "#fff", fontSize: 12 },
-  editor: { backgroundColor: "#22222B", flexDirection: "row", alignItems: "center", paddingHorizontal: 10, borderWidth: 1, borderColor: "#353541", gap: 8, overflow: "hidden" }, editorBody: { flex: 1, minWidth: 0 }, input: { color: "#fff", fontSize: 14, lineHeight: 20, paddingVertical: 8, paddingHorizontal: 4, maxHeight: 48 }, expandedInput: { maxHeight: 60, paddingVertical: 0 }, counter: { color: "#92929D", fontSize: 10, textAlign: "right", paddingRight: 4, paddingTop: 2 }, send: { width: 36, height: 44, alignItems: "center", justifyContent: "center" },
+  avatar: { width: 32, height: 32, borderRadius: 16 }, initialAvatar: { backgroundColor: palette.button, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: palette.magenta }, initial: { color: palette.onButton, fontSize: 14, fontWeight: "600" },
+  body: { flex: 1, minWidth: 0, gap: 4 }, username: { color: palette.secondary, fontSize: 13, fontWeight: "600" }, commentText: { color: palette.text, fontSize: 15, lineHeight: 20 }, replyTo: { color: palette.teal, fontSize: 11 },
+  metaRow: { flexDirection: "row", gap: 18, marginTop: 4 }, meta: { color: palette.secondary, fontSize: 11 }, like: { alignItems: "center", justifyContent: "flex-start", gap: 4, minWidth: 36, paddingVertical: 4 },
+  threadAction: { marginLeft: 42, paddingVertical: 12 }, link: { color: palette.teal, fontSize: 12 }, more: { padding: 16, alignItems: "center" },
+  errorRow: { paddingHorizontal: 16, paddingBottom: 8, flexDirection: "row", alignItems: "center", gap: 8 }, error: { color: palette.destructive, fontSize: 12, flex: 1 }, retry: { padding: 8 },
+  composer: { paddingTop: 10, paddingHorizontal: 8, paddingBottom: 8 }, replyIndicator: { alignSelf: "center", marginBottom: 6 }, replyBubble: { minWidth: 130, minHeight: 28, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }, replyLabel: { color: palette.text, fontSize: 12 },
+  editor: { backgroundColor: palette.input, flexDirection: "row", alignItems: "center", paddingHorizontal: 10, borderWidth: 1, borderColor: palette.border, gap: 8, overflow: "hidden" }, editorBody: { flex: 1, minWidth: 0 }, input: { color: palette.text, fontSize: 14, lineHeight: 20, paddingVertical: 8, paddingHorizontal: 4, maxHeight: 48 }, expandedInput: { maxHeight: 60, paddingVertical: 0 }, counter: { color: palette.secondary, fontSize: 10, textAlign: "right", paddingRight: 4, paddingTop: 2 }, send: { width: 36, height: 44, alignItems: "center", justifyContent: "center" },
 });
 

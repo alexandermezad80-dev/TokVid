@@ -1,3 +1,6 @@
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {StatusBar} from 'expo-status-bar';
+import {palette} from '../constants/palette';
 import { useLocalSearchParams, router } from "expo-router";
 import React from "react";
 import { ActivityIndicator, Alert, View } from "react-native";
@@ -7,10 +10,11 @@ import Quieme from "../lib/features/live/Quieme";
 export default function LiveQuiemeScreen() {
   const { roomId } = useLocalSearchParams<{ roomId?: string }>();
   const { user } = useAuth();
+  const insets=useSafeAreaInsets();
 
   if (!user) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#000", alignItems: "center", justifyContent: "center" }}>
+      <View style={{ flex: 1, backgroundColor: palette.input, alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator color="#FE2C55" />
       </View>
     );
@@ -22,5 +26,6 @@ export default function LiveQuiemeScreen() {
     return null;
   }
 
-  return <Quieme roomId={roomId} userId={user.id} onClose={() => router.back()} />;
+  return <View style={{flex:1,backgroundColor:palette.background,paddingTop:insets.top,paddingBottom:insets.bottom}}><StatusBar style="dark"/><Quieme roomId={roomId} userId={user.id} onClose={() => router.back()} /></View>;
 }
+

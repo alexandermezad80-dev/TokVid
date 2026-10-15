@@ -1,3 +1,5 @@
+import HeaderSurface from '../components/reference/HeaderSurface';
+import {palette} from '../constants/palette';
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
@@ -127,10 +129,10 @@ export default function StoryCreateScreen() {
     <View
       style={[
         styles.container,
-        { paddingTop: topPad, paddingBottom: bottomPad },
+        { paddingBottom: bottomPad },
       ]}
     >
-      <View style={styles.header}>
+      <HeaderSurface safeTop style={styles.header}>
         <TouchableOpacity
           onPress={() => router.back()}
           style={styles.iconButton}
@@ -140,7 +142,7 @@ export default function StoryCreateScreen() {
         </TouchableOpacity>
         <Text style={styles.title}>Crear historia</Text>
         <View style={styles.iconButton} />
-      </View>
+      </HeaderSurface>
 
       <View style={styles.body}>
         <View style={styles.illustration}>
@@ -209,7 +211,7 @@ export default function StoryCreateScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000" },
+  container: { flex: 1, backgroundColor: palette.background },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -217,7 +219,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#111",
+    borderBottomColor: palette.border,
   },
   iconButton: {
     width: 36,
@@ -225,7 +227,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  title: { color: "#fff", fontSize: 18, fontWeight: "700" },
+  title: { color: palette.headerText, fontSize: 18, fontWeight: "700" },
   body: {
     flex: 1,
     alignItems: "center",
@@ -237,14 +239,14 @@ const styles = StyleSheet.create({
     width: 112,
     height: 112,
     borderRadius: 56,
-    backgroundColor: "#111",
+    backgroundColor: palette.input,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
   },
-  heading: { color: "#fff", fontSize: 21, fontWeight: "700", textAlign: "center" },
+  heading: { color: palette.text, fontSize: 21, fontWeight: "700", textAlign: "center" },
   subheading: {
-    color: "#666",
+    color: palette.secondary,
     fontSize: 14,
     lineHeight: 21,
     textAlign: "center",
@@ -256,7 +258,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    backgroundColor: "#FE2C55",
+    backgroundColor: palette.button,
     borderRadius: 14,
     paddingVertical: 15,
     marginTop: 4,
@@ -267,12 +269,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    backgroundColor: "#1C1C1E",
+    backgroundColor: palette.button,
     borderRadius: 14,
     paddingVertical: 15,
   },
-  primaryButtonText: { color: "#fff", fontSize: 16, fontWeight: "700" },
-  secondaryButtonText: { color: "#fff", fontSize: 15, fontWeight: "600" },
+  primaryButtonText: { color: palette.onButton, fontSize: 16, fontWeight: "700" },
+  secondaryButtonText: { color: palette.onButton, fontSize: 15, fontWeight: "600" },
   disabled: { opacity: 0.6 },
   errorBox: {
     width: "100%",
@@ -283,5 +285,5 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 12,
   },
-  errorText: { color: "#FE2C55", fontSize: 13, flex: 1, lineHeight: 18 },
+  errorText: { color: palette.text, fontSize: 13, flex: 1, lineHeight: 18 },
 });

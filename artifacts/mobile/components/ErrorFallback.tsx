@@ -1,3 +1,4 @@
+import {StatusBar} from 'expo-status-bar';
 import { Feather } from "@expo/vector-icons";
 import { reloadAppAsync } from "expo";
 import React, { useState } from "react";
@@ -53,7 +54,7 @@ export function ErrorFallback({ error, resetError, componentStack = "" }: ErrorF
   });
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}><StatusBar style="dark"/>
       {__DEV__ ? (
         <Pressable
           onPress={() => setIsModalVisible(true)}

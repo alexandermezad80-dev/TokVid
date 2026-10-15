@@ -1,3 +1,5 @@
+import HeaderSurface from '../../../components/reference/HeaderSurface';
+import {palette} from '../../../constants/palette';
 import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
@@ -162,8 +164,8 @@ export default function ShareLive() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
+    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+      <HeaderSurface safeTop style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.iconButton}>
           <Feather name="arrow-left" size={23} color="#fff" />
         </TouchableOpacity>
@@ -171,15 +173,15 @@ export default function ShareLive() {
           <Text style={styles.title}>Compartir Live</Text>
           <Text style={styles.subtitle}>Envía este Live por Mensajes</Text>
         </View>
-      </View>
+      </HeaderSurface>
 
       <View style={styles.searchWrap}>
-        <Feather name="search" size={18} color="#777" />
+        <Feather name="search" size={18} color={palette.secondary} />
         <TextInput
           value={query}
           onChangeText={setQuery}
           placeholder="Buscar usuario..."
-          placeholderTextColor="#666"
+          placeholderTextColor={palette.muted}
           style={styles.search}
           autoCapitalize="none"
         />
@@ -189,7 +191,7 @@ export default function ShareLive() {
         <View style={styles.center}><ActivityIndicator color="#FE2C55" /></View>
       ) : filtered.length === 0 ? (
         <View style={styles.center}>
-          <Feather name="users" size={34} color="#555" />
+          <Feather name="users" size={34} color={palette.secondary} />
           <Text style={styles.emptyTitle}>No encontramos usuarios</Text>
           <Text style={styles.emptyText}>Prueba con otro nombre o @usuario.</Text>
         </View>
@@ -228,22 +230,22 @@ export default function ShareLive() {
 export { LIVE_SHARE_PREFIX };
 
 const styles = StyleSheet.create({
-  container:{ flex:1, backgroundColor:"#000" },
-  header:{ flexDirection:"row", alignItems:"center", paddingHorizontal:14, paddingVertical:12, borderBottomWidth:1, borderBottomColor:"#171717" },
+  container:{ flex:1, backgroundColor:palette.background },
+  header:{ flexDirection:"row", alignItems:"center", paddingHorizontal:14, paddingVertical:12, borderBottomWidth:1, borderBottomColor:palette.border },
   iconButton:{ padding:7, marginRight:8 },
   headerCopy:{ flex:1 },
-  title:{ color:"#fff", fontSize:19, fontWeight:"800" },
-  subtitle:{ color:"#777", fontSize:12, marginTop:2 },
-  searchWrap:{ flexDirection:"row", alignItems:"center", gap:9, margin:14, paddingHorizontal:14, height:46, borderRadius:23, backgroundColor:"#171719" },
-  search:{ flex:1, color:"#fff", fontSize:15 },
+  title:{ color:palette.headerText, fontSize:19, fontWeight:"800" },
+  subtitle:{ color:palette.headerSecondary, fontSize:12, marginTop:2 },
+  searchWrap:{ flexDirection:"row", alignItems:"center", gap:9, margin:14, paddingHorizontal:14, height:46, borderRadius:23, backgroundColor:palette.input },
+  search:{ flex:1, color:palette.text, fontSize:15 },
   list:{ paddingHorizontal:14, paddingBottom:24 },
   row:{ flexDirection:"row", alignItems:"center", paddingVertical:11, gap:12 },
-  avatar:{ width:50, height:50, borderRadius:25, backgroundColor:"#1C1C1E" },
+  avatar:{ width:50, height:50, borderRadius:25, backgroundColor:palette.input },
   identity:{ flex:1 },
-  username:{ color:"#fff", fontSize:15, fontWeight:"700" },
-  fullName:{ color:"#777", fontSize:13, marginTop:3 },
-  sendButton:{ width:40, height:40, borderRadius:20, backgroundColor:"#FE2C55", alignItems:"center", justifyContent:"center" },
+  username:{ color:palette.text, fontSize:15, fontWeight:"700" },
+  fullName:{ color:palette.secondary, fontSize:13, marginTop:3 },
+  sendButton:{ width:40, height:40, borderRadius:20, backgroundColor:palette.button, alignItems:"center", justifyContent:"center" },
   center:{ flex:1, alignItems:"center", justifyContent:"center", gap:10, paddingHorizontal:35 },
-  emptyTitle:{ color:"#fff", fontSize:16, fontWeight:"700" },
-  emptyText:{ color:"#666", fontSize:13, textAlign:"center" },
+  emptyTitle:{ color:palette.text, fontSize:16, fontWeight:"700" },
+  emptyText:{ color:palette.secondary, fontSize:13, textAlign:"center" },
 });

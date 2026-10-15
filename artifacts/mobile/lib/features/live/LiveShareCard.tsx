@@ -1,3 +1,4 @@
+import {palette} from '../../../constants/palette';
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
@@ -26,11 +27,11 @@ export default function LiveShareCard({ roomId }: Props) {
 }
 
 const styles = StyleSheet.create({
-  card:{ flexDirection:"row", alignItems:"center", gap:11, width:"92%", alignSelf:"center", padding:12, borderRadius:16, backgroundColor:"#171719", borderWidth:1, borderColor:"#2A2A2D" },
-  icon:{ width:42, height:42, borderRadius:13, backgroundColor:"#FE2C55", alignItems:"center", justifyContent:"center" },
+  card:{ flexDirection:"row", alignItems:"center", gap:11, width:"92%", alignSelf:"center", padding:12, borderRadius:16, backgroundColor:palette.input, borderWidth:1, borderColor:palette.border },
+  icon:{ width:42, height:42, borderRadius:13, backgroundColor:palette.button, alignItems:"center", justifyContent:"center" },
   copy:{ flex:1 },
-  title:{ color:"#fff", fontSize:14, fontWeight:"800" },
-  subtitle:{ color:"#8A8A8D", fontSize:12, marginTop:3 },
-  open:{ paddingHorizontal:13, paddingVertical:9, borderRadius:15, backgroundColor:"#2A2A2D" },
-  openText:{ color:"#fff", fontSize:12, fontWeight:"800" },
+  title:{ color:palette.text, fontSize:14, fontWeight:"800" },
+  subtitle:{ color:palette.secondary, fontSize:12, marginTop:3 },
+  open:{ paddingHorizontal:13, paddingVertical:9, borderRadius:15, backgroundColor:palette.button },
+  openText:{ color:palette.onButton, fontSize:12, fontWeight:"800" },
 });

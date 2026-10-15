@@ -1,3 +1,5 @@
+import HeaderSurface from '../../../components/reference/HeaderSurface';
+import {palette} from '../../../constants/palette';
 import { Feather } from "@expo/vector-icons";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -234,7 +236,7 @@ export default function LiveChat({ roomId, userId, onClose }: LiveChatProps) {
           <Text style={styles.content}>{item.content}</Text>
           {isPinned && (
             <View style={styles.pinnedTag}>
-              <Feather name="bookmark" size={11} color="#fff" />
+              <Feather name="bookmark" size={11} color={palette.text} />
               <Text style={styles.pinnedTagText}>Fijado</Text>
             </View>
           )}
@@ -242,7 +244,7 @@ export default function LiveChat({ roomId, userId, onClose }: LiveChatProps) {
         {canModerate && (
           <View style={styles.modActions}>
             <TouchableOpacity onPress={() => void pin(item.id)} style={styles.smallAction}>
-              <Feather name="bookmark" size={14} color="#fff" />
+              <Feather name="bookmark" size={14} color={palette.text} />
             </TouchableOpacity>
           </View>
         )}
@@ -255,7 +257,7 @@ export default function LiveChat({ roomId, userId, onClose }: LiveChatProps) {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <View style={styles.header}>
+      <HeaderSurface style={styles.header}>
         <View>
           <Text style={styles.title}>Live Chat</Text>
           <Text style={styles.subtitle}>Mensajes en tiempo real</Text>
@@ -265,12 +267,12 @@ export default function LiveChat({ roomId, userId, onClose }: LiveChatProps) {
             <Feather name="x" size={22} color="#fff" />
           </TouchableOpacity>
         )}
-      </View>
+      </HeaderSurface>
 
       {pinnedMessage && (
         <View style={styles.pinnedBar}>
           <View style={styles.pinnedInfo}>
-            <Feather name="bookmark" size={15} color="#fff" />
+            <Feather name="bookmark" size={15} color={palette.text} />
             <View style={styles.pinnedTextWrap}>
               <Text style={styles.pinnedTitle}>Mensaje fijado</Text>
               <Text numberOfLines={1} style={styles.pinnedContent}>{pinnedMessage.content}</Text>
@@ -278,7 +280,7 @@ export default function LiveChat({ roomId, userId, onClose }: LiveChatProps) {
           </View>
           {canModerate && (
             <TouchableOpacity onPress={() => void unpin()} style={styles.unpinButton}>
-              <Feather name="x" size={15} color="#fff" />
+              <Feather name="x" size={15} color={palette.text} />
             </TouchableOpacity>
           )}
         </View>
@@ -290,7 +292,7 @@ export default function LiveChat({ roomId, userId, onClose }: LiveChatProps) {
         </View>
       ) : messages.length === 0 ? (
         <View style={styles.center}>
-          <Feather name="message-circle" size={34} color="#555" />
+          <Feather name="message-circle" size={34} color={palette.secondary} />
           <Text style={styles.emptyTitle}>Sé el primero en escribir</Text>
           <Text style={styles.emptyText}>El chat del LIVE aparecerá aquí.</Text>
         </View>
@@ -311,7 +313,7 @@ export default function LiveChat({ roomId, userId, onClose }: LiveChatProps) {
           value={text}
           onChangeText={(value) => setText(value.slice(0, MAX_LENGTH))}
           placeholder="Escribe en el LIVE..."
-          placeholderTextColor="#666"
+          placeholderTextColor={palette.muted}
           style={styles.input}
           multiline
           maxLength={MAX_LENGTH}
@@ -330,53 +332,54 @@ export default function LiveChat({ roomId, userId, onClose }: LiveChatProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000" },
+  container: { flex: 1, backgroundColor: palette.background },
   header: {
     minHeight: 64, paddingHorizontal: 16, paddingVertical: 10,
-    borderBottomWidth: 1, borderBottomColor: "#181818",
+    borderBottomWidth: 1, borderBottomColor: palette.border,
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
   },
-  title: { color: "#fff", fontSize: 18, fontWeight: "800" },
-  subtitle: { color: "#777", fontSize: 12, marginTop: 2 },
+  title: { color: palette.headerText, fontSize: 18, fontWeight: "800" },
+  subtitle: { color: palette.headerSecondary, fontSize: 12, marginTop: 2 },
   closeButton: { padding: 8 },
   pinnedBar: {
-    paddingHorizontal: 14, paddingVertical: 9, backgroundColor: "#171717",
+    paddingHorizontal: 14, paddingVertical: 9, backgroundColor: palette.input,
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    borderBottomWidth: 1, borderBottomColor: "#282828",
+    borderBottomWidth: 1, borderBottomColor: palette.border,
   },
   pinnedInfo: { flex: 1, flexDirection: "row", alignItems: "center", gap: 9 },
   pinnedTextWrap: { flex: 1 },
-  pinnedTitle: { color: "#fff", fontSize: 12, fontWeight: "800" },
-  pinnedContent: { color: "#aaa", fontSize: 12, marginTop: 2 },
+  pinnedTitle: { color: palette.text, fontSize: 12, fontWeight: "800" },
+  pinnedContent: { color: palette.secondary, fontSize: 12, marginTop: 2 },
   unpinButton: { padding: 7 },
   list: { padding: 12, paddingBottom: 16, gap: 7 },
   messageRow: { flexDirection: "row", alignItems: "flex-end", gap: 6 },
   bubble: {
-    maxWidth: "88%", backgroundColor: "#1b1b1b", borderRadius: 14,
-    paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: "#262626",
+    maxWidth: "88%", backgroundColor: palette.input, borderRadius: 14,
+    paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: palette.border,
   },
-  myBubble: { backgroundColor: "#241217", borderColor: "#47212b" },
-  author: { color: "#888", fontSize: 10, fontWeight: "700", marginBottom: 2 },
-  content: { color: "#fff", fontSize: 14, lineHeight: 19 },
+  myBubble: { backgroundColor: palette.selected, borderColor: palette.selectedBorder },
+  author: { color: palette.secondary, fontSize: 10, fontWeight: "700", marginBottom: 2 },
+  content: { color: palette.text, fontSize: 14, lineHeight: 19 },
   pinnedTag: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 5 },
-  pinnedTagText: { color: "#aaa", fontSize: 10 },
+  pinnedTagText: { color: palette.secondary, fontSize: 10 },
   modActions: { flexDirection: "row", marginBottom: 2 },
-  smallAction: { padding: 7, backgroundColor: "#191919", borderRadius: 14 },
+  smallAction: { padding: 7, backgroundColor: palette.input, borderRadius: 14 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8, padding: 30 },
-  emptyTitle: { color: "#fff", fontSize: 15, fontWeight: "700" },
-  emptyText: { color: "#666", fontSize: 13 },
+  emptyTitle: { color: palette.text, fontSize: 15, fontWeight: "700" },
+  emptyText: { color: palette.secondary, fontSize: 13 },
   inputRow: {
     flexDirection: "row", alignItems: "flex-end", gap: 9, padding: 10,
-    borderTopWidth: 1, borderTopColor: "#181818",
+    borderTopWidth: 1, borderTopColor: palette.border,
   },
   input: {
     flex: 1, minHeight: 44, maxHeight: 120, borderRadius: 22,
-    backgroundColor: "#181818", color: "#fff", paddingHorizontal: 16,
+    backgroundColor: palette.input, color: palette.text, paddingHorizontal: 16,
     paddingVertical: 10, fontSize: 14,
   },
   sendButton: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: "#FE2C55",
+    width: 44, height: 44, borderRadius: 22, backgroundColor: palette.button,
     alignItems: "center", justifyContent: "center",
   },
-  sendDisabled: { backgroundColor: "#333" },
+  sendDisabled: { backgroundColor: palette.disabled },
 });
+

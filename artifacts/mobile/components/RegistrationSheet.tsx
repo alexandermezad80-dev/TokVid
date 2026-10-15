@@ -1,3 +1,4 @@
+import {palette} from '../constants/palette';
 import React, { useEffect, useRef, useState } from "react";
 import { Modal, View, Text, TextInput, Pressable, StyleSheet, Keyboard, ScrollView } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -48,7 +49,7 @@ export default function RegistrationSheet({ visible, onClose, tabBarHeight, befo
     <View ref={viewport.viewportRef} collapsable={false} onLayout={viewport.onLayout} style={[styles.backdrop, { paddingBottom: viewport.keyboardInset }]}>
       <View style={{ marginHorizontal: 16, marginBottom: viewport.registrationGap, maxHeight: viewport.registrationMaxHeight }}>
         <LinearGradient colors={["#00F2FE", "#FE0979"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.border}>
-            <Pressable onPress={close} style={styles.close} accessibilityLabel="Cerrar registro" accessibilityRole="button"><Feather name="x" size={22} color="#fff" /></Pressable>
+            <Pressable onPress={close} style={styles.close} accessibilityLabel="Cerrar registro" accessibilityRole="button"><Feather name="x" size={22} color={palette.text} /></Pressable>
           <ScrollView ref={scroll} style={[styles.sheet, { maxHeight: Math.max(0, viewport.registrationMaxHeight - 2) }]} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" onContentSizeChange={revealCode}>
             <View style={styles.handle} />
             <Text style={styles.title}>Únete a TokVid</Text>
@@ -56,14 +57,14 @@ export default function RegistrationSheet({ visible, onClose, tabBarHeight, befo
             {!method ? <>
               <GoogleButton loading={busy} onPress={() => run(async () => { const result = await signInWithGoogle(); if (result.error && result.error !== "cancel") throw new Error(result.error); })} />
               <Text style={styles.or}>o continúa con</Text>
-              <Pressable disabled={busy} onPress={() => setMethod("email")} style={styles.option}><Feather name="mail" size={20} color="#00F2FE" /><Text style={styles.optionText}>Correo electrónico</Text><Feather name="chevron-right" size={18} color="#aaa" /></Pressable>
-              <Pressable disabled={busy} onPress={() => setMethod("phone")} style={styles.option}><Feather name="smartphone" size={20} color="#FE0979" /><Text style={styles.optionText}>Teléfono</Text><Feather name="chevron-right" size={18} color="#aaa" /></Pressable>
+              <Pressable disabled={busy} onPress={() => setMethod("email")} style={styles.option}><Feather name="mail" size={20} color={palette.teal} /><Text style={styles.optionText}>Correo electrónico</Text><Feather name="chevron-right" size={18} color={palette.secondary} /></Pressable>
+              <Pressable disabled={busy} onPress={() => setMethod("phone")} style={styles.option}><Feather name="smartphone" size={20} color="#FE0979" /><Text style={styles.optionText}>Teléfono</Text><Feather name="chevron-right" size={18} color={palette.secondary} /></Pressable>
             </> : <>
               <Pressable onPress={() => { setMethod(null); setSent(false); setError(""); }}><Text style={styles.link}>‹ Otros métodos</Text></Pressable>
               <Text style={styles.optionText}>{sent ? "Introduce tu código" : method === "email" ? "Tu correo electrónico" : "Tu número de teléfono"}</Text>
-              <TextInput accessibilityLabel={method === "email" ? "Correo electrónico" : "Teléfono con código de país"} style={styles.input} value={address} onChangeText={setAddress} editable={!sent && !busy} autoCapitalize="none" autoCorrect={false} keyboardType={method === "email" ? "email-address" : "phone-pad"} placeholder={method === "email" ? "nombre@correo.com" : "+52…"} placeholderTextColor="#888" />
-              {sent && <TextInput onFocus={revealCode} accessibilityLabel="Código de verificación" style={styles.input} value={code} onChangeText={text => setCode(text.replace(/\D/g, ""))} keyboardType="number-pad" textContentType="oneTimeCode" maxLength={method === "email" ? 8 : 6} placeholder={method === "email" ? "8 dígitos" : "6 dígitos"} placeholderTextColor="#888" />}
-              <Pressable disabled={busy} onPress={submit} style={styles.submit}><Text style={styles.optionText}>{busy ? "Conectando…" : sent ? "Verificar y continuar" : "Enviar código"}</Text></Pressable>
+              <TextInput accessibilityLabel={method === "email" ? "Correo electrónico" : "Teléfono con código de país"} style={styles.input} value={address} onChangeText={setAddress} editable={!sent && !busy} autoCapitalize="none" autoCorrect={false} keyboardType={method === "email" ? "email-address" : "phone-pad"} placeholder={method === "email" ? "nombre@correo.com" : "+52…"} placeholderTextColor={palette.muted} />
+              {sent && <TextInput onFocus={revealCode} accessibilityLabel="Código de verificación" style={styles.input} value={code} onChangeText={text => setCode(text.replace(/\D/g, ""))} keyboardType="number-pad" textContentType="oneTimeCode" maxLength={method === "email" ? 8 : 6} placeholder={method === "email" ? "8 dígitos" : "6 dígitos"} placeholderTextColor={palette.muted} />}
+              <Pressable disabled={busy} onPress={submit} style={styles.submit}><Text style={[styles.optionText,{color:palette.onButton}]}>{busy ? "Conectando…" : sent ? "Verificar y continuar" : "Enviar código"}</Text></Pressable>
               {sent && <Pressable disabled={busy} onPress={() => { setSent(false); setCode(""); }}><Text style={styles.link}>Cambiar dirección o reenviar</Text></Pressable>}
             </>}
             {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
@@ -76,9 +77,10 @@ export default function RegistrationSheet({ visible, onClose, tabBarHeight, befo
 }
 const styles = StyleSheet.create({
   backdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.6)" },
-  border: { padding: 1, borderRadius: 28 }, sheet: { backgroundColor: "#15151B", borderRadius: 27 }, content: { padding: 24, gap: 14 },
+  border: { padding: 1, borderRadius: 28 }, sheet: { backgroundColor: palette.background, borderRadius: 27 }, content: { padding: 24, gap: 14 },
   close: { position: "absolute", right: 12, top: 12, width: 48, height: 48, alignItems: "center", justifyContent: "center", zIndex: 2 }, handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: "#555", alignSelf: "center", marginBottom: 8 },
-  title: { color: "#fff", fontSize: 27, fontWeight: "800", textAlign: "center" }, subtitle: { color: "#aaa", textAlign: "center", marginBottom: 10 },
-  or: { color: "#999", textAlign: "center", fontSize: 12 }, option: { flexDirection: "row", alignItems: "center", gap: 12, minHeight: 84, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: "#393941" }, optionText: { color: "#fff", fontSize: 15, fontWeight: "600", flex: 1 },
-  input: { borderWidth: 1, borderColor: "#555", borderRadius: 12, color: "#fff", padding: 14, fontSize: 17 }, submit: { padding: 16, borderRadius: 14, borderWidth: 1, borderColor: "#00F2FE", alignItems: "center" }, link: { color: "#00F2FE", paddingVertical: 6 }, error: { color: "#ff8dab", fontSize: 13 }, footer: { color: "#888", fontSize: 11, textAlign: "center", marginTop: 4 },
+  title: { color: palette.text, fontSize: 27, fontWeight: "800", textAlign: "center" }, subtitle: { color: palette.secondary, textAlign: "center", marginBottom: 10 },
+  or: { color: palette.secondary, textAlign: "center", fontSize: 12 }, option: { flexDirection: "row", alignItems: "center", gap: 12, minHeight: 84, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: palette.border }, optionText: { color: palette.text, fontSize: 15, fontWeight: "600", flex: 1 },
+  input: { borderWidth: 1, borderColor: palette.border, borderRadius: 12, color: palette.text, padding: 14, fontSize: 17 }, submit: { backgroundColor: palette.button, padding: 16, borderRadius: 14, borderWidth: 1, borderColor: palette.button, alignItems: "center" }, link: { color: palette.teal, paddingVertical: 6 }, error: { color: palette.destructive, fontSize: 13 }, footer: { color: palette.secondary, fontSize: 11, textAlign: "center", marginTop: 4 },
 });
+

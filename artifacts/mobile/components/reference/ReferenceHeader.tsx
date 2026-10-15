@@ -3,7 +3,8 @@ import {StyleSheet, Text, View, type StyleProp, type ViewStyle} from 'react-nati
 import {LinearGradient} from 'expo-linear-gradient';
 import {StatusBar} from 'expo-status-bar';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-export const HEADER_COLORS = ['#5F6A74','#76818B','#2F9A9F'] as const;
+import {palette} from '../../constants/palette';
+export const HEADER_COLORS = palette.header;
 export default function ReferenceHeader({title,left,right,children,compact=false,black=false,contentHeight,colors=HEADER_COLORS,style}:{title?:string;left?:React.ReactNode;right?:React.ReactNode;children?:React.ReactNode;compact?:boolean;black?:boolean;contentHeight?:number;colors?:readonly [string,string,...string[]];style?:StyleProp<ViewStyle>}){
  const insets=useSafeAreaInsets();
  return <View style={[s.shell,{paddingTop:insets.top,backgroundColor:black?'#0B0B0D':'#5F6A74'},style]}>

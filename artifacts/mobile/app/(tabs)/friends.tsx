@@ -1,3 +1,5 @@
+import HeaderSurface from '../../components/reference/HeaderSurface';
+import {palette} from '../../constants/palette';
 import {useMyConnections} from "../../hooks/useMyConnections";
 import {openPrivateConversation} from "../../lib/features/messages/services/private-messages";
 import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
@@ -60,7 +62,7 @@ function FollowAction({ person }: { person: Person }) {
       disabled={loading}
       activeOpacity={0.8}
     >
-      <LinearGradient pointerEvents="none" colors={["#25989D","#BA6B92"]} start={{x:0,y:0}} end={{x:1,y:1}} style={[StyleSheet.absoluteFill,{borderRadius:16}]}/><View pointerEvents="none" style={[StyleSheet.absoluteFill,{margin:1,borderRadius:15,backgroundColor:following?"#161823":"#284349"}]}/>
+      <LinearGradient pointerEvents="none" colors={["#25989D","#BA6B92"]} start={{x:0,y:0}} end={{x:1,y:1}} style={[StyleSheet.absoluteFill,{borderRadius:16}]}/><View pointerEvents="none" style={[StyleSheet.absoluteFill,{margin:1,borderRadius:15,backgroundColor:palette.button}]}/>
       {loading ? (
         <ActivityIndicator size="small" color="#FFF" />
       ) : (
@@ -217,7 +219,7 @@ export default function FriendsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top,height:insets.top+52 }]}>
+      <HeaderSurface safeTop style={[styles.header, { height:insets.top+52 }]}>
         <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
           <Feather name="arrow-left" size={22} color="#fff" />
         </TouchableOpacity>
@@ -226,7 +228,7 @@ export default function FriendsScreen() {
           <Text style={styles.headerSubtitle}>{tab==="friends"?"Se siguen mutuamente":tab==="followers"?"Personas que te siguen":"Personas a las que sigues"}</Text>
         </View>
         <View style={styles.headerButton} />
-      </View>
+      </HeaderSurface>
 
       <View style={styles.tabs}>
         {tabs.map((item) => (
@@ -256,7 +258,7 @@ export default function FriendsScreen() {
           value={search}
           onChangeText={setSearch}
           placeholder={`Buscar ${tab === "friends" ? "amigos" : tab === "followers" ? "seguidores" : "siguiendo"}`}
-          placeholderTextColor="#8A8B97"
+          placeholderTextColor={palette.muted}
           style={styles.searchInput}
           autoCapitalize="none"
           autoCorrect={false}
@@ -269,7 +271,7 @@ export default function FriendsScreen() {
       </View>
 
       <ScrollView style={styles.list} contentContainerStyle={{flexGrow:1,paddingBottom:insets.bottom+90}}>
-        {error||connections.error ? <View style={styles.empty}><Text style={styles.emptyText}>{error||connections.error}</Text><TouchableOpacity onPress={()=>{setRetry(n=>n+1);void connections.refresh();}} style={{padding:16}}><Text style={{color:"#A0D9DB"}}>Reintentar</Text></TouchableOpacity></View> : loading||connections.loading ? (
+        {error||connections.error ? <View style={styles.empty}><Text style={styles.emptyText}>{error||connections.error}</Text><TouchableOpacity onPress={()=>{setRetry(n=>n+1);void connections.refresh();}} style={{padding:16}}><Text style={{color:palette.teal}}>Reintentar</Text></TouchableOpacity></View> : loading||connections.loading ? (
           <View style={styles.center}>
             <ActivityIndicator size="large" color="#FE0979" />
             <Text style={styles.centerText}>Cargando...</Text>
@@ -277,7 +279,7 @@ export default function FriendsScreen() {
         ) : filteredPeople.length === 0 ? (
           <View style={styles.empty}>
             <View style={styles.emptyIcon}>
-              <Feather name={tab === "friends" ? "users" : "user"} size={30} color="#00F2FE" />
+              <Feather name={tab === "friends" ? "users" : "user"} size={30} color={palette.teal} />
             </View>
             <Text style={styles.emptyTitle}>
               {search
@@ -327,14 +329,14 @@ export default function FriendsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000" },
+  container: { flex: 1, backgroundColor: palette.background },
   header: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
     paddingBottom: 0,
     borderBottomWidth: 1,
-    borderBottomColor: "#2C2C2E",
+    borderBottomColor: palette.border,
   },
   headerButton: {
     width: 40,
@@ -343,14 +345,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   headerTitleWrap: { flex: 1, alignItems: "center" },
-  headerTitle: { color: "#fff", fontSize: 21, fontWeight: "800" },
-  headerSubtitle: { color: "#8A8B97", fontSize: 11, marginTop: 2 },
+  headerTitle: { color: palette.headerText, fontSize: 21, fontWeight: "800" },
+  headerSubtitle: { color: palette.headerSecondary, fontSize: 11, marginTop: 2 },
   tabs: {
     flexDirection: "row",
     marginHorizontal:16,marginVertical:12,
     height:44,padding:0,
     borderRadius: 12,
-    backgroundColor: "#161823",
+    backgroundColor: palette.tabs,
   },
   tab: {
     flex: 1,
@@ -361,9 +363,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 5,
   },
-  tabActive: { backgroundColor: "#253C43" },
-  tabText: { color: "#8A8B97", fontSize: 12, fontWeight: "700" },
-  tabTextActive: { color: "#fff" },
+  tabActive: { backgroundColor: palette.button },
+  tabText: { color: palette.tabInactive, fontSize: 12, fontWeight: "700" },
+  tabTextActive: { color: palette.headerText },
   searchBox: {
     flexDirection: "row",
     alignItems: "center",
@@ -372,13 +374,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 13,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "#161823",
+    backgroundColor: palette.input,
     borderWidth: 1,
-    borderColor: "#2C2C2E",
+    borderColor: palette.border,
   },
   searchInput: {
     flex: 1,
-    color: "#fff",
+    color: palette.text,
     fontSize: 14,
     marginLeft: 9,
     paddingVertical: 0,
@@ -389,53 +391,53 @@ const styles = StyleSheet.create({
     alignItems: "center",
     minHeight:64,paddingVertical:10,
     borderBottomWidth: 1,
-    borderBottomColor: "#1C1C1E",
+    borderBottomColor: palette.border,
   },
   avatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#161823",
+    backgroundColor: palette.input,
     borderWidth: 1,
-    borderColor: "#2C2C2E",
+    borderColor: palette.border,
   },
   personInfo: { flex: 1, marginHorizontal: 12, minWidth: 0 },
-  username: { color: "#fff", fontSize: 15, fontWeight: "700" },
-  secondaryText: { color: "#8A8B97", fontSize: 12.5, marginTop: 3 },
+  username: { color: palette.text, fontSize: 15, fontWeight: "700" },
+  secondaryText: { color: palette.secondary, fontSize: 12.5, marginTop: 3 },
   followButton: {
     minWidth: 96,
     height: 32,
     paddingHorizontal: 12,
     borderRadius: 10,
-    backgroundColor: "#FE0979",
+    backgroundColor: palette.button,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
   },
   followingButton: {
-    backgroundColor: "#1C1C1E",
+    backgroundColor: palette.button,
     borderWidth: 1,
     borderColor: "#FE0979",
   },
-  followButtonText: { color: "#fff", fontSize: 12, fontWeight: "800" },
-  followingButtonText: { color: "#FFFFFF" },
+  followButtonText: { color: palette.onButton, fontSize: 12, fontWeight: "800" },
+  followingButtonText: { color: palette.onButton },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10 },
-  centerText: { color: "#8A8B97", fontSize: 13 },
+  centerText: { color: palette.secondary, fontSize: 13 },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 35, gap: 10 },
   emptyIcon: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "#161823",
+    backgroundColor: palette.selected,
     borderWidth: 1,
-    borderColor: "#00F2FE",
+    borderColor: palette.selectedBorder,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
   },
-  emptyTitle: { color: "#fff", fontSize: 17, fontWeight: "800", textAlign: "center" },
-  emptyText: { color: "#8A8B97", fontSize: 13, textAlign: "center", lineHeight: 19 },
+  emptyTitle: { color: palette.text, fontSize: 17, fontWeight: "800", textAlign: "center" },
+  emptyText: { color: palette.secondary, fontSize: 13, textAlign: "center", lineHeight: 19 },
 
   modalBackdrop: {
     flex: 1,
@@ -443,11 +445,11 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   profileModal: {
-    backgroundColor: "#161823",
+    backgroundColor: palette.background,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderTopWidth: 1,
-    borderColor: "#2C2C2E",
+    borderColor: palette.border,
     paddingHorizontal: 18,
     paddingTop: 8,
     alignItems: "center",
@@ -471,7 +473,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 32,
     borderRadius: 18,
-    backgroundColor: "#1C1C1E",
+    backgroundColor: palette.button,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -480,12 +482,12 @@ const styles = StyleSheet.create({
     height: 92,
     borderRadius: 46,
     borderWidth: 3,
-    borderColor: "#FE0979",
-    backgroundColor: "#1C1C1E",
+    borderColor: palette.magenta,
+    backgroundColor: palette.input,
     marginTop: 2,
   },
-  modalName: { color: "#fff", fontSize: 20, fontWeight: "800", marginTop: 10 },
-  modalHandleText: { color: "#8A8B97", fontSize: 13, marginTop: 2 },
+  modalName: { color: palette.text, fontSize: 20, fontWeight: "800", marginTop: 10 },
+  modalHandleText: { color: palette.secondary, fontSize: 13, marginTop: 2 },
   modalStats: {
     width: "100%",
     flexDirection: "row",
@@ -494,12 +496,12 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: "#2C2C2E",
+    borderColor: palette.border,
   },
   modalStat: { alignItems: "center", minWidth: 80 },
-  modalStatValue: { color: "#fff", fontSize: 17, fontWeight: "800" },
-  modalStatLabel: { color: "#8A8B97", fontSize: 11, marginTop: 2 },
-  modalBio: { color: "#fff", fontSize: 13, lineHeight: 19, textAlign: "center", marginTop: 12 },
+  modalStatValue: { color: palette.text, fontSize: 17, fontWeight: "800" },
+  modalStatLabel: { color: palette.secondary, fontSize: 11, marginTop: 2 },
+  modalBio: { color: palette.text, fontSize: 13, lineHeight: 19, textAlign: "center", marginTop: 12 },
   modalActions: {
     width: "100%",
     flexDirection: "row",
@@ -511,14 +513,14 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 42,
     borderRadius: 11,
-    backgroundColor: "#1C1C1E",
+    backgroundColor: palette.button,
     borderWidth: 1,
-    borderColor: "#2C2C2E",
+    borderColor: palette.border,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
     gap: 7,
   },
-  messageButtonText: { color: "#fff", fontSize: 13, fontWeight: "800" },
+  messageButtonText: { color: palette.onButton, fontSize: 13, fontWeight: "800" },
 });
 

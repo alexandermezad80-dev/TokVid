@@ -1,3 +1,4 @@
+import {StatusBar} from 'expo-status-bar';
 import { Link, Stack } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -9,7 +10,7 @@ export default function NotFoundScreen() {
   return (
     <>
       <Stack.Screen options={{ title: "Oops!" }} />
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}><StatusBar style="dark"/>
         <Text style={[styles.title, { color: colors.foreground }]}>
           This screen doesn&apos;t exist.
         </Text>
@@ -43,3 +44,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
+

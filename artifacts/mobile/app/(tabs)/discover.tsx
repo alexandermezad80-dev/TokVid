@@ -1,3 +1,5 @@
+import HeaderSurface from '../../components/reference/HeaderSurface';
+import {palette} from '../../constants/palette';
 import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -79,7 +81,7 @@ function FollowButton({ creatorId, size = "md" }: { creatorId: string; size?: "s
       disabled={loading}
     >
       {loading ? (
-        <ActivityIndicator size="small" color={following ? "#FE2C55" : "#fff"} />
+        <ActivityIndicator size="small" color={following ? palette.teal : palette.onButton} />
       ) : (
         <Text style={[styles.followBtnText, following && styles.followBtnTextActive]}>
           {following ? "Siguiendo" : "Seguir"}
@@ -166,17 +168,17 @@ export default function DiscoverScreen() {
   const isSearching = query.length > 0;
 
   return (
-    <View style={[styles.container, { paddingTop: topPad }]}>
+    <View style={styles.container}>
       {/* Search bar */}
-      <View style={styles.searchRow}>
+      <HeaderSurface safeTop style={styles.searchRow}>
         <View style={styles.searchBox}>
-          <Feather name="search" size={18} color="#555" />
+          <Feather name="search" size={18} color={palette.secondary} />
           <TextInput
             ref={inputRef}
             value={query}
             onChangeText={setQuery}
             placeholder="Buscar usuarios..."
-            placeholderTextColor="#555"
+            placeholderTextColor={palette.muted}
             autoCapitalize="none"
             autoCorrect={false}
             style={styles.input}
@@ -184,7 +186,7 @@ export default function DiscoverScreen() {
           />
           {query.length > 0 && (
             <TouchableOpacity onPress={clearSearch} hitSlop={8}>
-              <Feather name="x" size={16} color="#555" />
+              <Feather name="x" size={16} color={palette.secondary} />
             </TouchableOpacity>
           )}
         </View>
@@ -193,7 +195,7 @@ export default function DiscoverScreen() {
             <Text style={styles.cancelText}>Cancelar</Text>
           </TouchableOpacity>
         )}
-      </View>
+      </HeaderSurface>
 
       {/* Search results */}
       {isSearching ? (
@@ -204,7 +206,7 @@ export default function DiscoverScreen() {
         ) : searched && results.length === 0 ? (
           <View style={styles.center}>
             <View style={styles.emptyIcon}>
-              <Feather name="user-x" size={32} color="#333" />
+              <Feather name="user-x" size={32} color={palette.secondary} />
             </View>
             <Text style={styles.emptyTitle}>Sin resultados</Text>
             <Text style={styles.emptyText}>No encontramos usuarios con "{query}"</Text>
@@ -282,7 +284,7 @@ export default function DiscoverScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000" },
+  container: { flex: 1, backgroundColor: palette.background },
 
   // Search
   searchRow: {
@@ -296,19 +298,19 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1C1C1E",
+    backgroundColor: palette.input,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
     gap: 8,
   },
-  input: { flex: 1, color: "#fff", fontSize: 15 },
-  cancelText: { color: "#FE2C55", fontSize: 15, fontWeight: "600" },
+  input: { flex: 1, color: palette.text, fontSize: 15 },
+  cancelText: { color: palette.headerText, fontSize: 15, fontWeight: "600" },
 
   // Search results
   resultsList: { paddingBottom: 100 },
   resultsHeader: {
-    color: "#555",
+    color: palette.secondary,
     fontSize: 13,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -320,12 +322,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     gap: 12,
   },
-  resultAvatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: "#1C1C1E" },
+  resultAvatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: palette.input },
   resultInfo: { flex: 1, gap: 2 },
-  resultUsername: { color: "#fff", fontSize: 15, fontWeight: "700" },
-  resultBio: { color: "#888", fontSize: 13 },
-  resultFollowers: { color: "#555", fontSize: 12 },
-  separator: { height: 1, backgroundColor: "#111", marginLeft: 80 },
+  resultUsername: { color: palette.text, fontSize: 15, fontWeight: "700" },
+  resultBio: { color: palette.secondary, fontSize: 13 },
+  resultFollowers: { color: palette.secondary, fontSize: 12 },
+  separator: { height: 1, backgroundColor: palette.border, marginLeft: 80 },
 
   // Empty / loading states
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 14, paddingHorizontal: 40 },
@@ -333,16 +335,16 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: "#111",
+    backgroundColor: palette.input,
     alignItems: "center",
     justifyContent: "center",
   },
-  emptyTitle: { color: "#fff", fontSize: 18, fontWeight: "700" },
-  emptyText: { color: "#555", fontSize: 14, textAlign: "center" },
+  emptyTitle: { color: palette.text, fontSize: 18, fontWeight: "700" },
+  emptyText: { color: palette.secondary, fontSize: 14, textAlign: "center" },
 
   // Default explore sections
   sectionTitle: {
-    color: "#fff",
+    color: palette.text,
     fontSize: 18,
     fontWeight: "700",
     paddingHorizontal: 14,
@@ -353,30 +355,30 @@ const styles = StyleSheet.create({
   // Tags
   tags: { paddingHorizontal: 14, gap: 10 },
   tag: {
-    backgroundColor: "#1C1C1E",
+    backgroundColor: palette.input,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
-  tagText: { color: "#fff", fontSize: 14, fontWeight: "600" },
+  tagText: { color: palette.text, fontSize: 14, fontWeight: "600" },
 
   // Creator cards
   creatorList: { paddingHorizontal: 14, gap: 12 },
   creatorCard: {
     alignItems: "center",
     width: 110,
-    backgroundColor: "#161823",
+    backgroundColor: palette.input,
     borderRadius: 16,
     padding: 14,
     gap: 6,
   },
   creatorAvatar: { width: 64, height: 64, borderRadius: 32 },
-  creatorHandle: { color: "#fff", fontSize: 12, fontWeight: "700", textAlign: "center" },
-  creatorFollowers: { color: "#888", fontSize: 11, textAlign: "center" },
+  creatorHandle: { color: palette.text, fontSize: 12, fontWeight: "700", textAlign: "center" },
+  creatorFollowers: { color: palette.secondary, fontSize: 11, textAlign: "center" },
 
   // Follow button
   followBtn: {
-    backgroundColor: "#FE2C55",
+    backgroundColor: palette.button,
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 6,
@@ -386,11 +388,11 @@ const styles = StyleSheet.create({
   followBtnActive: {
     backgroundColor: "transparent",
     borderWidth: 1.5,
-    borderColor: "#FE2C55",
+    borderColor: palette.selectedBorder,
   },
   followBtnSm: { paddingHorizontal: 12, paddingVertical: 5 },
-  followBtnText: { color: "#fff", fontSize: 12, fontWeight: "700" },
-  followBtnTextActive: { color: "#FE2C55" },
+  followBtnText: { color: palette.onButton, fontSize: 12, fontWeight: "700" },
+  followBtnTextActive: { color: palette.teal },
 
   // Trending grid
   grid: {
@@ -404,7 +406,7 @@ const styles = StyleSheet.create({
     height: 180,
     borderRadius: 8,
     overflow: "hidden",
-    backgroundColor: "#1C1C1E",
+    backgroundColor: palette.input,
   },
   gridItemTall: { height: 240 },
   viewsBadge: {
@@ -416,7 +418,7 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   viewsText: {
-    color: "#fff",
+    color: palette.mediaText,
     fontSize: 11,
     fontWeight: "600",
     textShadowColor: "rgba(0,0,0,0.8)",

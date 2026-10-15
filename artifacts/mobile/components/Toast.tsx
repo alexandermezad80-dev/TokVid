@@ -1,3 +1,4 @@
+import {palette} from '../constants/palette';
 import React, { useEffect, useRef } from "react";
 import { Animated, StyleSheet, Text } from "react-native";
 
@@ -33,16 +34,17 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 100,
     alignSelf: "center",
-    backgroundColor: "rgba(255,255,255,0.15)",
+    backgroundColor: palette.background,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
+    borderColor: palette.border,
     borderRadius: 24,
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
   text: {
-    color: "#fff",
+    color: palette.text,
     fontSize: 14,
     fontWeight: "600",
   },
 });
+

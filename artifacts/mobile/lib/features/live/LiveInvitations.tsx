@@ -1,3 +1,4 @@
+import {palette} from '../../../constants/palette';
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -174,7 +175,7 @@ export function LiveInvitations({ roomId, userId }: Props) {
 
       {visibleInvitation ? (
         <View style={styles.promptPosition}>
-          <BlurView intensity={55} tint="dark" style={styles.prompt}>
+          <BlurView intensity={55} tint="light" style={styles.prompt}>
             <View style={styles.promptHeader}>
               <View style={styles.iconCircle}>
                 <Feather name="user-plus" size={18} color="#fff" />
@@ -214,11 +215,11 @@ export function LiveInvitations({ roomId, userId }: Props) {
 
       {listOpen ? (
         <View style={styles.listPosition}>
-          <BlurView intensity={65} tint="dark" style={styles.list}>
+          <BlurView intensity={65} tint="light" style={styles.list}>
             <View style={styles.listHeader}>
               <Text style={styles.listTitle}>Invitaciones</Text>
               <Pressable onPress={() => setListOpen(false)}>
-                <Feather name="x" size={18} color="#fff" />
+                <Feather name="x" size={18} color={palette.text} />
               </Pressable>
             </View>
 
@@ -284,7 +285,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   badgeText: {
-    color: "#fff",
+    color: palette.onButton,
     fontSize: 9,
     fontWeight: "800",
   },
@@ -302,9 +303,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.18)",
+    borderColor: palette.border,
     padding: 16,
-    backgroundColor: "rgba(20,20,24,0.68)",
+    backgroundColor: palette.background,
   },
   promptHeader: {
     flexDirection: "row",
@@ -317,18 +318,18 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.12)",
+    backgroundColor: palette.button,
   },
   promptCopy: {
     flex: 1,
   },
   promptTitle: {
-    color: "#fff",
+    color: palette.text,
     fontSize: 15,
     fontWeight: "800",
   },
   promptText: {
-    color: "#d5d5d8",
+    color: palette.text,
     fontSize: 12,
     lineHeight: 17,
     marginTop: 3,
@@ -344,10 +345,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.1)",
+    backgroundColor: palette.input,
   },
   rejectText: {
-    color: "#fff",
+    color: palette.text,
     fontSize: 12,
     fontWeight: "800",
   },
@@ -357,10 +358,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FE2C55",
+    backgroundColor: palette.button,
   },
   acceptText: {
-    color: "#fff",
+    color: palette.onButton,
     fontSize: 12,
     fontWeight: "800",
   },
@@ -376,8 +377,8 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.16)",
-    backgroundColor: "rgba(20,20,24,0.72)",
+    borderColor: palette.border,
+    backgroundColor: palette.background,
     padding: 14,
   },
   listHeader: {
@@ -387,12 +388,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   listTitle: {
-    color: "#fff",
+    color: palette.text,
     fontSize: 15,
     fontWeight: "800",
   },
   emptyText: {
-    color: "#aaa",
+    color: palette.secondary,
     fontSize: 12,
     paddingVertical: 12,
   },
@@ -401,19 +402,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.08)",
+    borderTopColor: palette.border,
   },
   listCopy: {
     flex: 1,
     paddingRight: 8,
   },
   listName: {
-    color: "#fff",
+    color: palette.text,
     fontSize: 13,
     fontWeight: "700",
   },
   listMeta: {
-    color: "#999",
+    color: palette.secondary,
     fontSize: 11,
     marginTop: 2,
   },
@@ -425,7 +426,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: "rgba(255,255,255,0.1)",
+    backgroundColor: palette.button,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -433,8 +434,9 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: "#FE2C55",
+    backgroundColor: palette.button,
     alignItems: "center",
     justifyContent: "center",
   },
 });
+

@@ -1,3 +1,5 @@
+import {StatusBar} from 'expo-status-bar';
+import {palette} from '../../constants/palette';
 import { useRegistration } from "../../context/RegistrationContext";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Linking from "expo-linking";
@@ -37,7 +39,7 @@ export default function AuthCallback() {
   }, [url]);
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container}><StatusBar style="dark"/>
       <ActivityIndicator size="large" color="#FE2C55" />
       <Text style={styles.text}>{status}</Text>
     </View>
@@ -45,6 +47,6 @@ export default function AuthCallback() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000", alignItems: "center", justifyContent: "center", gap: 20 },
-  text: { color: "#888", fontSize: 15 },
+  container: { flex: 1, backgroundColor: palette.background, alignItems: "center", justifyContent: "center", gap: 20 },
+  text: { color: palette.secondary, fontSize: 15 },
 });

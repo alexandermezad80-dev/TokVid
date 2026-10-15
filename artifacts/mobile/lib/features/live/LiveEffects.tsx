@@ -1,3 +1,4 @@
+import {palette} from '../../../constants/palette';
 import React, { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { applyLiveEffect } from "./live-effects-controller";
@@ -100,21 +101,22 @@ export default function LiveEffects({ onSelect }: LiveEffectsProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { backgroundColor: "#090909", borderRadius: 20, paddingVertical: 14 },
+  container: { backgroundColor: palette.background, borderRadius: 20, paddingVertical: 14 },
   header: { paddingHorizontal: 16, gap: 3 },
-  title: { color: "#fff", fontSize: 18, fontWeight: "800" },
-  subtitle: { color: "#8b8b8b", fontSize: 12 },
+  title: { color: palette.text, fontSize: 18, fontWeight: "800" },
+  subtitle: { color: palette.secondary, fontSize: 12 },
   tabs: { gap: 8, paddingHorizontal: 16, paddingVertical: 14 },
-  tab: { borderRadius: 18, backgroundColor: "#181818", paddingHorizontal: 14, paddingVertical: 8 },
-  tabActive: { backgroundColor: "#fff" },
-  tabText: { color: "#999", fontSize: 12, fontWeight: "700" },
-  tabTextActive: { color: "#111" },
+  tab: { borderRadius: 18, backgroundColor: palette.input, paddingHorizontal: 14, paddingVertical: 8 },
+  tabActive: { backgroundColor: palette.button },
+  tabText: { color: palette.secondary, fontSize: 12, fontWeight: "700" },
+  tabTextActive: { color: palette.onButton },
   effects: { gap: 14, paddingHorizontal: 16 },
   effect: { width: 76, alignItems: "center", gap: 7 },
   effectSelected: { transform: [{ scale: 1.03 }] },
-  icon: { width: 58, height: 58, borderRadius: 29, backgroundColor: "#171717", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#252525" },
-  iconSelected: { borderColor: "#fff", backgroundColor: "#242424" },
+  icon: { width: 58, height: 58, borderRadius: 29, backgroundColor: palette.input, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: palette.border },
+  iconSelected: { borderColor: palette.selectedBorder, backgroundColor: palette.selected },
   iconText: { fontSize: 25 },
-  label: { color: "#8d8d8d", fontSize: 11, fontWeight: "600", textAlign: "center" },
-  labelSelected: { color: "#fff" },
+  label: { color: palette.secondary, fontSize: 11, fontWeight: "600", textAlign: "center" },
+  labelSelected: { color: palette.teal },
 });
+

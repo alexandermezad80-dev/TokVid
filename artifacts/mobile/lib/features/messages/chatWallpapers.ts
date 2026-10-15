@@ -1,3 +1,4 @@
+import {palette} from '../../../constants/palette';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { ImageSourcePropType } from 'react-native';
 
@@ -25,4 +26,4 @@ export async function saveChatWallpaper(userId:string,conversationId:string,id:s
 }
 export const chatPalette=(dark:boolean)=>dark
  ? {background:'#000000',card:'#161823',surface:'#1C1C1E',border:'#2C2C2E',text:'#FFFFFF',secondary:'#8A8B97',accent:'#25F4EE'}
- : {background:'#FFFFFF',card:'#F9F9F9',surface:'#F0F0F0',border:'#E5E5E5',text:'#0A0A0A',secondary:'#737373',accent:'#0AA9A4'};
+ : {background:palette.background,card:palette.surface,surface:palette.input,border:palette.border,text:palette.text,secondary:palette.secondary,accent:palette.teal};

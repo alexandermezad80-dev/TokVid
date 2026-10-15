@@ -1,6 +1,6 @@
 # TokVid — fase 4 autorizada, 14 de octubre de 2026
 
-Estado: implementación en curso; no hay APK nueva ni prueba física de esta fase. Base remota `0e217d8cbc6ce668677bc66613d77b33c826bf03`, rama `feature/feed-mini-video-avatar`. El usuario autorizó «ahora sí implementa y documenta estos cambios» después de aportar referencias. Las aclaraciones aquí registradas prevalecen sobre fases anteriores.
+Estado: bloque funcional compilado en APK220; ampliación de paleta global en verificación. No hay prueba física de esta fase. Base remota `0e217d8cbc6ce668677bc66613d77b33c826bf03`, rama `feature/feed-mini-video-avatar`. El usuario autorizó «ahora sí implementa y documenta estos cambios» después de aportar referencias. Las aclaraciones aquí registradas prevalecen sobre fases anteriores.
 
 ## Decisiones que conservar
 
@@ -52,4 +52,30 @@ Migración **20261015005124_profile_visibility_activity_and_personal_inbox** apl
 
 Preflight **27a677af2b9adffe2da7b4e82ef6eb2e7c4bd4ae**, [Check chat phase](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38662224924): **132 pruebas aprobadas**, TypeScript y prebuild Android aprobados. Después, se verificaron 40 pruebas focalizadas por la integración final de contadores y navegación. El primer preflight detectó una expectativa antigua de un único listener de notificaciones; se actualizó para incluir lecturas UPDATE manteniendo las pruebas de reconexión y descarte de callbacks retirados.
 
-APK de fase4 pendiente de compilación. La apariencia, teclado normal/emojis y apertura de apps requieren prueba física; no están confirmados en teléfono.
+APK220 del bloque inicial compiló correctamente (commit e22f7d05339144d252dcb42e6fc422e9e2f68b4d, run38662627176). No es la entrega final: el usuario amplió después el alcance a colores de toda la app. La apariencia, teclado normal/emojis y apertura de apps requieren prueba física; no están confirmados en teléfono.
+
+
+## Ampliación autorizada: misma lógica de colores en todas las UI
+
+El 15 de octubre, durante la compilación del bloque anterior, el usuario pidió aplicar la misma lógica de colores a todas las pantallas de TokVid. Se implementa como actualización de presentación sobre el trabajo existente. Esta autorización amplía la paleta a las áreas que todavía conservaban el tema oscuro; no autoriza rediseñar flujos ni cambiar servicios de Auth, LIVE o publicación.
+
+Fuente común: `artifacts/mobile/constants/palette.ts`. Blanco para superficies, gris claro para campos/tarjetas, texto oscuro, botones negros con etiquetas blancas, degradado gris–turquesa en encabezados y cian/magenta como acentos de marca. Los enlaces sobre blanco usan un turquesa más oscuro para ser legibles. Rojo se conserva en acciones destructivas y verde en aceptar llamada. El aspecto oscuro del sistema no reemplaza esta presentación.
+
+`ReferenceHeader` y `HeaderSurface` comparten la paleta. El segundo aplica colores a los controles existentes, sin cambiar sus acciones. En pantallas completas consume el inset superior una sola vez; en paneles internos no añade otra franja de estado. Se mantienen las áreas seguras inferiores.
+
+| Área | Aplicación de la paleta |
+| --- | --- |
+| Perfil propio/público, Información, herramientas, relaciones, actividad, Inbox | Conservan las referencias ya aplicadas; su familia de color es la base común. Menú de fotografía ahora blanco. |
+| Amigos y descubrimiento/búsqueda | Encabezado degradado, contenido blanco, texto oscuro, botones negros y pestañas slate. |
+| Chat privado/grupos, reenviar/traducir/denunciar, historial de llamadas | Superficies claras y cabecera común; controles y funcionamiento conservados. |
+| Comentarios y menús de acciones/compartir | Panel blanco, texto oscuro, cabecera degradada cuando existe. Se conservan geometría, video pequeño, borrados y teclado. |
+| Registro y retorno Google/correo | Presentación clara; se conserva el mismo flujo, OTP de ocho dígitos y destino de retorno. Logo oficial de Google sin recolorear. |
+| Historias y publicación | Creación de historia y formulario de publicación claros; cámara, fotografía/video y vista previa conservan fondo oscuro para el medio. |
+| LIVE | Crear/gestionar/compartir/chat/efectos/invitaciones y actividades con superficies claras. La transmisión y controles sobre video conservan contraste oscuro. Ningún cambio en permisos ni servicios LIVE. |
+| Avisos globales, llamada entrante, errores | Superficies claras legibles en cualquier pantalla; controles de aceptar/rechazar mantienen sus significados. |
+
+Excepciones deliberadas de la misma lógica: reproductores Feed/guardados/likes/hashtags/publicación, visor y recorte de fotografía, cámara, historias reproducidas, llamada/video y LIVE conservan superficies oscuras para el contenido. La tab bar inferior negra y las zonas negras superior/correo de Información de perfil mantienen la referencia explícita aprobada. Las burbujas, fondos elegidos y logos de aplicaciones mantienen sus colores propios. Las rutas que redirigen no agregan pantallas nuevas.
+
+Las medidas, funciones y tipografías aprobadas no se sustituyen para aplicar colores. El badge de pestaña Actividad se ajusta a17dp/11sp del PDF; los contadores de filas permanecen20dp/12sp. El mock visual del test de retorno Auth recibe la paleta nueva; sus comprobaciones de navegación y restauración no cambian.
+
+Verificación local inicial:132 archivos TypeScript/TSX analizados sin errores sintácticos y24 pruebas focalizadas aprobadas. La suite completa y TypeScript reales se ejecutan en CI; no confundir el adaptador Babel local con un typecheck real. Pendiente registrar el resultado de CI y binario final. La comprobación física de colores, safe areas y teclado sigue pendiente.

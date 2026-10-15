@@ -1,45 +1,15 @@
-const colors = {
-  light: {
-    text: "#0a0a0a",
-    tint: "#FE2C55",
-    background: "#ffffff",
-    foreground: "#0a0a0a",
-    card: "#f9f9f9",
-    cardForeground: "#0a0a0a",
-    primary: "#FE2C55",
-    primaryForeground: "#ffffff",
-    secondary: "#f0f0f0",
-    secondaryForeground: "#1a1a1a",
-    muted: "#f0f0f0",
-    mutedForeground: "#737373",
-    accent: "#FE2C55",
-    accentForeground: "#ffffff",
-    destructive: "#ef4444",
-    destructiveForeground: "#ffffff",
-    border: "#e5e5e5",
-    input: "#e5e5e5",
-  },
-  dark: {
-    text: "#ffffff",
-    tint: "#FE2C55",
-    background: "#000000",
-    foreground: "#ffffff",
-    card: "#161823",
-    cardForeground: "#ffffff",
-    primary: "#FE2C55",
-    primaryForeground: "#ffffff",
-    secondary: "#1C1C1E",
-    secondaryForeground: "#ffffff",
-    muted: "#1C1C1E",
-    mutedForeground: "#8A8B97",
-    accent: "#25F4EE",
-    accentForeground: "#000000",
-    destructive: "#ef4444",
-    destructiveForeground: "#ffffff",
-    border: "#2C2C2E",
-    input: "#2C2C2E",
-  },
-  radius: 12,
-};
+import {palette} from './palette';
 
-export default colors;
+// App UI follows the approved light presentation, independent of Android theme.
+// Media stages use palette.media explicitly instead of changing the whole UI.
+const light = {
+  text: palette.text, tint: palette.magenta, background: palette.background,
+  foreground: palette.text, card: palette.surface, cardForeground: palette.text,
+  primary: palette.button, primaryForeground: palette.onButton,
+  secondary: palette.input, secondaryForeground: palette.text,
+  muted: palette.input, mutedForeground: palette.secondary,
+  accent: palette.teal, accentForeground: palette.onButton,
+  destructive: palette.destructive, destructiveForeground: palette.onButton,
+  border: palette.border, input: palette.border,
+};
+export default {light, radius:12};

@@ -185,8 +185,8 @@ export default function InboxScreen() {
                 {t === "activity" ? "Actividad" : "Mensajes"}
               </Text>
               {t === "activity" && unreadCount > 0 && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{unreadCount > 99 ? "99+" : unreadCount}</Text>
+                <View style={[styles.badge,{minWidth:17,minHeight:17,paddingHorizontal:4}]}>
+                  <Text style={[styles.badgeText,{fontSize:11}]}>{unreadCount > 99 ? "99+" : unreadCount}</Text>
                 </View>
               )}
             </View>
