@@ -66,12 +66,14 @@ export function useFeedComments(visible: boolean, videoId: string, onCountChange
             if(root.data)roots.rows=mergeComments(roots.rows,[root.data as unknown as FeedComment]);
           }
           if(target.parent_id){const page=threads[rootId]??await readReplies(videoId,rootId,REPLY_PAGE_SIZE);threads[rootId]={...page,rows:mergeComments(page.rows,[target])};}
-          if(epoch.current===currentEpoch&&focusRevealed.current!==focusCommentId){focusRevealed.current=focusCommentId;if(target.parent_id)setExpanded(previous=>new Set(previous).add(rootId));}
+          if(epoch.current===currentEpoch&&requestSequence.current===sequence&&focusRevealed.current!==focusCommentId){focusRevealed.current=focusCommentId;if(target.parent_id)setExpanded(previous=>new Set(previous).add(rootId));}
         }else if(epoch.current===currentEpoch){setOperationError('Este comentario ya no está disponible.');}
       }
       const ids = [...roots.rows, ...Object.values(threads).flatMap(page => page.rows)].map(row => row.id);
       const [liked, hiddenThreads] = await Promise.all([readOwnCommentLikes(user?.id, ids), readHiddenThreads(user?.id, videoId)]);
       if (epoch.current !== currentEpoch || requestSequence.current !== sequence) return;
+      const focusedRow=[...roots.rows,...Object.values(threads).flatMap(page=>page.rows)].find(r=>r.id===focusCommentId);
+      if(focusedRow&&hiddenThreads.has(focusedRow.root_id??focusedRow.id))setOperationError("Este comentario pertenece a un hilo oculto. Usa Mostrar para verlo.");
       setState({ key, roots: roots.rows, threads, liked, hiddenThreads, total: roots.total, hasMore: roots.hasMore, publicationOwnerId });
       setError("");
       countCallback.current?.(videoId, roots.total);

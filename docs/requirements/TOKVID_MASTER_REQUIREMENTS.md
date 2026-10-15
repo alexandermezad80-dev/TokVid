@@ -3017,3 +3017,8 @@ Ver [registro de fase 3](../TOKVID_REFERENCE_DESIGNS_PHASE_3.md). El usuario con
 ### Presentación de Información de perfil en APK #217
 
 El usuario aprobó funciones, iconos y medidas de la app y rechazó el formulario de cajas grandes. Se compactan nombre/usuario/descripción, se muestran separadores y contador usado/200, y correo en una franja legible de solo lectura. Guardado, validación y foto se conservan. Esta aclaración está incluida en el binario y sustituye la presentación de #216. La aprobación funcional no equivale a aprobación visual de este ajuste, aún pendiente física.
+
+
+## Aclaraciones autorizadas de fase4 — 15 octubre2026
+
+El [registro de fase4](../TOKVID_PHASE_4.md) reúne las capturas, cuatro documentos de medidas y decisiones posteriores. Sustituye las presentaciones antiguas en perfiles/Inbox/chat, el submenú lateral de burbujas, el fondo estirado y el menú intermedio de los tres puntos. El contenido compacto de Información fue aprobado; su teclado recibe la corrección solicitada. «Solange» solo en su propia cuenta. Nuevas herramientas financieras, QR y eliminación de cuenta quedan preparadas según el alcance, sin afirmar servicios activos. No reabrir permisos de comentarios ni Auth. Ver el registro para implementación, pruebas y límites físicos.

@@ -1,3 +1,5 @@
+> **Fase4 en verificación (15 octubre2026):** el usuario autorizó implementar todas las referencias posteriores y confirmó visualmente el contenido compacto de Información de perfil de APK217. El teclado de chat seguía fallando y NO se considera validado físicamente. Ver [registro de fase4](../TOKVID_PHASE_4.md). Preflight27a677a aprobado:132 pruebas, TypeScript/prebuild. Migración20261015005124 aplicada, pruebas revertidas aprobadas. La APK nueva todavía está pendiente; conservar217 como última entregada hasta registrar el binario nuevo.
+
 # TokVid — estado y continuidad entre sesiones
 
 **Entrega vigente: [APK #217](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38485133390/artifacts/11859633718), código `306c29db53ccadcaf025f5cf574033cf5a3e250e`. 127 pruebas, TypeScript y Android aprobados. Prueba física pendiente. Leer [CONTINUAR_AQUI](../../CONTINUAR_AQUI.md) y [fase 3](../TOKVID_REFERENCE_DESIGNS_PHASE_3.md). Esta cabecera sustituye el estado histórico de #210.**

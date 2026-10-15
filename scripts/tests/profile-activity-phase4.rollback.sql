@@ -4,7 +4,7 @@ select set_config('tokvid.test.b',(select id::text from public.profiles where id
 select set_config('request.jwt.claim.sub',current_setting('tokvid.test.b'),true);
 set local role authenticated;
 do $test$
-declare a uuid:=current_setting('tokvid.test.a')::uuid;b uuid:=auth.uid();v uuid;c uuid;room uuid;mid uuid:=gen_random_uuid();cutoff timestamptz;affected integer;count_before integer;
+declare a uuid:=current_setting('tokvid.test.a')::uuid;b uuid:=auth.uid();v uuid;c uuid;room uuid;mid uuid:=gen_random_uuid();cutoff timestamptz;affected integer;count_before integer;g uuid:=gen_random_uuid();gm uuid:=gen_random_uuid();new_gm uuid:=gen_random_uuid();
 begin
  insert into public.videos(user_id,video_url,thumbnail_url,media_type,caption) values(b,'https://example.invalid/p4.jpg','https://example.invalid/p4.jpg','image','__rollback_phase4__') returning id into v;
  select id into c from public.create_feed_comment(v::text,'phase4 original',null,gen_random_uuid()::text);
@@ -33,7 +33,15 @@ begin
  perform set_config('request.jwt.claim.sub',b::text,true);
  update public.messages set read_by_other=true where id=mid;
  if exists(select 1 from public.notifications where data->>'messageId'=mid::text and not read) then raise exception 'Read chat retained unread activity';end if;
+ perform public.create_chat_group(g,'__rollback_phase4__',array[a,b]);
+ insert into public.chat_group_messages(id,group_id,sender_id,text) values(gm,g,b,'older group message');
  cutoff:=public.inbox_clear_boundary();perform public.clear_own_inbox(cutoff);
+ if exists(select 1 from public.visible_chat_group_messages where id=gm) or exists(select 1 from public.chat_group_inbox where id=g) then raise exception 'Cleared group still visible';end if;
+ perform set_config('request.jwt.claim.sub',a::text,true);
+ if not exists(select 1 from public.visible_chat_group_messages where id=gm) then raise exception 'Group history of other member removed';end if;
+ insert into public.chat_group_messages(id,group_id,sender_id,text,created_at) values(new_gm,g,a,'new group message',clock_timestamp());
+ perform set_config('request.jwt.claim.sub',b::text,true);
+ if not exists(select 1 from public.visible_chat_group_messages where id=new_gm) or not exists(select 1 from public.chat_group_inbox where id=g and last_message='new group message') then raise exception 'New group event did not return to Inbox';end if;
  if exists(select 1 from public.visible_private_messages where id=mid) then raise exception 'Own clear failed';end if;
  perform set_config('request.jwt.claim.sub',a::text,true);
  if not exists(select 1 from public.visible_private_messages where id=mid) then raise exception 'Clearing deleted the other account history';end if;

@@ -53,7 +53,8 @@ export default function VideoActions({
   creatorAvatar,
   isGuest, isFollowing = false, followPending = false, onFollow, onAvatarPress, commentCue,
 }: Props) {
-  const saves=useVideoSaveCount(videoId);
+  const liveCounts=useVideoSaveCount(videoId),saves=liveCounts.saves;
+  const fmt=(n:number)=>n>=1000000?`${(n/1000000).toFixed(1)}M`:n>=1000?`${(n/1000).toFixed(1)}K`:String(n);
   const {tabBarHeight}=useRegistration();
   const heartScale = useRef(new Animated.Value(1)).current;
   const shareScale = useRef(new Animated.Value(1)).current;
@@ -145,7 +146,7 @@ export default function VideoActions({
         <Animated.View style={{ transform: [{ scale: shareScale }] }}>
           <Feather name="share-2" size={28} color="#fff" />
         </Animated.View>
-        <Text style={styles.count}>{shares}</Text>
+        <Text style={styles.count}>{liveCounts.shares===null?shares:fmt(liveCounts.shares)}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={isGuest ? onSave : handleSave} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Guardar">

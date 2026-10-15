@@ -36,4 +36,20 @@ Fuentes: Medidas-Inbox-completo.pdf; Medidas-Encabezado-Detalles-del-chat-y-Chat
 
 ## Registro de implementación y comprobaciones
 
-Pendiente de completar con cambios reales, verificaciones, migraciones registradas, commit remoto y APK. No confundir los criterios anteriores con trabajo entregado. La comprobación física de teclado, aspectos visuales y destinos externos requiere la nueva APK en Android.
+Implementados: cabeceras compartidas, perfiles propio/público y privacidad, menú de herramientas a pantalla completa, teclado nativo del chat y desplazamiento por campo en Información, 10 estilos de burbujas con catálogo común, fondos completos y dos fondos neutros, iconos/contadores del feed, compartir directo en Android, Inbox blanco, borrado privado y navegación de actividad con galería separada.
+
+- Cuenta personalizada: se resolvió la cuenta existente de Solange y el placeholder se vincula a su ID estable; no se activa por coincidencia de nombre.
+- Android: el editor ya no usa `useOverlayKeyboard` ni una altura absoluta manual. `KeyboardAvoidingView` del controlador nativo reduce el área desplazable y mantiene el compositor en el flujo; no hay segunda compensación de altura. Los comentarios conservan su geometría aprobada.
+- Burbujas: Redonda antigua se normaliza a Clásica, sin borrar preferencias de instalaciones anteriores. Magenta, Cristal grafito y Cristal azul se añaden a las siete variantes de la referencia. Las vistas previas tienen ancho/alto propios.
+- Fondos: `ChatWallpaper` aplica contain dentro del área de conversación; miniaturas conservan aspecto1080/2400 y vista previa usa el mismo componente. Gris y azul son degradados neutros.
+- Compartir: el módulo Android enumera un conjunto limitado de apps compatibles, obtiene sus iconos del sistema y utiliza intent explícito por paquete; no lanza un segundo chooser al tocar una app. El contador de compartir se registra tras abrir el destino, no demuestra que el usuario haya terminado de enviarlo dentro de esa app.
+- Actividad: admite las claves históricas `video_id/comment_id` y las actuales `videoId/commentId`. La galería consulta solo notificaciones de la cuenta y vuelve a aplicar RLS al obtener publicaciones. Un comentario eliminado informa su ausencia; un hilo oculto conserva la preferencia del usuario.
+- Mensajes: leer chat limpia los avisos de mensajes de esa conversación; el listener de UPDATE refresca Actividad. Otras actividades conservan su contador de eventos por actor/tipo; mensajes muestra solo no leídos.
+- Borrado de Inbox: límite temporal del servidor capturado antes de confirmar; ocultación privada, grupos incluidos, sin eliminar membresía ni historial de otros. Los nuevos mensajes posteriores vuelven a la bandeja.
+- Herramientas preparadas: Saldo provisional sin operaciones financieras; Suscripción deshabilitada; QR y eliminación de cuenta pendientes de sus servicios. Cerrar sesión y cambio mediante cierre de sesión usan el servicio existente. Ajustes de visibilidad y Centro de actividades sí conectados.
+
+Migración **20261015005124_profile_visibility_activity_and_personal_inbox** aplicada y registrada oficialmente el 15 de octubre. No cambió Auth/OTP ni eliminó datos de usuarios. Añade RLS para preferencias, funciones acotadas para perfiles/relaciones públicas, contadores/avisos y ocultación de grupos. La prueba `profile-activity-phase4.rollback.sql` pasó antes y después de aplicarla y revirtió todos sus datos temporales.
+
+Preflight **27a677af2b9adffe2da7b4e82ef6eb2e7c4bd4ae**, [Check chat phase](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38662224924): **132 pruebas aprobadas**, TypeScript y prebuild Android aprobados. Después, se verificaron 40 pruebas focalizadas por la integración final de contadores y navegación. El primer preflight detectó una expectativa antigua de un único listener de notificaciones; se actualizó para incluir lecturas UPDATE manteniendo las pruebas de reconexión y descarte de callbacks retirados.
+
+APK de fase4 pendiente de compilación. La apariencia, teclado normal/emojis y apertura de apps requieren prueba física; no están confirmados en teléfono.

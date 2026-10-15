@@ -57,7 +57,7 @@ test('the authenticated creator + follows only other unfollowed users and is dis
   const animation = () => ({ start() {}, stop() {} });
   const Actions = component('components/VideoActions.tsx', {
     react: { ...rt.hooks, createElement: element }, 'react-native': { ...native, Animated: { Value: class {}, View: 'AnimatedView', timing: animation, sequence: animation, loop: animation } },
-    './reference/BrandAvatar':{__esModule:true,default:'BrandAvatar'},'../hooks/useVideoSaveCount':{useVideoSaveCount:()=>3},
+    './reference/BrandAvatar':{__esModule:true,default:'BrandAvatar'},'../hooks/useVideoSaveCount':{useVideoSaveCount:()=>({saves:3,shares:null})},
     '../context/RegistrationContext':{useRegistration:()=>({tabBarHeight:88})},'@expo/vector-icons': { Feather: 'Feather', MaterialCommunityIcons: 'Icon' }, 'expo-linear-gradient': { LinearGradient: 'Gradient' }, 'expo-haptics': {},
   });
   const props = { isGuest: false, isOwner: false, isFollowing: false, onFollow: () => follows++ };
