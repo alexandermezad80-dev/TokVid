@@ -114,8 +114,8 @@ export default function ProfileScreen() {
             {value:connections.loading?"…":fmtCount(connections.following.length),label:"Siguiendo",target:"following"},
             {value:connections.loading?"…":fmtCount(connections.followers.length),label:"Seguidores",target:"followers"},
           ].map(stat=><TouchableOpacity key={stat.target} style={styles.stat} onPress={()=>stat.target==="liked"?setTab("liked"):router.push({pathname:"/(tabs)/friends",params:{tab:stat.target}})}><Text maxFontSizeMultiplier={1.2} style={styles.statValue}>{stat.value}</Text><Text maxFontSizeMultiplier={1.2} numberOfLines={1} style={styles.statLabel}>{stat.label}</Text></TouchableOpacity>)}</View>
-          <Text maxFontSizeMultiplier={1.2} style={styles.bio} numberOfLines={expanded?undefined:3}>{bio}</Text>
-          {!!bio&&<TouchableOpacity onPress={()=>setExpanded(!expanded)}><Text style={styles.bioMore}>{expanded?"Ver menos":"Ver más"}</Text></TouchableOpacity>}
+          <Text onPress={()=>setExpanded(true)} accessibilityRole="button" accessibilityState={{expanded}} accessibilityLabel="Biografía" maxFontSizeMultiplier={1.2} style={styles.bio} numberOfLines={expanded?undefined:3}>{bio}</Text>
+          {!!bio&&expanded&&<TouchableOpacity onPress={()=>setExpanded(false)}><Text style={styles.bioMore}>Ver menos</Text></TouchableOpacity>}
           {!!connections.error&&<TouchableOpacity onPress={()=>void connections.refresh()}><Text style={{color:"#E7ACBF",fontSize:12}}>{connections.error}</Text></TouchableOpacity>}
         </View>
       </LinearGradient>
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   handle: { flex: 1, minWidth: 0, textAlign: "center", color: "#fff", fontSize: 17, fontWeight: "700" },
   profileSection: {
     flexDirection:"row",
-    paddingTop:4,paddingBottom:12,
+    paddingTop:4,paddingBottom:8,
     paddingHorizontal: 16,
     gap: 16,
   },
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: "#1C1C1E",
   },
-  tabItem: { flex: 1, alignItems: "center", paddingVertical: 12 },
+  tabItem: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 8 },
   tabItemActive: { borderBottomWidth: 2, borderBottomColor: "#25F4EE" },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 2, paddingHorizontal: 0, paddingVertical: 2 },
   gridItem: {

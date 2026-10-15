@@ -1,3 +1,5 @@
+> **Decisiones posteriores a APK224:** [perfiles A/B y relaciones](../TOKVID_POST_224_PROFILE_RELATIONS.md). Autorizadas e implementadas en verificación. APK224 desaprobada por branding de inicio; conservar observación pendiente. El botón Seguir→Amigos existe solo en B; biografía/barra se ajustan en A y B. Listas en ambos con Amigos/Seguidores/Siguiendo e iconos sin fondos de botón, conservando acciones.
+
 > **Última entrega —15 octubre2026: APK#224.** Fase4 y ampliación de colores implementadas/documentadas. [Estado vigente](../../CONTINUAR_AQUI.md) y [registro](../TOKVID_PHASE_4.md) prevalecen sobre estados de entrega antiguos en este historial.132 pruebas, TypeScript y compilación Android aprobados; prueba física pendiente.
 
 # TOKVID

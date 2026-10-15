@@ -1,3 +1,5 @@
+> **Revisión posterior a APK224:** usuario autorizó los ajustes de perfiles/relaciones; ver [alcance y estado](../TOKVID_POST_224_PROFILE_RELATIONS.md). APK224 está **desaprobada por branding de inicio**. Preferencia: branding anterior; corrección pendiente. No confundir compilación aprobada con aceptación del usuario.
+
 > **Estado vigente —15 octubre2026: APK#224, código `e7f8309ca1d820d467f8ad8fee7dde8e2b468dbb`.** [Descarga](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38741386976/artifacts/11976997023), [compilación](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38741386976), [manifiesto](APK_224_VERIFICATION.json).132 pruebas/TypeScript/Android aprobados; prueba física pendiente. Incluye fase4 y paleta global autorizada. Leer [CONTINUAR_AQUI](../../CONTINUAR_AQUI.md) y [fase4](../TOKVID_PHASE_4.md). Esta cabecera sustituye todos los estados históricos inferiores de APK217/220 vigente, implementación o APK pendiente. No cambiar Auth/OTP ni repetir migraciones. No confundir el commit documental con el del binario.
 
 ---

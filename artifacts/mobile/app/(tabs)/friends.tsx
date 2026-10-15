@@ -25,7 +25,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useFollow } from "../../context/FollowContext";
 import { supabase } from "../../lib/supabase";
 
-type FriendTab = "friends" | "followers" | "following";
+import {connectionTabs, connectionLabel, type ConnectionKind as FriendTab} from "../../lib/features/profile/connections";
 
 interface Person {
   id: string;
@@ -50,7 +50,7 @@ function getAvatar(person: Pick<Person, "id" | "username" | "avatar_url">) {
   )}&backgroundColor=FE0979&textColor=ffffff&size=128`;
 }
 
-function FollowAction({ person }: { person: Person }) {
+function FollowAction({ person, tab }: { person: Person; tab?: FriendTab }) {
   const { isFollowing, toggleFollow, loadingIds } = useFollow();
   const following = isFollowing(person.id);
   const loading = loadingIds.has(person.id);
@@ -58,6 +58,7 @@ function FollowAction({ person }: { person: Person }) {
   return (
     <TouchableOpacity
       style={styles.followButton}
+      accessibilityLabel={`${following ? "Dejar de seguir a" : "Seguir a"} ${person.username}`}
       onPress={() => toggleFollow(person.id)}
       disabled={loading}
       activeOpacity={0.8}
@@ -73,7 +74,7 @@ function FollowAction({ person }: { person: Person }) {
             color="#FFF"
           />
           <Text style={[styles.followButtonText, following && styles.followingButtonText]}>
-            {following ? "Siguiendo" : "Seguir"}
+            {tab ? connectionLabel(tab) : following ? "Siguiendo" : "Seguir"}
           </Text>
         </>
       )}
@@ -211,11 +212,7 @@ export default function FriendsScreen() {
     return people.filter((person) => person.username.toLowerCase().includes(term));
   }, [people, search]);
 
-  const tabs: { key: FriendTab; label: string; icon: "users" | "user-plus" | "user-check" }[] = [
-    { key: "friends", label: "Amigos", icon: "users" },
-    { key: "followers", label: "Seguidores", icon: "user-plus" },
-    { key: "following", label: "Siguiendo", icon: "user-check" },
-  ];
+  const tabs = connectionTabs;
 
   return (
     <View style={styles.container}>
@@ -234,7 +231,9 @@ export default function FriendsScreen() {
         {tabs.map((item) => (
           <TouchableOpacity
             key={item.key}
-            style={[styles.tab, tab === item.key && styles.tabActive]}
+            style={styles.tab}
+            accessibilityRole="tab"
+            accessibilityState={{selected: tab === item.key}}
             onPress={() => {
               setTab(item.key);
               setSearch("");
@@ -243,7 +242,7 @@ export default function FriendsScreen() {
             <Feather
               name={item.icon}
               size={16}
-              color={tab === item.key ? "#fff" : "#8A8B97"}
+              color={tab === item.key ? palette.text : palette.muted}
             />
             <Text style={[styles.tabText, tab === item.key && styles.tabTextActive]}>
               {item.label}
@@ -313,7 +312,7 @@ export default function FriendsScreen() {
                   @{person.username}
                 </Text>
               </View>
-              <FollowAction person={person} />
+              <FollowAction person={person} tab={tab} />
             </TouchableOpacity>
           ))
         )}
@@ -351,8 +350,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     marginHorizontal:16,marginVertical:12,
     height:44,padding:0,
-    borderRadius: 12,
-    backgroundColor: palette.tabs,
+    backgroundColor: "transparent",
   },
   tab: {
     flex: 1,
@@ -363,9 +361,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 5,
   },
-  tabActive: { backgroundColor: palette.button },
-  tabText: { color: palette.tabInactive, fontSize: 12, fontWeight: "700" },
-  tabTextActive: { color: palette.headerText },
+  tabText: { color: palette.muted, fontSize: 12, fontWeight: "700" },
+  tabTextActive: { color: palette.text },
   searchBox: {
     flexDirection: "row",
     alignItems: "center",

@@ -1,3 +1,5 @@
+> **Nueva revisión autorizada después de APK224:** ajustes de perfiles A/B, botón Seguir→Amigos solo B y listas Amigos/Seguidores/Siguiendo con iconos sin fondo de botón. Implementación y compilación en verificación. **APK224 desaprobada por el usuario por el branding de inicio; prefiere el anterior.** Branding pendiente de diagnóstico/corrección, sin rollback general. Leer [registro vigente](docs/TOKVID_POST_224_PROFILE_RELATIONS.md). Esta nota sustituye la condición anterior de solo prueba física pendiente.
+
 # TokVid — continuar desde aquí
 
 Actualizado: **15 de octubre de2026 (UTC)**. Este estado sustituye las notas anteriores de fase4 «en implementación», APK pendiente y APK217 como última entrega.
