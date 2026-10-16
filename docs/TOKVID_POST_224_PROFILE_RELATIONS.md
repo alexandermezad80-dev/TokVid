@@ -34,4 +34,21 @@ Pruebas locales nuevas de paginación de amigos, errores sin presentar datos par
 
 Consulta de solo lectura de la RPC actual para el perfil de referencia:2 seguidores,2 seguidos,2 amigos mutuos; transacción revertida, sin mutaciones persistentes. La documentación actual de RPC se consultó mediante MCP; el índice de changelog no pudo descargarse por proxy local no disponible. No se incorporan APIs/dependencias nuevas.
 
-Compilación, artefacto y verificación automática definitiva: pendientes en este commit. Prueba física de diseño: pendiente. No marcar APK224 aceptada ni afirmar corregido su branding.
+## Verificación automática y entrega
+
+Código: `835493d04515a6be43d0e2b840a3490a02ba56ed`; árbol `e036fb469c8a9dad406f90adcccf2519ab3a4fd0`; rama `feature/feed-mini-video-avatar`.
+
+[CI de comprobación](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38823328303): **135 pruebas aprobadas, cero fallos**, TypeScript móvil real y prebuild Android aprobados. Esta ejecución completa resuelve la limitación local de dependencia faltante.
+
+[Compilación APK225](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38823328262): **correcta**, `BUILD SUCCESSFUL in 26m 6s`. Terminó el15 de octubre de2026 a las23:51 UTC. Cierre documental16 de octubre.
+
+- [Descargar APK225](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38823328262/artifacts/12015177799): extraer ZIP e instalar `app-release.apk`.
+- SHA256 del APK: `b1003255476fae95c4ffb985840e28d0c65dee03438fd0ebe3b0e24b29779cda`.
+- [Mapa de fuentes correspondiente](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38823328262/artifacts/12014139940). El workflow verificó el commit y el marcador de diagnóstico dentro del bundle.
+- [Manifiesto completo](continuity/APK_225_VERIFICATION.json), incluidos tamaños y digests ZIP (distintos del checksum APK).
+
+**Prueba física de diseño pendiente.** APK224 sigue desaprobada por branding; APK225 conserva ese arranque porque se pidió registrarlo como nota. No afirmar que se haya corregido. La entrega de225 no implica aceptación del usuario.
+
+## Próxima revisión
+
+En A y B: tocar biografía, expandir/contraer y comprobar ausencia de «Ver más» contraída; revisar margen8dp y barra ligeramente más baja con iconos del mismo tamaño/ancho. Solo B: pastilla junto al nombre Seguir→Amigos. En ambas listas: tres pestañas con iconos sin fondos y etiqueta correspondiente en cada contacto; dejar de seguir en Amigos propios conserva retirada de esa lista. Visitar B debe mostrar relaciones de B. Conservar el branding como incidencia separada hasta diagnóstico/corrección autorizados.

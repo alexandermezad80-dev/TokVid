@@ -1,18 +1,23 @@
-> **Nueva revisión autorizada después de APK224:** ajustes de perfiles A/B, botón Seguir→Amigos solo B y listas Amigos/Seguidores/Siguiendo con iconos sin fondo de botón. Implementación y compilación en verificación. **APK224 desaprobada por el usuario por el branding de inicio; prefiere el anterior.** Branding pendiente de diagnóstico/corrección, sin rollback general. Leer [registro vigente](docs/TOKVID_POST_224_PROFILE_RELATIONS.md). Esta nota sustituye la condición anterior de solo prueba física pendiente.
-
 # TokVid — continuar desde aquí
 
-Actualizado: **15 de octubre de2026 (UTC)**. Este estado sustituye las notas anteriores de fase4 «en implementación», APK pendiente y APK217 como última entrega.
+Actualizado: **16 de octubre de2026 (UTC)**.
 
-## Entrega vigente
+## Entrega vigente y aprobación
 
 - Repositorio: [alexandermezad80-dev/TokVid](https://github.com/alexandermezad80-dev/TokVid).
-- Rama: **feature/feed-mini-video-avatar**. No volver a main ni al snapshot de onboarding para continuar.
-- Código del binario: **`e7f8309ca1d820d467f8ad8fee7dde8e2b468dbb`**. Un cierre documental posterior no cambia el código incorporado en esta APK.
-- [Descargar APK#224](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38741386976/artifacts/11976997023): extraer el ZIP e instalar `app-release.apk`.
-- [Compilación#224](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38741386976): **132 pruebas aprobadas, cero fallos**, TypeScript móvil y Android correctos; `BUILD SUCCESSFUL in 19m 38s`.
-- [Manifiesto/checksum](docs/continuity/APK_224_VERIFICATION.json). SHA256 del APK, distinto del ZIP: `e052dc935bfc5543723f84890b4918fa2a8de23800de3b578852d65eb5635eb9`.
-- [Mapa de fuentes de esta misma APK](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38741386976/artifacts/11977006949). Diagnóstico y commit verificados dentro del bundle. No usar el mapa de una APK anterior.
+- Rama: **feature/feed-mini-video-avatar**. Conservar el código actual; no volver a main ni a una APK histórica.
+- **APK225:** código `835493d04515a6be43d0e2b840a3490a02ba56ed`, árbol `e036fb469c8a9dad406f90adcccf2519ab3a4fd0`.
+- [Descargar APK225](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38823328262/artifacts/12015177799): extraer ZIP e instalar `app-release.apk`.
+- [Compilación](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38823328262):135 pruebas aprobadas,0 fallos, TypeScript/prebuild/Android correctos; `BUILD SUCCESSFUL in 26m 6s`.
+- [Manifiesto](docs/continuity/APK_225_VERIFICATION.json). SHA256 APK: `b1003255476fae95c4ffb985840e28d0c65dee03438fd0ebe3b0e24b29779cda`.
+- [Mapa de fuentes225](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38823328262/artifacts/12014139940). No usar otro mapa para diagnosticar esta APK.
+- **APK224 desaprobada por el usuario por el branding de inicio.** Prefiere el anterior; número exacto anterior y causa técnica sin confirmar. Registrado como nota, corrección pendiente. APK225 no cambia el branding ni significa aprobación física.
+
+## Cambios posteriores a224 autorizados y entregados en225
+
+[Registro completo](docs/TOKVID_POST_224_PROFILE_RELATIONS.md). Biografía A/B se expande tocando texto, solo muestra «Ver menos» expandida; barra exploradora8dp más baja, iconos22dp y anchos/distribución conservados, margen inferior del bloque8dp. Pastilla Seguir→Amigos junto al nombre **solo en B**.
+
+Ambas listas: Amigos/Seguidores/Siguiendo con iconos y sin fondos de botón; botón por persona muestra el nombre de la sección. Lista Amigos de B usa relaciones mutuas de B y todas las páginas. Acciones de seguimiento, contexto y reglas existentes conservados. No hubo migración, cambios de Auth ni del branding. Prueba física pendiente.
 
 ## Regla del usuario
 
@@ -46,4 +51,4 @@ Migración **20261015005124_profile_visibility_activity_and_personal_inbox** apl
 
 Prueba física del usuario en Android: teclado normal/emojis en chat y edición de perfil, fuente grande, gestos/botones y áreas seguras; colores y contraste en pantallas/modales; compartir directo con apps instaladas; contadores/lecturas entre dos cuentas; tocar notificación versus avatar y privacidad de perfil visitante. Registrar observaciones sin rehacer funciones aprobadas. **physical_device_verified=false** hasta confirmación expresa.
 
-Consultar [handoff](docs/continuity/TOKVID_SESSION_HANDOFF.md), [requisitos](docs/requirements/TOKVID_MASTER_REQUIREMENTS.md) y [AGENTS.md](AGENTS.md). APK220 fue una compilación intermedia sin la ampliación global de colores; APK#224 la sustituye.
+Consultar [handoff](docs/continuity/TOKVID_SESSION_HANDOFF.md), [requisitos](docs/requirements/TOKVID_MASTER_REQUIREMENTS.md) y [AGENTS.md](AGENTS.md). Historial: APK220 fue intermedia; APK224 incorporó paleta global y después quedó desaprobada por branding. APK225 añade los ajustes indicados; no corrige el arranque.

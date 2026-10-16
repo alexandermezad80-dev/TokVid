@@ -1,0 +1,64 @@
+{
+  "repository": "alexandermezad80-dev/TokVid",
+  "branch": "feature/feed-mini-video-avatar",
+  "commit": "835493d04515a6be43d0e2b840a3490a02ba56ed",
+  "tree": "e036fb469c8a9dad406f90adcccf2519ab3a4fd0",
+  "run_id": 38823328262,
+  "run_number": 225,
+  "job_id": 116724855650,
+  "check_run_id": 38823328303,
+  "check_job_id": 116724855135,
+  "check_status": "success",
+  "build_status": "success",
+  "tests": {
+    "passed": 135,
+    "failed": 0
+  },
+  "typecheck": "passed",
+  "prebuild": "passed",
+  "android_build": "BUILD SUCCESSFUL in 26m 6s",
+  "apk_sha256": "b1003255476fae95c4ffb985840e28d0c65dee03438fd0ebe3b0e24b29779cda",
+  "artifacts": [
+    {
+      "id": 12015177799,
+      "name": "tokvid-android-feed-avatar",
+      "size_in_bytes": 244624854,
+      "url": "https://api.github.com/repos/alexandermezad80-dev/TokVid/actions/artifacts/12015177799",
+      "archive_download_url": "https://api.github.com/repos/alexandermezad80-dev/TokVid/actions/artifacts/12015177799/zip",
+      "expired": false,
+      "created_at": "2026-10-15T23:51:44Z",
+      "expires_at": "2027-01-13T23:23:58Z",
+      "updated_at": "2026-10-15T23:51:44Z",
+      "digest": "sha256:9c06211492fceb4b97bafe37eaed9329f8f6417ac257e487c219ca25dcb3dca6",
+      "workflow_run": {
+        "id": 38823328262,
+        "repository_id": 1268853672,
+        "head_repository_id": 1268853672,
+        "head_branch": "feature/feed-mini-video-avatar",
+        "head_sha": "835493d04515a6be43d0e2b840a3490a02ba56ed"
+      }
+    },
+    {
+      "id": 12014139940,
+      "name": "tokvid-auth-diagnostic-sourcemap",
+      "size_in_bytes": 3427804,
+      "url": "https://api.github.com/repos/alexandermezad80-dev/TokVid/actions/artifacts/12014139940",
+      "archive_download_url": "https://api.github.com/repos/alexandermezad80-dev/TokVid/actions/artifacts/12014139940/zip",
+      "expired": false,
+      "created_at": "2026-10-15T23:51:45Z",
+      "expires_at": "2027-01-13T23:23:58Z",
+      "updated_at": "2026-10-15T23:51:45Z",
+      "digest": "sha256:79a6e88a9e630b68e90f18187a324cd6d77d00dade1d1dcd0fd1d007537ffd0b",
+      "workflow_run": {
+        "id": 38823328262,
+        "repository_id": 1268853672,
+        "head_repository_id": 1268853672,
+        "head_branch": "feature/feed-mini-video-avatar",
+        "head_sha": "835493d04515a6be43d0e2b840a3490a02ba56ed"
+      }
+    }
+  ],
+  "physical_device_verified": false,
+  "apk224_user_approval": "rejected: startup branding",
+  "branding_fix_status": "pending, recorded only"
+}
