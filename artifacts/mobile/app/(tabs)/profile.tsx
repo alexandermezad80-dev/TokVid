@@ -1,3 +1,6 @@
+import ReferenceHeader from "../../components/reference/ReferenceHeader";
+import BrandOutline from "../../components/reference/BrandOutline";
+import {referenceVisual as v} from "../../constants/referenceVisual";
 import {LinearGradient} from "expo-linear-gradient";
 import {StatusBar} from "expo-status-bar";
 import BrandAvatar from "../../components/reference/BrandAvatar";
@@ -92,20 +95,20 @@ export default function ProfileScreen() {
     n >= 1_000 ? `${(n / 1_000).toFixed(1)}K` : String(n);
 
   return (
-    <View style={styles.container}><StatusBar style="light"/>
-      <View style={[styles.header,{paddingTop:topPad,height:topPad+44}]}>
+    <View style={styles.container}>
+      <ReferenceHeader variant="profile">
         <TouchableOpacity style={styles.menuBtn} onPress={()=>router.push("/user-tools")} accessibilityLabel="Herramientas de usuario"><Feather name="menu" size={24} color="#FFF"/></TouchableOpacity>
         <TouchableOpacity style={styles.menuBtn} onPress={()=>router.push({pathname:"/(tabs)/friends",params:{tab:"friends"}})} accessibilityLabel="Amigos"><Feather name="users" size={22} color="#FFF"/></TouchableOpacity>
         <View style={{flex:1}}/><TouchableOpacity style={styles.menuBtn} onPress={()=>router.push("/edit-profile")} accessibilityLabel="Información de perfil"><Feather name="more-horizontal" size={24} color="#FFF"/></TouchableOpacity>
-      </View>
-      <LinearGradient colors={["#727C87","#36969B"]} start={{x:0,y:0}} end={{x:1,y:.36}} style={styles.profileSection}>
-        <View style={{width:88,gap:8}}>
+      </ReferenceHeader>
+      <View style={styles.profileSection}>
+        <View style={{width:84,gap:8}}>
           <TouchableOpacity style={styles.avatarWrap} onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})} accessibilityLabel="Ver mis historias">
-            <BrandAvatar uri={avatarUrl(user,profile)}/>
+            <BrandAvatar uri={avatarUrl(user,profile)} size={84} radius={12} reference/>
             <TouchableOpacity style={styles.editBadge} onPress={()=>router.push("/story-create")} accessibilityLabel="Añadir historia"><Feather name="plus" size={18} color="#FFF"/></TouchableOpacity>
           </TouchableOpacity>
-          <Pressable onPress={()=>router.push({pathname:"/user-tools",params:{section:"balance"}})} style={styles.accountButton}><Text style={styles.accountLabel}>Saldo</Text></Pressable>
-          <Pressable disabled accessibilityState={{disabled:true}} style={styles.accountButton}><Text style={styles.accountLabel}>Suscripción</Text></Pressable>
+          <Pressable onPress={()=>router.push({pathname:"/user-tools",params:{section:"balance"}})} style={styles.accountButton}><BrandOutline radius={7}/><Text style={styles.accountLabel}>Saldo</Text></Pressable>
+          <Pressable disabled accessibilityState={{disabled:true}} style={styles.accountButton}><BrandOutline radius={7}/><Text style={styles.accountLabel}>Suscripción</Text></Pressable>
         </View>
         <View style={{flex:1,minWidth:0,gap:8}}>
           <Text maxFontSizeMultiplier={1.2} numberOfLines={1} style={styles.displayName}>{handle}</Text>
@@ -116,12 +119,12 @@ export default function ProfileScreen() {
           ].map(stat=><TouchableOpacity key={stat.target} style={styles.stat} onPress={()=>stat.target==="liked"?setTab("liked"):router.push({pathname:"/(tabs)/friends",params:{tab:stat.target}})}><Text maxFontSizeMultiplier={1.2} style={styles.statValue}>{stat.value}</Text><Text maxFontSizeMultiplier={1.2} numberOfLines={1} style={styles.statLabel}>{stat.label}</Text></TouchableOpacity>)}</View>
           <Text onPress={()=>setExpanded(true)} accessibilityRole="button" accessibilityState={{expanded}} accessibilityLabel="Biografía" maxFontSizeMultiplier={1.2} style={styles.bio} numberOfLines={expanded?undefined:3}>{bio}</Text>
           {!!bio&&expanded&&<TouchableOpacity onPress={()=>setExpanded(false)}><Text style={styles.bioMore}>Ver menos</Text></TouchableOpacity>}
-          {!!connections.error&&<TouchableOpacity onPress={()=>void connections.refresh()}><Text style={{color:"#E7ACBF",fontSize:12}}>{connections.error}</Text></TouchableOpacity>}
+          {!!connections.error&&<TouchableOpacity onPress={()=>void connections.refresh()}><Text style={{color:"#D32F3F",fontSize:12}}>{connections.error}</Text></TouchableOpacity>}
         </View>
-      </LinearGradient>
+      </View>
       <View style={styles.tabBar}>{([
         {key:"videos",icon:"grid",label:"Videos"},{key:"stories",icon:"clock",label:"Historias"},{key:"gallery",icon:"image",label:"Galería"},{key:"liked",icon:"heart",label:"Me gusta"},{key:"saved",icon:"bookmark",label:"Guardados"},{key:"more",icon:"more-horizontal",label:"Más"},
-      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>item.key==="more"?router.push("/user-tools"):setTab(item.key)} style={[styles.tabItem,tab===item.key&&styles.tabItemActive]}><Feather name={item.icon} size={22} color={tab===item.key?"#FFF":"#8A8B97"}/></TouchableOpacity>)}</View>
+      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>item.key==="more"?router.push("/user-tools"):setTab(item.key)} style={[styles.tabItem,tab===item.key&&styles.tabItemActive]}><Feather name={item.icon} size={22} color={tab===item.key?v.ink:v.inactive}/></TouchableOpacity>)}</View>
       <ScrollView style={{flex:1}} showsVerticalScrollIndicator={false}>
       {tab==="stories"?<View style={styles.emptyState}><TouchableOpacity onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})}><Text style={styles.emptyTitle}>Ver mis historias</Text></TouchableOpacity><TouchableOpacity onPress={()=>router.push("/story-create")}><Text style={styles.bioMore}>Añadir historia</Text></TouchableOpacity></View>:
       tab === "saved" ? (
@@ -192,7 +195,7 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  accountButton:{width:88,minHeight:34,borderRadius:8,backgroundColor:"#161616",alignItems:"center",justifyContent:"center",opacity:1},accountLabel:{color:"#FFF",fontSize:11},bioMore:{color:"#FFFFFF",fontSize:12},
+  accountButton:{width:84,minHeight:32,borderRadius:7,backgroundColor:v.white,alignItems:"center",justifyContent:"center",opacity:1},accountLabel:{color:v.ink,fontSize:11},bioMore:{color:v.ink,fontSize:12},
   container: { flex: 1, backgroundColor: "#FFFFFF" },
   header: {
     flexDirection: "row",
@@ -237,13 +240,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#000",
   },
-  displayName: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  displayName: { color: v.ink, fontSize: 16, fontWeight: "700" },
   email: { color: "#555", fontSize: 13 },
-  bio: { color: "#FFFFFF", fontSize: 12,lineHeight:16 },
+  bio: { color: v.ink, fontSize: 12,lineHeight:16 },
   stats: { flexDirection: "row",gap:4,marginTop:12,marginBottom:4 },
   stat: { flex:1,alignItems: "center",gap:2 },
-  statValue: { color: "#fff", fontSize: 16, fontWeight: "800" },
-  statLabel: { color: "#F1F3F5", fontSize: 10.5 },
+  statValue: { color: v.ink, fontSize: 16, fontWeight: "800" },
+  statLabel: { color: v.label, fontSize: 10.5 },
   actions: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 8 },
   editBtn: {
     backgroundColor: "#1C1C1E",
@@ -258,14 +261,15 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   tabBar: {
-    backgroundColor:"#232F39",
+    backgroundColor:v.white,
     flexDirection: "row",
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: "#1C1C1E",
+    borderColor: v.ink,
+    height:39,
   },
-  tabItem: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 8 },
-  tabItemActive: { borderBottomWidth: 2, borderBottomColor: "#25F4EE" },
+  tabItem: { flex: 1, alignItems: "center", justifyContent: "center" },
+  tabItemActive: {},
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 2, paddingHorizontal: 0, paddingVertical: 2 },
   gridItem: {
     width: "32%",

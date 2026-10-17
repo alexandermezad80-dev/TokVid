@@ -9,7 +9,7 @@ export const BUBBLE_TOKENS:Record<BubbleStyleVariant,BubbleToken>={
  classic:{background:'#7A64BE',color:'#FFFFFF',radius:20},
  minimal:{background:'#FFFFFF',border:'#2B4A8B',color:'#101010',radius:8},
  glass:{background:'#E6E9EC',border:'#C3C9CF',color:'#101010',radius:14},
- gradient:{background:'#5F6A74',gradient:['#5F6A74','#2F9A9F'],color:'#FFFFFF',radius:20},
+ gradient:{background:'#3F6486',gradient:['#3F6486','#6F9CC4'],color:'#FFFFFF',radius:20},
  neon:{background:'#FFF6E5',border:'#E8B04B',color:'#101010',radius:14},
  elegant:{background:'#161616',color:'#FFFFFF',radius:20},
  compact:{background:'#1F8A5B',color:'#FFFFFF',radius:8},

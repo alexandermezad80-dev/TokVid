@@ -1,3 +1,4 @@
+import {referenceVisual as v} from "../../constants/referenceVisual";
 import ReferenceHeader from "../../components/reference/ReferenceHeader";
 import ClearInboxDialog from "../../lib/features/messages/components/ClearInboxDialog";
 import {activityCounter,activityHasGallery} from "../../lib/features/messages/activity";
@@ -168,7 +169,7 @@ export default function InboxScreen() {
 
   return (
     <View style={styles.container}>
-      <ReferenceHeader compact style={{paddingHorizontal:7}}>
+      <ReferenceHeader variant="inbox" compact style={{paddingHorizontal:7}}>
         <Text style={styles.pageTitle}>Inbox</Text>
         {tab === "activity" && unreadCount > 0 && (
           <TouchableOpacity style={styles.markAllBtn} onPress={markAllRead}>
@@ -268,15 +269,15 @@ const styles = StyleSheet.create({
   markAllBtn: { paddingVertical: 6, paddingHorizontal: 12 },
   markAllText: { color: "#FFFFFF", fontSize: 14, fontWeight: "600" },
   tabs: {
-    backgroundColor:"#232F39",marginTop:-20,paddingTop:24,minHeight:62,
+    backgroundColor:v.white,marginTop:0,paddingTop:10,minHeight:44,
     flexDirection: "row",
-    borderBottomWidth: 1, borderBottomColor: "#1C1C1E",
+    borderBottomWidth: 1, borderBottomColor: v.inboxLine,
     marginBottom: 0,
   },
   tabBtn: { flex: 1, alignItems: "center", paddingBottom: 8 },
   tabLabelRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  tabText: { color: "#9AA5AE", fontSize: 16, fontWeight: "600" },
-  tabTextActive: { color: "#fff" },
+  tabText: { color: v.secondary, fontSize: 16, fontWeight: "600" },
+  tabTextActive: { color: v.ink },
   tabIndicator: {
     position: "absolute", bottom: 0,
     height: 2, width: 97, backgroundColor: "#25F4EE",
@@ -303,9 +304,9 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: "#FFFFFF",
   },
   notifBody: { flex: 1 },
-  notifUser: { color: "#101010", fontWeight: "700", fontSize: 15 },
+  notifUser: { color: v.ink, fontWeight: "700", fontSize: 15 },
   notifText: { color: "#3F3F46", fontSize: 14, lineHeight: 20 },
-  notifTime: { color: "#8A8B97", fontSize: 13, marginTop: 3 },
+  notifTime: { color: v.secondary, fontSize: 13, marginTop: 3 },
   unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#FE2C55" },
   emptyState: {
     flex: 1, alignItems: "center", justifyContent: "center",
@@ -315,7 +316,7 @@ const styles = StyleSheet.create({
     width: 80, height: 80, borderRadius: 40,
     backgroundColor: "#111", alignItems: "center", justifyContent: "center",
   },
-  emptyTitle: { color: "#101010", fontSize: 18, fontWeight: "700" },
+  emptyTitle: { color: v.ink, fontSize: 18, fontWeight: "700" },
   emptyText: { color: "#555", fontSize: 14, textAlign: "center", lineHeight: 20 },
 });
 

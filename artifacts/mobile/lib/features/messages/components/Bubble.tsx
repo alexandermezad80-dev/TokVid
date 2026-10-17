@@ -18,7 +18,7 @@ export default function Bubble({text,direction,groupPosition='single',styleVaria
  const content=<Text numberOfLines={preview?1:undefined} maxFontSizeMultiplier={preview?1.15:1.5} accessibilityLabel={(direction==='sent'?'Enviado: ':'Recibido: ')+text+(timestamp?', '+timestamp:'')} style={{color:token.color,fontSize:preview?(compact?15:17):(compact?14:15),lineHeight:preview?22:21,includeFontPadding:false}}>{text}</Text>;
  return <View style={[s.row,{alignItems:direction==='sent'?'flex-end':'flex-start'}]}>
   <Pressable style={{maxWidth:preview?'100%':'82%'}} disabled={!onPress&&!onLongPress} onPress={onPress} onLongPress={onLongPress} accessibilityRole={onPress?'button':'text'}>
-   {token.gradient?<LinearGradient colors={token.gradient} start={{x:0,y:0}} end={{x:1,y:1}} style={[s.bubble,shape]}>{content}</LinearGradient>:<View style={[s.bubble,shape]}>{content}</View>}
+   {token.gradient?<LinearGradient colors={token.gradient} start={{x:0,y:0}} end={{x:1,y:variant==='gradient'?0:1}} style={[s.bubble,shape]}>{content}</LinearGradient>:<View style={[s.bubble,shape]}>{content}</View>}
   </Pressable>{timestamp&&<Text style={s.time}>{timestamp}</Text>}
  </View>;
 }

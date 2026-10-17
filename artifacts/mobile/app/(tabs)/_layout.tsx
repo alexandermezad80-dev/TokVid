@@ -1,3 +1,4 @@
+import {referenceVisual as v} from "../../constants/referenceVisual";
 import { useRegistration } from "../../context/RegistrationContext";
 import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { BlurView } from "expo-blur";
@@ -14,9 +15,9 @@ import { useNotifications } from "../../context/NotificationsContext";
 import { useAuth } from "../../context/AuthContext";
 import { router } from "expo-router";
 
-const PRIMARY = "#FE0979";
+const PRIMARY = "#FE2C55";
 const CYAN = "#00F2FE";
-const DARK = "#000000";
+const DARK = "#0E1216";
 const BORDER = "#2C2C2E";
 
 function UnreadBadge({ count }: { count: number }) {
@@ -73,9 +74,9 @@ function GuestTabButton({
       style={styles.guestButton}
     >
       {create ? (
-        <View style={styles.createBtn}>
+        <View style={styles.createBtn}><LinearGradient pointerEvents="none" colors={v.outline} start={{x:0,y:.5}} end={{x:1,y:.5}} style={StyleSheet.absoluteFill}/>
           <LinearGradient
-            colors={[CYAN, PRIMARY]}
+            colors={v.createFill}
             start={{ x: 0, y: 0.5 }}
             end={{ x: 1, y: 0.5 }}
             style={styles.createBtnInner}
@@ -84,7 +85,7 @@ function GuestTabButton({
           </LinearGradient>
         </View>
       ) : (
-        <Feather name={icon as React.ComponentProps<typeof Feather>["name"]} size={22} color="#8A8B97" />
+        <Feather name={icon as React.ComponentProps<typeof Feather>["name"]} size={22} color={v.inactive} />
       )}
       {!create ? <Text style={styles.guestLabel}>{label}</Text> : null}
     </Pressable>
@@ -111,7 +112,7 @@ function ClassicTabLayout() {
         tabBarAllowFontScaling:false,
         tabBarItemStyle: { minHeight: barBody, paddingVertical: 4 },
         tabBarActiveTintColor: PRIMARY,
-        tabBarInactiveTintColor: "#8A8B97",
+        tabBarInactiveTintColor: v.inactive,
         headerShown: false,
         tabBarStyle: {
           position: "absolute",
@@ -167,9 +168,9 @@ function ClassicTabLayout() {
           title: "",
           tabBarButton: guest ? () => <GuestTabButton label="Crear" icon="plus" create /> : undefined,
           tabBarIcon: () => (
-            <View style={styles.createBtn}>
+            <View style={styles.createBtn}><LinearGradient pointerEvents="none" colors={v.outline} start={{x:0,y:.5}} end={{x:1,y:.5}} style={StyleSheet.absoluteFill}/>
               <LinearGradient
-                colors={[CYAN, PRIMARY]}
+                colors={v.createFill}
                 start={{ x: 0, y: 0.5 }}
                 end={{ x: 1, y: 0.5 }}
                 style={styles.createBtnInner}
@@ -236,11 +237,12 @@ const styles = StyleSheet.create({
     minHeight: 58,
     gap: 2,
   },
-  guestLabel: { color: "#8A8B97", fontSize: 10, fontWeight: "600" },
+  guestLabel: { color: v.inactive, fontSize: 10, fontWeight: "600" },
   createBtn: {
-    width: 52,
-    height: 32,
-    borderRadius: 10,
+    width: 49,
+    height: 30,
+    borderRadius: 9,
+    padding:1,
     overflow: "hidden",
     marginBottom: 4,
   },
@@ -248,7 +250,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 10,
+    borderRadius: 8,
   },
   badgeWrap: {
     position: "absolute",

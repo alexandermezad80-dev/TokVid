@@ -3043,3 +3043,12 @@ El usuario reportó que los fondos seguían recortados y enormes en Detalles y e
 - Selector: tres columnas, tarjetas9:16 compactas, ancho máximo112dp (alto máximo~199dp), con selección y nombres actuales. Esta referencia sustituye el tamaño provisional72×160.
 - No se cambian las funciones de mensajería privada ni teclado/compositor. No se aplican a este chat las nuevas reglas propuestas para comentarios del feed.
 - [Diagnóstico, cambios y verificación](../TOKVID_CHAT_WALLPAPER_FIX.md). Entregado en APK 226, código `9a162c843231958e4facf428a7e3fb7addae257b`: 135 pruebas, TypeScript, prebuild y Android aprobados. [APK](https://github.com/alexandermezad80-dev/TokVid/actions/runs/39001106777/artifacts/12089588382); [manifiesto](../continuity/APK_226_VERIFICATION.json). Validación física pendiente; no declarar aprobación del usuario por compilar.
+
+
+## Presentación azul acero autorizada y transición del branding — 17 octubre 2026
+
+El usuario validó **TokVid-r-Medidas-y-colores-2.zip** con las imágenes de **tus sueños.zip** y ordenó implementarlo como cambio visual, conservando funciones. Descartó expresamente el PDF individual de Estilo de burbuja. [Especificación aplicada, medidas, colores y límites](../TOKVID_STEEL_VISUAL_REFRESH.md).
+
+Las cabeceras de las pantallas indicadas pasan a azul acero `#4B7194`, con márgenes y radios específicos; cuerpo blanco, marcos y líneas `#15DFF3`→`#E91C84`, botón + con interior azul. Esta autorización sustituye los colores/contornos anteriores solo donde indica el documento válido. Se conservan acciones, iconos, teclado, catálogo de diez estilos, fondos de APK 226 y distinción dueño/visitante.
+
+También autorizó corregir el destello blanco antes del feed: se restauran fondos de carga/raíz/navegación oscuros y se define fondo nativo negro, preservando splash/logotipo y Auth. Implementado en verificación; no confundir compilación con prueba física ni aprobación del branding.

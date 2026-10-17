@@ -1,3 +1,6 @@
+import ReferenceHeader from "../components/reference/ReferenceHeader";
+import BrandOutline from "../components/reference/BrandOutline";
+import {referenceVisual as v} from "../constants/referenceVisual";
 import {LinearGradient} from "expo-linear-gradient";
 import {StatusBar} from "expo-status-bar";
 import BrandAvatar from "../components/reference/BrandAvatar";
@@ -75,9 +78,9 @@ function FollowButton({ userId }: { userId: string }) {
       disabled={loading}
     >
       {loading ? (
-        <ActivityIndicator color="#fff" size="small" />
+        <ActivityIndicator color={v.darkGray} size="small" />
       ) : (
-        <><Feather name={following ? "users" : "user-plus"} size={14} color="#FFF"/><Text numberOfLines={1} maxFontSizeMultiplier={1.2} style={styles.followBtnText}>{following ? "Amigos" : "Seguir"}</Text></>
+        <><Feather name={following ? "users" : "user-plus"} size={14} color={v.darkGray}/><Text numberOfLines={1} maxFontSizeMultiplier={1.2} style={styles.followBtnText}>{following ? "Amigos" : "Seguir"}</Text></>
       )}
     </TouchableOpacity>
   );
@@ -142,20 +145,20 @@ export default function UserProfileScreen() {
   const error=tab==='videos'?publications.error:activityError;
   const isLoading=tab==='videos'?videosLoading:activityLoading;
   const connections=(kind:'friends'|'following'|'followers')=>router.push({pathname:'/profile-connections',params:{userId,kind}});
-  return <View onLayout={gridLayout.onLayout} style={styles.container}><StatusBar style="light"/>
-   <View style={[styles.header,{paddingTop:topPad}]}><TouchableOpacity style={styles.backBtn} onPress={()=>router.back()} accessibilityLabel="Volver"><Feather name="arrow-left" size={24} color="#FFF"/></TouchableOpacity><TouchableOpacity style={styles.backBtn} onPress={()=>connections('friends')} accessibilityLabel="Amigos y seguidores"><Feather name="users" size={22} color="#FFF"/></TouchableOpacity><View style={{flex:1}}/></View>
+  return <View onLayout={gridLayout.onLayout} style={styles.container}>
+   <ReferenceHeader variant="profile"><TouchableOpacity style={styles.backBtn} onPress={()=>router.back()} accessibilityLabel="Volver"><Feather name="arrow-left" size={24} color="#FFF"/></TouchableOpacity><TouchableOpacity style={styles.backBtn} onPress={()=>connections('friends')} accessibilityLabel="Amigos y seguidores"><Feather name="users" size={22} color="#FFF"/></TouchableOpacity><View style={{flex:1}}/></ReferenceHeader>
    {loading?<View style={styles.center}><ActivityIndicator color="#2F9A9F"/></View>:!profile?<View style={styles.center}><Text style={styles.gridStateTitle}>Usuario no encontrado</Text></View>:<ScrollView showsVerticalScrollIndicator={false}>
-    <LinearGradient colors={['#727C87','#36969B']} start={{x:0,y:0}} end={{x:1,y:.36}} style={styles.profileSection}>
-     <View style={{width:88,gap:8}}><TouchableOpacity onPress={()=>profile.avatar_url&&router.push({pathname:'/profile-photo',params:{uri:profile.avatar_url}})} accessibilityLabel="Ver foto de perfil"><BrandAvatar uri={profile.avatar_url}/></TouchableOpacity>
-      <TouchableOpacity style={styles.accountButton} onPress={openChat} disabled={msgLoading}>{msgLoading?<ActivityIndicator color="#FFF"/>:<Text style={styles.accountLabel}>Mensajes</Text>}</TouchableOpacity>
-      <TouchableOpacity style={styles.accountButton} disabled accessibilityState={{disabled:true}}><Text style={styles.accountLabel}>Suscripción</Text></TouchableOpacity>
+    <View style={styles.profileSection}>
+     <View style={{width:84,gap:8}}><TouchableOpacity onPress={()=>profile.avatar_url&&router.push({pathname:'/profile-photo',params:{uri:profile.avatar_url}})} accessibilityLabel="Ver foto de perfil"><BrandAvatar uri={profile.avatar_url} size={84} radius={12} reference/></TouchableOpacity>
+      <TouchableOpacity style={styles.accountButton} onPress={openChat} disabled={msgLoading}><BrandOutline radius={7}/>{msgLoading?<ActivityIndicator color={v.ink}/>:<Text style={styles.accountLabel}>Mensajes</Text>}</TouchableOpacity>
+      <TouchableOpacity style={styles.accountButton} disabled accessibilityState={{disabled:true}}><BrandOutline radius={7}/><Text style={styles.accountLabel}>Suscripción</Text></TouchableOpacity>
      </View>
      <View style={{flex:1,gap:8,minWidth:0}}><View style={styles.nameRow}><Text numberOfLines={1} style={[styles.displayName,{flexShrink:1}]}>@{profile.username}</Text><FollowButton userId={profile.id}/></View>
       <View style={styles.stats}><View style={styles.stat}><Text style={styles.statValue}>{fmtCount(profile.likes_count)}</Text><Text style={styles.statLabel}>Me gusta</Text></View><TouchableOpacity style={styles.stat} onPress={()=>connections('following')}><Text style={styles.statValue}>{fmtCount(profile.following_count)}</Text><Text style={styles.statLabel}>Siguiendo</Text></TouchableOpacity><TouchableOpacity style={styles.stat} onPress={()=>connections('followers')}><Text style={styles.statValue}>{fmtCount(profile.followers_count)}</Text><Text style={styles.statLabel}>Seguidores</Text></TouchableOpacity></View>
       {!!profile.bio&&<><Text onPress={()=>setExpanded(true)} accessibilityRole="button" accessibilityState={{expanded}} accessibilityLabel="Biografía" numberOfLines={expanded?undefined:3} style={styles.bio}>{profile.bio}</Text>{expanded&&<TouchableOpacity onPress={()=>setExpanded(false)}><Text style={styles.more}>Ver menos</Text></TouchableOpacity>}</>}
      </View>
-    </LinearGradient>
-    <View style={styles.tabBar}>{(['videos',...(visibility.show_likes?['liked']:[]),...(visibility.show_shares?['shared']:[])] as ('videos'|'liked'|'shared')[]).map(t=><TouchableOpacity key={t} onPress={()=>setTab(t)} accessibilityLabel={t==='videos'?'Publicaciones':t==='liked'?'Me gusta':'Compartidos'} accessibilityState={{selected:tab===t}} style={[styles.tabItem,tab===t&&styles.tabItemActive]}><Feather name={t==='videos'?'grid':t==='liked'?'heart':'share-2'} size={22} color={tab===t?'#FFF':'#9AA5AE'}/></TouchableOpacity>)}</View>
+    </View>
+    <View style={styles.tabBar}>{(['videos',...(visibility.show_likes?['liked']:[]),...(visibility.show_shares?['shared']:[])] as ('videos'|'liked'|'shared')[]).map(t=><TouchableOpacity key={t} onPress={()=>setTab(t)} accessibilityLabel={t==='videos'?'Publicaciones':t==='liked'?'Me gusta':'Compartidos'} accessibilityState={{selected:tab===t}} style={[styles.tabItem,tab===t&&styles.tabItemActive]}><Feather name={t==='videos'?'grid':t==='liked'?'heart':'share-2'} size={22} color={tab===t?v.ink:v.inactive}/></TouchableOpacity>)}</View>
     {!!error&&<Text style={styles.gridStateText}>{error}</Text>}
     <View style={styles.grid}>{shown.map(v=><TouchableOpacity key={v.id} style={[styles.gridItem,gridLayout.tile]} onPress={()=>router.push({pathname:'/publication',params:{id:v.id}})}><PublicationThumbnail item={v}/></TouchableOpacity>)}</View>
     {isLoading?<ActivityIndicator style={{margin:24}} color="#2F9A9F"/>:!shown.length&&!error?<View style={styles.center}><Text style={styles.gridStateText}>Todavía no hay publicaciones en esta sección.</Text></View>:null}
@@ -164,4 +167,4 @@ export default function UserProfileScreen() {
    </ScrollView>}
   </View>;
 }
-const styles=StyleSheet.create({container:{flex:1,backgroundColor:'#FFF'},header:{backgroundColor:'#000',flexDirection:'row',alignItems:'center',paddingHorizontal:12},backBtn:{width:44,height:44,alignItems:'center',justifyContent:'center'},center:{minHeight:180,justifyContent:'center',alignItems:'center',padding:24},profileSection:{flexDirection:'row',paddingHorizontal:16,paddingTop:8,paddingBottom:8,gap:16},accountButton:{width:88,minHeight:34,borderRadius:8,backgroundColor:'#161616',alignItems:'center',justifyContent:'center'},accountLabel:{color:'#FFF',fontSize:11},displayName:{color:'#FFF',fontSize:16,fontWeight:'700'},stats:{flexDirection:'row',gap:4,marginTop:12,marginBottom:4},stat:{flex:1,alignItems:'center',gap:2},statValue:{color:'#FFF',fontSize:16,fontWeight:'800'},statLabel:{color:'#F1F3F5',fontSize:10.5},bio:{color:'#FFF',fontSize:12,lineHeight:16},more:{color:'#FFF',fontSize:12,textDecorationLine:'underline'},nameRow:{flexDirection:'row',alignItems:'center',gap:8,minWidth:0},followBtn:{flexDirection:'row',alignItems:'center',gap:4,flexShrink:0,backgroundColor:'#FFFFFF24',borderWidth:1,borderColor:'#FFFFFF88',borderRadius:16,paddingHorizontal:8,minHeight:26,justifyContent:'center'},followBtnText:{color:'#FFF',fontSize:12,fontWeight:'600'},tabBar:{flexDirection:'row',backgroundColor:'#232F39'},tabItem:{flex:1,paddingVertical:8,alignItems:'center',justifyContent:'center'},tabItemActive:{borderBottomWidth:2,borderBottomColor:'#25F4EE'},grid:{flexDirection:'row',flexWrap:'wrap',gap:6,paddingHorizontal:10,paddingVertical:10},gridItem:{aspectRatio:.75,borderRadius:8,overflow:'hidden'},gridStateTitle:{fontSize:18,color:'#101010',fontWeight:'600'},gridStateText:{fontSize:14,color:'#737373',textAlign:'center',padding:16}});
+const styles=StyleSheet.create({container:{flex:1,backgroundColor:'#FFF'},header:{backgroundColor:'#000',flexDirection:'row',alignItems:'center',paddingHorizontal:12},backBtn:{width:44,height:44,alignItems:'center',justifyContent:'center'},center:{minHeight:180,justifyContent:'center',alignItems:'center',padding:24},profileSection:{flexDirection:'row',paddingHorizontal:16,paddingTop:8,paddingBottom:8,gap:16},accountButton:{width:84,minHeight:32,borderRadius:7,backgroundColor:v.white,alignItems:'center',justifyContent:'center'},accountLabel:{color:v.ink,fontSize:11},displayName:{color:v.ink,fontSize:16,fontWeight:'700'},stats:{flexDirection:'row',gap:4,marginTop:12,marginBottom:4},stat:{flex:1,alignItems:'center',gap:2},statValue:{color:v.ink,fontSize:16,fontWeight:'800'},statLabel:{color:v.label,fontSize:10.5},bio:{color:v.ink,fontSize:12,lineHeight:16},more:{color:v.ink,fontSize:12,textDecorationLine:'underline'},nameRow:{flexDirection:'row',alignItems:'center',gap:8,minWidth:0},followBtn:{flexDirection:'row',alignItems:'center',gap:4,flexShrink:0,backgroundColor:v.input,borderWidth:1,borderColor:v.border,borderRadius:16,paddingHorizontal:8,minHeight:26,justifyContent:'center'},followBtnText:{color:v.darkGray,fontSize:12,fontWeight:'600'},tabBar:{flexDirection:'row',backgroundColor:v.white,height:39,borderTopWidth:1,borderBottomWidth:1,borderColor:v.ink},tabItem:{flex:1,alignItems:'center',justifyContent:'center'},tabItemActive:{},grid:{flexDirection:'row',flexWrap:'wrap',gap:6,paddingHorizontal:10,paddingVertical:10},gridItem:{aspectRatio:.75,borderRadius:8,overflow:'hidden'},gridStateTitle:{fontSize:18,color:'#101010',fontWeight:'600'},gridStateText:{fontSize:14,color:'#737373',textAlign:'center',padding:16}});

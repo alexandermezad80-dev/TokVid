@@ -36,14 +36,14 @@ function RootLayoutNav() {
   const { loading } = useAuth();
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: palette.background, alignItems: "center", justifyContent: "center" }}>
-        <StatusBar style="dark"/><ActivityIndicator color="#FE2C55" size="large" />
+      <View style={{ flex: 1, backgroundColor: palette.media, alignItems: "center", justifyContent: "center" }}>
+        <StatusBar style="light"/><ActivityIndicator color="#FE2C55" size="large" />
       </View>
     );
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle:{backgroundColor:palette.background} }}>
+    <Stack screenOptions={{ headerShown: false, contentStyle:{backgroundColor:palette.media} }}>
       <>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="story-viewer" options={{ presentation: "fullScreenModal", animation: "fade" }} />
@@ -72,7 +72,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
-          <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.background }}>
+          <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.media }}>
             <KeyboardProvider statusBarTranslucent navigationBarTranslucent>
               <AuthProvider>
                 <RegistrationProvider><FollowProvider>

@@ -1,3 +1,4 @@
+import {referenceVisual as v} from "../constants/referenceVisual";
 import {Feather} from "@expo/vector-icons";
 import {LinearGradient} from "expo-linear-gradient";
 import {router,useLocalSearchParams,useFocusEffect} from "expo-router";
@@ -31,8 +32,8 @@ export default function ChatScreen(){
  const params=useLocalSearchParams<{conversationId:string;messageId?:string}>();
  const conversationId=typeof params.conversationId==="string"?params.conversationId:"";
  const {user}=useAuth(),chat=usePrivateChat(conversationId,user?.id),insets=useSafeAreaInsets(),window=useWindowDimensions();
- const dark=false,colors=chatPalette(dark);
- const styles={...baseStyles,emojiPanel:[baseStyles.emojiPanel,{backgroundColor:colors.card,borderWidth:1,borderColor:colors.border}],deleteButton:[baseStyles.deleteButton,{backgroundColor:colors.card}],screen:[baseStyles.screen,{backgroundColor:colors.background}],header:[baseStyles.header,{backgroundColor:"transparent"}],name:[baseStyles.name,{color:"#FFFFFF"}],white:[baseStyles.white,{color:colors.text}],composer:[baseStyles.composer,{backgroundColor:colors.background+"F2"}],field:[baseStyles.field,{backgroundColor:dark?"#25353F":"#E5EFEE"}],input:[baseStyles.input,{color:colors.text}],quote:[baseStyles.quote,{backgroundColor:colors.card}],notice:[baseStyles.notice,{backgroundColor:colors.card}],meta:[baseStyles.meta,{color:colors.secondary}],time:[baseStyles.time,{color:colors.secondary}],reaction:[baseStyles.reaction,{backgroundColor:colors.card}]};
+ const dark=false,colors={...chatPalette(dark),background:v.white,card:v.white,surface:v.input,text:v.ink,secondary:v.secondary,border:v.border};
+ const styles={...baseStyles,emojiPanel:[baseStyles.emojiPanel,{backgroundColor:colors.card,borderWidth:1,borderColor:colors.border}],deleteButton:[baseStyles.deleteButton,{backgroundColor:colors.card}],screen:[baseStyles.screen,{backgroundColor:colors.background}],header:[baseStyles.header,{backgroundColor:"transparent"}],name:[baseStyles.name,{color:"#FFFFFF"}],white:[baseStyles.white,{color:colors.text}],composer:[baseStyles.composer,{backgroundColor:colors.background+"F2"}],field:[baseStyles.field,{backgroundColor:dark?"#25353F":v.input}],input:[baseStyles.input,{color:colors.text}],quote:[baseStyles.quote,{backgroundColor:colors.card}],notice:[baseStyles.notice,{backgroundColor:colors.card}],meta:[baseStyles.meta,{color:colors.secondary}],time:[baseStyles.time,{color:colors.secondary}],reaction:[baseStyles.reaction,{backgroundColor:colors.card}]};
  const [focused,setFocused]=useState(false),[text,setText]=useState(""),[prefs,setPrefs]=useState<ChatPreferences>(DEFAULT_CHAT_PREFERENCES);
  const [bubbleSheet,setBubbleSheet]=useState(false);
  const [wallpaper,setWallpaper]=useState("none");
@@ -98,7 +99,7 @@ export default function ChatScreen(){
  if(!user)return null;
  return <KeyboardAvoidingView behavior="padding" enabled={focused} style={styles.screen}>
   <View ref={root} style={{flex:1}} onLayout={()=>root.current?.measureInWindow((_x,y,_w,height)=>setViewport({top:y,height}))} collapsable={false}>
-   <ReferenceHeader>
+   <ReferenceHeader variant="chat">
     <Pressable onPress={()=>router.replace({pathname:"/(tabs)/inbox",params:{tab:"messages"}})} style={styles.icon} accessibilityLabel="Volver a Mensajes"><Feather name="arrow-left" size={23} color="#FFFFFF"/></Pressable>
     <Pressable style={styles.person} onPress={()=>chat.other&&router.push({pathname:"/user-profile",params:{userId:chat.other.id}})} accessibilityLabel={`Ver perfil de ${name}`}>{chat.other?.avatar_url?<Image source={{uri:chat.other.avatar_url}} style={styles.avatar}/>:<View style={[styles.avatar,styles.initial]}><Text style={[styles.white,{color:"#FFFFFF"}]}>{name[0]?.toUpperCase()}</Text></View>}<Text numberOfLines={1} style={styles.name}>@{name}</Text></Pressable>
     <Pressable style={styles.icon} onPress={startCall} disabled={busy||!chat.other} accessibilityLabel="Llamada de voz"><Feather name="phone" size={21} color="#FFFFFF"/></Pressable>

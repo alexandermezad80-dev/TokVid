@@ -1,3 +1,5 @@
+> **Actualización visual en verificación —17 octubre 2026:** el usuario autorizó el ZIP válido de medidas y colores y corregir el destello blanco del branding. [Registro](docs/TOKVID_STEEL_VISUAL_REFRESH.md). APK 226 sigue siendo la última entrega hasta completar la nueva.
+
 # TokVid — continuar desde aquí
 
 Actualizado: **17 de octubre de2026 (UTC)**.
