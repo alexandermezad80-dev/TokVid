@@ -10,7 +10,7 @@ function load(file, name) {
 }
 const layout = load('commentVideoLayout.ts', 'commentVideoLayout');
 const viewport = load('keyboardSheetGeometry.ts', 'keyboardSheetGeometry');
-test('opening any keyboard leaves the 9:16 preview and sheet at exactly the same position',()=>{
+test('opening any keyboard leaves the 155:275 preview and sheet at exactly the same position',()=>{
  for(const width of [320,360,412,800])for(const height of [600,800,950]){
   const options={width,availableHeight:height,safeTop:24,bottomPadding:0,desiredSheetHeight:500};
   const rest=layout({...options,keyboardVisible:false});
@@ -19,8 +19,8 @@ test('opening any keyboard leaves the 9:16 preview and sheet at exactly the same
    const measured=viewport({viewportHeight:height,viewportTop:0,screenHeight:height,keyboardTop,safeTop:24,tabBarHeight:88});
    assert.equal(height-measured.keyboardInset,keyboardTop);
   }
-  assert.equal(rest.preview.width/rest.preview.height,9/16);
-  assert.equal(rest.preview.y,32);
+  assert.ok(Math.abs(rest.preview.width/rest.preview.height-155/275)<1e-10);
+  assert.equal(rest.preview.y,42);
   assert.ok(Math.abs(rest.preview.y+rest.preview.height+8+rest.sheetHeight-height)<0.001);
  }
 });
