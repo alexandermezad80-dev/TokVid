@@ -13,9 +13,9 @@ Fecha: 17 octubre 2026. **Rama aislada, NO integrada en desarrollo, NO APK emiti
 | Cabecera | h48; tirador32×4 a y6.5; pill desde x10.5/y12.5, h34; X blanca | Cabecera translúcida azul acero; recuento del servidor y cerrar originales conservados |
 | Barra teclado cerrado | y728–802, h74 | Franja azul acero translúcida, editor de38dp y avatar de28; respeta insets |
 | Pieza teclado abierto | y325 hasta teclado real y471.5, h146.5 | Geometría ligada a `viewport.keyboardInset`, sin tocar altura ni apariencia del teclado nativo |
-| Reacciones rápidas | y50–72, siete emojis de18 | Siete botones que insertan texto emoji en el borrador; no publican sin tocar Enviar |
+| Reacciones rápidas | y50–72, siete emojis de18 | Siete emojis decorativos, sin callbacks ni funciones inventadas hasta autorización explícita |
 | Campo abierto | y76–114, avatar28 y campo306×38 | Editor existente único, contador0/300, cursor celeste y placeholder14; conservado el foco en cambios de IME |
-| Herramientas | y118–144: imagen, sticker, @ y micrófono de20 | Cuatro botones visibles, `@` inserta mención textual; imagen/sticker/audio **deshabilitados explícitamente** al no estar especificado su backend |
+| Herramientas | y118–144: imagen, sticker, @ y micrófono de20 | Cuatro iconos visibles **deshabilitados explícitamente**, sin inventar acciones; sus funciones se definirán por separado |
 | Enviar abierto | 44×26, margen derecho10, flecha20 | Conserva el mismo handler de publicar/editar, habilita solo con texto y no ocupado |
 | Vidrio | azul acero `#4682B4` alpha38; borde `#C8E1F8` alpha50 | `BlurView` de Expo con intensidad90 + RGBA; **no equivale numéricamente a sigma24**: validar el efecto Android |
 | Cuerpo de comentarios | blanco, scroll propio | `FlatList` y diseño de cada fila sin cambios; oculto visualmente solo al desplegar teclado |
@@ -23,12 +23,13 @@ Fecha: 17 octubre 2026. **Rama aislada, NO integrada en desarrollo, NO APK emiti
 ## Regresiones que se deben prevenir
 
 - Se mantiene el **mismo `TextInput`**, sin duplicarlo entre estados abierto/cerrado, para no perder el foco.
+- **Todos los iconos nuevos de la fila de herramientas y las reacciones permanecen visuales e inactivos**. No insertar `@`, emojis, archivos ni iniciar grabación desde estos controles antes de que el usuario decida qué debe hacer cada uno.
 - No se modifican los handlers existentes `send`, `comments.publish`, `comments.edit`, `comments.remove`, `comments.like`, `comments.toggleThread` o la lectura/refresh de Supabase.
 - Al responder o editar, la fila de emojis se sustituye temporalmente por el control **Cancelar respuesta/edición** mientras el teclado esté abierto, para conservar esas acciones sin alterar los 38dp del campo.
 - No se toca el reproductor ni el video reducido. El mensaje del dispositivo «No se pudo reproducir el video» se debe auditar aparte antes de atribuirlo a esta modificación.
 - Se preserva el modal de opciones (Responder/Editar/Eliminar/Ocultar/Cancelar), avatares y diseño de filas.
 - Sin cambios en RLS, tablas, migraciones, autenticación, mensajería privada ni otros módulos.
-- No se simula que imagen, sticker o micrófono ya puedan adjuntar/guardar/grabar: solo apariencia deshabilitada hasta recibir especificaciones de permisos, almacenamiento, límites y servicio.
+- No se simula que imagen, sticker o micrófono ya puedan adjuntar/guardar/grabar: solo apariencia deshabilitada hasta recibir especificaciones de permisos, almacenamiento, límites y servicio. Lo mismo se aplica al icono `@` y a la franja de emojis: sin `onPress` funcional.
 
 ## Archivos previstos
 
