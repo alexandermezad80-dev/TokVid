@@ -1,19 +1,21 @@
-> **Corrección de fondos en curso —17 octubre2026:** el usuario pidió continuar. Se corrige escala intrínseca1080×2400 y tarjetas9:16 compactas de tres columnas, exclusivamente presentación. [Registro](docs/TOKVID_CHAT_WALLPAPER_FIX.md). Compilación/verificación pendientes; APK225 sigue siendo la última entregada hasta registrar la nueva.
-
 # TokVid — continuar desde aquí
 
-Actualizado: **16 de octubre de2026 (UTC)**.
+Actualizado: **17 de octubre de2026 (UTC)**.
 
 ## Entrega vigente y aprobación
 
 - Repositorio: [alexandermezad80-dev/TokVid](https://github.com/alexandermezad80-dev/TokVid).
 - Rama: **feature/feed-mini-video-avatar**. Conservar el código actual; no volver a main ni a una APK histórica.
-- **APK225:** código `835493d04515a6be43d0e2b840a3490a02ba56ed`, árbol `e036fb469c8a9dad406f90adcccf2519ab3a4fd0`.
-- [Descargar APK225](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38823328262/artifacts/12015177799): extraer ZIP e instalar `app-release.apk`.
-- [Compilación](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38823328262):135 pruebas aprobadas,0 fallos, TypeScript/prebuild/Android correctos; `BUILD SUCCESSFUL in 26m 6s`.
-- [Manifiesto](docs/continuity/APK_225_VERIFICATION.json). SHA256 APK: `b1003255476fae95c4ffb985840e28d0c65dee03438fd0ebe3b0e24b29779cda`.
-- [Mapa de fuentes225](https://github.com/alexandermezad80-dev/TokVid/actions/runs/38823328262/artifacts/12014139940). No usar otro mapa para diagnosticar esta APK.
-- **APK224 desaprobada por el usuario por el branding de inicio.** Prefiere el anterior; número exacto anterior y causa técnica sin confirmar. Registrado como nota, corrección pendiente. APK225 no cambia el branding ni significa aprobación física.
+- **APK 226:** código `9a162c843231958e4facf428a7e3fb7addae257b`, árbol `ef42c8df29b5126ec7f51475ff00145aade54370`.
+- [Descargar APK 226](https://github.com/alexandermezad80-dev/TokVid/actions/runs/39001106777/artifacts/12089588382): extraer ZIP e instalar `app-release.apk`.
+- [Compilación](https://github.com/alexandermezad80-dev/TokVid/actions/runs/39001106777): 135 pruebas aprobadas, 0 fallos, TypeScript/prebuild/Android correctos; `BUILD SUCCESSFUL in 26m 19s`.
+- [Manifiesto](docs/continuity/APK_226_VERIFICATION.json). SHA256 APK: `6f973866409bab2765b547a6448a8a1ddaa41d5c7ac8fd6e006d4bf0eb0afe51`.
+- [Mapa de fuentes 226](https://github.com/alexandermezad80-dev/TokVid/actions/runs/39001106777/artifacts/12089598314). No usar otro mapa para diagnosticar esta APK.
+- **APK 224 desaprobada por el usuario por el branding de inicio.** Corrección pendiente. APK 225 y 226 conservan ese arranque; la entrega no significa aprobación física.
+
+## Corrección puntual de fondos entregada en 226
+
+[Registro completo](docs/TOKVID_CHAT_WALLPAPER_FIX.md). Imagen local limitada al tamaño del contenedor, composición completa sin deformar en chat, miniatura y vista previa. Selector de tres columnas con tarjetas 9:16, ancho máximo 112 dp. Solo dos archivos de presentación modificados; teclado, funciones y preferencias conservados. Validación física pendiente.
 
 ## Cambios posteriores a224 autorizados y entregados en225
 
@@ -51,6 +53,6 @@ Migración **20261015005124_profile_visibility_activity_and_personal_inbox** apl
 
 ## Siguiente paso concreto
 
-Prueba física del usuario en Android: teclado normal/emojis en chat y edición de perfil, fuente grande, gestos/botones y áreas seguras; colores y contraste en pantallas/modales; compartir directo con apps instaladas; contadores/lecturas entre dos cuentas; tocar notificación versus avatar y privacidad de perfil visitante. Registrar observaciones sin rehacer funciones aprobadas. **physical_device_verified=false** hasta confirmación expresa.
+Primero, comparar Ondas, Menta y olas y Doodles en selector, vista previa y chat aplicado: composición completa y tarjetas compactas. Sigue pendiente la prueba física del usuario en Android: teclado normal/emojis en chat y edición de perfil, fuente grande, gestos/botones y áreas seguras; colores y contraste en pantallas/modales; compartir directo con apps instaladas; contadores/lecturas entre dos cuentas; tocar notificación versus avatar y privacidad de perfil visitante. Registrar observaciones sin rehacer funciones aprobadas. **physical_device_verified=false** hasta confirmación expresa.
 
-Consultar [handoff](docs/continuity/TOKVID_SESSION_HANDOFF.md), [requisitos](docs/requirements/TOKVID_MASTER_REQUIREMENTS.md) y [AGENTS.md](AGENTS.md). Historial: APK220 fue intermedia; APK224 incorporó paleta global y después quedó desaprobada por branding. APK225 añade los ajustes indicados; no corrige el arranque.
+Consultar [handoff](docs/continuity/TOKVID_SESSION_HANDOFF.md), [requisitos](docs/requirements/TOKVID_MASTER_REQUIREMENTS.md) y [AGENTS.md](AGENTS.md). Historial: APK220 fue intermedia; APK224 incorporó paleta global y después quedó desaprobada por branding. APK225 añade los ajustes de perfiles/relaciones; APK226 corrige la escala de fondos y compacta sus tarjetas. Ninguna corrige el arranque.

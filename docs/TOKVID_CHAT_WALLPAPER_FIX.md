@@ -22,4 +22,13 @@ No se modifican teclado, compositor, alturas del chat, mensajes, acciones de bor
 
 Ocho originales comprobados:1080×2400. Inspección del original Ondas coincide con la composición proporcionada. Cálculo de ajuste verificado en espacios de miniatura y de chat con/sin teclado: escala uniforme, imagen completa dentro de los límites. Validación sintáctica local de los dos archivos correcta.
 
-Ejecución local amplia:124 pruebas aprobadas; un archivo no pudo ejecutarse porque falta la dependencia local `@supabase/supabase-js`. CI debe ejecutar las135 pruebas con dependencias reales y TypeScript. Esta comprobación de código/geometría no equivale a renderizado nativo verificado. Compilación, enlace y checksum pendientes en este commit. Validación física pendiente: comparar Ondas, Menta y olas y Doodles en selector, vista previa y chat aplicado.
+Ejecución local amplia:124 pruebas aprobadas; un archivo no pudo ejecutarse porque falta la dependencia local `@supabase/supabase-js`. CI ejecutó las 135 pruebas con dependencias reales: todas aprobadas; TypeScript y prebuild Android aprobados. Esta comprobación de código/geometría no equivale a renderizado nativo verificado. APK 226 compilada correctamente: `BUILD SUCCESSFUL in 26m 19s`. Validación física pendiente: comparar Ondas, Menta y olas y Doodles en selector, vista previa y chat aplicado.
+
+
+## Entrega APK 226
+
+Código `9a162c843231958e4facf428a7e3fb7addae257b`, árbol `ef42c8df29b5126ec7f51475ff00145aade54370`, rama `feature/feed-mini-video-avatar`. [Compilación](https://github.com/alexandermezad80-dev/TokVid/actions/runs/39001106777) y [descarga APK 226](https://github.com/alexandermezad80-dev/TokVid/actions/runs/39001106777/artifacts/12089588382). Extraer el ZIP e instalar `app-release.apk`.
+
+SHA256 del APK: `6f973866409bab2765b547a6448a8a1ddaa41d5c7ac8fd6e006d4bf0eb0afe51`. [Mapa de fuentes del mismo binario](https://github.com/alexandermezad80-dev/TokVid/actions/runs/39001106777/artifacts/12089598314); [manifiesto completo](continuity/APK_226_VERIFICATION.json). No confundir el digest del ZIP con el del APK.
+
+Esta entrega contiene únicamente el ajuste visual de fondos sobre APK 225. No corrige el branding de inicio que el usuario rechazó ni implementa las nuevas observaciones de perfiles, videos o comentarios. `physical_device_verified=false`: las pruebas y la compilación no sustituyen comprobar las tres vistas en un teléfono.
