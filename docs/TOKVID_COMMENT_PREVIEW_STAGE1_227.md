@@ -7,7 +7,7 @@ Fecha: 17 octubre 2026. Alcance autorizado: **solo miniatura y desfase de video*
 - Rama de origen: `feature/feed-mini-video-avatar`.
 - HEAD de origen comprobado antes de editar: `a25ef9638cb6d4145cd117125578b69b5bbe7757`.
 - Rama de trabajo **aislada**: `fix/comments-preview-build227-stage1`.
-- **Límite importante:** el repositorio documenta hasta APK 226 y no contiene el manifiesto `APK_227_VERIFICATION.json`. La asociación exacta entre build 227 y SHA de origen **no está verificada**. No asumir que la APK 227 coincide con este HEAD hasta contrastar el enlace/run de Actions.
+- **APK 227 confirmada:** [GitHub Actions ejecución 39050681410](https://github.com/alexandermezad80-dev/TokVid/actions/runs/39050681410) corresponde al código `a25ef9638cb6d4145cd117125578b69b5bbe7757`, exactamente el HEAD de origen de esta rama. 135 pruebas, 0 fallos; TypeScript, Gradle y generación APK aprobados. El paquete APK original es [artefacto 12108250234](https://github.com/alexandermezad80-dev/TokVid/actions/runs/39050681410/artifacts/12108250234), SHA256 interno del APK `66f73fa066e891c2c46071d467e06aa70f2d61627285c7fbb58d54861085149f`. Corresponde a la APK sin corrección. El repositorio no contiene todavía un manifiesto específico 227.
 - Ninguna modificación de Supabase, RLS, autenticación, comentarios, compositor, cabecera, teclado, navegación, branding, reproductor, fuentes, disposición de filas o otras pantallas.
 - Sin build de Android: la rama separada no activa el workflow que escucha solo `feature/feed-mini-video-avatar`.
 
@@ -29,7 +29,7 @@ Fecha: 17 octubre 2026. Alcance autorizado: **solo miniatura y desfase de video*
 
 ## Prueba física requerida antes de etapa 2
 
-1. Confirmar commit/run exactos de la **build 227** antes de incorporar este trabajo a la rama que construye Android.
+1. Build 227 ya confirmada por commit/run. Generar una nueva APK desde el cambio aislado y verificar sus resultados automáticos; no confundirla con la 227 original.
 2. En Motorola G05 abrir comentarios desde cualquier video real: comprobar marco y video coincidentes, **x=102,5; y=42; ancho=155; alto=275; radio=16** (referencia 360×802).
 3. Comprobar aire de 8 dp y que se ven los cuatro bordes y el botón maximizar.
 4. Repetir con teclado cerrado/abierto varias veces: **miniatura inmóvil**. Cambiar de video y volver al feed sin salto ni video superpuesto.
