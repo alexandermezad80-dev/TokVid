@@ -13,7 +13,7 @@ Fecha: 17 octubre 2026. **Rama aislada, NO integrada en desarrollo, NO APK emiti
 | Cabecera | h48; tirador32×4 a y6.5; pill desde x10.5/y12.5, h34; X blanca | Cabecera translúcida azul acero; recuento del servidor y cerrar originales conservados |
 | Barra teclado cerrado | y728–802, h74 | Franja azul acero translúcida, editor de38dp y avatar de28; respeta insets |
 | Pieza teclado abierto | y325 hasta teclado real y471.5, h146.5 | Geometría ligada a `viewport.keyboardInset`, sin tocar altura ni apariencia del teclado nativo |
-| Reacciones rápidas | y50–72, siete emojis de18 | Siete emojis decorativos, sin callbacks ni funciones inventadas hasta autorización explícita |
+| Reacciones rápidas | y50–72, siete emojis de18 | Siete reacciones rápidas pulsables; insertan el mismo carácter Unicode que acepta el teclado Android en el campo original, sin abrir un teclado propio ni enviar el comentario |
 | Campo abierto | y76–114, avatar28 y campo306×38 | Editor existente único, contador0/300, cursor celeste y placeholder14; conservado el foco en cambios de IME |
 | Herramientas | y118–144: imagen, sticker, @ y micrófono de20 | Cuatro iconos visibles **deshabilitados explícitamente**, sin inventar acciones; sus funciones se definirán por separado |
 | Enviar abierto | 44×26, margen derecho10, flecha20 | Conserva el mismo handler de publicar/editar, habilita solo con texto y no ocupado |
@@ -23,13 +23,15 @@ Fecha: 17 octubre 2026. **Rama aislada, NO integrada en desarrollo, NO APK emiti
 ## Regresiones que se deben prevenir
 
 - Se mantiene el **mismo `TextInput`**, sin duplicarlo entre estados abierto/cerrado, para no perder el foco.
-- **Todos los iconos nuevos de la fila de herramientas y las reacciones permanecen visuales e inactivos**. No insertar `@`, emojis, archivos ni iniciar grabación desde estos controles antes de que el usuario decida qué debe hacer cada uno.
+- **Emojis nativos del teclado Android/Gboard siempre activos:** al cambiar de letras a la pestaña de emojis, el teclado del sistema sigue insertando caracteres en el `TextInput` original, y el panel glass se adapta a su altura real. No se reemplaza ni personaliza Gboard.
+- **Siete reacciones rápidas de la pieza de vidrio:** son una fila de UI por encima del teclado, distinta del panel de Gboard. El usuario autorizó expresamente mantenerlas activas: al tocarlas insertan su emoji Unicode en el mismo campo sin publicarlo ni alterar las funciones de comentarios.
+- **Solo los cuatro iconos nuevos sin función definida** (imagen, sticker, @, micrófono) permanecen visibles y deshabilitados hasta que el usuario defina su comportamiento.
 - No se modifican los handlers existentes `send`, `comments.publish`, `comments.edit`, `comments.remove`, `comments.like`, `comments.toggleThread` o la lectura/refresh de Supabase.
 - Al responder o editar, la fila de emojis se sustituye temporalmente por el control **Cancelar respuesta/edición** mientras el teclado esté abierto, para conservar esas acciones sin alterar los 38dp del campo.
 - No se toca el reproductor ni el video reducido. El mensaje del dispositivo «No se pudo reproducir el video» se debe auditar aparte antes de atribuirlo a esta modificación.
 - Se preserva el modal de opciones (Responder/Editar/Eliminar/Ocultar/Cancelar), avatares y diseño de filas.
 - Sin cambios en RLS, tablas, migraciones, autenticación, mensajería privada ni otros módulos.
-- No se simula que imagen, sticker o micrófono ya puedan adjuntar/guardar/grabar: solo apariencia deshabilitada hasta recibir especificaciones de permisos, almacenamiento, límites y servicio. Lo mismo se aplica al icono `@` y a la franja de emojis: sin `onPress` funcional.
+- No se simula que imagen, sticker o micrófono ya puedan adjuntar/guardar/grabar: solo apariencia deshabilitada hasta recibir especificaciones de permisos, almacenamiento, límites y servicio. El icono `@` permanece deshabilitado. La fila de siete emojis sí admite toque para introducir texto; el selector nativo de emojis del teclado continúa funcionando por separado.
 
 ## Archivos previstos
 
@@ -41,7 +43,7 @@ Fecha: 17 octubre 2026. **Rama aislada, NO integrada en desarrollo, NO APK emiti
 ## Validación
 
 - Inspección del diff frente a `1ccb9e7907a6bc72cf68c28e1bb6357cd1314237`, último HEAD al iniciar.
-- Casos unitarios declarados: cerrado h74; abierto h146.5 con teclado h330.5; cambios de Gboard/emoji; bottom safe; ventanas pequeñas; comprobación de handlers.
+- Casos unitarios declarados: cerrado h74; abierto h146.5 con teclado h330.5; cambios de Gboard/emoji; bottom safe; ventanas pequeñas; comprobación de handlers y de que los siete emojis insertan en el campo sin desactivar el IME nativo.
 - **Pendiente el resultado de CI completo y TypeScript; no asegurar éxito.**
 - **Pendiente probar Android real** el teclado normal y el de emojis, contenido blanco, scroll, respuesta/edición, envío y repetición abierta/cerrada. Requerida aprobación explícita antes de merge.
 - No ampliar a etapa4 ni cambios de backend sin validación específica.
