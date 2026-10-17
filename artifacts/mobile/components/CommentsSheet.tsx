@@ -54,7 +54,6 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
   const comments = useFeedComments(visible, videoId,undefined,focusCommentId);
   const listRef=useRef<FlatList<ListRow>>(null),focusScrolled=useRef<string|null>(null);
   const [text, setText] = useState("");
-  const [composerHeight,setComposerHeight]=useState(60);
   const [reply, setReply] = useState<FeedComment | null>(null);
   const [editing, setEditing] = useState<FeedComment | null>(null);
   const [actionComment, setActionComment] = useState<FeedComment | null>(null);
@@ -238,7 +237,7 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
         </View>
 
       </Animated.View>
-        <Animated.View onLayout={e=>setComposerHeight(e.nativeEvent.layout.height)}
+        <Animated.View
           style={[styles.composer, composerShape, viewport.keyboardVisible ? styles.composerKeyboard : styles.composerClosed,
             { position: "absolute", left: 0, right: 0,
               top: composerTop,
