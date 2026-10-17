@@ -8,9 +8,9 @@ const ts = require('typescript');
 const root = path.resolve(__dirname, '../../artifacts/mobile');
 const source = fs.readFileSync(path.join(root, 'lib/commentsGlassGeometry.ts'), 'utf8');
 const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
-const exports = {};
-vm.runInNewContext(js, { exports });
-const geometry = exports.commentsGlassGeometry;
+const moduleExports = {};
+vm.runInNewContext(js, { exports: moduleExports });
+const geometry = moduleExports.commentsGlassGeometry;
 const reference = (more = {}) => geometry({ fullHeight: 802, sheetTop: 325, keyboardInset: 0, safeBottom: 24, keyboardVisible: false, ...more });
 
 test('closed keyboard: comments header 48dp and glass bar y728/h74', () => {
