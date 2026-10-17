@@ -75,6 +75,9 @@ export default function VideoCard({
   const lastTap = useRef<number>(0);
   const singleTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Keep the existing feed container ref for playback integration and measurement tests.
+  // The mini-preview animation uses absolute screen coordinates; it does not remeasure the player.
+  const containerRef = useRef<View>(null);
   const videoFrame = useSharedValue({ left: 0, top: 0, width: SCREEN_WIDTH, height: Math.max(1,SCREEN_HEIGHT-bottomInset), borderRadius: 0 });
   const videoPresentation = useAnimatedStyle(() => ({ ...videoFrame.value }));
   useEffect(() => {
@@ -152,7 +155,7 @@ export default function VideoCard({
   }, []);
 
   return (
-    <Pressable onPress={handleTap} style={[styles.container,{width:SCREEN_WIDTH,height:SCREEN_HEIGHT}]}>
+    <Pressable ref={containerRef} onPress={handleTap} style={[styles.container,{width:SCREEN_WIDTH,height:SCREEN_HEIGHT}]}>
       <Animated.View style={[styles.videoSurface, videoPresentation]}>
       {isImage ? <Image source={{ uri: video.uri }} style={styles.video} resizeMode="contain" /> : <VideoView
         player={player}
