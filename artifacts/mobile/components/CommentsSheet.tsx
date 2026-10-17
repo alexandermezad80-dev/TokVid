@@ -16,6 +16,7 @@ import { useOverlayKeyboard } from "../hooks/useOverlayKeyboard";
 import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
 import { COMMENT_LIMIT, FeedComment, commentCapabilities, commentLength, commentTime } from "../lib/features/comments/model";
 import { commentVideoLayout, VideoPreviewFrame } from "../lib/commentVideoLayout";
+import { commentsGlassGeometry } from "../lib/commentsGlassGeometry";
 
 interface Props {
   visible: boolean; onClose: () => void; videoId: string;
@@ -167,9 +168,10 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
   const sheetTop = showVideoPreview ? preview.y + preview.height + 8 : viewport.fullHeight - desiredSheetHeight;
   // Keep the frame and header pinned at the same screen Y while the IME changes
   // height (including Gboard letters -> emojis). Never resize the video here.
-  const keyboardGlassHeight = Math.max(0, viewport.fullHeight - viewport.keyboardInset - sheetTop);
-  const closedComposerHeight = Math.max(74, viewport.insets.bottom + 50);
-  const keyboardComposerHeight = Math.max(0, keyboardGlassHeight - 48);
+  const { keyboardGlassHeight, closedComposerHeight, keyboardComposerHeight, composerTop, composerHeight: glassComposerHeight } =
+    commentsGlassGeometry({ fullHeight: viewport.fullHeight, sheetTop,
+      keyboardInset: viewport.keyboardInset, safeBottom: viewport.insets.bottom,
+      keyboardVisible: viewport.keyboardVisible });
   const canSend = !!text.trim() && !busy;
   const appendToDraft = (fragment: string) => {
     if (busy) return;
@@ -240,8 +242,8 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
         <Animated.View onLayout={e=>setComposerHeight(e.nativeEvent.layout.height)}
           style={[styles.composer, composerShape, viewport.keyboardVisible ? styles.composerKeyboard : styles.composerClosed,
             { position: "absolute", left: 0, right: 0,
-              top: viewport.keyboardVisible ? sheetTop + 48 : viewport.fullHeight - closedComposerHeight,
-              height: viewport.keyboardVisible ? keyboardComposerHeight : closedComposerHeight,
+              top: composerTop,
+              height: glassComposerHeight,
               paddingLeft: viewport.keyboardVisible ? 0 : viewport.insets.left,
               paddingRight: viewport.keyboardVisible ? 0 : viewport.insets.right }]}>
           {!viewport.keyboardVisible && <BlurView pointerEvents="none" intensity={90} tint="light" experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />}
