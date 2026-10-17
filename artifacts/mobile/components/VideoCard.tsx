@@ -75,21 +75,17 @@ export default function VideoCard({
   const lastTap = useRef<number>(0);
   const singleTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const containerRef = useRef<View>(null);
   const videoFrame = useSharedValue({ left: 0, top: 0, width: SCREEN_WIDTH, height: Math.max(1,SCREEN_HEIGHT-bottomInset), borderRadius: 0 });
   const videoPresentation = useAnimatedStyle(() => ({ ...videoFrame.value }));
   useEffect(() => {
-    let active = true;
     if (previewFrame && isActive) {
-      containerRef.current?.measureInWindow((x, y) => {
-        if (!active) return;
-        videoFrame.value = withTiming({ left: previewFrame.x - x, top: previewFrame.y - y,
-          width: previewFrame.width, height: previewFrame.height, borderRadius: 20 }, { duration:220,easing:Easing.out(Easing.cubic) });
-      });
+      // Feed cells are full-screen stages. Do not subtract measureInWindow()
+      // from the separate Android Modal window: that caused a ~35 dp shift.
+      videoFrame.value = withTiming({ left: previewFrame.x, top: previewFrame.y,
+        width: previewFrame.width, height: previewFrame.height, borderRadius: 16 }, { duration:220,easing:Easing.out(Easing.cubic) });
     } else {
       videoFrame.value = withTiming({ left: 0, top: 0, width: SCREEN_WIDTH, height: Math.max(1,SCREEN_HEIGHT-bottomInset), borderRadius: 0 }, { duration:220,easing:Easing.out(Easing.cubic) });
     }
-    return () => { active = false; };
   }, [previewFrame?.x, previewFrame?.y, previewFrame?.width, previewFrame?.height, isActive, videoFrame,SCREEN_WIDTH,SCREEN_HEIGHT,bottomInset]);
 
   const player = useVideoPlayer(isImage ? null : video.uri, (p) => {
@@ -156,7 +152,7 @@ export default function VideoCard({
   }, []);
 
   return (
-    <Pressable ref={containerRef} onPress={handleTap} style={[styles.container,{width:SCREEN_WIDTH,height:SCREEN_HEIGHT}]}>
+    <Pressable onPress={handleTap} style={[styles.container,{width:SCREEN_WIDTH,height:SCREEN_HEIGHT}]}>
       <Animated.View style={[styles.videoSurface, videoPresentation]}>
       {isImage ? <Image source={{ uri: video.uri }} style={styles.video} resizeMode="contain" /> : <VideoView
         player={player}
