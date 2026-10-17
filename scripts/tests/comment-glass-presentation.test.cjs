@@ -52,6 +52,9 @@ test('UI uses glass, preserves comment actions, and declares unimplemented media
     'comments.publish(sentText', 'comments.edit(editing, sentText)', 'disabled style={styles.tool}']) {
     assert.ok(ui.includes(snippet), 'Missing invariant: ' + snippet);
   }
+  assert.ok(!ui.includes('appendToDraft'), 'New icons may not invent actions');
+  assert.ok(ui.includes('accessibilityLabel="Menciones: función pendiente"'), '@ icon stays disabled');
+  assert.ok(ui.includes('<View key={emoji} style={styles.emojiItem}>'), 'Reaction strip stays presentation-only');
   assert.equal((ui.match(/<TextInput /g) || []).length, 1, 'one editor keeps focus across keyboard changes');
   const transpiled = ts.transpileModule(ui, { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2020 }, reportDiagnostics: true });
   assert.equal((transpiled.diagnostics || []).filter(d => d.category === ts.DiagnosticCategory.Error).length, 0,
