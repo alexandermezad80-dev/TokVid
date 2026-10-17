@@ -171,11 +171,6 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
       keyboardInset: viewport.keyboardInset, safeBottom: viewport.insets.bottom,
       keyboardVisible: viewport.keyboardVisible });
   const canSend = !!text.trim() && !busy;
-  const appendToDraft = (fragment: string) => {
-    if (busy) return;
-    setText(previous => Array.from(previous + fragment).slice(0, COMMENT_LIMIT).join(""));
-    input.current?.focus();
-  };
   useEffect(() => {
     onPreviewFrame?.(visible && showVideoPreview ? { ...preview, y: preview.y + viewport.viewportTop } : null);
   }, [visible, showVideoPreview, preview.x, preview.y, preview.width, preview.height, viewport.viewportTop, onPreviewFrame]);
@@ -254,7 +249,7 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
               <Text style={styles.composerLabel}>{editing ? "Editando comentario · Cancelar" : "Respondiendo · Cancelar"}</Text>
             </Pressable>
           </View> : <View style={styles.emojiRow}>
-            {["❤️", "😂", "😍", "😮", "😢", "👍", "🔥"].map(emoji => <Pressable key={emoji} accessibilityRole="button" accessibilityLabel={`Insertar ${emoji} en comentario`} disabled={busy} onPress={() => appendToDraft(emoji)} style={styles.emojiItem}><Text style={styles.emojiText}>{emoji}</Text></Pressable>)}
+            {["❤️", "😂", "😍", "😮", "😢", "👍", "🔥"].map(emoji => <View key={emoji} style={styles.emojiItem}><Text style={styles.emojiText}>{emoji}</Text></View>)}
           </View>)}
           <Animated.View style={[styles.editor, editorShape, viewport.keyboardVisible ? styles.editorKeyboard : styles.editorClosed]}>
             <Avatar uri={profile?.avatar_url} username={profile?.username} small />
@@ -274,7 +269,7 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
           {viewport.keyboardVisible && <View style={styles.toolsRow}>
             <Pressable accessibilityRole="button" accessibilityLabel="Imagen: adjuntos a comentarios pendientes" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="image" size={20} color="rgba(255,255,255,0.60)" /></Pressable>
             <Pressable accessibilityRole="button" accessibilityLabel="Sticker: adjuntos a comentarios pendientes" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="smile" size={20} color="rgba(255,255,255,0.60)" /></Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Insertar arroba" disabled={busy} onPress={() => appendToDraft("@")} style={styles.tool}><Text style={styles.atIcon}>@</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Menciones: función pendiente" accessibilityState={{disabled:true}} disabled style={styles.tool}><Text style={styles.atIcon}>@</Text></Pressable>
             <Pressable accessibilityRole="button" accessibilityLabel="Micrófono: audio en comentarios pendiente" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="mic" size={20} color="rgba(255,255,255,0.60)" /></Pressable>
             <View style={styles.toolSpacer} />
             <Pressable accessibilityRole="button" accessibilityLabel={editing ? "Guardar cambios" : "Publicar comentario"} disabled={!canSend} onPress={() => { void send(); }} style={[styles.sendKeyboard, { backgroundColor: canSend ? "#4682B4" : "rgba(70,130,180,0.60)" }]}>
