@@ -161,7 +161,7 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
   const bottomPadding=viewport.keyboardVisible?0:viewport.insets.bottom;
   const desiredSheetHeight=Math.max(0,viewport.fullHeight-Math.max(0,viewport.insets.top-viewport.viewportTop)-12);
   const previewLayout=commentVideoLayout({width,availableHeight:viewport.fullHeight,
-    safeTop:Math.max(0,viewport.insets.top-viewport.viewportTop),safeLeft:viewport.insets.left,safeRight:viewport.insets.right,
+    safeTop:viewport.insets.top,viewportTop:viewport.viewportTop,safeLeft:viewport.insets.left,safeRight:viewport.insets.right,
     bottomPadding:0,desiredSheetHeight,keyboardVisible:false});
   const sheetHeight = showVideoPreview ? previewLayout.sheetHeight : desiredSheetHeight;
   const preview = previewLayout.preview;
@@ -203,7 +203,7 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
       <Pressable accessibilityLabel="Cerrar comentarios" onPress={close} style={StyleSheet.absoluteFill} />
       {showVideoPreview && preview.height > 0 && <Pressable accessibilityRole="button" accessibilityLabel="Volver al video completo" onPress={close}
         style={[styles.videoPreview, { left: preview.x, top: preview.y, width: preview.width, height: preview.height }]}>
-        <View style={styles.expandVideo}><Feather name="maximize-2" size={13} color="#fff" /></View>
+        <View style={styles.expandVideo}><Feather name="maximize-2" size={10} color="#fff" /></View>
       </Pressable>}
       <Animated.View style={[styles.sheet, sheetShape, { height: sheetHeight }]}>
         <View accessibilityElementsHidden={!!actionComment} importantForAccessibility={actionComment ? "no-hide-descendants" : "auto"} style={styles.panelBody}>
@@ -242,8 +242,8 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
 
 const styles = StyleSheet.create({
   viewport: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.28)" },
-  videoPreview: { position: "absolute", borderRadius: 20, borderWidth: 1, borderColor: "rgba(255,255,255,0.24)", overflow: "hidden" },
-  expandVideo: { position: "absolute", top: 5, right: 5, width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(0,0,0,0.38)", alignItems: "center", justifyContent: "center" },
+  videoPreview: { position: "absolute", borderRadius: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.40)", overflow: "hidden" },
+  expandVideo: { position: "absolute", top: 3.5, right: 3, width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
   sheet: { width: "100%", overflow: "hidden", borderTopWidth: 1, borderColor: "rgba(0,242,254,0.28)" },
   panelBody: { flex: 1, backgroundColor: palette.background },
   headerGlass: { overflow: "hidden", borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "rgba(255,255,255,0.08)" },
