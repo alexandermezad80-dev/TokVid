@@ -1,3 +1,5 @@
+> **Corrección de fondos en curso —17 octubre2026:** el usuario pidió continuar. Se corrige escala intrínseca1080×2400 y tarjetas9:16 compactas de tres columnas, exclusivamente presentación. [Registro](docs/TOKVID_CHAT_WALLPAPER_FIX.md). Compilación/verificación pendientes; APK225 sigue siendo la última entregada hasta registrar la nueva.
+
 # TokVid — continuar desde aquí
 
 Actualizado: **16 de octubre de2026 (UTC)**.

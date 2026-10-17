@@ -3033,3 +3033,13 @@ El [registro de fase4](../TOKVID_PHASE_4.md) reúne las capturas, cuatro documen
 El usuario pidió usar la misma lógica de colores en todas las UI de TokVid. Se unifican superficies blancas, texto oscuro, botones negros, encabezados gris–turquesa y acentos de marca; fondos de medios, tab bar y zonas negras explícitamente aprobadas se conservan. No cambia Auth/OTP, servicios LIVE, rutas ni acciones por este ajuste visual. Ver la matriz de pantallas y límites en [fase4](../TOKVID_PHASE_4.md).
 
 Entrega APK#224, commit `e7f8309ca1d820d467f8ad8fee7dde8e2b468dbb`. Las opciones preparadas siguen sin servicios financieros/QR/eliminación de cuenta activos. El texto «Solange» solo corresponde a su cuenta, no a todos los usuarios. El contenido compacto anterior fue aprobado; esta APK y el teclado requieren confirmación física. [Manifiesto](../continuity/APK_224_VERIFICATION.json).
+
+
+## Corrección puntual de fondos del chat — 17 octubre2026
+
+El usuario reportó que los fondos seguían recortados y enormes en Detalles y en el chat. Tras pedir continuar, se corrige exclusivamente su presentación conforme a las capturas1000176560 (defecto) y1000173452 (referencia).
+
+- Imagen local1080×2400 limitada explícitamente al ancho/alto del contenedor y `contain`, conservando composición completa sin deformación ni zoom. La misma implementación sirve para chat, miniatura y vista previa.
+- Selector: tres columnas, tarjetas9:16 compactas, ancho máximo112dp (alto máximo~199dp), con selección y nombres actuales. Esta referencia sustituye el tamaño provisional72×160.
+- No se cambian las funciones de mensajería privada ni teclado/compositor. No se aplican a este chat las nuevas reglas propuestas para comentarios del feed.
+- [Diagnóstico, cambios y verificación](../TOKVID_CHAT_WALLPAPER_FIX.md). Implementado en verificación; no declarar validación física por compilar.
