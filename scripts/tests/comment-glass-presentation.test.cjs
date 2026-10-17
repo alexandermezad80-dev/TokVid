@@ -52,9 +52,13 @@ test('UI uses glass, preserves comment actions, and declares unimplemented media
     'comments.publish(sentText', 'comments.edit(editing, sentText)', 'disabled style={styles.tool}']) {
     assert.ok(ui.includes(snippet), 'Missing invariant: ' + snippet);
   }
-  assert.ok(!ui.includes('appendToDraft'), 'New icons may not invent actions');
   assert.ok(ui.includes('accessibilityLabel="Menciones: función pendiente"'), '@ icon stays disabled');
-  assert.ok(ui.includes('<View key={emoji} style={styles.emojiItem}>'), 'Reaction strip stays presentation-only');
+  assert.ok(ui.includes('disabled style={styles.tool}'), 'New media icons stay disabled');
+  assert.ok(ui.includes('onPress={() => insertQuickEmoji(emoji)}'), 'Seven quick Unicode emojis must be tappable');
+  assert.ok(ui.includes('Array.from(previous + emoji).slice(0, COMMENT_LIMIT).join("")'), 'Quick emoji respects existing 300 character limit');
+  assert.ok(ui.includes('input.current?.focus()'), 'Quick emoji uses original focused input');
+  assert.ok(ui.includes('onChangeText={value => setText(Array.from(value).slice(0, COMMENT_LIMIT).join(""))}'), 'Native keyboard and Gboard emojis still type normally');
+  assert.ok(!ui.includes('showSoftInputOnFocus={false}'), 'Never block the native emoji keyboard');
   assert.equal((ui.match(/<TextInput /g) || []).length, 1, 'one editor keeps focus across keyboard changes');
   const transpiled = ts.transpileModule(ui, { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2020 }, reportDiagnostics: true });
   assert.equal((transpiled.diagnostics || []).filter(d => d.category === ts.DiagnosticCategory.Error).length, 0,
