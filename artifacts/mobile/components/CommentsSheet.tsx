@@ -171,6 +171,14 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
       keyboardInset: viewport.keyboardInset, safeBottom: viewport.insets.bottom,
       keyboardVisible: viewport.keyboardVisible });
   const canSend = !!text.trim() && !busy;
+  // The OS keyboard (including Gboard's emoji panel) keeps inserting through
+  // TextInput.onChangeText. The seven quick reactions insert the same Unicode
+  // characters into that existing field; they do not replace the native IME.
+  const insertQuickEmoji = (emoji: string) => {
+    if (busy) return;
+    setText(previous => Array.from(previous + emoji).slice(0, COMMENT_LIMIT).join(""));
+    input.current?.focus();
+  };
   useEffect(() => {
     onPreviewFrame?.(visible && showVideoPreview ? { ...preview, y: preview.y + viewport.viewportTop } : null);
   }, [visible, showVideoPreview, preview.x, preview.y, preview.width, preview.height, viewport.viewportTop, onPreviewFrame]);
@@ -249,7 +257,7 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
               <Text style={styles.composerLabel}>{editing ? "Editando comentario · Cancelar" : "Respondiendo · Cancelar"}</Text>
             </Pressable>
           </View> : <View style={styles.emojiRow}>
-            {["❤️", "😂", "😍", "😮", "😢", "👍", "🔥"].map(emoji => <View key={emoji} style={styles.emojiItem}><Text style={styles.emojiText}>{emoji}</Text></View>)}
+            {["❤️", "😂", "😍", "😮", "😢", "👍", "🔥"].map(emoji => <Pressable key={emoji} accessibilityRole="button" accessibilityLabel={`Añadir emoji ${emoji} al comentario`} disabled={busy} onPress={() => insertQuickEmoji(emoji)} style={styles.emojiItem}><Text style={styles.emojiText}>{emoji}</Text></Pressable>)}
           </View>)}
           <Animated.View style={[styles.editor, editorShape, viewport.keyboardVisible ? styles.editorKeyboard : styles.editorClosed]}>
             <Avatar uri={profile?.avatar_url} username={profile?.username} small />
