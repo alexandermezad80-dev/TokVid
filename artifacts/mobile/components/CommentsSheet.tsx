@@ -69,9 +69,9 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
   useEffect(() => { selectionSequence.current++; setText(""); setReply(null); setEditing(null); setActionComment(null); setActionAnchor(null); savedDraft.current = null; }, [context]);
   useEffect(() => { if (!visible) { selectionSequence.current++; setActionComment(null); setActionAnchor(null); } }, [visible]);
   useEffect(() => { phase.value = withTiming(viewport.keyboardVisible ? 1 : 0, {duration:220,easing:Easing.out(Easing.cubic)}); }, [viewport.keyboardVisible, phase]);
-  const sheetShape = useAnimatedStyle(() => { const p = Math.max(0, Math.min(1, phase.value)); return { borderTopLeftRadius: 24, borderTopRightRadius: 24 }; });
+  const sheetShape = useAnimatedStyle(() => ({ borderTopLeftRadius: 24, borderTopRightRadius: 24 }));
   const editorShape = useAnimatedStyle(() => { const p = Math.max(0, Math.min(1, phase.value)); return { borderRadius: 18 - 4 * p, height: 38 }; });
-  const composerShape = useAnimatedStyle(() => { const p = Math.max(0, Math.min(1, phase.value)); return { paddingTop: 0 }; });
+  const composerShape = useAnimatedStyle(() => ({ paddingTop: 0 }));
   const dismissActions = () => { selectionSequence.current++; setActionComment(null); setActionAnchor(null); };
   const close = () => { dismissActions(); Keyboard.dismiss(); onClose(); };
   backHandler.current = () => actionComment ? dismissActions() : close();
@@ -158,7 +158,6 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
     safeLeft: viewport.insets.left, safeRight: viewport.insets.right,
     menuHeight: Math.max(actionMenuHeight, actions.length * 48 * Math.max(1, fontScale) + 8),
   }) : null;
-  const bottomPadding=viewport.keyboardVisible?0:viewport.insets.bottom;
   const desiredSheetHeight=Math.max(0,viewport.fullHeight-Math.max(0,viewport.insets.top-viewport.viewportTop)-12);
   const previewLayout=commentVideoLayout({width,availableHeight:viewport.fullHeight,
     safeTop:viewport.insets.top,viewportTop:viewport.viewportTop,safeLeft:viewport.insets.left,safeRight:viewport.insets.right,
@@ -168,7 +167,7 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
   const sheetTop = showVideoPreview ? preview.y + preview.height + 8 : viewport.fullHeight - desiredSheetHeight;
   // Keep the frame and header pinned at the same screen Y while the IME changes
   // height (including Gboard letters -> emojis). Never resize the video here.
-  const { keyboardGlassHeight, closedComposerHeight, keyboardComposerHeight, composerTop, composerHeight: glassComposerHeight } =
+  const { keyboardGlassHeight, composerTop, composerHeight: glassComposerHeight } =
     commentsGlassGeometry({ fullHeight: viewport.fullHeight, sheetTop,
       keyboardInset: viewport.keyboardInset, safeBottom: viewport.insets.bottom,
       keyboardVisible: viewport.keyboardVisible });
