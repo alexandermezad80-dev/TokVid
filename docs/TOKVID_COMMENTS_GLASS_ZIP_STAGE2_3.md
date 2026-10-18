@@ -13,7 +13,7 @@ Fecha: 17 octubre 2026. **Rama aislada, NO integrada en desarrollo, NO APK emiti
 | Cabecera | h48; tirador32×4 a y6.5; pill desde x10.5/y12.5, h34; X blanca | Cabecera translúcida azul acero; recuento del servidor y cerrar originales conservados |
 | Barra teclado cerrado | y728–802, h74 | Franja azul acero translúcida, editor de38dp y avatar de28; respeta insets |
 | Pieza teclado abierto | y325 hasta teclado real y471.5, h146.5 | Geometría ligada a `viewport.keyboardInset`, sin tocar altura ni apariencia del teclado nativo |
-| Reacciones rápidas | y50–72, siete emojis de18 | Siete reacciones rápidas pulsables; insertan el mismo carácter Unicode que acepta el teclado Android en el campo original, sin abrir un teclado propio ni enviar el comentario |
+| Reacciones rápidas | y50–72, siete emojis de18 | Siete reacciones rápidas exactamente **😂 😍 😮 😢 🔥 👏 ❤️**, en ese orden visual. Insertan el carácter Unicode del teclado Android en el campo original, sin teclado propio ni envío automático |
 | Campo abierto | y76–114, avatar28 y campo306×38 | Editor existente único, contador0/300, cursor celeste y placeholder14; conservado el foco en cambios de IME |
 | Herramientas | y118–144: imagen, sticker, @ y micrófono de20 | Cuatro iconos visibles **deshabilitados explícitamente**, sin inventar acciones; sus funciones se definirán por separado |
 | Enviar abierto | 44×26, margen derecho10, flecha20 | Conserva el mismo handler de publicar/editar, habilita solo con texto y no ocupado |
@@ -27,7 +27,7 @@ Fecha: 17 octubre 2026. **Rama aislada, NO integrada en desarrollo, NO APK emiti
 - **Siete reacciones rápidas de la pieza de vidrio:** son una fila de UI por encima del teclado, distinta del panel de Gboard. El usuario autorizó expresamente mantenerlas activas: al tocarlas insertan su emoji Unicode en el mismo campo sin publicarlo ni alterar las funciones de comentarios.
 - **Solo los cuatro iconos nuevos sin función definida** (imagen, sticker, @, micrófono) permanecen visibles y deshabilitados hasta que el usuario defina su comportamiento.
 - No se modifican los handlers existentes `send`, `comments.publish`, `comments.edit`, `comments.remove`, `comments.like`, `comments.toggleThread` o la lectura/refresh de Supabase.
-- Al responder o editar, la fila de emojis se sustituye temporalmente por el control **Cancelar respuesta/edición** mientras el teclado esté abierto, para conservar esas acciones sin alterar los 38dp del campo.
+- Al responder o editar, **se conservan los siete emojis en su fila** y se mantienen accesibles los controles existentes para cancelar respuesta/edición. No reemplazar la fila de emojis por otra interfaz.
 - No se toca el reproductor ni el video reducido. El mensaje del dispositivo «No se pudo reproducir el video» se debe auditar aparte antes de atribuirlo a esta modificación.
 - Se preserva el modal de opciones (Responder/Editar/Eliminar/Ocultar/Cancelar), avatares y diseño de filas.
 - Sin cambios en RLS, tablas, migraciones, autenticación, mensajería privada ni otros módulos.
@@ -51,3 +51,14 @@ Fecha: 17 octubre 2026. **Rama aislada, NO integrada en desarrollo, NO APK emiti
 ## Próximo paso
 
 Revisar CI de `verify-comments-glass.yml`, resolver cualquier error **en esta rama** y no integrarla hasta obtener resultados verdes y aprobación del usuario. Comparar captura del Motorola G05 con tres capturas del ZIP.
+
+## Correcciones revisadas contra las dos imágenes anotadas por el usuario
+
+- Los cuadros oscuros de la captura pertenecen al teclado real, no a la aplicación: el teclado Gboard no se toca.
+- Los círculos naranjas anotados son la **foto/avatar del usuario** tanto con teclado cerrado como abierto, 28 dp, no un placeholder fijo.
+- El estado vacío de fondo blanco es solo una muestra de la presentación: los comentarios existentes no se suprimen ni se rediseñan.
+- Marco del video/minimización aprobado por el usuario en APK **229**: **no editar** `VideoCard.tsx` ni `commentVideoLayout.ts` en este PR.
+- Se evitó la superposición de dos capas de tinte en cabecera al abrir teclado. La equivalencia de desenfoque Android con sigma24 sigue pendiente de validación física.
+- Teclado cerrado: píldora x8..351 (343×38), avatar x17, texto desde x55,5 y flecha centrada x327,5.
+- Teclado abierto: 7 emojis y50..72, campo y76..114, herramientas y118..144; teclado real inicia y146,5 de la pieza en referencia.
+- El cierre del teclado después de un envío confirmado sigue usando `input.current?.blur()` y `Keyboard.dismiss()` originales; no se altera su función.
