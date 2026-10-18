@@ -11,7 +11,7 @@ const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind
 const moduleExports = {};
 vm.runInNewContext(js, { exports: moduleExports });
 const geometry = moduleExports.commentsGlassGeometry;
-const reference = (more = {}) => geometry({ fullHeight: 802, sheetTop: 325, keyboardInset: 0, safeBottom: 24, keyboardVisible: false, ...more });
+const reference = (more = {}) => geometry({ fullHeight: 802, availableHeight: 802, sheetTop: 325, safeBottom: 24, keyboardVisible: false, ...more });
 
 test('closed keyboard: comments header 48dp and glass bar y728/h74', () => {
   const a = reference();
@@ -20,7 +20,7 @@ test('closed keyboard: comments header 48dp and glass bar y728/h74', () => {
   assert.equal(a.composerHeight, 74);
 });
 test('open keyboard: glass runs y325 to y471.5 and composer follows header', () => {
-  const a = reference({ keyboardVisible: true, keyboardInset: 330.5 });
+  const a = reference({ keyboardVisible: true, availableHeight: 471.5 });
   assert.equal(a.keyboardGlassHeight, 146.5);
   assert.equal(a.composerTop, 373);
   assert.equal(a.composerHeight, 98.5);
@@ -32,22 +32,27 @@ test('open keyboard: glass runs y325 to y471.5 and composer follows header', () 
 });
 test('different Gboard/emoji keyboard heights always align to IME top', () => {
   for (const inset of [250, 300, 330.5, 360, 400]) {
-    const a = reference({ keyboardVisible: true, keyboardInset: inset });
+    const a = reference({ keyboardVisible: true, availableHeight: 802 - inset });
     assert.equal(a.composerTop + a.composerHeight, 802 - inset);
   }
 });
+test('modal-local keyboard top stays aligned when the stable window includes system bars', () => {
+  const a = reference({ sheetTop: 301, availableHeight: 447.5, keyboardVisible: true });
+  assert.equal(a.keyboardGlassHeight, 146.5);
+  assert.equal(a.composerTop + a.composerHeight, 447.5);
+});
 test('larger safe-bottom inset grows only the closed composer', () => {
   assert.equal(reference({ safeBottom: 36 }).composerHeight, 86);
-  assert.equal(reference({ safeBottom: 36, keyboardInset: 330.5, keyboardVisible: true }).composerHeight, 98.5);
+  assert.equal(reference({ safeBottom: 36, availableHeight: 471.5, keyboardVisible: true }).composerHeight, 98.5);
 });
 test('no negative size with unusually tall keyboards or shorter screens', () => {
-  const a = reference({ fullHeight: 400, sheetTop: 325, keyboardInset: 250, keyboardVisible: true });
+  const a = reference({ fullHeight: 400, availableHeight: 150, sheetTop: 325, keyboardVisible: true });
   assert.equal(a.keyboardGlassHeight, 0);
   assert.equal(a.composerHeight, 0);
 });
 test('UI uses glass, preserves comment actions, and declares unimplemented media controls disabled', () => {
   const ui = fs.readFileSync(path.join(root, 'components/CommentsSheet.tsx'), 'utf8');
-  for (const snippet of ['styles.headerGlass', 'styles.openSheetGlass', 'styles.emojiRow',
+  for (const snippet of ['styles.headerGlass', 'styles.openSheetGlass', 'intensity={24} tint="default"', 'styles.emojiRow',
     'styles.toolsRow', 'styles.editorKeyboard', 'comments.like(row)', 'comments.remove(row)',
     'comments.publish(sentText', 'comments.edit(editing, sentText)', 'disabled style={styles.tool}']) {
     assert.ok(ui.includes(snippet), 'Missing invariant: ' + snippet);
