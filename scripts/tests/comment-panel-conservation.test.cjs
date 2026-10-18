@@ -16,15 +16,15 @@ test('closed/open native editor retains draft and quick emojis; confirmed send c
   assert.equal(h.input().props.value, 'Hola❤️');
   assert.equal(h.nodes().filter(n => n.type === 'TextInput').length, 1);
   findLabel(h, 'Publicar comentario').props.onPress(); await tick(); h.render();
-  assert.deepEqual(h.calls.publish.map(a => Array.from(a)), [['Hola❤️', null]]);
+  assert.deepEqual(h.calls.publish.map(a => Array.from(a).slice(0,2)), [['Hola❤️', null]]);
   assert.equal(h.input().props.value, ''); assert.equal(h.calls.blur, 1); assert.equal(h.calls.dismiss, 1);
 });
-test('failed send preserves draft and focus; disabled submit remains disabled for whitespace', async () => {
+test('failed send restores draft after immediate keyboard dismissal; disabled submit remains disabled for whitespace', async () => {
   const h = harness(); h.render(); h.openKeyboard();
   h.comments.publish = async () => false;
   h.input().props.onChangeText('No perder'); h.render();
   findLabel(h, 'Publicar comentario').props.onPress(); await tick(); h.render();
-  assert.equal(h.input().props.value, 'No perder'); assert.equal(h.calls.blur, 0); assert.equal(h.calls.dismiss, 0);
+  assert.equal(h.input().props.value, 'No perder'); assert.equal(h.calls.blur, 1); assert.equal(h.calls.dismiss, 1);
   h.input().props.onChangeText('  '); h.render(); assert.equal(findLabel(h, 'Publicar comentario').props.disabled, true);
 });
 test('existing own/foreign menus, cancellation, likes and restore remain connected', async () => {
@@ -51,10 +51,71 @@ test('reference UI positions preserve short field, touch target and readable lis
   assert.ok(closed); assert.equal(flatten(closed.props.style).height, 38);
   assert.equal(h.styles.close.width, 40); assert.equal(h.styles.close.height, 40);
   h.openKeyboard();
-  assert.equal(h.styles.emojiRow.marginTop + h.styles.headerGlass.height, 57);
-  assert.equal(h.styles.emojiRow.height, 20);
-  assert.equal(flatten(h.nodes().find(n => flatten(n.props.style).marginHorizontal === 10 && flatten(n.props.style).gap === 6).props.style).height, 36);
-  assert.equal(h.styles.editorBodyKeyboard.height, 36);
+  const emojiRow = h.nodes().find(n => flatten(n.props.style).gap === 12);
+  assert.equal(flatten(emojiRow.props.style).height, 20);
+  assert.equal(flatten(emojiRow.props.style).marginTop, 1);
+  assert.equal(flatten(emojiRow.props.style).marginLeft, 44);
+  const field = h.nodes().find(n => flatten(n.props.style).width === 340);
+  assert.equal(flatten(field.props.style).height, 36);
   assert.equal(h.styles.sendKeyboard.height, 24);
   assert.equal(h.nodes().filter(n => n.props.accessibilityState?.disabled === true).length, 4);
+});
+const deferred = () => { let resolve, reject; const promise = new Promise((a,b) => { resolve=a; reject=b; }); return { promise, resolve, reject }; };
+const list = h => h.nodes().find(n => n.type === 'FlatList');
+test('sending empties immediately, shows a pending row, rejects double tap and restores on failure', async () => {
+  const h=harness(); h.render(); h.openKeyboard(); const wait=deferred(); let writes=0;
+  h.comments.publish=() => { writes++; return wait.promise; };
+  h.input().props.onChangeText('Importante'); h.render();
+  const submit=findLabel(h,'Publicar comentario').props.onPress;
+  submit(); submit(); h.render();
+  assert.equal(writes,1); assert.equal(h.input().props.value,'');
+  assert.equal(h.calls.blur,1); assert.equal(h.calls.dismiss,1);
+  assert.equal(list(h).props.data[0].kind,'pending');
+  assert.equal(list(h).props.refreshing,false);
+  assert.equal(h.rowNodes().some(n=>n.props.accessibilityLabel==='Opciones del comentario'),false);
+  wait.resolve(null); await tick(); h.render();
+  assert.equal(h.input().props.value,'Importante'); assert.equal(list(h).props.data.length,0);
+  assert.ok(h.nodes().some(n=>n.props.accessibilityRole==='alert'));
+});
+test('confirmed observer replaces the pending row while refresh is still waiting', async () => {
+  const h=harness(); h.render(); const wait=deferred(); let committed;
+  h.comments.publish=(_text,_parent,observer) => { committed=observer; return wait.promise; };
+  h.input().props.onChangeText('Guardado'); h.render(); findLabel(h,'Publicar comentario').props.onPress(); h.render();
+  h.comments.roots=[{...own,id:'saved',text:'Guardado'}]; committed(h.comments.roots[0]); h.render();
+  assert.deepEqual(Array.from(list(h).props.data,r=>r.comment.id),['saved']);
+  wait.resolve(h.comments.roots[0]); await tick(); h.render(); assert.equal(h.input().props.value,'');
+});
+test('late failure from another video never replaces the current draft', async () => {
+  const h=harness(); h.render(); const wait=deferred(); h.comments.publish=()=>wait.promise;
+  h.input().props.onChangeText('Anterior'); h.render(); findLabel(h,'Publicar comentario').props.onPress(); h.render();
+  h.props.videoId='other-video'; h.render(); h.input().props.onChangeText('Actual'); h.render();
+  wait.reject(Error('offline')); await tick(); h.render();
+  assert.equal(h.input().props.value,'Actual'); assert.equal(list(h).props.data.length,0);
+});
+test('native Unicode emoji insertion updates quick reactions without duplicate or deletion promotion', () => {
+  const h=harness(); h.render(); h.openKeyboard(); h.input().props.onChangeText('Hola 👩🏽‍💻'); h.render();
+  let labels=h.nodes().filter(n=>n.props.accessibilityLabel?.startsWith('Añadir emoji')).map(n=>n.props.accessibilityLabel);
+  assert.equal(labels.length,7); assert.equal(labels[0],'Añadir emoji 👩🏽‍💻 al comentario');
+  h.input().props.onChangeText('Hola '); h.render();
+  assert.equal(h.nodes().find(n=>n.props.accessibilityLabel?.startsWith('Añadir emoji')).props.accessibilityLabel,labels[0]);
+});
+test('360dp reference controls scale to the recording width, while input identity survives IME changes', () => {
+  const width=720/1.75, h=harness({width}); h.render();
+  let input=h.input(), field=h.nodes().find(n=>Math.abs(flatten(n.props.style).width-265*width/360)<.001);
+  assert.ok(field); assert.equal(input.props.placeholder,'Agregar comentarios');
+  const editorRef=input.props.ref; h.openKeyboard(); input=h.input(); assert.equal(input.props.ref,editorRef);
+  assert.equal(flatten(input.props.style).paddingVertical,8*width/360);
+  const at=h.nodes().find(n=>n.props.name==='at-sign'); assert.ok(Math.abs(at.props.size-20*width/360)<.0001);
+  h.closeKeyboard(); assert.equal(h.input().props.ref,editorRef);
+});
+test('failed reply restores its target and successful edit restores the pre-edit draft', async()=>{
+ const h=harness({roots:[own]}); h.render(); h.input().props.onChangeText('Borrador previo'); h.render();
+ h.rowNodes().find(n=>n.props.accessibilityLabel==='Opciones del comentario').props.onPress({stopPropagation(){}}); h.render();
+ h.nodes().find(n=>n.type==='Popover').props.actions.find(a=>a.key==='edit').onPress(); h.render();
+ h.input().props.onChangeText('Editado'); h.render(); findLabel(h,'Guardar cambios').props.onPress(); h.render();
+ assert.equal(h.input().props.value,''); await tick(); h.render(); assert.equal(h.input().props.value,'Borrador previo');
+ h.rowNodes().find(n=>n.props.accessibilityLabel==='Opciones del comentario').props.onPress({stopPropagation(){}}); h.render();
+ h.nodes().find(n=>n.type==='Popover').props.actions.find(a=>a.key==='reply').onPress(); h.render();
+ h.comments.publish=async()=>null; findLabel(h,'Publicar comentario').props.onPress(); await tick(); h.render();
+ assert.ok(findLabel(h,'Cancelar respuesta')); assert.equal(h.input().props.value,'Borrador previo');
 });

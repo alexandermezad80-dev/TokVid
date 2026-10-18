@@ -146,7 +146,7 @@ export function useFeedComments(visible: boolean, videoId: string, onCountChange
     if (epoch.current === currentEpoch) { pagingLock.current = false; setPaging(false); }
   };
 
-  const publish = async (text: string, parentId: string | null): Promise<FeedComment | null> => {
+  const publish = async (text: string, parentId: string | null, onCommitted?: (row: FeedComment) => void): Promise<FeedComment | null> => {
     if (!user || !visible || currentContext.current.key !== key || !currentContext.current.visible || sendLock.current || mutationLock.current) return null;
     const currentEpoch = epoch.current;
     sendLock.current = true; setSending(true); setOperationError("");
@@ -167,6 +167,9 @@ export function useFeedComments(visible: boolean, videoId: string, onCountChange
         threadLimits.current.set(row.root_id, threadLimits.current.get(row.root_id) ?? REPLY_PAGE_SIZE);
         setExpanded(previous => new Set(previous).add(row.root_id!));
       }
+      // Presentation can replace its pending row as soon as the write is real;
+      // the existing refresh, request ID, locks and epoch checks remain intact.
+      try { onCommitted?.(row); } catch { /* An observer cannot undo a confirmed write. */ }
       await refresh();
       return epoch.current === currentEpoch ? row : null;
     } catch (failure) {

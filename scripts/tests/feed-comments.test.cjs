@@ -323,3 +323,20 @@ test('oversized popovers scroll beside the selected message instead of covering 
   assert.ok(above.top + above.maxHeight <= 212);
 });
 
+test('confirmed publish notifies presentation before refresh, without transferring write ownership', async () => {
+  let block=false; const read=deferred(), events=[];
+  const h=hookHarness({ readComments: async()=>block ? read.promise : {rows:[],total:0,hasMore:false} });
+  await h.rt.flush(); block=true;
+  const write=h.rt.output.publish('Nuevo',null,r=>events.push(r.id));
+  await h.rt.flush(); assert.deepEqual(events,['posted']); assert.equal(h.rt.output.roots[0].id,'posted'); assert.equal(h.rt.output.sending,true);
+  read.resolve({rows:[row('posted')],total:1,hasMore:false}); assert.equal((await write).id,'posted'); h.rt.unmount();
+});
+test('failed/stale writes never confirm presentation; observer error cannot undo a saved comment', async () => {
+  const fail=hookHarness({createComment:async()=>{throw Error('offline');}}); await fail.rt.flush(); let notifications=0;
+  assert.equal(await fail.rt.output.publish('A',null,()=>notifications++),null); assert.equal(notifications,0); fail.rt.unmount();
+  const deferredWrite=deferred(), stale=hookHarness({createComment:()=>deferredWrite.promise}); await stale.rt.flush();
+  const promise=stale.rt.output.publish('A',null,()=>notifications++); stale.state.video='v2'; stale.rt.update(); await stale.rt.flush();
+  deferredWrite.resolve(row()); assert.equal(await promise,null); assert.equal(notifications,0); stale.rt.unmount();
+  const confirmed=hookHarness(); await confirmed.rt.flush();
+  assert.equal((await confirmed.rt.output.publish('A',null,()=>{throw Error('observer');})).id,'posted'); confirmed.rt.unmount();
+});

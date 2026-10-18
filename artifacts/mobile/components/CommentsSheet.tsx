@@ -6,7 +6,7 @@ import { router } from "expo-router";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Dimensions, FlatList, Image, Keyboard, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
-import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, withTiming, FadeIn, LinearTransition } from "react-native-reanimated";
 import CommentActionsPopover, { CommentAction } from "./CommentActionsPopover";
 import { CommentAnchor, commentPopoverGeometry } from "../lib/commentPopoverGeometry";
 import { useRegistration } from "../context/RegistrationContext";
@@ -17,6 +17,12 @@ import { requestRegistration } from "../lib/features/auth/services/registrationB
 import { COMMENT_LIMIT, FeedComment, commentCapabilities, commentLength, commentTime } from "../lib/features/comments/model";
 import { commentVideoLayout, VideoPreviewFrame } from "../lib/commentVideoLayout";
 import { commentsGlassGeometry } from "../lib/commentsGlassGeometry";
+import { commentSheetMotion } from "../lib/commentSheetMotion";
+import { useCommentKeyboardMotion } from "../hooks/useCommentKeyboardMotion";
+import { useRecentCommentEmojis } from "../hooks/useRecentCommentEmojis";
+import { insertedCommentEmojis } from "../lib/commentRecentEmojis";
+
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
 interface Props {
   visible: boolean; onClose: () => void; videoId: string;
@@ -27,14 +33,17 @@ interface Props {
   showVideoPreview?: boolean;
   onPreviewFrame?: (frame: VideoPreviewFrame | null) => void;
 }
-type ListRow = { kind: "comment"; comment: FeedComment; nested: boolean } | { kind: "thread"; root: FeedComment } | { kind: "more"; rootId: string };
-const spring = { damping: 15, stiffness: 90, mass: 0.8 };
+type ListRow = { kind: "pending"; comment: FeedComment; nested: boolean } | { kind: "comment"; comment: FeedComment; nested: boolean } | { kind: "thread"; root: FeedComment } | { kind: "more"; rootId: string };
+function commentEntrance() {
+  "worklet";
+  return { initialValues: { opacity: 0, transform: [{ translateY: -8 }] }, animations: { opacity: withTiming(1, { duration: 200 }), transform: [{ translateY: withTiming(0, { duration: 200 }) }] } };
+}
 
-function Avatar({ uri, username, small = false }: { uri?: string | null; username?: string | null; small?: boolean }) {
+function Avatar({ uri, username, small = false, scale = 1 }: { uri?: string | null; username?: string | null; small?: boolean; scale?: number }) {
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [uri]);
-  return uri && !failed ? <Image source={{ uri }} onError={() => setFailed(true)} style={[styles.avatar, small && styles.composerAvatar]} /> :
-    <View style={[styles.avatar, small && styles.composerAvatar, styles.initialAvatar]}>{username ? <Text style={styles.initial}>{Array.from(username)[0]?.toUpperCase()}</Text> : <Feather name="user" size={18} color="#aaa" />}</View>;
+  return uri && !failed ? <Image source={{ uri }} onError={() => setFailed(true)} style={[styles.avatar, small && { ...styles.composerAvatar, width: 28 * scale, height: 28 * scale, borderRadius: 14 * scale }]} /> :
+    <View style={[styles.avatar, small && { ...styles.composerAvatar, width: 28 * scale, height: 28 * scale, borderRadius: 14 * scale }, styles.initialAvatar]}>{username ? <Text style={styles.initial}>{Array.from(username)[0]?.toUpperCase()}</Text> : <Feather name="user" size={18} color="#aaa" />}</View>;
 }
 
 export default function CommentsSheet(props: Props) {
@@ -51,6 +60,12 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
   const { tabBarHeight } = useRegistration();
   const { width, fontScale } = useWindowDimensions();
   const viewport = useOverlayKeyboard(visible);
+  const scale = Math.max(.75, Math.min(1.5, (width - viewport.insets.left - viewport.insets.right) / 360));
+  const styles = useMemo(() => scaledCommentStyles(scale), [scale]);
+  const motion = useCommentKeyboardMotion(visible);
+  const { controlsOpen } = motion;
+  const viewportTop = viewport.viewportTop, safeLeft = viewport.insets.left;
+  const emojis = useRecentCommentEmojis(user?.id);
   const comments = useFeedComments(visible, videoId,undefined,focusCommentId);
   const listRef=useRef<FlatList<ListRow>>(null),focusScrolled=useRef<string|null>(null);
   const [text, setText] = useState("");
@@ -63,13 +78,16 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
   const selectionSequence = useRef(0);
   const savedDraft = useRef<{ text: string; reply: FeedComment | null } | null>(null);
   const input = useRef<TextInput>(null);
-  const phase = useSharedValue(0);
+  const [pending, setPending] = useState<FeedComment | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState("");
+  const [newCommentId, setNewCommentId] = useState<string | null>(null);
+  const sendAttempt = useRef(0), sendLocked = useRef(false), mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const context = `${videoId}:${user?.id ?? "guest"}`;
-  useEffect(() => { selectionSequence.current++; setText(""); setReply(null); setEditing(null); setActionComment(null); setActionAnchor(null); savedDraft.current = null; }, [context]);
+  const currentContext = useRef(context); currentContext.current = context;
+  useEffect(() => { sendAttempt.current++; sendLocked.current = false; setPending(null); setSubmitting(false); setSubmissionError(""); setNewCommentId(null); selectionSequence.current++; setText(""); setReply(null); setEditing(null); setActionComment(null); setActionAnchor(null); savedDraft.current = null; }, [context]);
   useEffect(() => { if (!visible) { selectionSequence.current++; setActionComment(null); setActionAnchor(null); } }, [visible]);
-  useEffect(() => { phase.value = withTiming(viewport.keyboardVisible ? 1 : 0, {duration:220,easing:Easing.out(Easing.cubic)}); }, [viewport.keyboardVisible, phase]);
-  const sheetShape = useAnimatedStyle(() => ({ borderTopLeftRadius: 24, borderTopRightRadius: 24 }));
-  const editorShape = useAnimatedStyle(() => { const p = Math.max(0, Math.min(1, phase.value)); return { borderRadius: 19 - 6 * p, height: 38 - 2 * p }; });
   const dismissActions = () => { selectionSequence.current++; setActionComment(null); setActionAnchor(null); };
   const close = () => { dismissActions(); Keyboard.dismiss(); onClose(); };
   backHandler.current = () => actionComment ? dismissActions() : close();
@@ -79,9 +97,12 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
     if (authorId === user?.id) router.push("/(tabs)/profile");
     else router.push({ pathname: "/user-profile", params: { userId: authorId } });
   };
-  const rows = useMemo<ListRow[]>(() => comments.roots.flatMap(root => {
+  const rows = useMemo<ListRow[]>(() => [
+    ...(pending && !pending.parent_id ? [{ kind: "pending" as const, comment: pending, nested: false }] : []),
+    ...comments.roots.flatMap(root => {
     if (comments.hiddenThreads.has(root.id)) return [];
     const result: ListRow[] = [{ kind: "comment", comment: root, nested: false }];
+    if (pending?.root_id === root.id) result.push({ kind: "pending", comment: pending, nested: true });
 
     if (comments.expanded.has(root.id)) {
       const thread = comments.threads[root.id];
@@ -89,11 +110,11 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
       if (thread?.hasMore) result.push({ kind: "more", rootId: root.id });
     }
     return result;
-  }), [comments.roots, comments.threads, comments.expanded, comments.hiddenThreads]);
+  })], [comments.roots, comments.threads, comments.expanded, comments.hiddenThreads, pending]);
   const focusIndex=rows.findIndex(r=>r.kind==='comment'&&r.comment.id===focusCommentId);
   useEffect(()=>{if(!visible){focusScrolled.current=null;return;}if(focusIndex<0||comments.loading||!focusCommentId||focusScrolled.current===focusCommentId)return;const timer=setTimeout(()=>{listRef.current?.scrollToIndex({index:focusIndex,viewPosition:.25,animated:true});focusScrolled.current=focusCommentId;},200);return()=>clearTimeout(timer);},[visible,focusCommentId,focusIndex,comments.loading]);
   const requireUser = () => { if (user) return true; close(); requestRegistration(); return false; };
-  const busy = comments.sending || comments.mutating;
+  const busy = comments.sending || comments.mutating || submitting;
   const cancelEdit = () => {
     const draft = savedDraft.current;
     setText(draft?.text ?? ""); setReply(draft?.reply ?? null); setEditing(null); savedDraft.current = null;
@@ -160,43 +181,115 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
   const previewLayout=commentVideoLayout({width,availableHeight:viewport.fullHeight,
     safeTop:viewport.insets.top,viewportTop:viewport.viewportTop,safeLeft:viewport.insets.left,safeRight:viewport.insets.right,
     bottomPadding:0,desiredSheetHeight,keyboardVisible:false});
-  const sheetHeight = showVideoPreview ? previewLayout.sheetHeight : desiredSheetHeight;
   const preview = previewLayout.preview;
   const sheetTop = showVideoPreview ? preview.y + preview.height + 8 : viewport.fullHeight - desiredSheetHeight;
   // Keep the frame and header pinned at the same screen Y while the IME changes
   // height (including Gboard letters -> emojis). Never resize the video here.
-  const { keyboardGlassHeight, closedComposerHeight, closedSheetHeight, composerTop, composerHeight: glassComposerHeight } =
-    commentsGlassGeometry({ fullHeight: viewport.fullHeight, availableHeight: viewport.availableHeight, sheetTop,
-      safeBottom: viewport.insets.bottom, keyboardVisible: viewport.keyboardVisible,
-      screenHeight: Dimensions.get("screen").height, viewportTop: viewport.viewportTop });
+  const screenHeight = Dimensions.get("screen").height;
+  const { closedBottom, closedSheetHeight } = commentsGlassGeometry({ fullHeight: viewport.fullHeight,
+    availableHeight: viewport.availableHeight, sheetTop, safeBottom: viewport.insets.bottom,
+    keyboardVisible: viewport.keyboardVisible, screenHeight, viewportTop: viewport.viewportTop, scale });
+  const composerMotion = useAnimatedStyle(() => {
+    const layout = commentSheetMotion({ sheetTop, closedBottom, screenHeight, viewportTop: viewportTop,
+      keyboardHeight: motion.height.value, progress: motion.progress.value, scale });
+    return { top: layout.composerTop, height: layout.composerHeight };
+  });
+  const bodyMotion = useAnimatedStyle(() => {
+    const layout = commentSheetMotion({ sheetTop, closedBottom, screenHeight, viewportTop: viewportTop,
+      keyboardHeight: motion.height.value, progress: motion.progress.value, scale });
+    return { height: layout.bodyHeight, opacity: motion.bodyOpacity.value };
+  });
+  const formMotion = useAnimatedStyle(() => ({ paddingTop: 12.5 * (1 - motion.progress.value) * scale,
+    paddingBottom: (23.5 - 20 * motion.progress.value) * scale }));
+  const emojiMotion = useAnimatedStyle(() => ({ height: 20 * motion.progress.value * scale,
+    marginTop: motion.progress.value * scale, opacity: motion.controlsOpacity.value }));
+  const toolsMotion = useAnimatedStyle(() => ({ height: 24 * motion.progress.value * scale,
+    marginTop: 3 * motion.progress.value * scale, opacity: motion.controlsOpacity.value }));
+  const editorMotion = useAnimatedStyle(() => {
+    const p = Math.max(0, Math.min(1, motion.progress.value));
+    return { height: (38 - 2 * p) * scale, width: ((265 + 75 * p) * scale),
+      marginLeft: safeLeft + (8 + 2 * p) * scale, marginTop: 3 * p * scale,
+      paddingLeft: 8 * (1 - p) * scale, paddingRight: 2.5 * (1 - p) * scale,
+      gap: (11 - 5 * p) * scale, borderWidth: (1 - p) * scale,
+      borderRadius: (19 - 6 * p) * scale, backgroundColor: `rgba(255,255,255,${.2 * (1 - p)})` };
+  });
+  const fieldMotion = useAnimatedStyle(() => ({ borderWidth: motion.progress.value * scale,
+    borderRadius: 13 * motion.progress.value * scale, marginRight: 40 * (1 - motion.progress.value) * scale,
+    backgroundColor: `rgba(255,255,255,${.2 * motion.progress.value})` }));
+  const inputMotion = useAnimatedStyle(() => ({ fontSize: (15 - motion.progress.value) * scale,
+    paddingLeft: 10 * motion.progress.value * scale, paddingRight: 52 * motion.progress.value * scale,
+    paddingVertical: (9 - motion.progress.value) * scale }));
+  const counterMotion = useAnimatedStyle(() => ({ opacity: motion.controlsOpacity.value }));
+  const collapsedSendMotion = useAnimatedStyle(() => ({ opacity: 1 - motion.progress.value }));
   const canSend = !!text.trim() && !busy;
-  // The OS keyboard (including Gboard's emoji panel) keeps inserting through
-  // TextInput.onChangeText. The seven quick reactions insert the same Unicode
-  // characters into that existing field; they do not replace the native IME.
+  const changeText = (value: string) => {
+    const next = Array.from(value).slice(0, COMMENT_LIMIT).join("");
+    emojis.remember(insertedCommentEmojis(text, next));
+    setText(next); setSubmissionError("");
+  };
   const insertQuickEmoji = (emoji: string) => {
     if (busy) return;
-    setText(previous => Array.from(previous + emoji).slice(0, COMMENT_LIMIT).join(""));
-    input.current?.focus();
+    const next = Array.from(text + emoji).slice(0, COMMENT_LIMIT).join("");
+    if (next !== text) emojis.remember([emoji]);
+    setText(next); input.current?.focus();
   };
   useEffect(() => {
     onPreviewFrame?.(visible && showVideoPreview ? { ...preview, y: preview.y + viewport.viewportTop } : null);
   }, [visible, showVideoPreview, preview.x, preview.y, preview.width, preview.height, viewport.viewportTop, onPreviewFrame]);
   useEffect(() => () => onPreviewFrame?.(null), [onPreviewFrame]);
   const send = async () => {
-    if (!text.trim() || busy || !requireUser()) return;
-    const sentText = text;
-    const sentReply = reply;
-    const confirmed = editing ? await comments.edit(editing, sentText) : await comments.publish(sentText, sentReply?.id ?? null);
-    if (confirmed) { if (editing) cancelEdit(); else { setText(""); setReply(null); } input.current?.blur(); Keyboard.dismiss(); }
+    if (!text.trim() || busy || sendLocked.current || !requireUser()) return;
+    sendLocked.current = true;
+    const attempt = ++sendAttempt.current, sentContext = context;
+    const sentText = text, sentReply = reply, sentEditing = editing;
+    let committed = false;
+    const isCurrent = () => mounted.current && currentContext.current === sentContext && sendAttempt.current === attempt;
+    setSubmitting(true); setSubmissionError(""); setText(""); setReply(null); setEditing(null);
+    if (!sentEditing) setPending({ id: `pending:${attempt}`, video_id: videoId, user_id: user!.id,
+      username: profile?.username ?? "", avatar_url: profile?.avatar_url ?? null, text: sentText.trim(),
+      created_at: new Date().toISOString(), parent_id: sentReply?.id ?? null,
+      root_id: sentReply ? sentReply.root_id ?? sentReply.id : null,
+      reply_to_username: sentReply?.username ?? null, likes_count: 0, reply_count: 0 });
+    input.current?.blur(); Keyboard.dismiss();
+    if (!sentReply) listRef.current?.scrollToOffset({ offset: 0, animated: true });
+    const onCommitted = (row: FeedComment) => {
+      committed = true;
+      if (isCurrent()) { setPending(null); setNewCommentId(row.id); }
+    };
+    try {
+      const confirmed = sentEditing ? await comments.edit(sentEditing, sentText)
+        : await comments.publish(sentText, sentReply?.id ?? null, onCommitted);
+      if (!isCurrent()) return;
+      setPending(null);
+      if (confirmed || committed) {
+        if (sentEditing) cancelEdit();
+      } else {
+        setText(sentText); setReply(sentReply); setEditing(sentEditing);
+        setSubmissionError("No se pudo enviar. Conservamos tu texto para reintentar.");
+      }
+    } catch {
+      if (isCurrent() && !committed) {
+        setPending(null); setText(sentText); setReply(sentReply); setEditing(sentEditing);
+        setSubmissionError("No se pudo enviar. Conservamos tu texto para reintentar.");
+      }
+    } finally {
+      if (isCurrent()) { sendLocked.current = false; setSubmitting(false); }
+    }
   };
   const renderRow = ({ item }: { item: ListRow }) => {
+    if (item.kind === "pending") return <Animated.View entering={commentEntrance} style={[styles.comment, item.nested && styles.nested]} accessibilityLabel="Comentario pendiente de envío">
+      <Avatar uri={item.comment.avatar_url} username={item.comment.username} />
+      <View style={styles.body}><View style={styles.commentHeader}><Text style={[styles.username, styles.usernameHeading]}>@{item.comment.username}</Text><Text style={styles.meta}>ahora · Enviando</Text></View>
+        {!!item.comment.reply_to_username && <Text style={styles.replyTo}>↳ @{item.comment.reply_to_username}</Text>}
+        <Text style={styles.commentText}>{item.comment.text}</Text></View>
+    </Animated.View>;
     if (item.kind === "thread") return <Pressable accessibilityRole="button" disabled={comments.loading} onPress={() => { void comments.toggleThread(item.root.id); }} style={styles.threadAction}>
       <Text style={styles.link}>{comments.expanded.has(item.root.id) ? "Ocultar respuestas" : `Ver respuestas (${item.root.reply_count})`}</Text>
     </Pressable>;
     if (item.kind === "more") return <Pressable accessibilityRole="button" disabled={comments.paging} onPress={() => { void comments.moreReplies(item.rootId); }} style={styles.threadAction}><Text style={styles.link}>{comments.paging ? "Cargando…" : "Ver más respuestas"}</Text></Pressable>;
     const row = item.comment;
     const liked = comments.liked.has(row.id);
-    return <View ref={view => { if (view) rowViews.current.set(row.id, view); else rowViews.current.delete(row.id); }} collapsable={false} style={[styles.comment, item.nested && styles.nested, actionComment?.id === row.id && styles.selectedComment]}>
+    return <Animated.View entering={newCommentId === row.id ? commentEntrance : undefined} ref={view => { if (view) rowViews.current.set(row.id, view); else rowViews.current.delete(row.id); }} collapsable={false} style={[styles.comment, item.nested && styles.nested, actionComment?.id === row.id && styles.selectedComment]}>
       <Pressable accessibilityRole="button" accessibilityLabel={`Ver perfil de ${row.username}`} onPress={() => openProfile(row.user_id)} hitSlop={6}><Avatar uri={row.avatar_url} username={row.username} /></Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel={`Opciones del comentario de ${row.username}`} onPress={() => openActions(row)} onLongPress={() => openActions(row)} style={styles.body}>
         <View style={styles.commentHeader}><Text numberOfLines={1} ellipsizeMode="tail" style={[styles.username, styles.usernameHeading]}>@{row.username}</Text><Text style={styles.meta}>{commentTime(row.created_at)}{row.edited_at?" · editado":""}</Text><Pressable accessibilityRole="button" accessibilityLabel="Opciones del comentario" disabled={busy || comments.pendingLikes.has(row.id)} onPress={event => { event.stopPropagation(); openActions(row); }} hitSlop={10} style={styles.optionsButton}><Feather name="more-horizontal" size={18} color="#92929D" /></Pressable></View>
@@ -210,7 +303,7 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
         <Text style={styles.meta}>{row.likes_count}</Text>
       </Pressable>}
       </View>
-    </View>;
+    </Animated.View>;
   };
   return <View ref={viewport.viewportRef} collapsable={false} onLayout={viewport.onLayout} style={[styles.viewport, showVideoPreview && { backgroundColor: "transparent" }, { height:viewport.fullHeight,flex:0 }]}>
       <Pressable accessibilityLabel="Cerrar comentarios" onPress={close} style={StyleSheet.absoluteFill} />
@@ -218,70 +311,61 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
         style={[styles.videoPreview, { left: preview.x, top: preview.y, width: preview.width, height: preview.height }]}>
         <View style={styles.expandVideo}><Feather name="maximize-2" size={10} color="#fff" /></View>
       </Pressable>}
-      <Animated.View style={[styles.sheet, sheetShape, viewport.keyboardVisible && styles.openSheetGlass, { position: "absolute", left: 0, right: 0, top: sheetTop, height: viewport.keyboardVisible ? keyboardGlassHeight : closedSheetHeight }]}>
-        {viewport.keyboardVisible && <BlurView pointerEvents="none" intensity={24} tint="default" blurReductionFactor={1} experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />}
-        {viewport.keyboardVisible && <View pointerEvents="none" style={styles.glassTint} />}
-        <View accessibilityElementsHidden={!!actionComment} importantForAccessibility={actionComment ? "no-hide-descendants" : "auto"} style={[styles.panelBody, viewport.keyboardVisible && styles.openPanelBody]}>
-        <View style={styles.headerGlass}>
-          {!viewport.keyboardVisible && <BlurView pointerEvents="none" intensity={24} tint="default" blurReductionFactor={1} experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />}
-          {!viewport.keyboardVisible && <View pointerEvents="none" style={styles.glassTint} />}
+      <Animated.View style={[styles.sheet, { position: "absolute", left: 0, right: 0, top: sheetTop, height: closedSheetHeight, backgroundColor: "#101820" }]}>
+        <BlurView pointerEvents="none" intensity={24} tint="default" blurReductionFactor={1} experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />
+        <View pointerEvents="none" style={styles.glassTint} />
+        <View accessibilityElementsHidden={!!actionComment} importantForAccessibility={actionComment ? "no-hide-descendants" : "auto"} style={styles.headerGlass}>
           <View style={styles.handle} />
           <View style={styles.header}>
-            <View style={[styles.countBadge, { left: 10.5 + viewport.insets.left, maxWidth: Math.max(125, Math.min(280, width - viewport.insets.left - viewport.insets.right - (viewport.keyboardVisible && (editing || reply) ? 220 : 60))) }]}><Text numberOfLines={1} style={styles.title}>{comments.total === null ? "Comentarios" : `${comments.total} comentarios`}</Text></View>
-            <Pressable onPress={close} accessibilityLabel="Cerrar comentarios" accessibilityRole="button" style={[styles.close, { right: 2 + viewport.insets.right }]}><Svg width={14} height={14} viewBox="0 0 14 14"><Line x1={1} y1={1} x2={13} y2={13} stroke="#FFFFFF" strokeWidth={2} /><Line x1={13} y1={1} x2={1} y2={13} stroke="#FFFFFF" strokeWidth={2} /></Svg></Pressable>
+            <View style={[styles.countBadge, { left: 10.5 * scale + viewport.insets.left, maxWidth: Math.max(125 * scale, Math.min(280 * scale, width - viewport.insets.left - viewport.insets.right - (controlsOpen && (editing || reply) ? 220 : 60) * scale)) }]}><Text numberOfLines={1} style={styles.title}>{comments.total === null ? "Comentarios" : `${comments.total} comentarios`}</Text></View>
+            <Pressable onPress={close} accessibilityLabel="Cerrar comentarios" accessibilityRole="button" style={[styles.close, { right: 2 * scale + viewport.insets.right }]}><Svg width={14 * scale} height={14 * scale} viewBox="0 0 14 14"><Line x1={1} y1={1} x2={13} y2={13} stroke="#FFFFFF" strokeWidth={2} /><Line x1={13} y1={1} x2={1} y2={13} stroke="#FFFFFF" strokeWidth={2} /></Svg></Pressable>
           </View>
         </View>
-        {!viewport.keyboardVisible && !!comments.error && <View style={styles.errorRow}><Text accessibilityRole="alert" style={styles.error}>{comments.error}</Text><Pressable accessibilityRole="button" onPress={() => { void comments.refresh(); }} style={styles.retry}><Text style={styles.link}>Recargar</Text></Pressable></View>}
-        {!viewport.keyboardVisible && comments.hiddenThreads.size > 0 && <Pressable accessibilityRole="button" accessibilityLabel="Mostrar mensajes ocultos" disabled={busy} onPress={() => { void comments.restoreThreads(); }} style={styles.hiddenNotice}><View style={styles.showBadge}><BlurView pointerEvents="none" intensity={24} tint="default" blurReductionFactor={1} experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} /><View pointerEvents="none" style={styles.glassTint} /><Feather name="eye" size={15} color="#FFFFFF" /><Text style={styles.showLabel}>Mostrar</Text></View></Pressable>}
-        <FlatList<ListRow> ref={listRef} onScrollToIndexFailed={info=>{listRef.current?.scrollToOffset({offset:info.averageItemLength*info.index,animated:false});setTimeout(()=>{if(focusIndex>=0)listRef.current?.scrollToIndex({index:focusIndex,viewPosition:.25,animated:true});},200);}} data={rows} keyExtractor={row => row.kind === "comment" ? row.comment.id : row.kind === "thread" ? `thread:${row.root.id}` : `more:${row.rootId}`} renderItem={renderRow} style={[styles.list, viewport.keyboardVisible ? styles.hiddenList : { marginBottom: closedComposerHeight }]} onScrollBeginDrag={dismissActions} contentContainerStyle={[rows.length ? styles.listContent : styles.emptyContainer, rows.length > 0 && { paddingTop: comments.hiddenThreads.size > 0 ? 2 : 8 }, { paddingLeft: 16 + viewport.insets.left, paddingRight: 16 + viewport.insets.right,paddingBottom:12 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} refreshing={comments.loading} onRefresh={() => { void comments.refresh(); }}
-          ListEmptyComponent={comments.loading ? <ActivityIndicator color={palette.teal} /> : comments.total === 0 || comments.hiddenThreads.size > 0 ? <View style={styles.empty}><Feather name="message-circle" size={22.5} color="#5B6270" /><Text style={styles.emptyText}>{comments.total === 0 ? "Sé el primero en comentar" : "No hay hilos visibles en esta página"}</Text></View> : null}
-          ListFooterComponent={comments.hasMore ? <Pressable disabled={comments.paging} onPress={() => { void comments.loadMore(); }} style={styles.more}><Text style={styles.link}>{comments.paging ? "Cargando…" : "Cargar más comentarios"}</Text></Pressable> : null} />
-
-        </View>
-
-      </Animated.View>
-        <Animated.View
-          style={[styles.composer, viewport.keyboardVisible ? styles.composerKeyboard : styles.composerClosed,
-            { position: "absolute", left: 0, right: 0,
-              top: composerTop,
-              height: glassComposerHeight,
-              paddingLeft: viewport.keyboardVisible ? 0 : viewport.insets.left,
-              paddingRight: viewport.keyboardVisible ? 0 : viewport.insets.right }]}>
-          {!viewport.keyboardVisible && <BlurView pointerEvents="none" intensity={24} tint="default" blurReductionFactor={1} experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />}
-          {!viewport.keyboardVisible && <View pointerEvents="none" style={styles.glassTint} />}
-          <ScrollView style={styles.composerScroll} contentContainerStyle={viewport.keyboardVisible ? styles.openForm : styles.closedForm} scrollEnabled={viewport.keyboardVisible && glassComposerHeight < 90.5} keyboardShouldPersistTaps="always" showsVerticalScrollIndicator={false}>
-          {viewport.keyboardVisible && <View style={styles.emojiRow}>
-            {["😂", "😍", "😮", "😢", "🔥", "👏", "❤️"].map(emoji => <Pressable key={emoji} accessibilityRole="button" accessibilityLabel={`Añadir emoji ${emoji} al comentario`} disabled={busy} onPress={() => insertQuickEmoji(emoji)} style={styles.emojiItem}><Text style={styles.emojiText}>{emoji}</Text></Pressable>)}
-          </View>}
-          <Animated.View style={[styles.editor, editorShape, viewport.keyboardVisible ? styles.editorKeyboard : [styles.editorClosed, { width: Math.min(265, Math.max(0, width - viewport.insets.left - viewport.insets.right - 16)) }]]}>
-            <Avatar uri={profile?.avatar_url} username={profile?.username} small />
-            <View style={[styles.editorBody, viewport.keyboardVisible && styles.editorBodyKeyboard]}>
-              <TextInput ref={input} value={text} editable={!busy}
-                onChangeText={value => setText(Array.from(value).slice(0, COMMENT_LIMIT).join(""))}
-                style={[styles.input, viewport.keyboardVisible ? styles.expandedInput : styles.collapsedInput]}
-                placeholder="Agregar un comentario..." placeholderTextColor="rgba(255,255,255,0.80)"
-                selectionColor="#BFE3FF" accessibilityLabel="Escribe tu comentario"
-                multiline scrollEnabled maxLength={COMMENT_LIMIT * 2} textAlignVertical="center" />
-              {viewport.keyboardVisible && <Text style={styles.counter}>{commentLength(text)}/{COMMENT_LIMIT}</Text>}
-            </View>
-            {!viewport.keyboardVisible && <Pressable accessibilityRole="button" accessibilityLabel={editing ? "Guardar cambios" : "Publicar comentario"} disabled={!canSend} onPress={() => { void send(); }} style={styles.sendCollapsed}>
-              {busy ? <ActivityIndicator color="#FFFFFF" size="small" /> : <Feather name="arrow-up" size={12.5} color={canSend ? "#FFFFFF" : "rgba(255,255,255,0.60)"} />}
-            </Pressable>}
-          </Animated.View>
-          {viewport.keyboardVisible && <View style={styles.toolsRow}>
-            <Pressable accessibilityRole="button" accessibilityLabel="Imagen: adjuntos a comentarios pendientes" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="image" size={20} color="#FFFFFF" /></Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Sticker: adjuntos a comentarios pendientes" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="smile" size={20} color="#FFFFFF" /></Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Menciones: función pendiente" accessibilityState={{disabled:true}} disabled style={styles.tool}><Text style={styles.atIcon}>@</Text></Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Micrófono: audio en comentarios pendiente" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="mic" size={20} color="#FFFFFF" /></Pressable>
-            <View style={styles.toolSpacer} />
-            <Pressable accessibilityRole="button" accessibilityLabel={editing ? "Guardar cambios" : "Publicar comentario"} disabled={!canSend} onPress={() => { void send(); }} style={[styles.sendKeyboard, { backgroundColor: canSend ? "#4682B4" : "rgba(70,130,180,0.60)" }]}>
-              {busy ? <ActivityIndicator color="#FFFFFF" size="small" /> : <Feather name="arrow-up" size={20} color="#FFFFFF" />}
-            </Pressable>
-          </View>}
+        <Animated.View pointerEvents={controlsOpen ? "none" : "auto"} accessibilityElementsHidden={controlsOpen || !!actionComment} importantForAccessibility={controlsOpen || actionComment ? "no-hide-descendants" : "auto"} style={[{ position: "absolute", top: 56 * scale, left: 0, right: 0, overflow: "hidden", backgroundColor: "#FFFFFF" }, bodyMotion]}>
+          {!!(submissionError || comments.error) && <View style={styles.errorRow}><Text accessibilityRole="alert" style={styles.error}>{submissionError || comments.error}</Text><Pressable accessibilityRole="button" onPress={() => { void comments.refresh(); }} style={styles.retry}><Text style={styles.link}>Recargar</Text></Pressable></View>}
+          {comments.hiddenThreads.size > 0 && <Pressable accessibilityRole="button" accessibilityLabel="Mostrar mensajes ocultos" disabled={busy} onPress={() => { void comments.restoreThreads(); }} style={styles.hiddenNotice}><View style={styles.showBadge}><BlurView pointerEvents="none" intensity={24} tint="default" blurReductionFactor={1} experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} /><View pointerEvents="none" style={styles.glassTint} /><Feather name="eye" size={15 * scale} color="#FFFFFF" /><Text style={styles.showLabel}>Mostrar</Text></View></Pressable>}
+          <FlatList<ListRow> ref={listRef} onScrollToIndexFailed={info=>{listRef.current?.scrollToOffset({offset:info.averageItemLength*info.index,animated:false});setTimeout(()=>{if(focusIndex>=0)listRef.current?.scrollToIndex({index:focusIndex,viewPosition:.25,animated:true});},200);}} data={rows} keyExtractor={row => row.kind === "comment" || row.kind === "pending" ? row.comment.id : row.kind === "thread" ? `thread:${row.root.id}` : `more:${row.rootId}`} renderItem={renderRow} style={styles.list} onScrollBeginDrag={dismissActions} contentContainerStyle={[rows.length ? styles.listContent : styles.emptyContainer, rows.length > 0 && { paddingTop: Math.max(0, (comments.hiddenThreads.size > 0 ? 10 : 16) * scale - 8) }, { paddingLeft: 16 + viewport.insets.left, paddingRight: 16 + viewport.insets.right, paddingBottom: 12 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} refreshing={false} onRefresh={() => { void comments.refresh(); }}
+            ListEmptyComponent={comments.loading && !submitting ? <ActivityIndicator size={12} color={palette.teal} /> : comments.total === 0 || comments.hiddenThreads.size > 0 ? <View style={styles.empty}><Feather name="message-circle" size={22.5} color="#5B6270" /><Text style={styles.emptyText}>{comments.total === 0 ? "Sé el primero en comentar" : "No hay hilos visibles en esta página"}</Text></View> : null}
+            ListFooterComponent={comments.hasMore ? <Pressable disabled={comments.paging} onPress={() => { void comments.loadMore(); }} style={styles.more}><Text style={styles.link}>{comments.paging ? "Cargando…" : "Cargar más comentarios"}</Text></Pressable> : null} />
+        </Animated.View>
+        <Animated.View accessibilityElementsHidden={!!actionComment} importantForAccessibility={actionComment ? "no-hide-descendants" : "auto"} style={[styles.composer, { position: "absolute", left: 0, right: 0, overflow: "hidden" }, composerMotion]}>
+          <ScrollView style={styles.composerScroll} scrollEnabled={controlsOpen && viewport.availableHeight - sheetTop - 56 * scale < 90.5 * scale} keyboardShouldPersistTaps="always" showsVerticalScrollIndicator={false}>
+            <Animated.View style={formMotion}>
+              <Animated.View pointerEvents={controlsOpen ? "auto" : "none"} accessibilityElementsHidden={!controlsOpen} importantForAccessibility={controlsOpen ? "auto" : "no-hide-descendants"} style={[styles.emojiRow, { marginLeft: viewport.insets.left + 44 * scale }, emojiMotion]}>
+                {emojis.recent.map(emoji => <Animated.View key={emoji} entering={FadeIn.duration(150)} layout={LinearTransition.duration(150)}><Pressable accessibilityRole="button" accessibilityLabel={`Añadir emoji ${emoji} al comentario`} disabled={busy} onPress={() => insertQuickEmoji(emoji)} style={styles.emojiItem} hitSlop={6 * scale}><Text style={styles.emojiText}>{emoji}</Text></Pressable></Animated.View>)}
+              </Animated.View>
+              <Animated.View style={[styles.editor, editorMotion]}>
+                <Avatar uri={profile?.avatar_url} username={profile?.username} small scale={scale} />
+                <Animated.View style={[styles.editorBody, fieldMotion]}>
+                  <AnimatedTextInput ref={input} value={text} editable={!busy} onChangeText={changeText}
+                    style={[styles.input, { flex: 0, width: "100%", height: "100%", lineHeight: 18 * scale }, inputMotion]}
+                    placeholder={controlsOpen ? "Agregar un comentario..." : "Agregar comentarios"} placeholderTextColor="rgba(255,255,255,0.80)"
+                    selectionColor="#BFE3FF" accessibilityLabel="Escribe tu comentario"
+                    multiline scrollEnabled maxLength={COMMENT_LIMIT * 2} textAlignVertical="center" />
+                  <Animated.View pointerEvents="none" style={[{ position: "absolute", right: 10 * scale, top: 0, bottom: 0, justifyContent: "center" }, counterMotion]}><Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 11 * scale, includeFontPadding: false }}>{commentLength(text)}/{COMMENT_LIMIT}</Text></Animated.View>
+                </Animated.View>
+                <Animated.View pointerEvents={controlsOpen ? "none" : "auto"} accessibilityElementsHidden={controlsOpen} importantForAccessibility={controlsOpen ? "no-hide-descendants" : "auto"} style={[styles.sendCollapsed, collapsedSendMotion]}>
+                  <Pressable accessibilityRole="button" accessibilityLabel={editing ? "Guardar cambios" : "Publicar comentario"} disabled={!canSend} onPress={() => { void send(); }} style={StyleSheet.absoluteFill}>
+                    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>{busy ? <ActivityIndicator color="#FFFFFF" size={12} /> : <Feather name="arrow-up" size={12.5 * scale} color={canSend ? "#FFFFFF" : "rgba(255,255,255,0.60)"} />}</View>
+                  </Pressable>
+                </Animated.View>
+              </Animated.View>
+              <Animated.View pointerEvents={controlsOpen ? "auto" : "none"} accessibilityElementsHidden={!controlsOpen} importantForAccessibility={controlsOpen ? "auto" : "no-hide-descendants"} style={[styles.toolsRow, { paddingLeft: viewport.insets.left + 44 * scale, paddingRight: viewport.insets.right + 10 * scale, overflow: "hidden" }, toolsMotion]}>
+                <Pressable accessibilityRole="button" accessibilityLabel="Imagen: adjuntos a comentarios pendientes" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="image" size={20 * scale} color="#FFFFFF" /></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel="Sticker: adjuntos a comentarios pendientes" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="smile" size={20 * scale} color="#FFFFFF" /></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel="Menciones: función pendiente" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="at-sign" size={20 * scale} color="#FFFFFF" /></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel="Micrófono: audio en comentarios pendiente" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="mic" size={20 * scale} color="#FFFFFF" /></Pressable>
+                <View style={styles.toolSpacer} />
+                <Pressable accessibilityRole="button" accessibilityLabel={editing ? "Guardar cambios" : "Publicar comentario"} disabled={!canSend} onPress={() => { void send(); }} style={[styles.sendKeyboard, { backgroundColor: canSend ? "#4682B4" : "rgba(70,130,180,0.60)" }]}>
+                  {busy ? <ActivityIndicator color="#FFFFFF" size={12} /> : <Feather name="arrow-up" size={20 * scale} color="#FFFFFF" />}
+                </Pressable>
+              </Animated.View>
+            </Animated.View>
           </ScrollView>
         </Animated.View>
-          {editing && <Pressable accessibilityRole="button" accessibilityLabel="Cancelar edición" disabled={busy} onPress={cancelEdit} style={[styles.editIndicator, viewport.keyboardVisible && styles.keyboardCancel, { top: viewport.keyboardVisible ? sheetTop + 26 : composerTop - 30, maxWidth: Math.max(0, width - 210) }]}><Text style={styles.composerLabel}>Editando comentario · Cancelar</Text></Pressable>}
-          {reply && <Pressable accessibilityRole="button" accessibilityLabel="Cancelar respuesta" disabled={busy} onPress={() => setReply(null)} hitSlop={8} style={[styles.replyIndicator, viewport.keyboardVisible && styles.keyboardCancel, { top: viewport.keyboardVisible ? sheetTop + 26 : composerTop - 30, maxWidth: Math.max(0, width - 210) }]}><View style={styles.replyBubble}><Text style={styles.composerLabel}>Respondiendo</Text></View></Pressable>}
+      </Animated.View>
+      {editing && <Pressable accessibilityRole="button" accessibilityLabel="Cancelar edición" disabled={busy} onPress={cancelEdit} style={[styles.editIndicator, controlsOpen && styles.keyboardCancel, { top: controlsOpen ? sheetTop + 26 * scale : closedBottom - 104 * scale, maxWidth: Math.max(0, width - 210 * scale) }]}><Text style={styles.composerLabel}>Editando comentario · Cancelar</Text></Pressable>}
+      {reply && <Pressable accessibilityRole="button" accessibilityLabel="Cancelar respuesta" disabled={busy} onPress={() => setReply(null)} hitSlop={8} style={[styles.replyIndicator, controlsOpen && styles.keyboardCancel, { top: controlsOpen ? sheetTop + 26 * scale : closedBottom - 104 * scale, maxWidth: Math.max(0, width - 210 * scale) }]}><View style={styles.replyBubble}><Text style={styles.composerLabel}>Respondiendo</Text></View></Pressable>}
       {actionComment && placement && <CommentActionsPopover key={actionComment.id} placement={placement} actions={actions} onClose={dismissActions} onContentHeight={setActionMenuHeight} />}
     </View>
   ;
@@ -296,7 +380,7 @@ const styles = StyleSheet.create({
   panelBody: { flex: 1, backgroundColor: "transparent" },
   openPanelBody: { backgroundColor: "transparent" },
   glassTint: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(70,130,180,0.38)", borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.35)" },
-  headerGlass: { height: 56, overflow: "hidden", borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "rgba(200,225,248,0.50)" },
+  headerGlass: { height: 56, overflow: "hidden" },
   navigationGlass: { backgroundColor: "rgba(70,130,180,0.38)", borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: "rgba(200,225,248,0.50)" },
   handle: { width: 32, height: 4, borderRadius: 2, position: "absolute", top: 6.5, alignSelf: "center", backgroundColor: "rgba(255,255,255,0.65)", zIndex: 1 },
   header: { height: 56, width: "100%" },
@@ -331,18 +415,29 @@ const styles = StyleSheet.create({
   editor: { flexDirection: "row", alignItems: "center", height: 38, gap: 8, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.45)" },
   editorClosed: { marginLeft: 8, paddingLeft: 8, paddingRight: 2.5, gap: 6.5, backgroundColor: "rgba(255,255,255,0.20)", borderRadius: 20 },
   editorKeyboard: { marginTop: 3, marginHorizontal: 10, paddingHorizontal: 0, gap: 6, borderWidth: 0, backgroundColor: "transparent" },
-  editorBody: { flex: 1, minWidth: 0, height: "100%" },
+  editorBody: { flex: 1, minWidth: 0, height: 36, borderColor: "rgba(255,255,255,0.45)" },
   editorBodyKeyboard: { height: 36, borderRadius: 13, borderWidth: 1, borderColor: "rgba(255,255,255,0.45)", backgroundColor: "rgba(255,255,255,0.20)", justifyContent: "center" },
   input: { flex: 1, color: "#FFFFFF", fontSize: 15, paddingHorizontal: 4, paddingVertical: 0, height: 38, includeFontPadding: false },
   collapsedInput: { fontSize: 15, paddingHorizontal: 4 },
   expandedInput: { fontSize: 14, paddingLeft: 10, paddingRight: 52, height: 36 },
   counter: { position: "absolute", right: 10, top: 0, height: 34, textAlignVertical: "center", includeFontPadding: false, color: "rgba(255,255,255,0.65)", fontSize: 11 },
-  sendCollapsed: { width: 29, height: 38, alignItems: "center", justifyContent: "center" },
-  emojiRow: { height: 20, marginTop: 1, marginHorizontal: 10, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  emojiItem: { minWidth: 22, height: 20, alignItems: "center", justifyContent: "center" }, emojiText: { fontSize: 16, color: "#FFFFFF", includeFontPadding: false },
-  toolsRow: { height: 24, marginTop: 3, paddingLeft: 44, paddingRight: 10, flexDirection: "row", alignItems: "center" },
+  sendCollapsed: { position: "absolute", right: 2.5, top: 0, width: 29, height: 36, alignItems: "center", justifyContent: "center" },
+  emojiRow: { marginLeft: 44, flexDirection: "row", alignItems: "center", gap: 12, overflow: "hidden" },
+  emojiItem: { width: 18, height: 20, alignItems: "center", justifyContent: "center" }, emojiText: { fontSize: 18, lineHeight: 20, color: "#FFFFFF", includeFontPadding: false },
+  toolsRow: { paddingLeft: 44, paddingRight: 10, flexDirection: "row", alignItems: "center" },
   tool: { width: 20, height: 24, marginRight: 20, alignItems: "center", justifyContent: "center" },
   atIcon: { color: "#FFFFFF", fontSize: 20, fontWeight: "600" },
   toolSpacer: { flex: 1 },
   sendKeyboard: { width: 44, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center" },
 });
+
+function scaledCommentStyles(scale: number) {
+  const result = { ...styles };
+  const keys = ["sheet", "glassTint", "headerGlass", "header", "handle", "header", "countBadge", "title", "close", "hiddenNotice", "showBadge", "showLabel", "composer", "editor", "editorBody", "counter", "sendCollapsed", "emojiRow", "emojiItem", "emojiText", "toolsRow", "tool", "sendKeyboard", "replyBubble", "composerLabel", "editIndicator", "replyIndicator", "keyboardCancel"] as const;
+  for (const key of keys) {
+    const original = styles[key] as Record<string, unknown>;
+    (result as Record<string, unknown>)[key] = Object.fromEntries(Object.entries(original).map(([name, value]) => [name,
+      typeof value === "number" && !["flex", "zIndex", "opacity", "flexGrow", "flexShrink"].includes(name) ? value * scale : value]));
+  }
+  return result;
+}

@@ -11,7 +11,8 @@ function pure(file) {
   vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.join(root, file), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText, { exports });
   return exports;
 }
-function harness({ hidden = false, safeBottom = 24, roots = [] } = {}) {
+function harness({ hidden = false, safeBottom = 24, roots = [], width = 360 } = {}) {
+  const props = { visible: true, videoId: 'video' };
   const slots = []; let cursor = 0, effects = [], dirty = false, last, keyboardVisible = false;
   const calls = { publish: [], edit: [], like: [], remove: [], hide: [], restore: 0, dismiss: 0, focus: 0, blur: 0, close: 0, routes: [] };
   const same = (a, b) => a && b && a.length === b.length && a.every((x, i) => Object.is(x, b[i]));
@@ -24,12 +25,12 @@ function harness({ hidden = false, safeBottom = 24, roots = [] } = {}) {
   const viewport = { fullHeight: 802, availableHeight: 802, viewportTop: 0, keyboardInset: 0, keyboardVisible: false,
     insets: { top: 25, bottom: safeBottom, left: 0, right: 0 }, viewportRef: { current: { measureInWindow(fn) { fn(0, 0); } } }, onLayout() {} };
   const comments = { roots, threads: {}, expanded: new Set(), hiddenThreads: new Set(hidden ? ['hidden'] : []), liked: new Set(), pendingLikes: new Set(), loading: false, sending: false, mutating: false, paging: false, hasMore: false, error: null, total: roots.length, publicationOwnerId: 'owner',
-    publish: async (...args) => { calls.publish.push(args); return true; }, edit: async (...args) => { calls.edit.push(args); return true; },
+    publish: async (...args) => { calls.publish.push(args); const row = { id: 'confirmed' }; args[2]?.(row); return row; }, edit: async (...args) => { calls.edit.push(args); return true; },
     like: row => calls.like.push(row.id), remove: async row => { calls.remove.push(row.id); return true; }, hideThread: row => calls.hide.push(row.id),
     restoreThreads: () => { calls.restore++; }, toggleThread() {}, moreReplies() {}, loadMore() {}, refresh() {},
   };
   const native = Object.fromEntries(['ActivityIndicator', 'FlatList', 'Image', 'Modal', 'Pressable', 'ScrollView', 'Text', 'TextInput', 'View'].map(k => [k, k]));
-  Object.assign(native, { Alert: {}, Dimensions: { get: () => ({ width: 360, height: 802 }) }, useWindowDimensions: () => ({ width: 360, height: 802, fontScale: 1 }),
+  Object.assign(native, { Alert: {}, Dimensions: { get: () => ({ width, height: 802 }) }, useWindowDimensions: () => ({ width, height: 802, fontScale: 1 }),
     Keyboard: { dismiss() { calls.dismiss++; } }, StyleSheet: { create: x => x, hairlineWidth: 0.5, absoluteFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, absoluteFillObject: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 } } });
   const model = pure('lib/features/comments/model.ts');
   const mocks = {
@@ -37,10 +38,13 @@ function harness({ hidden = false, safeBottom = 24, roots = [] } = {}) {
     'react-native': native, '@expo/vector-icons': { Feather: 'Feather', Ionicons: 'Ionicons' }, 'expo-blur': { BlurView: 'BlurView' },
     'react-native-svg': { __esModule: true, default: 'Svg', Line: 'Line' },
     'expo-router': { router: { push: x => calls.routes.push(x) } }, 'react-native-keyboard-controller': { KeyboardProvider: 'KeyboardProvider' },
-    'react-native-reanimated': { default: { View: 'AnimatedView' }, View: 'AnimatedView', useAnimatedStyle: fn => fn(), useSharedValue: value => hooks.useRef({ value }).current, withTiming: x => x, Easing: { out: x => x, cubic: x => x } },
+    'react-native-reanimated': { __esModule: true, default: { View: 'AnimatedView', createAnimatedComponent: x => x }, FadeIn: { duration: () => ({}) }, LinearTransition: { duration: () => ({}) }, View: 'AnimatedView', useAnimatedStyle: fn => fn(), useSharedValue: value => hooks.useRef({ value }).current, withTiming: x => x, Easing: { out: x => x, cubic: x => x } },
     './CommentActionsPopover': { __esModule: true, default: 'Popover' }, '../lib/commentPopoverGeometry': pure('lib/commentPopoverGeometry.ts'),
     '../constants/palette': { palette: { text: '#0E1216', secondary: '#6B7580', teal: '#15868B', destructive: '#FE0979', button: '#0E1216', onButton: '#FFFFFF', magenta: '#FE0979' } },
     '../context/RegistrationContext': { useRegistration: () => ({ tabBarHeight: 70 }) }, '../context/AuthContext': { useAuth: () => ({ user: { id: 'me' }, profile: { username: 'Alexander', avatar_url: null } }) },
+    '../hooks/useCommentKeyboardMotion': { useCommentKeyboardMotion: () => ({ height: { value: viewport.keyboardInset }, progress: { value: keyboardVisible ? 1 : 0 }, bodyOpacity: { value: keyboardVisible ? 0 : 1 }, controlsOpacity: { value: keyboardVisible ? 1 : 0 }, controlsOpen: keyboardVisible }) },
+    '../hooks/useRecentCommentEmojis': { useRecentCommentEmojis: () => { const [recent, setRecent] = hooks.useState(pure('lib/commentRecentEmojis.ts').DEFAULT_COMMENT_EMOJIS); return { recent, remember: used => { if (used.length) setRecent(pure('lib/commentRecentEmojis.ts').rememberCommentEmojis(recent, used)); } }; } },
+    '../lib/commentSheetMotion': pure('lib/commentSheetMotion.ts'), '../lib/commentRecentEmojis': pure('lib/commentRecentEmojis.ts'),
     '../hooks/useFeedComments': { useFeedComments: () => comments }, '../hooks/useOverlayKeyboard': { useOverlayKeyboard: () => viewport },
     '../lib/features/auth/services/registrationBridge': { requestRegistration() {} }, '../lib/features/comments/model': model,
     '../lib/commentVideoLayout': pure('lib/commentVideoLayout.ts'), '../lib/commentsGlassGeometry': pure('lib/commentsGlassGeometry.ts'),
@@ -59,7 +63,7 @@ function harness({ hidden = false, safeBottom = 24, roots = [] } = {}) {
   function render() {
     for (let iteration = 0; iteration < 6; iteration++) {
       cursor = 0; effects = []; dirty = false;
-      last = exports.CommentsPanel({ visible: true, onClose: () => calls.close++, videoId: 'video', showVideoPreview: true, backHandler: { current() {} } });
+      last = exports.CommentsPanel({ ...props, onClose: () => calls.close++, showVideoPreview: true, backHandler: { current() {} } });
       nodes(last).forEach(attach);
       const list = nodes(last).find(n => n.type === 'FlatList');
       for (const item of list.props.data) nodes(list.props.renderItem({ item })).forEach(attach);
@@ -68,7 +72,7 @@ function harness({ hidden = false, safeBottom = 24, roots = [] } = {}) {
     }
     return last;
   }
-  return { calls, comments, styles: exports.styles, viewport, render, nodes: () => nodes(last), input: () => nodes(last).find(n => n.type === 'TextInput'),
+  return { props, calls, comments, styles: exports.styles, viewport, render, nodes: () => nodes(last), input: () => nodes(last).find(n => n.type === 'TextInput'),
     openKeyboard(height = 330.5) { keyboardVisible = true; Object.assign(viewport, { keyboardVisible, keyboardInset: height, availableHeight: 802 - height }); return render(); },
     closeKeyboard() { keyboardVisible = false; Object.assign(viewport, { keyboardVisible, keyboardInset: 0, availableHeight: 802 }); return render(); },
     rowNodes(index = 0) { const list = nodes(last).find(n => n.type === 'FlatList'); return nodes(list.props.renderItem({ item: list.props.data[index] })); },

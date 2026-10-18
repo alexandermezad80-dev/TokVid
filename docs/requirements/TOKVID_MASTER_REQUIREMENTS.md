@@ -3057,3 +3057,10 @@ También autorizó corregir el destello blanco antes del feed: se restauran fond
 ## Comentarios: segunda referencia sobre APK231 —18 octubre2026
 
 El usuario confirmó corregidos colores globales, branding y miniatura del feed y ordenó conservarlos. Autorizó auditar las funciones actuales de comentarios y aplicar únicamente la nueva presentación de Cccomentarios-medidas-2.zip. Auditoría entregada antes de modificar: conservar envío/edición/respuesta/borrado/ocultar/restaurar/likes/paginación/contador/emojis; los cuatro iconos sin servicio continúan deshabilitados. Las medidas nuevas de cabecera56, campo cerrado265×38, abierto36, Mostrar azul acero y zonas seguras sustituyen las del ZIP anterior en comentarios. No se reimplementa la miniatura ni las propuestas históricas de borrado. [Alcance, auditoría, medidas y validación](../TOKVID_COMMENTS_MEASURES_2.md). Implementado en validación; no afirmar prueba física del cambio nuevo.
+
+
+## Aclaración vigente — 18 octubre2026, comentarios ZIP3 y grabación
+
+[Registro y auditoría](../TOKVID_COMMENTS_MEASURES_3.md). Sustituye la presentación ZIP2; conserva las funciones auditadas y la aprobación del usuario de colores globales, branding y video de APK231. La nueva autorización añade transición de una sola hoja junto al IME, texto/cursor centrados, alineación x44 y @ como icono, campo cerrado «Agregar comentarios», siete emojis recientes persistidos en dispositivo y envío que limpia/cierra inmediatamente. Una fila local pendiente se reemplaza solo al confirmar escritura; fallo recupera texto y contexto. No cambiar RPC, RLS, permisos de comentarios ni servicios. No reabrir mensajería privada ni «Eliminar para todos» por este trabajo.
+
+Estado: implementado, pruebas locales ejecutables aprobadas; CI/Android y comprobación física pendientes. `physical_device_verified=false`. Cabeceras de continuidad y registro ZIP3 contienen el estado de entrega actualizado; los bloques anteriores son históricos.

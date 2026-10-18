@@ -1,4 +1,4 @@
-> **Estado vigente —18 octubre2026: base APK231 aprobada en colores, branding y miniatura por el usuario.** Código `ba910406234390673436b47c06897fc6afae4e52`, run39092998361. Nuevo cambio autorizado: exclusivamente presentación de comentarios según Cccomentarios-medidas-2.zip, auditoría entregada, implementación en validación. Conservar opciones/servicios actuales y no reabrir las áreas aprobadas. [Registro](../TOKVID_COMMENTS_MEASURES_2.md). Esta cabecera sustituye los estados históricos inferiores.
+> **Estado vigente —18 octubre 2026: revisión de comentarios ZIP3 + video, en validación.** Conserva la base aprobada APK231 y los avances remotos hasta `3683385f912e9afbfbf6b3684932a3de223bf528`. Una hoja/editor continuo, medidas y alineación de la referencia, envío inmediato con recuperación y siete emojis recientes. Colores globales, branding, video y opciones existentes conservados. [Registro](../TOKVID_COMMENTS_MEASURES_3.md). Esta cabecera sustituye los estados históricos inferiores.
 
 ## Cierre de verificación APK 227 — 18 octubre 2026
 
