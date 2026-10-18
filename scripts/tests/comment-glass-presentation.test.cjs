@@ -77,6 +77,8 @@ test('UI uses glass, preserves comment actions, and declares unimplemented media
   assert.ok(ui.includes('empty: { alignItems: "center", gap: 16 }'), 'Empty state horizontally and vertically centered');
   assert.ok(!ui.includes('keyboardContext:'), 'Reference header/emoji placement does not gain new context row');
   const transpiled = ts.transpileModule(ui, { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2020 }, reportDiagnostics: true });
-  assert.equal((transpiled.diagnostics || []).filter(d => d.category === ts.DiagnosticCategory.Error).length, 0,
-    'CommentsSheet TypeScript/JSX syntax must transpile');
+  const diagnosticErrors = (transpiled.diagnostics || [])
+    .filter(d => d.category === ts.DiagnosticCategory.Error)
+    .map(d => `${d.code} at ${d.start}: ${ts.flattenDiagnosticMessageText(d.messageText, ' ')}`);
+  assert.deepEqual(diagnosticErrors, [], 'CommentsSheet TypeScript/JSX syntax must transpile');
 });
