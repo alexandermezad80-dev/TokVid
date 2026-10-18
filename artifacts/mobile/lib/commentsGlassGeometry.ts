@@ -1,28 +1,29 @@
-/**
- * Glass composer geometry in dp, measured against the Modal viewport.
- *
- * The keyboard top is supplied as availableHeight from keyboardSheetGeometry:
- * it is measured in this viewport's coordinates, so system bars and modal
- * offsets cannot create an empty strip under the composer.
- */
+/** Comments-only presentation. Coordinates are local to the measured Modal. */
 export function commentsGlassGeometry({
   fullHeight, availableHeight, sheetTop, safeBottom, keyboardVisible,
+  screenHeight = fullHeight, viewportTop = 0,
 }: {
   fullHeight: number; availableHeight: number; sheetTop: number;
   safeBottom: number; keyboardVisible: boolean;
+  screenHeight?: number; viewportTop?: number;
 }) {
-  const headerHeight = 48;
-  const closedComposerHeight = Math.max(74, safeBottom + 50);
-  const keyboardGlassHeight = keyboardVisible
-    ? Math.max(0, availableHeight - sheetTop)
-    : 0;
+  const headerHeight = 56;
+  const closedComposerHeight = 74;
+  // The reference's 23.5dp bottom clearance already contains compact gesture
+  // insets (rounded to 24dp). Reserve larger system bars outside the composer.
+  // Their measured inset is used; never assume a fixed 42dp navigation bar.
+  const systemBottom = safeBottom > 24 ? safeBottom : 0;
+  // A Modal may already exclude system bars; do not subtract them twice.
+  const closedBottom = Math.max(0, Math.min(fullHeight, screenHeight - viewportTop - systemBottom));
+  const keyboardGlassHeight = keyboardVisible ? Math.max(0, availableHeight - sheetTop) : 0;
   const keyboardComposerHeight = Math.max(0, keyboardGlassHeight - headerHeight);
   const composerTop = keyboardVisible
-    ? sheetTop + headerHeight
-    : fullHeight - closedComposerHeight;
+    ? Math.min(availableHeight, sheetTop + headerHeight)
+    : Math.max(sheetTop, closedBottom - closedComposerHeight);
   return {
-    headerHeight, closedComposerHeight, keyboardGlassHeight,
-    keyboardComposerHeight, composerTop,
-    composerHeight: keyboardVisible ? keyboardComposerHeight : closedComposerHeight,
+    headerHeight, closedComposerHeight, closedBottom,
+    closedSheetHeight: Math.max(0, closedBottom - sheetTop),
+    keyboardGlassHeight, keyboardComposerHeight, composerTop,
+    composerHeight: keyboardVisible ? keyboardComposerHeight : Math.max(0, closedBottom - composerTop),
   };
 }

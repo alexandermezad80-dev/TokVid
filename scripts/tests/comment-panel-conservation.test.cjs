@@ -1,0 +1,60 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { harness, flatten } = require('./helpers/comments-panel-harness.cjs');
+const findLabel = (h, label) => h.nodes().find(n => n.props?.accessibilityLabel === label);
+const tick = async () => { await new Promise(resolve => setImmediate(resolve)); };
+const own = { id: 'own', video_id: 'video', user_id: 'me', username: 'Alexander', text: 'Original', created_at: '2026-10-18T00:00:00Z', parent_id: null, root_id: null, likes_count: 2, reply_count: 0, deleted_at: null };
+
+test('closed/open native editor retains draft and quick emojis; confirmed send clears and dismisses', async () => {
+  const h = harness(); h.render();
+  h.input().props.onChangeText('Hola'); h.render();
+  h.openKeyboard();
+  assert.equal(h.input().props.value, 'Hola');
+  findLabel(h, 'Añadir emoji ❤️ al comentario').props.onPress(); h.render();
+  assert.equal(h.input().props.value, 'Hola❤️');
+  h.openKeyboard(400);
+  assert.equal(h.input().props.value, 'Hola❤️');
+  assert.equal(h.nodes().filter(n => n.type === 'TextInput').length, 1);
+  findLabel(h, 'Publicar comentario').props.onPress(); await tick(); h.render();
+  assert.deepEqual(h.calls.publish.map(a => Array.from(a)), [['Hola❤️', null]]);
+  assert.equal(h.input().props.value, ''); assert.equal(h.calls.blur, 1); assert.equal(h.calls.dismiss, 1);
+});
+test('failed send preserves draft and focus; disabled submit remains disabled for whitespace', async () => {
+  const h = harness(); h.render(); h.openKeyboard();
+  h.comments.publish = async () => false;
+  h.input().props.onChangeText('No perder'); h.render();
+  findLabel(h, 'Publicar comentario').props.onPress(); await tick(); h.render();
+  assert.equal(h.input().props.value, 'No perder'); assert.equal(h.calls.blur, 0); assert.equal(h.calls.dismiss, 0);
+  h.input().props.onChangeText('  '); h.render(); assert.equal(findLabel(h, 'Publicar comentario').props.disabled, true);
+});
+test('existing own/foreign menus, cancellation, likes and restore remain connected', async () => {
+  const h = harness({ roots: [own, { ...own, id: 'foreign', user_id: 'other' }], hidden: true }); h.render();
+  findLabel(h, 'Mostrar mensajes ocultos').props.onPress(); assert.equal(h.calls.restore, 1);
+  h.rowNodes().find(n => n.props.accessibilityLabel === 'Me gusta').props.onPress(); assert.deepEqual(h.calls.like, ['own']);
+  h.rowNodes().find(n => n.props.accessibilityLabel === 'Opciones del comentario').props.onPress({ stopPropagation() {} }); h.render();
+  let actions = h.nodes().find(n => n.type === 'Popover').props.actions;
+  assert.deepEqual(Array.from(actions, a => a.title), ['Responder', 'Editar', 'Eliminar', 'Ocultar mensajes', 'Cancelar']);
+  actions.find(a => a.key === 'edit').onPress(); h.render(); h.openKeyboard();
+  assert.equal(h.input().props.value, 'Original');
+  assert.ok(findLabel(h, 'Cancelar edición'));
+  assert.equal(h.nodes().filter(n => n.props.accessibilityLabel?.startsWith('Añadir emoji')).length, 7);
+  findLabel(h, 'Cancelar edición').props.onPress(); h.render();
+  assert.equal(h.input().props.value, '');
+  h.rowNodes(1).find(n => n.props.accessibilityLabel === 'Opciones del comentario').props.onPress({ stopPropagation() {} }); h.render();
+  actions = h.nodes().find(n => n.type === 'Popover').props.actions;
+  assert.deepEqual(Array.from(actions, a => a.title), ['Responder', 'Ocultar mensajes', 'Cancelar']);
+});
+test('reference UI positions preserve short field, touch target and readable list spacing', () => {
+  const h = harness(); h.render();
+  assert.equal(h.styles.headerGlass.height, 56);
+  const closed = h.nodes().find(n => flatten(n.props.style).width === 265);
+  assert.ok(closed); assert.equal(flatten(closed.props.style).height, 38);
+  assert.equal(h.styles.close.width, 40); assert.equal(h.styles.close.height, 40);
+  h.openKeyboard();
+  assert.equal(h.styles.emojiRow.marginTop + h.styles.headerGlass.height, 57);
+  assert.equal(h.styles.emojiRow.height, 20);
+  assert.equal(flatten(h.nodes().find(n => flatten(n.props.style).marginHorizontal === 10 && flatten(n.props.style).gap === 6).props.style).height, 36);
+  assert.equal(h.styles.editorBodyKeyboard.height, 36);
+  assert.equal(h.styles.sendKeyboard.height, 24);
+  assert.equal(h.nodes().filter(n => n.props.accessibilityState?.disabled === true).length, 4);
+});

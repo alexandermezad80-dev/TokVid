@@ -1,3 +1,5 @@
+> **Estado vigente —18 octubre2026: base APK231 aprobada en colores, branding y miniatura por el usuario.** Código `ba910406234390673436b47c06897fc6afae4e52`, run39092998361. Nuevo cambio autorizado: exclusivamente presentación de comentarios según Cccomentarios-medidas-2.zip, auditoría entregada, implementación en validación. Conservar opciones/servicios actuales y no reabrir las áreas aprobadas. [Registro](docs/TOKVID_COMMENTS_MEASURES_2.md). Esta cabecera sustituye los estados históricos inferiores.
+
 ## Cierre de verificación APK 227 — 18 octubre 2026
 
 Código `a25ef9638cb6d4145cd117125578b69b5bbe7757`. [Descargar APK 227](https://github.com/alexandermezad80-dev/TokVid/actions/runs/39050681410/artifacts/12108250234): extraer el ZIP e instalar `app-release.apk`. [Mapa de fuentes correspondiente](https://github.com/alexandermezad80-dev/TokVid/actions/runs/39050681410/artifacts/12108210454). Compilación Android: `BUILD SUCCESSFUL in 18m 4s`; 135 pruebas aprobadas, 0 fallos, TypeScript y prebuild correctos. SHA256 APK: `66f73fa066e891c2c46071d467e06aa70f2d61627285c7fbb58d54861085149f`.
