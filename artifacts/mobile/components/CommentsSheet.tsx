@@ -223,8 +223,8 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
         {viewport.keyboardVisible && <BlurView pointerEvents="none" intensity={90} tint="light" experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />}
         <View accessibilityElementsHidden={!!actionComment} importantForAccessibility={actionComment ? "no-hide-descendants" : "auto"} style={[styles.panelBody, viewport.keyboardVisible && styles.openPanelBody]}>
         <View style={styles.headerGlass}>
-          <BlurView pointerEvents="none" intensity={90} tint="light" experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />
-          <View pointerEvents="none" style={styles.glassTint} />
+          {!viewport.keyboardVisible && <BlurView pointerEvents="none" intensity={90} tint="light" experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />}
+          {!viewport.keyboardVisible && <View pointerEvents="none" style={styles.glassTint} />
           <View style={styles.handle} />
           <View style={styles.header}>
             <View style={[styles.countBadge, { left: 10.5 + viewport.insets.left }]}><Text numberOfLines={1} style={styles.title}>{comments.total === null ? "Comentarios" : `${comments.total} comentarios`}</Text></View>
@@ -257,7 +257,7 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
               <Text style={styles.composerLabel}>{editing ? "Editando comentario · Cancelar" : "Respondiendo · Cancelar"}</Text>
             </Pressable>
           </View> : <View style={styles.emojiRow}>
-            {["❤️", "😂", "😍", "😮", "😢", "👍", "🔥"].map(emoji => <Pressable key={emoji} accessibilityRole="button" accessibilityLabel={`Añadir emoji ${emoji} al comentario`} disabled={busy} onPress={() => insertQuickEmoji(emoji)} style={styles.emojiItem}><Text style={styles.emojiText}>{emoji}</Text></Pressable>)}
+            {["😘", "😍", "🙂", "😂", "🔥", "👏", "❤️"].map(emoji => <Pressable key={emoji} accessibilityRole="button" accessibilityLabel={`Añadir emoji ${emoji} al comentario`} disabled={busy} onPress={() => insertQuickEmoji(emoji)} style={styles.emojiItem}><Text style={styles.emojiText}>{emoji}</Text></Pressable>)}
           </View>)}
           <Animated.View style={[styles.editor, editorShape, viewport.keyboardVisible ? styles.editorKeyboard : styles.editorClosed]}>
             <Avatar uri={profile?.avatar_url} username={profile?.username} small />
@@ -271,14 +271,14 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
               {viewport.keyboardVisible && <Text style={styles.counter}>{commentLength(text)}/{COMMENT_LIMIT}</Text>}
             </View>
             {!viewport.keyboardVisible && <Pressable accessibilityRole="button" accessibilityLabel={editing ? "Guardar cambios" : "Publicar comentario"} disabled={!canSend} onPress={() => { void send(); }} style={styles.sendCollapsed}>
-              {busy ? <ActivityIndicator color="#FFFFFF" size="small" /> : <Feather name="arrow-up" size={13} color={canSend ? "#FFFFFF" : "rgba(255,255,255,0.60)"} />}
+              {busy ? <ActivityIndicator color="#FFFFFF" size="small" /> : <Feather name="arrow-up" size={12.5} color={canSend ? "#FFFFFF" : "rgba(255,255,255,0.60)"} />}
             </Pressable>}
           </Animated.View>
           {viewport.keyboardVisible && <View style={styles.toolsRow}>
-            <Pressable accessibilityRole="button" accessibilityLabel="Imagen: adjuntos a comentarios pendientes" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="image" size={20} color="rgba(255,255,255,0.60)" /></Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Sticker: adjuntos a comentarios pendientes" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="smile" size={20} color="rgba(255,255,255,0.60)" /></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Imagen: adjuntos a comentarios pendientes" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="image" size={20} color="#FFFFFF" /></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Sticker: adjuntos a comentarios pendientes" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="smile" size={20} color="#FFFFFF" /></Pressable>
             <Pressable accessibilityRole="button" accessibilityLabel="Menciones: función pendiente" accessibilityState={{disabled:true}} disabled style={styles.tool}><Text style={styles.atIcon}>@</Text></Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Micrófono: audio en comentarios pendiente" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="mic" size={20} color="rgba(255,255,255,0.60)" /></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Micrófono: audio en comentarios pendiente" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="mic" size={20} color="#FFFFFF" /></Pressable>
             <View style={styles.toolSpacer} />
             <Pressable accessibilityRole="button" accessibilityLabel={editing ? "Guardar cambios" : "Publicar comentario"} disabled={!canSend} onPress={() => { void send(); }} style={[styles.sendKeyboard, { backgroundColor: canSend ? "#4682B4" : "rgba(70,130,180,0.60)" }]}>
               {busy ? <ActivityIndicator color="#FFFFFF" size="small" /> : <Feather name="arrow-up" size={20} color="#FFFFFF" />}
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
   keyboardContext: { flex: 1, height: 22, justifyContent: "center", alignItems: "flex-start", paddingHorizontal: 8 },
   composerLabel: { color: "#FFFFFF", fontSize: 12 },
   editor: { flexDirection: "row", alignItems: "center", height: 38, gap: 8, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.45)" },
-  editorClosed: { marginLeft: 8, marginRight: 9, paddingHorizontal: 8, backgroundColor: "rgba(255,255,255,0.20)", borderRadius: 20 },
+  editorClosed: { marginLeft: 8, marginRight: 9, paddingLeft: 9, paddingRight: 9, gap: 6.5, backgroundColor: "rgba(255,255,255,0.20)", borderRadius: 20 },
   editorKeyboard: { marginTop: 4, marginHorizontal: 10, paddingHorizontal: 0, gap: 6, borderWidth: 0, backgroundColor: "transparent" },
   editorBody: { flex: 1, minWidth: 0 },
   editorBodyKeyboard: { height: 38, borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.45)", backgroundColor: "rgba(255,255,255,0.20)", justifyContent: "center" },
@@ -339,9 +339,9 @@ const styles = StyleSheet.create({
   collapsedInput: { fontSize: 15 },
   expandedInput: { fontSize: 14, paddingLeft: 10, paddingRight: 52, height: 38 },
   counter: { position: "absolute", right: 10, bottom: 4, color: "rgba(255,255,255,0.65)", fontSize: 11 },
-  sendCollapsed: { width: 36, height: 38, alignItems: "center", justifyContent: "center" },
+  sendCollapsed: { width: 29, height: 38, alignItems: "center", justifyContent: "center" },
   emojiRow: { height: 22, marginTop: 2, marginHorizontal: 10, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  emojiItem: { minWidth: 22, height: 22, alignItems: "center", justifyContent: "center" }, emojiText: { fontSize: 18, color: "#FFFFFF" },
+  emojiItem: { minWidth: 22, height: 22, alignItems: "center", justifyContent: "center" }, emojiText: { fontSize: 18, color: "#FFFFFF", includeFontPadding: false },
   toolsRow: { height: 26, marginTop: 4, paddingLeft: 44, paddingRight: 10, flexDirection: "row", alignItems: "center" },
   tool: { width: 20, height: 26, marginRight: 20, alignItems: "center", justifyContent: "center" },
   atIcon: { color: "#FFFFFF", fontSize: 20, fontWeight: "600" },
