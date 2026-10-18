@@ -167,9 +167,8 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
   // Keep the frame and header pinned at the same screen Y while the IME changes
   // height (including Gboard letters -> emojis). Never resize the video here.
   const { keyboardGlassHeight, closedComposerHeight, composerTop, composerHeight: glassComposerHeight } =
-    commentsGlassGeometry({ fullHeight: viewport.fullHeight, sheetTop,
-      keyboardInset: viewport.keyboardInset, safeBottom: viewport.insets.bottom,
-      keyboardVisible: viewport.keyboardVisible });
+    commentsGlassGeometry({ fullHeight: viewport.fullHeight, availableHeight: viewport.availableHeight, sheetTop,
+      safeBottom: viewport.insets.bottom, keyboardVisible: viewport.keyboardVisible });
   const canSend = !!text.trim() && !busy;
   // The OS keyboard (including Gboard's emoji panel) keeps inserting through
   // TextInput.onChangeText. The seven quick reactions insert the same Unicode
@@ -220,10 +219,10 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
         <View style={styles.expandVideo}><Feather name="maximize-2" size={10} color="#fff" /></View>
       </Pressable>}
       <Animated.View style={[styles.sheet, sheetShape, viewport.keyboardVisible && styles.openSheetGlass, { position: "absolute", left: 0, right: 0, top: sheetTop, height: viewport.keyboardVisible ? keyboardGlassHeight : sheetHeight }]}>
-        {viewport.keyboardVisible && <BlurView pointerEvents="none" intensity={90} tint="light" experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />}
+        {viewport.keyboardVisible && <BlurView pointerEvents="none" intensity={24} tint="default" experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />}
         <View accessibilityElementsHidden={!!actionComment} importantForAccessibility={actionComment ? "no-hide-descendants" : "auto"} style={[styles.panelBody, viewport.keyboardVisible && styles.openPanelBody]}>
         <View style={styles.headerGlass}>
-          {!viewport.keyboardVisible && <BlurView pointerEvents="none" intensity={90} tint="light" experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />}
+          {!viewport.keyboardVisible && <BlurView pointerEvents="none" intensity={24} tint="default" experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />}
           {!viewport.keyboardVisible && <View pointerEvents="none" style={styles.glassTint} />}
           <View style={styles.handle} />
           <View style={styles.header}>
@@ -247,7 +246,7 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
               height: glassComposerHeight,
               paddingLeft: viewport.keyboardVisible ? 0 : viewport.insets.left,
               paddingRight: viewport.keyboardVisible ? 0 : viewport.insets.right }]}>
-          {!viewport.keyboardVisible && <BlurView pointerEvents="none" intensity={90} tint="light" experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />}
+          {!viewport.keyboardVisible && <BlurView pointerEvents="none" intensity={24} tint="default" experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />}
           {!viewport.keyboardVisible && <View pointerEvents="none" style={styles.glassTint} />}
           {editing && <Pressable accessibilityRole="button" accessibilityLabel="Cancelar edición" disabled={busy} onPress={cancelEdit} style={[styles.editIndicator, viewport.keyboardVisible && styles.keyboardCancel]}><Text style={styles.composerLabel}>Editando comentario · Cancelar</Text></Pressable>}
           {reply && <Pressable accessibilityRole="button" accessibilityLabel="Cancelar respuesta" disabled={busy} onPress={() => setReply(null)} hitSlop={8} style={[styles.replyIndicator, viewport.keyboardVisible && styles.keyboardCancel]}><View style={styles.replyBubble}><Text style={styles.composerLabel}>Respondiendo</Text></View></Pressable>}
