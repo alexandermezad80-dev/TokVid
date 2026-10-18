@@ -1,0 +1,65 @@
+{
+  "repository": "alexandermezad80-dev/TokVid",
+  "branch": "feature/feed-mini-video-avatar",
+  "commit": "a25ef9638cb6d4145cd117125578b69b5bbe7757",
+  "tree": "4cfa54dccbbf08d50dca3e2e1a22d8facff1d5b3",
+  "run_id": 39050681410,
+  "run_number": 227,
+  "job_id": 117448455085,
+  "check_run_id": 39050681463,
+  "check_job_id": 117448454755,
+  "check_status": "success",
+  "build_status": "success",
+  "tests": {
+    "passed": 135,
+    "failed": 0
+  },
+  "typecheck": "passed",
+  "prebuild": "passed",
+  "android_build": "BUILD SUCCESSFUL in 18m 4s",
+  "apk_sha256": "66f73fa066e891c2c46071d467e06aa70f2d61627285c7fbb58d54861085149f",
+  "artifacts": [
+    {
+      "id": 12108250234,
+      "name": "tokvid-android-feed-avatar",
+      "size_in_bytes": 244624188,
+      "url": "https://api.github.com/repos/alexandermezad80-dev/TokVid/actions/artifacts/12108250234",
+      "archive_download_url": "https://api.github.com/repos/alexandermezad80-dev/TokVid/actions/artifacts/12108250234/zip",
+      "expired": false,
+      "created_at": "2026-10-17T17:03:12Z",
+      "expires_at": "2027-01-15T16:43:54Z",
+      "updated_at": "2026-10-17T17:03:12Z",
+      "digest": "sha256:486a52ad51fadbab9a93a860b6b430b59d66d0b4fa5618ab0cf21fddf1e67bed",
+      "workflow_run": {
+        "id": 39050681410,
+        "repository_id": 1268853672,
+        "head_repository_id": 1268853672,
+        "head_branch": "feature/feed-mini-video-avatar",
+        "head_sha": "a25ef9638cb6d4145cd117125578b69b5bbe7757"
+      }
+    },
+    {
+      "id": 12108210454,
+      "name": "tokvid-auth-diagnostic-sourcemap",
+      "size_in_bytes": 3431227,
+      "url": "https://api.github.com/repos/alexandermezad80-dev/TokVid/actions/artifacts/12108210454",
+      "archive_download_url": "https://api.github.com/repos/alexandermezad80-dev/TokVid/actions/artifacts/12108210454/zip",
+      "expired": false,
+      "created_at": "2026-10-17T17:03:14Z",
+      "expires_at": "2027-01-15T16:43:54Z",
+      "updated_at": "2026-10-17T17:03:14Z",
+      "digest": "sha256:3ba141b41f59bd01fe8107e77dd7c8daf98f641cba7818d8aae2581302dc018e",
+      "workflow_run": {
+        "id": 39050681410,
+        "repository_id": 1268853672,
+        "head_repository_id": 1268853672,
+        "head_branch": "feature/feed-mini-video-avatar",
+        "head_sha": "a25ef9638cb6d4145cd117125578b69b5bbe7757"
+      }
+    }
+  ],
+  "physical_device_verified": false,
+  "branding_fix_status": "implemented-physical-verification-pending",
+  "recorded_at": "2026-10-18",
+  "scope": "Approved steel visual refresh and dark startup transition; subsequent comment changes excluded from APK 227."
+}

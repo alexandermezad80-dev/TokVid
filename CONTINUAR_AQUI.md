@@ -1,4 +1,14 @@
-> **Actualización visual en verificación —17 octubre 2026:** el usuario autorizó el ZIP válido de medidas y colores y corregir el destello blanco del branding. [Registro](docs/TOKVID_STEEL_VISUAL_REFRESH.md). APK 226 sigue siendo la última entrega hasta completar la nueva.
+## Cierre de verificación APK 227 — 18 octubre 2026
+
+Código `a25ef9638cb6d4145cd117125578b69b5bbe7757`. [Descargar APK 227](https://github.com/alexandermezad80-dev/TokVid/actions/runs/39050681410/artifacts/12108250234): extraer el ZIP e instalar `app-release.apk`. [Mapa de fuentes correspondiente](https://github.com/alexandermezad80-dev/TokVid/actions/runs/39050681410/artifacts/12108210454). Compilación Android: `BUILD SUCCESSFUL in 18m 4s`; 135 pruebas aprobadas, 0 fallos, TypeScript y prebuild correctos. SHA256 APK: `66f73fa066e891c2c46071d467e06aa70f2d61627285c7fbb58d54861085149f`.
+
+Cabeceras, medidas, colores y líneas del ZIP válido implementados; capas blancas identificadas del arranque corregidas. La ausencia del destello requiere prueba en teléfono: `physical_device_verified=false`.
+
+Al cerrar el registro, la rama ya contiene cambios posteriores de comentarios hasta `ba910406234390673436b47c06897fc6afae4e52`. Se conservan íntegros. APK 227 identifica esta entrega visual; no incluye esos cambios posteriores y no debe presentarse como la última compilación de la rama.
+
+[Especificación visual](docs/TOKVID_STEEL_VISUAL_REFRESH.md), [manifiesto](docs/continuity/APK_227_VERIFICATION.json). Los bloques inferiores describen entregas históricas; este cierre sustituye su estado pendiente de APK 227. La paleta azul acero y el correo sobre blanco de la especificación válida prevalecen donde se indican.
+
+---
 
 # TokVid — continuar desde aquí
 

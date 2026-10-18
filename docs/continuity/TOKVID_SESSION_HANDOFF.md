@@ -1,4 +1,14 @@
-> **Cambio autorizado en verificación —17 octubre 2026:** [cabeceras azul acero, líneas y contornos](../TOKVID_STEEL_VISUAL_REFRESH.md), con corrección de las capas blancas de transición al feed. Fuente válida TokVid-r-Medidas-y-colores-2.zip; PDF individual de burbujas descartado. Funciones conservadas, APK y prueba física pendientes.
+## Cierre de verificación APK 227 — 18 octubre 2026
+
+Código `a25ef9638cb6d4145cd117125578b69b5bbe7757`. [Descargar APK 227](https://github.com/alexandermezad80-dev/TokVid/actions/runs/39050681410/artifacts/12108250234): extraer el ZIP e instalar `app-release.apk`. [Mapa de fuentes correspondiente](https://github.com/alexandermezad80-dev/TokVid/actions/runs/39050681410/artifacts/12108210454). Compilación Android: `BUILD SUCCESSFUL in 18m 4s`; 135 pruebas aprobadas, 0 fallos, TypeScript y prebuild correctos. SHA256 APK: `66f73fa066e891c2c46071d467e06aa70f2d61627285c7fbb58d54861085149f`.
+
+Cabeceras, medidas, colores y líneas del ZIP válido implementados; capas blancas identificadas del arranque corregidas. La ausencia del destello requiere prueba en teléfono: `physical_device_verified=false`.
+
+Al cerrar el registro, la rama ya contiene cambios posteriores de comentarios hasta `ba910406234390673436b47c06897fc6afae4e52`. Se conservan íntegros. APK 227 identifica esta entrega visual; no incluye esos cambios posteriores y no debe presentarse como la última compilación de la rama.
+
+[Especificación](../TOKVID_STEEL_VISUAL_REFRESH.md), [manifiesto](APK_227_VERIFICATION.json). Este registro sustituye el estado pendiente de 227; no revertir los avances posteriores al retomar.
+
+---
 
 > **Entrega vigente —17 octubre2026: APK 226**, código `9a162c843231958e4facf428a7e3fb7addae257b`. Solo corrige presentación de fondos y tarjetas compactas sobre 225. 135 pruebas, TypeScript/prebuild y Android aprobados. [Descarga](https://github.com/alexandermezad80-dev/TokVid/actions/runs/39001106777/artifacts/12089588382), [registro y límites](../TOKVID_CHAT_WALLPAPER_FIX.md), [manifiesto](APK_226_VERIFICATION.json). Validación física pendiente. Branding rechazado continúa pendiente. Esta cabecera prevalece sobre los estados históricos inferiores.
 

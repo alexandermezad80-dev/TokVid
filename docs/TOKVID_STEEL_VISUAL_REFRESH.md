@@ -60,4 +60,14 @@ No se modifican el archivo del logotipo, el splash turquesa `#0C959F`, su tamañ
 
 Los callbacks de guardar, seguimiento, navegación, mensajes, borrar, reacciones y preferencias permanecen. No hay cambios de servicios, hooks, permisos, migraciones ni base de datos. No se modifican el escalado de fondos corregido en 226, el controlador de teclado, las alturas del compositor o panel de comentarios, ni los controles del reproductor. Las otras observaciones del usuario no se implementan como parte de este ajuste visual.
 
-Validación sintáctica local de todos los archivos cambiados aprobada. Auditoría comparativa: se conservan los 137 enlaces JSX de eventos de los archivos existentes modificados. Pruebas existentes de guardar foto con fallo/reintento y estabilidad de hooks aprobadas; solo se adaptan sus dobles de componentes decorativos nuevos, sin eliminar aserciones. El entorno local carece de `@supabase/supabase-js` para una suite: las pruebas completas, TypeScript real y prebuild se ejecutarán en CI. APK, checksum y resultados finales pendientes de registrar. `physical_device_verified=false`.
+Validación sintáctica local de todos los archivos cambiados aprobada. Auditoría comparativa: se conservan los 137 enlaces JSX de eventos de los archivos existentes modificados. Pruebas existentes de guardar foto con fallo/reintento y estabilidad de hooks aprobadas; solo se adaptan sus dobles de componentes decorativos nuevos, sin eliminar aserciones. CI completó 135 pruebas sin fallos, TypeScript real, prebuild y Android correctamente. La verificación física permanece pendiente; ver el cierre de entrega y el manifiesto.
+
+## Cierre de verificación APK 227 — 18 octubre 2026
+
+Código `a25ef9638cb6d4145cd117125578b69b5bbe7757`. [Descargar APK 227](https://github.com/alexandermezad80-dev/TokVid/actions/runs/39050681410/artifacts/12108250234): extraer el ZIP e instalar `app-release.apk`. [Mapa de fuentes correspondiente](https://github.com/alexandermezad80-dev/TokVid/actions/runs/39050681410/artifacts/12108210454). Compilación Android: `BUILD SUCCESSFUL in 18m 4s`; 135 pruebas aprobadas, 0 fallos, TypeScript y prebuild correctos. SHA256 APK: `66f73fa066e891c2c46071d467e06aa70f2d61627285c7fbb58d54861085149f`.
+
+Cabeceras, medidas, colores y líneas del ZIP válido implementados; capas blancas identificadas del arranque corregidas. La ausencia del destello requiere prueba en teléfono: `physical_device_verified=false`.
+
+Al cerrar el registro, la rama ya contiene cambios posteriores de comentarios hasta `ba910406234390673436b47c06897fc6afae4e52`. Se conservan íntegros. APK 227 identifica esta entrega visual; no incluye esos cambios posteriores y no debe presentarse como la última compilación de la rama.
+
+[Manifiesto verificable](continuity/APK_227_VERIFICATION.json).
