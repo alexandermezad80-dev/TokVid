@@ -2,6 +2,9 @@ name: Verify comments glass preview (no APK)
 on:
   push:
     branches: [feature/comments-glass-reference-stage2-3]
+  pull_request:
+    branches: [feature/feed-mini-video-avatar]
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
 concurrency:
   group: verify-comments-glass-${{ github.ref }}
