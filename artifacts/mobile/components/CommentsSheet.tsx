@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
   editorBody: { flex: 1, minWidth: 0, height: "100%" },
   editorBodyKeyboard: { height: 36, borderRadius: 13, borderWidth: 1, borderColor: "rgba(255,255,255,0.45)", backgroundColor: "rgba(255,255,255,0.20)", justifyContent: "center" },
   input: { flex: 1, color: "#FFFFFF", fontSize: 15, paddingHorizontal: 4, paddingVertical: 0, height: 38, includeFontPadding: false },
-  collapsedInput: { fontSize: 15, paddingHorizontal: 3 },
+  collapsedInput: { fontSize: 15, paddingHorizontal: 4 },
   expandedInput: { fontSize: 14, paddingLeft: 10, paddingRight: 52, height: 36 },
   counter: { position: "absolute", right: 10, top: 0, height: 34, textAlignVertical: "center", includeFontPadding: false, color: "rgba(255,255,255,0.65)", fontSize: 11 },
   sendCollapsed: { width: 29, height: 38, alignItems: "center", justifyContent: "center" },
