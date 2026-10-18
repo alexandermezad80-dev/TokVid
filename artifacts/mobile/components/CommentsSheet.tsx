@@ -224,7 +224,7 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
         <View accessibilityElementsHidden={!!actionComment} importantForAccessibility={actionComment ? "no-hide-descendants" : "auto"} style={[styles.panelBody, viewport.keyboardVisible && styles.openPanelBody]}>
         <View style={styles.headerGlass}>
           {!viewport.keyboardVisible && <BlurView pointerEvents="none" intensity={90} tint="light" experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />}
-          {!viewport.keyboardVisible && <View pointerEvents="none" style={styles.glassTint} />
+          {!viewport.keyboardVisible && <View pointerEvents="none" style={styles.glassTint} />}
           <View style={styles.handle} />
           <View style={styles.header}>
             <View style={[styles.countBadge, { left: 10.5 + viewport.insets.left }]}><Text numberOfLines={1} style={styles.title}>{comments.total === null ? "Comentarios" : `${comments.total} comentarios`}</Text></View>
