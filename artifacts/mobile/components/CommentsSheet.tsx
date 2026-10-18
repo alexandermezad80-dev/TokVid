@@ -249,16 +249,11 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
               paddingRight: viewport.keyboardVisible ? 0 : viewport.insets.right }]}>
           {!viewport.keyboardVisible && <BlurView pointerEvents="none" intensity={90} tint="light" experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />}
           {!viewport.keyboardVisible && <View pointerEvents="none" style={styles.glassTint} />}
-          {!viewport.keyboardVisible && editing && <Pressable accessibilityRole="button" accessibilityLabel="Cancelar edición" disabled={busy} onPress={cancelEdit} style={styles.editIndicator}><Text style={styles.composerLabel}>Editando comentario · Cancelar</Text></Pressable>}
-          {!viewport.keyboardVisible && reply && <Pressable accessibilityRole="button" accessibilityLabel="Cancelar respuesta" disabled={busy} onPress={() => setReply(null)} hitSlop={8} style={styles.replyIndicator}><View style={styles.replyBubble}><Text style={styles.composerLabel}>Respondiendo</Text></View></Pressable>}
-          {viewport.keyboardVisible && (editing || reply ? <View style={styles.emojiRow}>
-            <Pressable accessibilityRole="button" accessibilityLabel={editing ? "Cancelar edición" : "Cancelar respuesta"} disabled={busy}
-              onPress={editing ? cancelEdit : () => setReply(null)} style={styles.keyboardContext}>
-              <Text style={styles.composerLabel}>{editing ? "Editando comentario · Cancelar" : "Respondiendo · Cancelar"}</Text>
-            </Pressable>
-          </View> : <View style={styles.emojiRow}>
-            {["😘", "😍", "🙂", "😂", "🔥", "👏", "❤️"].map(emoji => <Pressable key={emoji} accessibilityRole="button" accessibilityLabel={`Añadir emoji ${emoji} al comentario`} disabled={busy} onPress={() => insertQuickEmoji(emoji)} style={styles.emojiItem}><Text style={styles.emojiText}>{emoji}</Text></Pressable>)}
-          </View>)}
+          {editing && <Pressable accessibilityRole="button" accessibilityLabel="Cancelar edición" disabled={busy} onPress={cancelEdit} style={[styles.editIndicator, viewport.keyboardVisible && styles.keyboardCancel]}><Text style={styles.composerLabel}>Editando comentario · Cancelar</Text></Pressable>}
+          {reply && <Pressable accessibilityRole="button" accessibilityLabel="Cancelar respuesta" disabled={busy} onPress={() => setReply(null)} hitSlop={8} style={[styles.replyIndicator, viewport.keyboardVisible && styles.keyboardCancel]}><View style={styles.replyBubble}><Text style={styles.composerLabel}>Respondiendo</Text></View></Pressable>}
+          {viewport.keyboardVisible && <View style={styles.emojiRow}>
+            {["😂", "😍", "😮", "😢", "🔥", "👏", "❤️"].map(emoji => <Pressable key={emoji} accessibilityRole="button" accessibilityLabel={`Añadir emoji ${emoji} al comentario`} disabled={busy} onPress={() => insertQuickEmoji(emoji)} style={styles.emojiItem}><Text style={styles.emojiText}>{emoji}</Text></Pressable>)}
+          </View>}
           <Animated.View style={[styles.editor, editorShape, viewport.keyboardVisible ? styles.editorKeyboard : styles.editorClosed]}>
             <Avatar uri={profile?.avatar_url} username={profile?.username} small />
             <View style={[styles.editorBody, viewport.keyboardVisible && styles.editorBodyKeyboard]}>
@@ -315,7 +310,7 @@ const styles = StyleSheet.create({
   usernameHeading: { flex: 1 },
   optionsButton: { width: 24, height: 24, alignItems: "center", justifyContent: "center" },
   list: { flex: 1 }, hiddenList: { display: "none" }, listContent: { paddingHorizontal: 12, paddingBottom: 12 }, emptyContainer: { flexGrow: 1, alignItems: "center", justifyContent: "center" },
-  empty: { alignItems: "center", gap: 17, paddingTop: 12 }, emptyText: { color: "#5B6270", fontSize: 15 },
+  empty: { alignItems: "center", gap: 16 }, emptyText: { color: "#5B6270", fontSize: 15 },
   comment: { flexDirection: "row", gap: 12, paddingVertical: 7, paddingHorizontal: 4, borderWidth: 1, borderColor: "transparent", borderRadius: 12 }, selectedComment: { backgroundColor: "rgba(0,242,254,0.055)", borderColor: "rgba(0,242,254,0.25)" }, nested: { marginLeft: 44 },
   avatar: { width: 32, height: 32, borderRadius: 16 }, composerAvatar: { width: 28, height: 28, borderRadius: 14 }, initialAvatar: { backgroundColor: palette.button, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: palette.magenta }, initial: { color: palette.onButton, fontSize: 14, fontWeight: "600" },
   body: { flex: 1, minWidth: 0, gap: 4 }, username: { color: palette.secondary, fontSize: 13, fontWeight: "600" }, commentText: { color: palette.text, fontSize: 15, lineHeight: 20 }, replyTo: { color: palette.teal, fontSize: 11 },
@@ -328,7 +323,7 @@ const styles = StyleSheet.create({
   replyIndicator: { position: "absolute", right: 16, top: -30, zIndex: 3 },
   replyBubble: { minWidth: 130, height: 28, paddingHorizontal: 12, borderRadius: 10, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.45)", backgroundColor: "rgba(70,130,180,0.9)" },
   editIndicator: { position: "absolute", right: 16, top: -30, zIndex: 3, paddingVertical: 5 },
-  keyboardContext: { flex: 1, height: 22, justifyContent: "center", alignItems: "flex-start", paddingHorizontal: 8 },
+  keyboardCancel: { right: 50, top: -30, maxWidth: 175 },
   composerLabel: { color: "#FFFFFF", fontSize: 12 },
   editor: { flexDirection: "row", alignItems: "center", height: 38, gap: 8, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.45)" },
   editorClosed: { marginLeft: 8, marginRight: 9, paddingLeft: 9, paddingRight: 9, gap: 6.5, backgroundColor: "rgba(255,255,255,0.20)", borderRadius: 20 },
