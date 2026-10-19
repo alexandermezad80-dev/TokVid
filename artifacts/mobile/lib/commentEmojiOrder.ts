@@ -12,6 +12,7 @@ export function commentEmojiOrder(recent: string[]): string[] {
 
 /** Keep the row stationary while browsing; install the latest order at its start. */
 export function commentEmojiStripGeometry(scale: number, count: number) {
-  const pitch = 47 * scale, glyph = 18 * scale, width = 300 * scale;
+  // A 24dp cell leaves room for Android color-glyph bearings; the icon stays 18dp.
+  const pitch = 46 * scale, glyph = 24 * scale, width = 300 * scale;
   return { pitch, glyph, width, length: Math.max(0, count - 1) * pitch + glyph };
 }

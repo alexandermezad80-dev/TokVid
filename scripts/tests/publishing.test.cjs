@@ -2,15 +2,17 @@ const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const fs = require('node:fs'), path = require('node:path'), vm = require('node:vm');
 const { stripTypeScriptTypes } = require('node:module');
-function load(file, names) {
+function load(file, names, context={}) {
  const source=fs.readFileSync(path.join(__dirname,'../../artifacts/mobile/lib/features/publishing',file),'utf8').replace(/^import .*;\n/gm,'').replace(/^export /gm,''); const exports={};
- vm.runInNewContext(stripTypeScriptTypes(source,{mode:'transform'})+'\nObject.assign(exports,{'+names.join(',')+'});',{exports,Error,Math,Number}); return exports;
+ vm.runInNewContext(stripTypeScriptTypes(source,{mode:'transform'})+'\nObject.assign(exports,{'+names.join(',')+'});',{exports,Error,Math,Number,...context}); return exports;
 }
 const { validateMedia, publishedMediaKind }=load('model.ts',['validateMedia','publishedMediaKind']);
-const { publishDraft }=load('service.ts',['publishDraft']);
+const { readVideoReplyTarget }=load('../comments/videoReply.ts',['readVideoReplyTarget']);
+const { publishDraft }=load('service.ts',['publishDraft'],{readVideoReplyTarget});
 function fixture() {
- const state={actor:'owner',row:null,inserts:0,uploads:0,failUpload:false,failInsert:false,lostResponse:false,silentInsert:false};
- const client={auth:{getSession:async()=>({data:{session:{user:{id:state.actor}}}})},storage:{from:()=>({getPublicUrl:p=>({data:{publicUrl:'https://storage.test/'+p}})})},from:()=>{
+ const state={actor:'owner',row:null,inserts:0,uploads:0,failUpload:false,failInsert:false,lostResponse:false,silentInsert:false,comment:{id:'comment',video_id:'original',username:'Marian',text:'Pregunta',deleted_at:null}};
+ const client={auth:{getSession:async()=>({data:{session:{user:{id:state.actor}}}})},storage:{from:()=>({getPublicUrl:p=>({data:{publicUrl:'https://storage.test/'+p}})})},from:table=>{
+   if(table==='comments'){const q={select:()=>q,eq:()=>q,maybeSingle:async()=>({data:state.comment})};return q;}
    let inserting=false,payload;const q={select:()=>q,eq:()=>q,maybeSingle:async()=>({data:state.row}),insert:p=>{inserting=true;payload=p;state.inserts++;return q;},single:async()=>{
     assert.ok(inserting);if(state.failInsert)return{error:new Error('insert failed')};if(state.silentInsert)return{data:null};state.row=payload;return state.lostResponse?{error:new Error('response lost')}:{data:payload};
    }};return q;
@@ -55,4 +57,19 @@ test('account switching blocks both uploads and publication under the old accoun
 });
 test('missing confirmation is an error, never a successful publication',async()=>{
  const f=fixture();f.state.silentInsert=true;await assert.rejects(publishDraft(f.client,f.draft,'text',f.upload,()=>{}),/confirmar/);
+});
+
+test('a video reply persists the original comment link and retains it across a lost-response retry',async()=>{
+ const f=fixture();f.draft.replyCommentId='comment';f.state.lostResponse=true;
+ await publishDraft(f.client,f.draft,'Mi respuesta',f.upload,()=>{});assert.equal(f.state.row.reply_to_comment_id,'comment');
+ const inserted=f.state.inserts;await publishDraft(f.client,f.draft,'Mi respuesta',f.upload,()=>{});assert.equal(f.state.inserts,inserted);
+});
+test('deleted comment and photo reply are rejected before any upload or publication',async()=>{
+ const f=fixture();f.draft.replyCommentId='comment';f.state.comment=null;
+ await assert.rejects(publishDraft(f.client,f.draft,'',f.upload,()=>{}),/no está disponible/);assert.equal(f.state.uploads,0);assert.equal(f.state.inserts,0);
+ f.state.comment={id:'comment',deleted_at:'now'};await assert.rejects(publishDraft(f.client,f.draft,'',f.upload,()=>{}),/no está disponible/);
+ f.draft.kind='image';await assert.rejects(publishDraft(f.client,f.draft,'',f.upload,()=>{}),/debe ser un video/);assert.equal(f.state.inserts,0);
+});
+test('ordinary publication does not carry a reply link or read comments',async()=>{
+ const f=fixture();await publishDraft(f.client,f.draft,'',f.upload,()=>{});assert.equal('reply_to_comment_id' in f.state.row,false);
 });

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PublicationDraft } from "./model";
+import { readVideoReplyTarget } from "../comments/videoReply";
 export type UploadFile = (path: string, uri: string, contentType: string, onProgress: (ratio: number) => void) => Promise<void>;
 
 // Keep the same draft/id across retries: a lost response must not publish twice.
@@ -12,6 +13,10 @@ export async function publishDraft(client: SupabaseClient, draft: PublicationDra
     return data;
   };
   if (await findPublished()) return draft.id;
+  if (draft.replyCommentId) {
+    if (draft.kind !== "video") throw new Error("La respuesta debe ser un video.");
+    await readVideoReplyTarget(client, draft.replyCommentId);
+  }
   const path = `${draft.userId}/${draft.id}.${draft.extension}`;
   if (!draft.uploadedUrl) {
     await uploadFile(path, draft.uri, draft.contentType, value => onProgress(value * 0.90));
@@ -26,7 +31,7 @@ export async function publishDraft(client: SupabaseClient, draft: PublicationDra
   const { data: freshSession } = await client.auth.getSession();
   if (freshSession.session?.user.id !== draft.userId) throw new Error("Tu sesión cambió. La publicación no se ha enviado.");
   const { data, error } = await client.from("videos").insert({ id: draft.id, user_id: draft.userId,
-    video_url: draft.uploadedUrl, thumbnail_url: draft.thumbnailUrl ?? null, media_type: draft.kind, caption: caption.trim().slice(0, 300) })
+    video_url: draft.uploadedUrl, thumbnail_url: draft.thumbnailUrl ?? null, media_type: draft.kind, ...(draft.replyCommentId ? { reply_to_comment_id: draft.replyCommentId } : {}), caption: caption.trim().slice(0, 300) })
     .select("id, user_id, video_url").single();
   if (error) {
     // A concurrent retry or lost insert response may already have committed.

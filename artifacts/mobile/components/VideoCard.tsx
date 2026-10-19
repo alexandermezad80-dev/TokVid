@@ -180,6 +180,7 @@ export default function VideoCard({
           creatorHandle={video.creatorHandle}
           creatorAvatar={video.creatorAvatar}
           caption={video.caption}
+          replyCommentId={video.replyCommentId}
           song={video.song}
           isFollowing={video.isFollowing}
           onFollow={onFollow}

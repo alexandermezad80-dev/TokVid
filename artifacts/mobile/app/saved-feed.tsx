@@ -142,6 +142,8 @@ export default function SavedFeedScreen() {
         visible={!!commentVideo}
         commentCount={commentVideo ? formatCount(commentVideo.comments) : "0"}
         videoId={commentVideo?.id ?? ""}
+        isVideoSaved={!!commentVideo && savedIds.has(commentVideo.id)}
+        onSaveVideo={() => { if (commentVideo) void toggleSave(commentVideo.id); }}
         onClose={() => setCommentVideo(null)}
       />
     </View>

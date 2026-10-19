@@ -1,6 +1,6 @@
 export type MediaKind = "video" | "image";
 export type PickedMedia = { uri: string; type?: string | null; mimeType?: string | null; fileName?: string | null; fileSize?: number; duration?: number | null; width?: number; height?: number };
-export type PublicationDraft = { id: string; userId: string; uri: string; kind: MediaKind; contentType: string; extension: string; size: number; thumbnailUri?: string; uploadedUrl?: string; thumbnailUrl?: string };
+export type PublicationDraft = { id: string; userId: string; uri: string; kind: MediaKind; contentType: string; extension: string; size: number; thumbnailUri?: string; uploadedUrl?: string; thumbnailUrl?: string; replyCommentId?: string };
 export const MAX_VIDEO_BYTES = 250 * 1024 * 1024;
 export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 export function publicationId() {

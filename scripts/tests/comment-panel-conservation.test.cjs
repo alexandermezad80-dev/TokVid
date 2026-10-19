@@ -33,7 +33,7 @@ test('existing own/foreign menus, cancellation, likes and restore remain connect
   h.rowNodes().find(n => n.props.accessibilityLabel === 'Me gusta').props.onPress(); assert.deepEqual(h.calls.like, ['own']);
   h.rowNodes().find(n => n.props.accessibilityLabel === 'Opciones del comentario').props.onPress({ stopPropagation() {} }); h.render();
   let actions = h.nodes().find(n => n.type === 'Popover').props.actions;
-  assert.deepEqual(Array.from(actions, a => a.title), ['Responder', 'Editar', 'Eliminar', 'Ocultar mensajes', 'Cancelar']);
+  assert.deepEqual(Array.from(actions, a => a.title), ['Editar', 'Eliminar', 'Ocultar mensajes', 'Copiar', 'Responder con video', 'Guardar']);
   actions.find(a => a.key === 'edit').onPress(); h.render(); h.openKeyboard();
   assert.equal(h.input().props.value, 'Original');
   assert.ok(findLabel(h, 'Cancelar edición'));
@@ -42,7 +42,7 @@ test('existing own/foreign menus, cancellation, likes and restore remain connect
   assert.equal(h.input().props.value, '');
   h.rowNodes(1).find(n => n.props.accessibilityLabel === 'Opciones del comentario').props.onPress({ stopPropagation() {} }); h.render();
   actions = h.nodes().find(n => n.type === 'Popover').props.actions;
-  assert.deepEqual(Array.from(actions, a => a.title), ['Responder', 'Ocultar mensajes', 'Cancelar']);
+  assert.deepEqual(Array.from(actions, a => a.title), ['Ocultar mensajes', 'Copiar', 'Responder con video', 'Guardar']);
 });
 test('reference UI positions preserve short field, touch target and readable list spacing', () => {
   const h = harness(); h.render();
@@ -115,7 +115,8 @@ test('failed reply restores its target and successful edit restores the pre-edit
  h.input().props.onChangeText('Editado'); h.render(); findLabel(h,'Guardar cambios').props.onPress(); h.render();
  assert.equal(h.input().props.value,''); await tick(); h.render(); assert.equal(h.input().props.value,'Borrador previo');
  h.rowNodes().find(n=>n.props.accessibilityLabel==='Opciones del comentario').props.onPress({stopPropagation(){}}); h.render();
- h.nodes().find(n=>n.type==='Popover').props.actions.find(a=>a.key==='reply').onPress(); h.render();
+ h.nodes().find(n=>n.type==='Popover').props.onClose(); h.render();
+ h.rowNodes().find(n=>n.props.accessibilityLabel==='Responder a @Alexander').props.onPress({stopPropagation(){}}); h.render();
  h.comments.publish=async()=>null; findLabel(h,'Publicar comentario').props.onPress(); await tick(); h.render();
  assert.ok(findLabel(h,'Cancelar respuesta')); assert.equal(h.input().props.value,'Borrador previo');
 });
@@ -134,12 +135,30 @@ test('quick row never inserts half a composite emoji at the 300 character limit'
  h.nodes().find(n=>n.type==='EmojiStrip').props.onSelect('👩🏽‍💻');h.render();assert.equal(h.input().props.value,'x'.repeat(299));
 });
 
-test('reply and edit cancellation remain legible after the K4 sheet turns white',()=>{
+test('edit cancellation stays legible while the separate reply pill is removed',()=>{
  const h=harness({roots:[own]});h.render();
  assert.equal(h.styles.composerLabel.color,'#131313');
- assert.equal(h.styles.replyBubble.backgroundColor,'#F0EFEC');
- assert.equal(h.styles.replyBubble.borderColor,'#DCDCDC');
+ assert.equal(h.styles.replyBubble,undefined);
  h.rowNodes().find(n=>n.props.accessibilityLabel==='Opciones del comentario').props.onPress({stopPropagation(){}});h.render();
  h.nodes().find(n=>n.type==='Popover').props.actions.find(a=>a.key==='edit').onPress();h.render();
  assert.ok(findLabel(h,'Cancelar edición'));
+});
+
+
+test('bottom actions copy the exact comment, save the host video and open a linked video reply',async()=>{
+ const h=harness({roots:[{...own,text:'Hola 👩🏽‍💻\n❤️'}]});h.render();
+ const open=()=>{h.rowNodes().find(n=>n.props.accessibilityLabel==='Opciones del comentario').props.onPress({stopPropagation(){}});h.render();return h.nodes().find(n=>n.type==='Popover');};
+ let menu=open();assert.equal(menu.props.placement,undefined);assert.equal(menu.props.safeBottom,24);
+ menu.props.actions.find(a=>a.key==='copy').onPress();await tick();h.render();assert.deepEqual(h.calls.copy,['Hola 👩🏽‍💻\n❤️']);assert.equal(h.nodes().some(n=>n.type==='Popover'),false);
+ open().props.actions.find(a=>a.key==='save').onPress();assert.equal(h.calls.save,1);
+ h.props.isVideoSaved=true;h.render();assert.equal(open().props.actions.find(a=>a.key==='save').title,'Quitar de favoritos');
+ open().props.actions.find(a=>a.key==='video-reply').onPress();assert.equal(h.calls.close,1);assert.equal(h.calls.routes[0].pathname,'/comment-video-reply');assert.equal(h.calls.routes[0].params.commentId,'own');
+});
+test('reply target appears inside the existing editor; cancelling keeps the draft and sends a root comment',async()=>{
+ const h=harness({roots:[own]});h.render();
+ h.rowNodes().find(n=>n.props.accessibilityLabel==='Responder a @Alexander').props.onPress({stopPropagation(){}});h.render();
+ assert.equal(h.input().props.placeholder,'Responder a @Alexander');assert.equal(h.nodes().some(n=>n.type==='Text' && n.props.children?.includes?.('Respondiendo')),false);
+ h.openKeyboard();assert.equal(h.input().props.placeholder,'Responder a @Alexander');
+ h.input().props.onChangeText('Mi respuesta');h.render();findLabel(h,'Cancelar respuesta').props.onPress();h.render();
+ assert.equal(h.input().props.value,'Mi respuesta');findLabel(h,'Publicar comentario').props.onPress();await tick();assert.equal(h.calls.publish[0][1],null);
 });

@@ -36,11 +36,17 @@ test('browsing the row freezes visible order until returning to start, while tap
  const before=h.list.props.data;h.list.props.onScrollBeginDrag();h.list.props.onScroll(event(470));h.list.props.onScrollEndDrag(event(470));
  const item=before[10],cell=h.list.props.renderItem({item,index:10});cell.props.children.props.onPress();assert.deepEqual(h.selected,[item]);
  h.props.recent=['💙',...recent.DEFAULT_COMMENT_EMOJIS];h.render();assert.equal(h.list.props.data,before,'no reordered data while browsing');
- h.list.props.onMomentumScrollEnd(event(0));h.render();assert.equal(h.list.props.data[0],'💙');assert.equal(h.list.props.snapToInterval,47);
+ h.list.props.onMomentumScrollEnd(event(0));h.render();assert.equal(h.list.props.data[0],'💙');assert.equal(h.list.props.snapToInterval,46);
  assert.equal(h.list.props.keyboardShouldPersistTaps,'always');
 });
 test('at the start a recent change is reflected immediately and final cell excludes trailing gap',()=>{
  const h=harness();h.render();h.props.recent=['👩🏽‍💻'];h.render();assert.equal(h.list.props.data[0],'👩🏽‍💻');
- assert.equal(h.list.props.getItemLayout(null,0).length,47);
- assert.equal(h.list.props.getItemLayout(null,h.list.props.data.length-1).length,18);
+ assert.equal(h.list.props.getItemLayout(null,0).length,46);
+ assert.equal(h.list.props.getItemLayout(null,h.list.props.data.length-1).length,24);
+});
+
+test('Android emoji paint gets breathing room without enlarging the icon or applying text font scaling',()=>{
+ const h=harness();h.render();const item=h.list.props.data[0];const cell=h.list.props.renderItem({item,index:0}),button=cell.props.children,text=button.props.children;
+ assert.equal(text.props.allowFontScaling,false);assert.equal(text.props.style.fontSize,18);assert.equal(button.props.style.width,24);assert.equal(h.list.props.style.height,24);
+ assert.ok(text.props.style.lineHeight>text.props.style.fontSize);
 });

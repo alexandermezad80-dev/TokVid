@@ -17,7 +17,7 @@ function pure(file) {
 function harness({ hidden = false, safeBottom = 24, roots = [], width = 360 } = {}) {
   const props = { visible: true, videoId: 'video' };
   const slots = []; let cursor = 0, effects = [], dirty = false, last, keyboardVisible = false;
-  const calls = { publish: [], edit: [], like: [], remove: [], hide: [], restore: 0, dismiss: 0, focus: 0, blur: 0, close: 0, routes: [] };
+  const calls = { publish: [], edit: [], like: [], remove: [], hide: [], restore: 0, dismiss: 0, focus: 0, blur: 0, close: 0, routes: [], copy: [], save: 0 };
   const same = (a, b) => a && b && a.length === b.length && a.every((x, i) => Object.is(x, b[i]));
   const hooks = {
     useState(initial) { const i = cursor++; slots[i] ??= { value: typeof initial === 'function' ? initial() : initial }; return [slots[i].value, next => { const value = typeof next === 'function' ? next(slots[i].value) : next; if (!Object.is(value, slots[i].value)) { slots[i].value = value; dirty = true; } }]; },
@@ -33,13 +33,14 @@ function harness({ hidden = false, safeBottom = 24, roots = [], width = 360 } = 
     restoreThreads: () => { calls.restore++; }, toggleThread() {}, moreReplies() {}, loadMore() {}, refresh() {},
   };
   const native = Object.fromEntries(['ActivityIndicator', 'FlatList', 'Image', 'Modal', 'Pressable', 'ScrollView', 'Text', 'TextInput', 'View'].map(k => [k, k]));
-  Object.assign(native, { Alert: {}, Dimensions: { get: () => ({ width, height: 802 }) }, useWindowDimensions: () => ({ width, height: 802, fontScale: 1 }),
+  Object.assign(native, { Alert: { alert() {} }, Dimensions: { get: () => ({ width, height: 802 }) }, useWindowDimensions: () => ({ width, height: 802, fontScale: 1 }),
     Keyboard: { dismiss() { calls.dismiss++; } }, StyleSheet: { create: x => x, hairlineWidth: 0.5, absoluteFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, absoluteFillObject: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 } } });
   const model = pure('lib/features/comments/model.ts');
   const mocks = {
     react: { ...hooks, createElement: element, default: { createElement: element } }, 'react/jsx-runtime': { jsx: (t, p) => element(t, p), jsxs: (t, p) => element(t, p) },
     'react-native': native, '@expo/vector-icons': { Feather: 'Feather', Ionicons: 'Ionicons' }, 'expo-blur': { BlurView: 'BlurView' },
     'react-native-svg': { __esModule: true, default: 'Svg', Line: 'Line' },
+    'expo-clipboard': { setStringAsync: async text => { calls.copy.push(text); } },
     'expo-router': { router: { push: x => calls.routes.push(x) } }, 'react-native-keyboard-controller': { KeyboardProvider: 'KeyboardProvider' },
     'react-native-reanimated': { __esModule: true, default: { View: 'AnimatedView', createAnimatedComponent: x => x }, FadeIn: { duration: () => ({}) }, LinearTransition: { duration: () => ({}) }, View: 'AnimatedView', useAnimatedStyle: fn => fn(), useSharedValue: value => hooks.useRef({ value }).current, withTiming: x => x, Easing: { out: x => x, cubic: x => x } },
     './CommentEmojiStrip': { __esModule: true, default: 'EmojiStrip' },
@@ -67,7 +68,7 @@ function harness({ hidden = false, safeBottom = 24, roots = [], width = 360 } = 
   function render() {
     for (let iteration = 0; iteration < 6; iteration++) {
       cursor = 0; effects = []; dirty = false;
-      last = exports.CommentsPanel({ ...props, onClose: () => calls.close++, showVideoPreview: true, backHandler: { current() {} } });
+      last = exports.CommentsPanel({ onSaveVideo: () => calls.save++, ...props, onClose: () => calls.close++, showVideoPreview: true, backHandler: { current() {} } });
       nodes(last).forEach(attach);
       const list = nodes(last).find(n => n.type === 'FlatList');
       for (const item of list.props.data) nodes(list.props.renderItem({ item })).forEach(attach);

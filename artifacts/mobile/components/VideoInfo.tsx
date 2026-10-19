@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import CommentVideoReplyBadge from "./CommentVideoReplyBadge";
 import { supabase } from "../lib/supabase";
 
 async function goToMention(username: string) {
@@ -62,6 +63,7 @@ interface Props {
   creatorHandle: string;
   creatorAvatar: string;
   caption: string;
+  replyCommentId?: string | null;
   song: string;
   isFollowing: boolean;
   isOwner?: boolean;
@@ -74,7 +76,7 @@ export default function VideoInfo({
   creator,
   creatorHandle,
   creatorAvatar,
-  caption,
+  caption, replyCommentId,
   song,
   isFollowing,
   isOwner=false,
@@ -112,6 +114,7 @@ export default function VideoInfo({
     <Animated.View
       style={[styles.container, {paddingBottom:tabBarHeight+16, transform: [{ translateX: slideX }], opacity }]}
     >
+      {!!replyCommentId && <CommentVideoReplyBadge commentId={replyCommentId} />}
       <View style={styles.creator}>
         <TouchableOpacity style={{flex:1,minWidth:0}} onPress={onAvatarPress} activeOpacity={0.85}>
           <Text numberOfLines={1} style={styles.creatorName}>{creatorHandle}</Text>

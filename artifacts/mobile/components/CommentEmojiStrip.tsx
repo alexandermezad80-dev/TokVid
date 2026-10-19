@@ -20,7 +20,7 @@ export default function CommentEmojiStrip({ recent, scale, disabled, onSelect }:
     if (offset.current <= .5 * scale) setItems(pending.current);
   };
   return <Animated.FlatList<string> horizontal data={items} keyExtractor={emoji => emoji}
-    style={{ width, height: 18 * scale, flexGrow: 0 }}
+    style={{ width, height: 24 * scale, flexGrow: 0 }}
     initialNumToRender={14} maxToRenderPerBatch={14} windowSize={3}
     showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always"
     snapToInterval={pitch} snapToAlignment="start" decelerationRate="fast" disableIntervalMomentum
@@ -28,10 +28,10 @@ export default function CommentEmojiStrip({ recent, scale, disabled, onSelect }:
     getItemLayout={(_data, index) => ({ index, offset: index * pitch, length: index === items.length - 1 ? glyph : pitch })}
     onScroll={event => { offset.current = Math.max(0, event.nativeEvent.contentOffset.x); }} scrollEventThrottle={16}
     onScrollBeginDrag={() => { dragging.current = true; }} onScrollEndDrag={settle} onMomentumScrollEnd={settle}
-    renderItem={({ item, index }) => <Animated.View entering={FadeIn.duration(150)} style={{ width: index === items.length - 1 ? glyph : pitch, height: 18 * scale }}>
+    renderItem={({ item, index }) => <Animated.View entering={FadeIn.duration(150)} style={{ width: index === items.length - 1 ? glyph : pitch, height: 24 * scale }}>
       <Pressable accessibilityRole="button" accessibilityLabel={`Añadir emoji ${item} al comentario`} disabled={disabled}
-        onPress={() => onSelect(item)} hitSlop={6 * scale} style={{ width: glyph, height: 18 * scale, alignItems: "center", justifyContent: "center" }}>
-        <Text style={{ fontSize: 18 * scale, lineHeight: 18 * scale, includeFontPadding: false }}>{item}</Text>
+        onPress={() => onSelect(item)} hitSlop={6 * scale} style={{ width: glyph, height: 24 * scale, alignItems: "center", justifyContent: "center" }}>
+        <Text allowFontScaling={false} numberOfLines={1} style={{ width: glyph, textAlign: "center", fontSize: 18 * scale, lineHeight: 24 * scale, includeFontPadding: false }}>{item}</Text>
       </Pressable>
     </Animated.View>} />;
 }

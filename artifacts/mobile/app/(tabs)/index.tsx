@@ -348,6 +348,8 @@ ${item.uri}`,
         visible={!!commentVideo}
         onClose={closeComments}
         videoId={commentVideo?.id ?? ""}
+        isVideoSaved={!!commentVideo && savedIds.has(commentVideo.id)}
+        onSaveVideo={() => { if (commentVideo) void toggleSave(commentVideo.id); }}
       />
       {error || commentCountsError || likeCountsError ? (
         <View style={styles.errorBanner}>

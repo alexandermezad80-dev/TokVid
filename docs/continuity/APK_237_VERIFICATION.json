@@ -1,0 +1,66 @@
+{
+  "repository": "alexandermezad80-dev/TokVid",
+  "branch": "feature/feed-mini-video-avatar",
+  "commit": "3d565023929a591b8b10180208a3831cec4a1e69",
+  "tree": "045f6ca89f8b0a85bf8d6118e1da9ca5baf47e96",
+  "run_id": 39214336014,
+  "run_number": 237,
+  "job_id": 117934682352,
+  "check_run_id": 39214336041,
+  "check_job_id": 117934583428,
+  "check_status": "success",
+  "build_status": "success",
+  "tests": {
+    "passed": 175,
+    "failed": 0
+  },
+  "typecheck": "passed",
+  "prebuild": "passed",
+  "android_build": "BUILD SUCCESSFUL in 18m 38s",
+  "apk_sha256": "08ac0d6d30cd649a01fb3e45f415505c0186c8408f4db95319e2491ae2852faa",
+  "artifacts": [
+    {
+      "id": 12169547443,
+      "node_id": "MDg6QXJ0aWZhY3QxMjE2OTU0NzQ0Mw==",
+      "name": "tokvid-android-feed-avatar",
+      "size_in_bytes": 244665498,
+      "url": "https://api.github.com/repos/alexandermezad80-dev/TokVid/actions/artifacts/12169547443",
+      "archive_download_url": "https://api.github.com/repos/alexandermezad80-dev/TokVid/actions/artifacts/12169547443/zip",
+      "expired": false,
+      "digest": "sha256:bfaceac9e4eb9f386f1f1d72074c91d781349505044298f6ad626701512695d5",
+      "created_at": "2026-10-19T07:30:51Z",
+      "updated_at": "2026-10-19T07:30:51Z",
+      "expires_at": "2027-01-17T07:10:55Z",
+      "workflow_run": {
+        "id": 39214336014,
+        "repository_id": 1268853672,
+        "head_repository_id": 1268853672,
+        "head_branch": "feature/feed-mini-video-avatar",
+        "head_sha": "3d565023929a591b8b10180208a3831cec4a1e69"
+      }
+    },
+    {
+      "id": 12169058737,
+      "node_id": "MDg6QXJ0aWZhY3QxMjE2OTA1ODczNw==",
+      "name": "tokvid-auth-diagnostic-sourcemap",
+      "size_in_bytes": 3459666,
+      "url": "https://api.github.com/repos/alexandermezad80-dev/TokVid/actions/artifacts/12169058737",
+      "archive_download_url": "https://api.github.com/repos/alexandermezad80-dev/TokVid/actions/artifacts/12169058737/zip",
+      "expired": false,
+      "digest": "sha256:85410773cf070cbff10aa47df5282a8bdbc69b235149c72b4833034ccca97880",
+      "created_at": "2026-10-19T07:30:53Z",
+      "updated_at": "2026-10-19T07:30:53Z",
+      "expires_at": "2027-01-17T07:10:55Z",
+      "workflow_run": {
+        "id": 39214336014,
+        "repository_id": 1268853672,
+        "head_repository_id": 1268853672,
+        "head_branch": "feature/feed-mini-video-avatar",
+        "head_sha": "3d565023929a591b8b10180208a3831cec4a1e69"
+      }
+    }
+  ],
+  "physical_device_verified": false,
+  "recorded_at": "2026-10-19",
+  "scope": "K4 base; subsequent user approved observed layout/functions except emoji clipping and requested new bottom actions."
+}

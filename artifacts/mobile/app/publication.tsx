@@ -62,7 +62,7 @@ export default function PublicationScreen() {
       onShare={() => { void Share.share({ message: `${item.caption}\n${item.uri}` }).catch(() => setError("No se pudo compartir la publicación.")); }} /> : <View style={styles.center}><Text style={styles.message}>{error}</Text><Pressable onPress={() => setRetry(value => value + 1)} style={styles.retry}><Text style={styles.message}>Reintentar</Text></Pressable></View>}
     {!comments && <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Volver" style={[styles.back, { top: insets.top + 8 }]}><Feather name="arrow-left" color="#fff" size={24} /></Pressable>}
     {!!item && !!(error || likes.error || counts.error) && <Text accessibilityRole="alert" style={[styles.error, { top: insets.top + 62 }]}>{error || likes.error || counts.error}</Text>}
-    <CommentsSheet focusCommentId={commentId} visible={comments} onClose={closeComments} videoId={item?.id ?? ""} showVideoPreview onPreviewFrame={setPreview} />
+    <CommentsSheet focusCommentId={commentId} visible={comments} onClose={closeComments} videoId={item?.id ?? ""} isVideoSaved={!!item && savedIds.has(item.id)} onSaveVideo={() => { if (item) void toggleSave(item.id); }} showVideoPreview onPreviewFrame={setPreview} />
   </View>;
 }
 const styles = StyleSheet.create({ screen:{flex:1,backgroundColor:"#000"},center:{flex:1,alignItems:"center",justifyContent:"center",padding:24},message:{color:"#D2DBE1",fontSize:15,textAlign:"center"},retry:{padding:16},back:{position:"absolute",left:12,width:44,height:44,alignItems:"center",justifyContent:"center",backgroundColor:"#0C0F1788",borderRadius:22},error:{position:"absolute",left:16,right:16,color:"#F7A9BB",backgroundColor:"#17151DEE",padding:12,borderRadius:10} });

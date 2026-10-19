@@ -11,6 +11,7 @@ export interface VideoItem {
   id: string;
   uri: string;
   mediaType?: "video" | "image";
+  replyCommentId?: string | null;
   thumbnail: any;
   creator: string;
   creatorHandle: string;
@@ -174,6 +175,7 @@ export async function mapRowsToVideoItems(vids: any[]): Promise<VideoItem[]> {
       id: v.id,
       uri: videoUrl,
       mediaType: publishedMediaKind(v),
+      replyCommentId: v.reply_to_comment_id ?? null,
       thumbnail: v.thumbnail_url ? { uri: v.thumbnail_url } : publishedMediaKind(v) === "image" ? { uri: videoUrl } : null,
       creator: username,
       creatorHandle: `@${username}`,

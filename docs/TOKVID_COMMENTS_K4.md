@@ -46,3 +46,8 @@ Producción: `CommentsSheet.tsx`, `commentSheetMotion.ts`, límite local en `com
 Pruebas: conservación del panel y sus acciones; colores/medidas; geometría segura y tamaños de IME; catálogo Unicode/duplicados/secuencias; siete glifos completos;20 recientes; congelación de orden al deslizar y retorno al inicio; selección sin recorte parcial; envío/recuperación y round-trip de texto/emoji del servicio. CI con dependencias reales debe completar la suite, TypeScript y Android antes de entregar.
 
 No hay dispositivo/emulador Android disponible. Las capturas VISTA-FINAL son referencias del usuario, no capturas de esta APK. Pendiente comparar en teléfono teclado cerrado/abierto/Mostrar, scroll de comentarios, fila larga y retorno al inicio, errores/reintento, gestos/3botones y fuentes disponibles. `physical_device_verified=false`.
+
+
+## Cierre de base237 y aclaración posterior —19 octubre2026
+
+K4 compilado en APK237:175 pruebas, TypeScript/prebuild y Android aprobados. [Manifiesto](continuity/APK_237_VERIFICATION.json). El usuario aprueba el estado observado salvo los emojis recortados y solicita la actualización documentada en [acciones de comentarios](TOKVID_COMMENT_ACTIONS.md). La conservación del menú flotante y de la píldora Respondiendo queda sustituida por esa petición. La nueva actualización todavía está en validación; no confundirla con el binario237.

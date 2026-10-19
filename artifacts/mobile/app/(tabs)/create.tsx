@@ -18,11 +18,25 @@ import { PickedMedia, PublicationDraft, publicationId, validateMedia } from "../
 import { publishDraft } from "../../lib/features/publishing/service";
 import { uploadPublicationFile } from "../../lib/features/publishing/nativeUpload";
 
+import { readVideoReplyTarget, VideoReplyTarget } from "../../lib/features/comments/videoReply";
+
 const tones = ["rgba(0,242,254,0.26)", "rgba(254,9,121,0.26)"] as const;
 type Phase = "pick" | "edit" | "uploading" | "success";
-export default function CreateScreen() {
+export default function CreateScreen() { return <PublicationComposer />; }
+export function PublicationComposer({ replyCommentId, onExit }: { replyCommentId?: string; onExit?: () => void }) {
   const insets = useSafeAreaInsets();
   const { user, profile, requireAuth } = useAuth();
+  const [replyTarget, setReplyTarget] = useState<VideoReplyTarget | null>(null);
+  const [replyError, setReplyError] = useState("");
+  const [replyRetry, setReplyRetry] = useState(0);
+  useEffect(() => {
+    let active = true; setReplyTarget(null); setReplyError("");
+    if (replyCommentId) void readVideoReplyTarget(supabase, replyCommentId)
+      .then(row => { if (active) setReplyTarget(row); })
+      .catch(e => { if (active) setReplyError(e?.message ?? "No se pudo cargar el comentario."); });
+    return () => { active = false; };
+  }, [replyCommentId, replyRetry]);
+  const replyReady = !replyCommentId || !!replyTarget;
   const [phase, setPhase] = useState<Phase>("pick");
   const [draft, setDraft] = useState<PublicationDraft | null>(null);
   const [caption, setCaption] = useState("");
@@ -56,6 +70,7 @@ export default function CreateScreen() {
     try {
       let uri = asset.uri;
       const kind = asset.type === "video" ? "video" : "image";
+      if (replyCommentId && kind !== "video") throw new Error("Elige un video para responder al comentario.");
       if (kind === "image") {
         const context = ImageManipulator.manipulate(uri);
         if ((asset.width ?? 0) > 1920) context.resize({ width: 1920 });
@@ -67,24 +82,24 @@ export default function CreateScreen() {
       const size = info.exists && "size" in info ? info.size : 0;
       const details = validateMedia({ ...asset, uri, type: kind, ...(kind === "image" ? { mimeType: "image/jpeg" } : {}) }, size);
       if (!mounted.current || selection.current !== sequence || currentUserId.current !== owner) return;
-      setDraft({ id: publicationId(), userId: owner, uri, ...details }); setPhase("edit");
+      setDraft({ id: publicationId(), userId: owner, uri, ...details, ...(replyCommentId ? { replyCommentId } : {}) }); setPhase("edit");
     } catch (e: any) { if (mounted.current) setError(e?.message ?? "No pudimos abrir ese archivo."); }
     finally { if (mounted.current) setPreparing(false); }
   };
   const pick = async () => {
-    if (selecting.current || busy.current) return;
+    if (selecting.current || busy.current || !replyReady) return;
     selecting.current = true;
     try {
       const owner = user ?? await requireAuth(); if (!owner) return;
       setError(null);
-      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["videos", "images"], allowsMultipleSelection: false, allowsEditing: false, quality: 1, videoMaxDuration: 180 });
+      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: replyCommentId ? ["videos"] : ["videos", "images"], allowsMultipleSelection: false, allowsEditing: false, quality: 1, videoMaxDuration: 180 });
       if (!result.canceled && result.assets[0]) await prepare(result.assets[0], owner.id);
     } catch { setError("No pudimos abrir tu galería. Revisa los permisos de TokVid."); }
     finally { selecting.current = false; }
   };
   const capture = async () => {
     if (recording) { camera.current?.stopRecording(); return; }
-    if (preparing || busy.current || selecting.current || !cameraReady) return;
+    if (preparing || busy.current || selecting.current || !cameraReady || !replyReady) return;
     const owner = user ?? await requireAuth(); if (!owner || !camera.current) return;
     selecting.current = true; setError(null);
     try {
@@ -102,7 +117,7 @@ export default function CreateScreen() {
     finally { selecting.current = false; setRecording(false); }
   };
   const publish = async () => {
-    if (!draft || busy.current || preparing) return;
+    if (!draft || busy.current || preparing || !replyReady) return;
     busy.current = true; setPhase("uploading"); setError(null); setProgress(0); player.pause();
     const sentCaption = caption;
     try {
@@ -123,14 +138,19 @@ export default function CreateScreen() {
   };
   const exit = () => {
     if (busy.current) return;
-    if (draft && phase !== "success") Alert.alert("Descartar publicación", "Se descartarán la selección y la descripción.", [{ text: "Seguir editando", style: "cancel" }, { text: "Descartar", style: "destructive", onPress: reset }]);
-    else { reset(); router.replace("/(tabs)"); }
+    if (draft && phase !== "success") Alert.alert("Descartar publicación", "Se descartarán la selección y la descripción.", [{ text: "Seguir editando", style: "cancel" }, { text: "Descartar", style: "destructive", onPress: () => { reset(); onExit?.(); } }]);
+    else { reset(); if (onExit) onExit(); else router.replace("/(tabs)"); }
   };
   const secondaryFormColors=phase === "pick" ? null : {color:palette.secondary};
   const formColors=phase === "pick" ? null : {color:palette.text};
   const errorView = error && <Text accessibilityRole="alert" style={[styles.error,phase!=="pick"&&{color:palette.destructive}]}>{error}</Text>;
-  return <KeyboardAvoidingView style={[styles.screen,phase!=="pick"&&{backgroundColor:palette.background}, { paddingBottom: 80 + insets.bottom }]} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-    <HeaderSurface safeTop style={[styles.header,{height:52+insets.top}]}><Pressable accessibilityRole="button" accessibilityLabel="Cerrar creación" onPress={exit} disabled={phase === "uploading" || recording} style={styles.iconButton}><Feather name="x" size={23} color="#fff" /></Pressable><Text style={styles.headerTitle}>{phase === "pick" ? "Crear" : phase === "success" ? "Publicación lista" : "Tu publicación"}</Text><View style={styles.brandDot} /></HeaderSurface>
+  return <KeyboardAvoidingView style={[styles.screen,phase!=="pick"&&{backgroundColor:palette.background}, { paddingBottom: (replyCommentId ? 0 : 80) + insets.bottom }]} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+    <HeaderSurface safeTop style={[styles.header,{height:52+insets.top}]}><Pressable accessibilityRole="button" accessibilityLabel="Cerrar creación" onPress={exit} disabled={phase === "uploading" || recording} style={styles.iconButton}><Feather name="x" size={23} color="#fff" /></Pressable><Text style={styles.headerTitle}>{phase === "pick" ? (replyCommentId ? "Responder con video" : "Crear") : phase === "success" ? "Publicación lista" : "Tu publicación"}</Text><View style={styles.brandDot} /></HeaderSurface>
+    {!!replyCommentId && <View style={styles.replyContext}>
+      {replyTarget ? <><Text style={styles.replyName}>Responder con video a @{replyTarget.username.replace(/^@/, "")}</Text><Text style={styles.replyText} numberOfLines={2}>{replyTarget.text}</Text></>
+        : replyError ? <><Text accessibilityRole="alert" style={styles.replyText}>{replyError}</Text><Pressable onPress={() => setReplyRetry(n => n + 1)}><Text style={styles.replyName}>Reintentar</Text></Pressable></>
+        : <ActivityIndicator color="#4682B4" />}
+    </View>}
     {phase === "pick" ? <>
       <View style={styles.stage}>
         {focused && cameraPermission?.granted && !preparing ? <CameraView ref={camera} style={StyleSheet.absoluteFill} facing={facing} mode={mode} flash={flash ? "on" : "off"} enableTorch={mode === "video" && flash} onCameraReady={() => setCameraReady(true)} onMountError={() => setError("No se pudo abrir la cámara. Puedes usar Galería.")} /> : <LinearGradient colors={["#10232A", "#18171F", "#241321"]} style={[StyleSheet.absoluteFill, styles.stageEmpty]}><Feather name="camera" size={44} color="#D0DEE0" /><Text style={styles.stageTitle}>Tu próximo momento</Text><Text style={styles.stageText}>Graba algo nuevo o elige una foto o video de tu galería.</Text><Pressable onPress={() => void requestCamera()} accessibilityRole="button" style={styles.activate}><Text style={styles.white}>Activar cámara</Text></Pressable></LinearGradient>}
@@ -139,20 +159,23 @@ export default function CreateScreen() {
         {preparing && <View style={styles.loading}><ActivityIndicator color="#8DDDE0" /><Text style={styles.white}>Preparando…</Text></View>}
       </View>
       {errorView}
-      <View style={styles.modes}>{(["video", "picture"] as const).map(value => <Pressable key={value} disabled={recording || preparing} onPress={() => { if (mode !== value) { setCameraReady(false); setMode(value); } }} style={[styles.mode, mode === value && styles.activeMode]}><Text style={[styles.modeText, mode === value && styles.white]}>{value === "video" ? "VIDEO" : "FOTO"}</Text></Pressable>)}</View>
-      <View style={styles.captureRow}><Pressable onPress={() => void pick()} disabled={preparing || recording} accessibilityRole="button" accessibilityLabel="Elegir foto o video de galería" style={styles.sideAction}><View style={styles.galleryIcon}><Feather name="image" size={26} color="#EAF5F5" /></View><Text style={[styles.small,secondaryFormColors]}>Galería</Text></Pressable><Pressable onPress={() => void capture()} disabled={!cameraPermission?.granted || preparing} accessibilityRole="button" accessibilityLabel={recording ? "Detener grabación" : mode === "video" ? "Grabar video" : "Tomar foto"}><LinearGradient colors={["#65BFC5", "#A96991"]} start={{x:0,y:0}} end={{x:1,y:1}} style={styles.shutterRing}><View style={styles.shutterInner}><View style={[styles.shutter, mode === "video" && styles.videoShutter, recording && styles.stopShutter]} /></View></LinearGradient></Pressable><Pressable onPress={() => router.push("/live-create")} disabled={recording || preparing} style={styles.sideAction} accessibilityRole="button" accessibilityLabel="Crear LIVE"><Feather name="radio" size={25} color="#B7B4C0" /><Text style={[styles.small,secondaryFormColors]}>LIVE</Text></Pressable></View>
+      <View style={styles.modes}>{(replyCommentId ? ["video"] as const : ["video", "picture"] as const).map(value => <Pressable key={value} disabled={recording || preparing} onPress={() => { if (mode !== value) { setCameraReady(false); setMode(value); } }} style={[styles.mode, mode === value && styles.activeMode]}><Text style={[styles.modeText, mode === value && styles.white]}>{value === "video" ? "VIDEO" : "FOTO"}</Text></Pressable>)}</View>
+      <View style={styles.captureRow}><Pressable onPress={() => void pick()} disabled={preparing || recording || !replyReady} accessibilityRole="button" accessibilityLabel={replyCommentId ? "Elegir video de galería" : "Elegir foto o video de galería"} style={styles.sideAction}><View style={styles.galleryIcon}><Feather name="image" size={26} color="#EAF5F5" /></View><Text style={[styles.small,secondaryFormColors]}>Galería</Text></Pressable><Pressable onPress={() => void capture()} disabled={!cameraPermission?.granted || preparing || !replyReady} accessibilityRole="button" accessibilityLabel={recording ? "Detener grabación" : mode === "video" ? "Grabar video" : "Tomar foto"}><LinearGradient colors={["#65BFC5", "#A96991"]} start={{x:0,y:0}} end={{x:1,y:1}} style={styles.shutterRing}><View style={styles.shutterInner}><View style={[styles.shutter, mode === "video" && styles.videoShutter, recording && styles.stopShutter]} /></View></LinearGradient></Pressable>{!replyCommentId && <Pressable onPress={() => router.push("/live-create")} disabled={recording || preparing} style={styles.sideAction} accessibilityRole="button" accessibilityLabel="Crear LIVE"><Feather name="radio" size={25} color="#B7B4C0" /><Text style={[styles.small,secondaryFormColors]}>LIVE</Text></Pressable>}</View>
     </> : phase === "success" ? <View style={styles.success}><LinearGradient colors={tones} style={styles.successIcon}><Feather name="check" size={38} color="#CAFFFF" /></LinearGradient><Text style={[styles.stageTitle,formColors]}>Ya está publicado</Text><Text style={[styles.stageText,{color:palette.secondary}]}>Tu {draft?.kind === "image" ? "foto" : "video"} está disponible en tu perfil y en el feed.</Text><Pressable style={[styles.primary,{backgroundColor:palette.button}]} onPress={() => { reset(); router.push("/(tabs)/profile"); }}><Text style={styles.white}>Ver en mi perfil</Text></Pressable><Pressable style={styles.secondary} onPress={() => { const id = draft!.id; reset(); router.push({ pathname: "/publication", params: { id } }); }}><Text style={[styles.white,formColors]}>Ver publicación</Text></Pressable><Pressable style={styles.secondary} onPress={reset}><Text style={[styles.small,secondaryFormColors]}>Crear otra</Text></Pressable></View> : <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.editContent}>
       <View style={styles.preview}>{draft?.kind === "image" ? <Image source={{ uri: draft.uri }} style={StyleSheet.absoluteFill} resizeMode="contain" /> : <><VideoView player={player} style={StyleSheet.absoluteFill} contentFit="contain" nativeControls={false} surfaceType="textureView" /><Pressable accessibilityRole="button" accessibilityLabel={playing ? "Pausar vista previa" : "Reproducir vista previa"} style={styles.previewControl} onPress={() => { if (playing) player.pause(); else player.play(); setPlaying(!playing); }}><Feather name={playing ? "pause" : "play"} size={24} color="#fff" /></Pressable></>}</View>
       <View style={[styles.captionBox,{backgroundColor:palette.input,borderColor:palette.border}]}><TextInput value={caption} onChangeText={setCaption} editable={phase !== "uploading"} placeholder="Añade una descripción…" placeholderTextColor="#92929F" style={[styles.caption,formColors]} maxLength={300} multiline accessibilityLabel="Descripción de la publicación" /><Text style={styles.counter}>{caption.length}/300</Text></View>
       <View style={styles.audience}><Feather name="globe" size={15} color="#9CD1D4" /><Text style={[styles.small,secondaryFormColors]}>Público · Perfil y feed</Text></View>
       {phase === "uploading" && <View accessibilityRole="progressbar" accessibilityValue={{ min:0, max:100, now:progress }}><View style={[styles.track,{backgroundColor:palette.border}]}><View style={[styles.fill, { width: `${progress}%` }]} /></View><Text style={[styles.progress,{color:palette.secondary}]}>{progress < 96 ? `Subiendo… ${progress}%` : "Confirmando publicación…"}</Text></View>}
       {errorView}
-      <Pressable disabled={phase === "uploading"} onPress={() => void publish()} accessibilityRole="button" accessibilityLabel="Publicar" style={styles.publish}><LinearGradient colors={[palette.button,palette.button]} start={{x:0,y:0}} end={{x:1,y:0}} style={styles.publishInner}>{phase === "uploading" ? <ActivityIndicator color="#fff" /> : <><Feather name="arrow-up" size={21} color="#fff" /><Text style={styles.white}>Publicar</Text></>}</LinearGradient></Pressable>
+      <Pressable disabled={phase === "uploading" || !replyReady} onPress={() => void publish()} accessibilityRole="button" accessibilityLabel="Publicar" style={styles.publish}><LinearGradient colors={[palette.button,palette.button]} start={{x:0,y:0}} end={{x:1,y:0}} style={styles.publishInner}>{phase === "uploading" ? <ActivityIndicator color="#fff" /> : <><Feather name="arrow-up" size={21} color="#fff" /><Text style={styles.white}>Publicar</Text></>}</LinearGradient></Pressable>
       <Pressable disabled={phase === "uploading"} onPress={() => void pick()} style={styles.secondary}><Text style={[styles.small,secondaryFormColors]}>Cambiar archivo</Text></Pressable>
     </ScrollView>}
   </KeyboardAvoidingView>;
 }
 const styles = StyleSheet.create({
+  replyContext: { backgroundColor: "#F0EFEC", margin: 12, padding: 12, borderRadius: 12, gap: 6 },
+  replyName: { color: "#4682B4", fontSize: 14, fontWeight: "600" },
+  replyText: { color: "#131313", fontSize: 14 },
   screen:{flex:1,backgroundColor:"#09090E"}, header:{height:52,flexDirection:"row",alignItems:"center",justifyContent:"space-between",paddingHorizontal:14},headerTitle:{color:"#F5F4F8",fontSize:17,fontWeight:"600"},iconButton:{width:44,height:44,alignItems:"center",justifyContent:"center"},brandDot:{width:8,height:8,borderRadius:4,backgroundColor:"#85BFC5",marginRight:18},
   stage:{flex:1,marginHorizontal:10,borderRadius:24,overflow:"hidden",backgroundColor:"#171820",minHeight:180},stageEmpty:{justifyContent:"center",alignItems:"center",paddingHorizontal:32,gap:16},stageTitle:{color:"#F4F4F7",fontSize:24,fontWeight:"700",textAlign:"center"},stageText:{color:"#B5B7C3",fontSize:14,lineHeight:22,textAlign:"center"},activate:{borderWidth:1,borderColor:"#6A8F98",paddingHorizontal:18,paddingVertical:12,borderRadius:22},white:{color:"#F8F8FA",fontSize:15,fontWeight:"600"},stageTop:{position:"absolute",left:16,right:16,top:16,flexDirection:"row",justifyContent:"space-between",alignItems:"center"},pill:{paddingHorizontal:14,paddingVertical:8,borderRadius:18,borderWidth:1,borderColor:"#FFFFFF20"},limit:{color:"#EBECF0",fontSize:12,backgroundColor:"#00000055",padding:8,borderRadius:15},tools:{position:"absolute",right:12,top:76,gap:12},tool:{width:44,height:44,borderRadius:22,backgroundColor:"#11131D88",alignItems:"center",justifyContent:"center"},loading:{...StyleSheet.absoluteFillObject,backgroundColor:"#0A0A12DD",alignItems:"center",justifyContent:"center",gap:12},
   modes:{flexDirection:"row",justifyContent:"center",gap:8,paddingTop:14},mode:{minHeight:36,paddingHorizontal:20,borderRadius:18,justifyContent:"center"},activeMode:{backgroundColor:"#252632"},modeText:{fontSize:12,fontWeight:"600",color:"#92929F"},captureRow:{flexDirection:"row",alignItems:"center",justifyContent:"space-evenly",paddingTop:12,paddingBottom:12},sideAction:{width:76,minHeight:68,alignItems:"center",justifyContent:"center",gap:6},galleryIcon:{width:44,height:40,borderWidth:1,borderColor:"#697681",borderRadius:10,justifyContent:"center",alignItems:"center",backgroundColor:"#1E2730"},small:{color:"#B7B8C5",fontSize:12,lineHeight:18},shutterRing:{width:76,height:76,borderRadius:38,padding:3},shutterInner:{flex:1,borderRadius:36,backgroundColor:"#11121A",padding:5,alignItems:"center",justifyContent:"center"},shutter:{width:58,height:58,borderRadius:29,backgroundColor:"#E6EEF0"},videoShutter:{backgroundColor:"#BE7595"},stopShutter:{width:30,height:30,borderRadius:8},
