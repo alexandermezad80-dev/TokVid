@@ -17,12 +17,12 @@ test('every animation frame follows IME without changing sheet origin or leaving
     assert.ok(a.bodyHeight>=0&&a.composerHeight>=0); assert.equal(a.bottom,expected);
   }
 });
-test('reference endpoints keep header56, composer74/90.5 and aligned tools without dead space',()=>{
- const args={sheetTop:325,closedBottom:802,screenHeight:802,viewportTop:0};
+test('reference endpoints keep header56, composer74/117.5 and aligned tools without dead space',()=>{
+ const args={sheetTop:298,closedBottom:802,screenHeight:802,viewportTop:0};
  const closed=motion({...args,keyboardHeight:0,progress:0}),open=motion({...args,keyboardHeight:330.5,progress:1});
- assert.equal(closed.composerHeight,74); assert.equal(closed.composerTop+325,728);
- assert.equal(open.composerHeight,90.5); assert.equal(open.composerTop,56); assert.equal(open.bodyHeight,0);
- assert.equal(325+open.composerTop+1+20+3+36+3+24+3.5,471.5);
+ assert.equal(closed.composerHeight,74); assert.equal(closed.composerTop+298,728);
+ assert.equal(open.composerHeight,117.5); assert.equal(open.composerTop,56); assert.equal(open.bodyHeight,0);
+ assert.equal(298+open.composerTop+6+18+10+36+14+24+9.5,471.5);
 });
 test('emoji detection retains ZWJ, tone, flag, keycap sequences and detects middle insertions',()=>{
  for(const value of ['👩🏽‍💻','👨‍👩‍👧‍👦','🇸🇻','1️⃣','❤️','👍🏽']) {
@@ -33,11 +33,11 @@ test('emoji detection retains ZWJ, tone, flag, keycap sequences and detects midd
  assert.deepEqual(Array.from(emoji.insertedCommentEmojis('Hola 😂','Hola ')),[]);
  assert.deepEqual(Array.from(emoji.insertedCommentEmojis('Hola 😂','Hola 😂')),[]);
 });
-test('MRU remains seven unique complete emojis and tolerates damaged stored preferences',()=>{
+test('MRU retains up to twenty unique complete emojis and tolerates damaged stored preferences',()=>{
  let recent=emoji.normalizeCommentEmojis(['text',null,{},'💙','❤️','❤','😍😍']);
- assert.equal(recent.length,7); assert.equal(recent[0],'💙'); assert.equal(recent.filter(x=>x.replace(/\uFE0F/g,'')==='❤').length,1);
+ assert.equal(recent.length,8); assert.equal(recent[0],'💙'); assert.equal(recent.filter(x=>x.replace(/\uFE0F/g,'')==='❤').length,1);
  recent=emoji.rememberCommentEmojis(recent,['👩🏽‍💻','🔥','🔥']);
- assert.equal(recent.length,7); assert.equal(recent[0],'🔥'); assert.equal(recent[1],'👩🏽‍💻');
+ assert.equal(recent.length,9); assert.equal(recent[0],'🔥'); assert.equal(recent[1],'👩🏽‍💻');
  assert.deepEqual(Array.from(emoji.normalizeCommentEmojis('broken')),Array.from(emoji.DEFAULT_COMMENT_EMOJIS));
 });
 function runtime() {

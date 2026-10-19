@@ -1,4 +1,4 @@
-> **Estado vigente —18 octubre 2026: revisión de comentarios ZIP3 + video, en validación.** Conserva la base aprobada APK231 y los avances remotos hasta `3683385f912e9afbfbf6b3684932a3de223bf528`. Una hoja/editor continuo, medidas y alineación de la referencia, envío inmediato con recuperación y siete emojis recientes. Colores globales, branding, video y opciones existentes conservados. [Registro](docs/TOKVID_COMMENTS_MEASURES_3.md). Esta cabecera sustituye los estados históricos inferiores.
+> **Estado vigente —19 octubre2026: comentarios K4 en validación.** Sustituye el vidrio de ZIP3 por hoja blanca/píldoras gris claro y amplía la fila a un catálogo Unicode deslizable con20 recientes. Base APK235 (`0386f81cd2353f689505f93db4bb889cee1709b0`);167 pruebas/Android de235 aprobados, no es la entrega final de K4. Miniatura, animación, envío y opciones conservados. [Auditoría y alcance](docs/TOKVID_COMMENTS_K4.md). Esta cabecera prevalece sobre el historial.
 
 ## Cierre de verificación APK 227 — 18 octubre 2026
 

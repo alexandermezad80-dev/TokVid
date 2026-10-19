@@ -3064,3 +3064,10 @@ El usuario confirmó corregidos colores globales, branding y miniatura del feed 
 [Registro y auditoría](../TOKVID_COMMENTS_MEASURES_3.md). Sustituye la presentación ZIP2; conserva las funciones auditadas y la aprobación del usuario de colores globales, branding y video de APK231. La nueva autorización añade transición de una sola hoja junto al IME, texto/cursor centrados, alineación x44 y @ como icono, campo cerrado «Agregar comentarios», siete emojis recientes persistidos en dispositivo y envío que limpia/cierra inmediatamente. Una fila local pendiente se reemplaza solo al confirmar escritura; fallo recupera texto y contexto. No cambiar RPC, RLS, permisos de comentarios ni servicios. No reabrir mensajería privada ni «Eliminar para todos» por este trabajo.
 
 Estado: implementado, pruebas locales ejecutables aprobadas; CI/Android y comprobación física pendientes. `physical_device_verified=false`. Cabeceras de continuidad y registro ZIP3 contienen el estado de entrega actualizado; los bloques anteriores son históricos.
+
+
+## Aclaración vigente —19 octubre2026, comentarios K4
+
+[K4: auditoría, implementación y límites](../TOKVID_COMMENTS_K4.md). La presentación blanca y píldoras#F0EFEC/borde#DCDCDC sustituye expresamente el vidrio azul del ZIP3 solo en comentarios. Mantener el marco/minimización/posición de hoja, animación, envío, filas, opciones y permisos existentes. Fila horizontal: siete visibles, catálogo Unicode completo16.0/3781 secuencias,20 recientes locales, sin salto al navegar; el catálogo privado/orden de Gboard no es accesible y no se afirma que sea ese catálogo. Campo y fila terminan en x344; espacios6/10/14/9.5. No tocar chat privado, branding, paleta global, Auth ni base de datos.
+
+Auditoría de lectura confirmóUTF8/text/límite300 Unicode: familia de emoji puede contar7. No hubo DML ni cambios de esquema. APK235 (ZIP3) quedó compilada y registrada, superada como objetivo final por K4. EstadoK4: implementación en validación, CI/Android y prueba física pendientes. `physical_device_verified=false`.

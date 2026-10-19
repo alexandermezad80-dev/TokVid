@@ -1,0 +1,64 @@
+{
+  "repository": "alexandermezad80-dev/TokVid",
+  "branch": "feature/feed-mini-video-avatar",
+  "run_id": 39144661209,
+  "run_number": 235,
+  "job_id": 117725946229,
+  "check_run_id": 39144661241,
+  "check_job_id": 117725946422,
+  "check_status": "success",
+  "build_status": "success",
+  "tests": {
+    "passed": 167,
+    "failed": 0
+  },
+  "typecheck": "passed",
+  "prebuild": "passed",
+  "android_build": "BUILD SUCCESSFUL in 19m 17s",
+  "apk_sha256": "b2be74102a1084bda17b1ed627bed7c118430fbc27e313acea7e583e1ac8c0bf",
+  "artifacts": [
+    {
+      "id": 12143238523,
+      "node_id": "MDg6QXJ0aWZhY3QxMjE0MzIzODUyMw==",
+      "name": "tokvid-auth-diagnostic-sourcemap",
+      "size_in_bytes": 3444639,
+      "url": "https://api.github.com/repos/alexandermezad80-dev/TokVid/actions/artifacts/12143238523",
+      "archive_download_url": "https://api.github.com/repos/alexandermezad80-dev/TokVid/actions/artifacts/12143238523/zip",
+      "expired": false,
+      "digest": "sha256:46f5fc495d41d7d52e5693a0dc2cd717b07f8e4d0ab8e63fe539e5ac35a4704d",
+      "created_at": "2026-10-18T16:42:40Z",
+      "updated_at": "2026-10-18T16:42:40Z",
+      "expires_at": "2027-01-16T16:21:55Z",
+      "workflow_run": {
+        "id": 39144661209,
+        "repository_id": 1268853672,
+        "head_repository_id": 1268853672,
+        "head_branch": "feature/feed-mini-video-avatar",
+        "head_sha": "0386f81cd2353f689505f93db4bb889cee1709b0"
+      }
+    },
+    {
+      "id": 12143004253,
+      "node_id": "MDg6QXJ0aWZhY3QxMjE0MzAwNDI1Mw==",
+      "name": "tokvid-android-feed-avatar",
+      "size_in_bytes": 244634481,
+      "url": "https://api.github.com/repos/alexandermezad80-dev/TokVid/actions/artifacts/12143004253",
+      "archive_download_url": "https://api.github.com/repos/alexandermezad80-dev/TokVid/actions/artifacts/12143004253/zip",
+      "expired": false,
+      "digest": "sha256:dcf946044d29861a326841388b61f2581a562ec7bb9d6f0b55fa6a5b401ff1c4",
+      "created_at": "2026-10-18T16:42:39Z",
+      "updated_at": "2026-10-18T16:42:39Z",
+      "expires_at": "2027-01-16T16:21:55Z",
+      "workflow_run": {
+        "id": 39144661209,
+        "repository_id": 1268853672,
+        "head_repository_id": 1268853672,
+        "head_branch": "feature/feed-mini-video-avatar",
+        "head_sha": "0386f81cd2353f689505f93db4bb889cee1709b0"
+      }
+    }
+  ],
+  "physical_device_verified": false,
+  "recorded_at": "2026-10-19",
+  "scope": "ZIP3 reference and video; build completed before k4.zip. Superseded for final delivery by K4 presentation."
+}

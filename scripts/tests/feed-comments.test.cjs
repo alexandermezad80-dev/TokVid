@@ -340,3 +340,9 @@ test('failed/stale writes never confirm presentation; observer error cannot undo
   const confirmed=hookHarness(); await confirmed.rt.flush();
   assert.equal((await confirmed.rt.output.publish('A',null,()=>{throw Error('observer');})).id,'posted'); confirmed.rt.unmount();
 });
+test('emoji-only and mixed comments reach and return from the existing RPC without Unicode loss',async()=>{
+ const samples=['😂👩🏽‍💻🇸🇻❤️','Hola 👨‍👩‍👧‍👦, nos vemos 🫶🏽'];
+ const service=serviceHarness(spec=>({data:[row('emoji',{text:spec.args.p_text})],error:null}));
+ for(const text of samples){const result=await service.createComment('v1',text,null,'unicode-test');assert.equal(result.text,text);assert.equal(service.calls.at(-1).args.p_text,text);}
+ assert.equal(model.commentLength('👨‍👩‍👧‍👦'),7);
+});

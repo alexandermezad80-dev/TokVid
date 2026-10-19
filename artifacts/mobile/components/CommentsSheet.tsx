@@ -1,12 +1,11 @@
 import {palette} from '../constants/palette';
 import { Feather, Ionicons } from "@expo/vector-icons";
-import { BlurView } from "expo-blur";
 import Svg, { Line } from "react-native-svg";
 import { router } from "expo-router";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Dimensions, FlatList, Image, Keyboard, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
-import Animated, { useAnimatedStyle, withTiming, FadeIn, LinearTransition } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, withTiming } from "react-native-reanimated";
 import CommentActionsPopover, { CommentAction } from "./CommentActionsPopover";
 import { CommentAnchor, commentPopoverGeometry } from "../lib/commentPopoverGeometry";
 import { useRegistration } from "../context/RegistrationContext";
@@ -21,6 +20,8 @@ import { commentSheetMotion } from "../lib/commentSheetMotion";
 import { useCommentKeyboardMotion } from "../hooks/useCommentKeyboardMotion";
 import { useRecentCommentEmojis } from "../hooks/useRecentCommentEmojis";
 import { insertedCommentEmojis } from "../lib/commentRecentEmojis";
+
+import CommentEmojiStrip from "./CommentEmojiStrip";
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
@@ -200,22 +201,22 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
     return { height: layout.bodyHeight, opacity: motion.bodyOpacity.value };
   });
   const formMotion = useAnimatedStyle(() => ({ paddingTop: 12.5 * (1 - motion.progress.value) * scale,
-    paddingBottom: (23.5 - 20 * motion.progress.value) * scale }));
-  const emojiMotion = useAnimatedStyle(() => ({ height: 20 * motion.progress.value * scale,
-    marginTop: motion.progress.value * scale, opacity: motion.controlsOpacity.value }));
+    paddingBottom: (23.5 - 14 * motion.progress.value) * scale }));
+  const emojiMotion = useAnimatedStyle(() => ({ height: 18 * motion.progress.value * scale,
+    marginTop: 6 * motion.progress.value * scale, opacity: motion.controlsOpacity.value }));
   const toolsMotion = useAnimatedStyle(() => ({ height: 24 * motion.progress.value * scale,
-    marginTop: 3 * motion.progress.value * scale, opacity: motion.controlsOpacity.value }));
+    marginTop: 14 * motion.progress.value * scale, opacity: motion.controlsOpacity.value }));
   const editorMotion = useAnimatedStyle(() => {
     const p = Math.max(0, Math.min(1, motion.progress.value));
-    return { height: (38 - 2 * p) * scale, width: ((265 + 75 * p) * scale),
-      marginLeft: safeLeft + (8 + 2 * p) * scale, marginTop: 3 * p * scale,
+    return { height: (38 - 2 * p) * scale, width: ((265 + 69 * p) * scale),
+      marginLeft: safeLeft + (8 + 2 * p) * scale, marginTop: 10 * p * scale,
       paddingLeft: 8 * (1 - p) * scale, paddingRight: 2.5 * (1 - p) * scale,
       gap: (11 - 5 * p) * scale, borderWidth: (1 - p) * scale,
-      borderRadius: (19 - 6 * p) * scale, backgroundColor: `rgba(255,255,255,${.2 * (1 - p)})` };
+      borderRadius: (19 - 6 * p) * scale, backgroundColor: `rgba(240,239,236,${1 - p})` };
   });
   const fieldMotion = useAnimatedStyle(() => ({ borderWidth: motion.progress.value * scale,
     borderRadius: 13 * motion.progress.value * scale, marginRight: 40 * (1 - motion.progress.value) * scale,
-    backgroundColor: `rgba(255,255,255,${.2 * motion.progress.value})` }));
+    backgroundColor: `rgba(240,239,236,${motion.progress.value})` }));
   const inputMotion = useAnimatedStyle(() => ({ fontSize: (15 - motion.progress.value) * scale,
     paddingLeft: 10 * motion.progress.value * scale, paddingRight: 52 * motion.progress.value * scale,
     paddingVertical: (9 - motion.progress.value) * scale }));
@@ -229,7 +230,8 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
   };
   const insertQuickEmoji = (emoji: string) => {
     if (busy) return;
-    const next = Array.from(text + emoji).slice(0, COMMENT_LIMIT).join("");
+    if (commentLength(text) + commentLength(emoji) > COMMENT_LIMIT) return;
+    const next = text + emoji;
     if (next !== text) emojis.remember([emoji]);
     setText(next); input.current?.focus();
   };
@@ -311,50 +313,48 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, overTabBar =
         style={[styles.videoPreview, { left: preview.x, top: preview.y, width: preview.width, height: preview.height }]}>
         <View style={styles.expandVideo}><Feather name="maximize-2" size={10} color="#fff" /></View>
       </Pressable>}
-      <Animated.View style={[styles.sheet, { position: "absolute", left: 0, right: 0, top: sheetTop, height: closedSheetHeight, backgroundColor: "#101820" }]}>
-        <BlurView pointerEvents="none" intensity={24} tint="default" blurReductionFactor={1} experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />
-        <View pointerEvents="none" style={styles.glassTint} />
+      <Animated.View style={[styles.sheet, { position: "absolute", left: 0, right: 0, top: sheetTop, height: closedSheetHeight, backgroundColor: "#FFFFFF" }]}>
         <View accessibilityElementsHidden={!!actionComment} importantForAccessibility={actionComment ? "no-hide-descendants" : "auto"} style={styles.headerGlass}>
           <View style={styles.handle} />
           <View style={styles.header}>
             <View style={[styles.countBadge, { left: 10.5 * scale + viewport.insets.left, maxWidth: Math.max(125 * scale, Math.min(280 * scale, width - viewport.insets.left - viewport.insets.right - (controlsOpen && (editing || reply) ? 220 : 60) * scale)) }]}><Text numberOfLines={1} style={styles.title}>{comments.total === null ? "Comentarios" : `${comments.total} comentarios`}</Text></View>
-            <Pressable onPress={close} accessibilityLabel="Cerrar comentarios" accessibilityRole="button" style={[styles.close, { right: 2 * scale + viewport.insets.right }]}><Svg width={14 * scale} height={14 * scale} viewBox="0 0 14 14"><Line x1={1} y1={1} x2={13} y2={13} stroke="#FFFFFF" strokeWidth={2} /><Line x1={13} y1={1} x2={1} y2={13} stroke="#FFFFFF" strokeWidth={2} /></Svg></Pressable>
+            <Pressable onPress={close} accessibilityLabel="Cerrar comentarios" accessibilityRole="button" style={[styles.close, { right: 2 * scale + viewport.insets.right }]}><Svg width={14 * scale} height={14 * scale} viewBox="0 0 14 14"><Line x1={1} y1={1} x2={13} y2={13} stroke="#1C1C1E" strokeWidth={2} /><Line x1={13} y1={1} x2={1} y2={13} stroke="#1C1C1E" strokeWidth={2} /></Svg></Pressable>
           </View>
         </View>
         <Animated.View pointerEvents={controlsOpen ? "none" : "auto"} accessibilityElementsHidden={controlsOpen || !!actionComment} importantForAccessibility={controlsOpen || actionComment ? "no-hide-descendants" : "auto"} style={[{ position: "absolute", top: 56 * scale, left: 0, right: 0, overflow: "hidden", backgroundColor: "#FFFFFF" }, bodyMotion]}>
           {!!(submissionError || comments.error) && <View style={styles.errorRow}><Text accessibilityRole="alert" style={styles.error}>{submissionError || comments.error}</Text><Pressable accessibilityRole="button" onPress={() => { void comments.refresh(); }} style={styles.retry}><Text style={styles.link}>Recargar</Text></Pressable></View>}
-          {comments.hiddenThreads.size > 0 && <Pressable accessibilityRole="button" accessibilityLabel="Mostrar mensajes ocultos" disabled={busy} onPress={() => { void comments.restoreThreads(); }} style={styles.hiddenNotice}><View style={styles.showBadge}><BlurView pointerEvents="none" intensity={24} tint="default" blurReductionFactor={1} experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} /><View pointerEvents="none" style={styles.glassTint} /><Feather name="eye" size={15 * scale} color="#FFFFFF" /><Text style={styles.showLabel}>Mostrar</Text></View></Pressable>}
+          {comments.hiddenThreads.size > 0 && <Pressable accessibilityRole="button" accessibilityLabel="Mostrar mensajes ocultos" disabled={busy} onPress={() => { void comments.restoreThreads(); }} style={styles.hiddenNotice}><View style={styles.showBadge}><Feather name="eye" size={15 * scale} color="#131313" /><Text style={styles.showLabel}>Mostrar</Text></View></Pressable>}
           <FlatList<ListRow> ref={listRef} onScrollToIndexFailed={info=>{listRef.current?.scrollToOffset({offset:info.averageItemLength*info.index,animated:false});setTimeout(()=>{if(focusIndex>=0)listRef.current?.scrollToIndex({index:focusIndex,viewPosition:.25,animated:true});},200);}} data={rows} keyExtractor={row => row.kind === "comment" || row.kind === "pending" ? row.comment.id : row.kind === "thread" ? `thread:${row.root.id}` : `more:${row.rootId}`} renderItem={renderRow} style={styles.list} onScrollBeginDrag={dismissActions} contentContainerStyle={[rows.length ? styles.listContent : styles.emptyContainer, rows.length > 0 && { paddingTop: Math.max(0, (comments.hiddenThreads.size > 0 ? 10 : 16) * scale - 8) }, { paddingLeft: 16 + viewport.insets.left, paddingRight: 16 + viewport.insets.right, paddingBottom: 12 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} refreshing={false} onRefresh={() => { void comments.refresh(); }}
             ListEmptyComponent={comments.loading && !submitting ? <ActivityIndicator size={12} color={palette.teal} /> : comments.total === 0 || comments.hiddenThreads.size > 0 ? <View style={styles.empty}><Feather name="message-circle" size={22.5} color="#5B6270" /><Text style={styles.emptyText}>{comments.total === 0 ? "Sé el primero en comentar" : "No hay hilos visibles en esta página"}</Text></View> : null}
             ListFooterComponent={comments.hasMore ? <Pressable disabled={comments.paging} onPress={() => { void comments.loadMore(); }} style={styles.more}><Text style={styles.link}>{comments.paging ? "Cargando…" : "Cargar más comentarios"}</Text></Pressable> : null} />
         </Animated.View>
         <Animated.View accessibilityElementsHidden={!!actionComment} importantForAccessibility={actionComment ? "no-hide-descendants" : "auto"} style={[styles.composer, { position: "absolute", left: 0, right: 0, overflow: "hidden" }, composerMotion]}>
-          <ScrollView style={styles.composerScroll} scrollEnabled={controlsOpen && viewport.availableHeight - sheetTop - 56 * scale < 90.5 * scale} keyboardShouldPersistTaps="always" showsVerticalScrollIndicator={false}>
+          <ScrollView style={styles.composerScroll} scrollEnabled={controlsOpen && viewport.availableHeight - sheetTop - 56 * scale < 117.5 * scale} keyboardShouldPersistTaps="always" showsVerticalScrollIndicator={false}>
             <Animated.View style={formMotion}>
               <Animated.View pointerEvents={controlsOpen ? "auto" : "none"} accessibilityElementsHidden={!controlsOpen} importantForAccessibility={controlsOpen ? "auto" : "no-hide-descendants"} style={[styles.emojiRow, { marginLeft: viewport.insets.left + 44 * scale }, emojiMotion]}>
-                {emojis.recent.map(emoji => <Animated.View key={emoji} entering={FadeIn.duration(150)} layout={LinearTransition.duration(150)}><Pressable accessibilityRole="button" accessibilityLabel={`Añadir emoji ${emoji} al comentario`} disabled={busy} onPress={() => insertQuickEmoji(emoji)} style={styles.emojiItem} hitSlop={6 * scale}><Text style={styles.emojiText}>{emoji}</Text></Pressable></Animated.View>)}
+                <CommentEmojiStrip key={user?.id ?? "guest"} recent={emojis.recent} scale={scale} disabled={busy} onSelect={insertQuickEmoji} />
               </Animated.View>
               <Animated.View style={[styles.editor, editorMotion]}>
                 <Avatar uri={profile?.avatar_url} username={profile?.username} small scale={scale} />
                 <Animated.View style={[styles.editorBody, fieldMotion]}>
                   <AnimatedTextInput ref={input} value={text} editable={!busy} onChangeText={changeText}
                     style={[styles.input, { flex: 0, width: "100%", height: "100%", lineHeight: 18 * scale }, inputMotion]}
-                    placeholder={controlsOpen ? "Agregar un comentario..." : "Agregar comentarios"} placeholderTextColor="rgba(255,255,255,0.80)"
-                    selectionColor="#BFE3FF" accessibilityLabel="Escribe tu comentario"
+                    placeholder={controlsOpen ? "Agregar un comentario..." : "Agregar comentarios"} placeholderTextColor="#6B6B66"
+                    selectionColor="#4682B4" accessibilityLabel="Escribe tu comentario"
                     multiline scrollEnabled maxLength={COMMENT_LIMIT * 2} textAlignVertical="center" />
-                  <Animated.View pointerEvents="none" style={[{ position: "absolute", right: 10 * scale, top: 0, bottom: 0, justifyContent: "center" }, counterMotion]}><Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 11 * scale, includeFontPadding: false }}>{commentLength(text)}/{COMMENT_LIMIT}</Text></Animated.View>
+                  <Animated.View pointerEvents="none" style={[{ position: "absolute", right: 10 * scale, top: 0, bottom: 0, justifyContent: "center" }, counterMotion]}><Text style={{ color: "#6B6B66", fontSize: 11 * scale, includeFontPadding: false }}>{commentLength(text)}/{COMMENT_LIMIT}</Text></Animated.View>
                 </Animated.View>
                 <Animated.View pointerEvents={controlsOpen ? "none" : "auto"} accessibilityElementsHidden={controlsOpen} importantForAccessibility={controlsOpen ? "no-hide-descendants" : "auto"} style={[styles.sendCollapsed, collapsedSendMotion]}>
                   <Pressable accessibilityRole="button" accessibilityLabel={editing ? "Guardar cambios" : "Publicar comentario"} disabled={!canSend} onPress={() => { void send(); }} style={StyleSheet.absoluteFill}>
-                    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>{busy ? <ActivityIndicator color="#FFFFFF" size={12} /> : <Feather name="arrow-up" size={12.5 * scale} color={canSend ? "#FFFFFF" : "rgba(255,255,255,0.60)"} />}</View>
+                    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>{busy ? <ActivityIndicator color="#6B6B66" size={12} /> : <Feather name="arrow-up" size={12.5 * scale} color="#6B6B66" />}</View>
                   </Pressable>
                 </Animated.View>
               </Animated.View>
-              <Animated.View pointerEvents={controlsOpen ? "auto" : "none"} accessibilityElementsHidden={!controlsOpen} importantForAccessibility={controlsOpen ? "auto" : "no-hide-descendants"} style={[styles.toolsRow, { paddingLeft: viewport.insets.left + 44 * scale, paddingRight: viewport.insets.right + 10 * scale, overflow: "hidden" }, toolsMotion]}>
-                <Pressable accessibilityRole="button" accessibilityLabel="Imagen: adjuntos a comentarios pendientes" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="image" size={20 * scale} color="#FFFFFF" /></Pressable>
-                <Pressable accessibilityRole="button" accessibilityLabel="Sticker: adjuntos a comentarios pendientes" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="smile" size={20 * scale} color="#FFFFFF" /></Pressable>
-                <Pressable accessibilityRole="button" accessibilityLabel="Menciones: función pendiente" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="at-sign" size={20 * scale} color="#FFFFFF" /></Pressable>
-                <Pressable accessibilityRole="button" accessibilityLabel="Micrófono: audio en comentarios pendiente" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="mic" size={20 * scale} color="#FFFFFF" /></Pressable>
+              <Animated.View pointerEvents={controlsOpen ? "auto" : "none"} accessibilityElementsHidden={!controlsOpen} importantForAccessibility={controlsOpen ? "auto" : "no-hide-descendants"} style={[styles.toolsRow, { paddingLeft: viewport.insets.left + 44 * scale, paddingRight: viewport.insets.right + 16 * scale, overflow: "hidden" }, toolsMotion]}>
+                <Pressable accessibilityRole="button" accessibilityLabel="Imagen: adjuntos a comentarios pendientes" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="image" size={20 * scale} color="#3A3F47" /></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel="Sticker: adjuntos a comentarios pendientes" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="smile" size={20 * scale} color="#3A3F47" /></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel="Menciones: función pendiente" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="at-sign" size={20 * scale} color="#3A3F47" /></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel="Micrófono: audio en comentarios pendiente" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="mic" size={20 * scale} color="#3A3F47" /></Pressable>
                 <View style={styles.toolSpacer} />
                 <Pressable accessibilityRole="button" accessibilityLabel={editing ? "Guardar cambios" : "Publicar comentario"} disabled={!canSend} onPress={() => { void send(); }} style={[styles.sendKeyboard, { backgroundColor: canSend ? "#4682B4" : "rgba(70,130,180,0.60)" }]}>
                   {busy ? <ActivityIndicator color="#FFFFFF" size={12} /> : <Feather name="arrow-up" size={20 * scale} color="#FFFFFF" />}
@@ -380,16 +380,16 @@ const styles = StyleSheet.create({
   panelBody: { flex: 1, backgroundColor: "transparent" },
   openPanelBody: { backgroundColor: "transparent" },
   glassTint: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(70,130,180,0.38)", borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.35)" },
-  headerGlass: { height: 56, overflow: "hidden" },
+  headerGlass: { height: 56, overflow: "hidden", backgroundColor: "#FFFFFF" },
   navigationGlass: { backgroundColor: "rgba(70,130,180,0.38)", borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: "rgba(200,225,248,0.50)" },
-  handle: { width: 32, height: 4, borderRadius: 2, position: "absolute", top: 6.5, alignSelf: "center", backgroundColor: "rgba(255,255,255,0.65)", zIndex: 1 },
+  handle: { width: 32, height: 4, borderRadius: 2, position: "absolute", top: 6.5, alignSelf: "center", backgroundColor: "#1C1C1E", zIndex: 1 },
   header: { height: 56, width: "100%" },
-  countBadge: { position: "absolute", top: 14, minWidth: 125, height: 32, maxWidth: 280, borderRadius: 16, paddingHorizontal: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.14)", borderWidth: 1, borderColor: "rgba(255,255,255,0.45)" },
-  title: { color: "#FFFFFF", fontSize: 15, fontWeight: "600" },
+  countBadge: { position: "absolute", top: 14, minWidth: 125, height: 32, maxWidth: 280, borderRadius: 16, paddingHorizontal: 12, alignItems: "center", justifyContent: "center", backgroundColor: "#F0EFEC", borderWidth: 1, borderColor: "#DCDCDC" },
+  title: { color: "#131313", fontSize: 15, fontWeight: "600" },
   close: { position: "absolute", top: 10, width: 40, height: 40, alignItems: "center", justifyContent: "center" },
   hiddenNotice: { alignSelf: "stretch", paddingLeft: 11.5, paddingTop: 12, backgroundColor: "#FFFFFF" },
-  showBadge: { width: 95, height: 36, borderRadius: 10, borderWidth: 1, borderColor: "rgba(200,225,248,0.50)", overflow: "hidden", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
-  showLabel: { color: "#FFFFFF", fontSize: 13, fontWeight: "600" },
+  showBadge: { width: 95, height: 36, borderRadius: 10, backgroundColor: "#F0EFEC", borderWidth: 1, borderColor: "#DCDCDC", overflow: "hidden", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
+  showLabel: { color: "#131313", fontSize: 13, fontWeight: "600" },
   deletedText: { color: palette.secondary, fontStyle: "italic" },
   likeButton: { alignItems: "center", gap: 4, minHeight: 36 },
   commentHeader: { flexDirection: "row", alignItems: "center", gap: 4 },
@@ -412,17 +412,17 @@ const styles = StyleSheet.create({
   editIndicator: { position: "absolute", right: 16, top: -30, zIndex: 3, paddingVertical: 5 },
   keyboardCancel: { right: 50, top: -30, maxWidth: 175 },
   composerLabel: { color: "#FFFFFF", fontSize: 12 },
-  editor: { flexDirection: "row", alignItems: "center", height: 38, gap: 8, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.45)" },
+  editor: { flexDirection: "row", alignItems: "center", height: 38, gap: 8, overflow: "hidden", borderWidth: 1, borderColor: "#DCDCDC" },
   editorClosed: { marginLeft: 8, paddingLeft: 8, paddingRight: 2.5, gap: 6.5, backgroundColor: "rgba(255,255,255,0.20)", borderRadius: 20 },
   editorKeyboard: { marginTop: 3, marginHorizontal: 10, paddingHorizontal: 0, gap: 6, borderWidth: 0, backgroundColor: "transparent" },
-  editorBody: { flex: 1, minWidth: 0, height: 36, borderColor: "rgba(255,255,255,0.45)" },
+  editorBody: { flex: 1, minWidth: 0, height: 36, borderColor: "#DCDCDC" },
   editorBodyKeyboard: { height: 36, borderRadius: 13, borderWidth: 1, borderColor: "rgba(255,255,255,0.45)", backgroundColor: "rgba(255,255,255,0.20)", justifyContent: "center" },
-  input: { flex: 1, color: "#FFFFFF", fontSize: 15, paddingHorizontal: 4, paddingVertical: 0, height: 38, includeFontPadding: false },
+  input: { flex: 1, color: "#131313", fontSize: 15, paddingHorizontal: 4, paddingVertical: 0, height: 38, includeFontPadding: false },
   collapsedInput: { fontSize: 15, paddingHorizontal: 4 },
   expandedInput: { fontSize: 14, paddingLeft: 10, paddingRight: 52, height: 36 },
   counter: { position: "absolute", right: 10, top: 0, height: 34, textAlignVertical: "center", includeFontPadding: false, color: "rgba(255,255,255,0.65)", fontSize: 11 },
   sendCollapsed: { position: "absolute", right: 2.5, top: 0, width: 29, height: 36, alignItems: "center", justifyContent: "center" },
-  emojiRow: { marginLeft: 44, flexDirection: "row", alignItems: "center", gap: 12, overflow: "hidden" },
+  emojiRow: { marginLeft: 44, flexDirection: "row", alignItems: "center", width: 300, overflow: "hidden" },
   emojiItem: { width: 18, height: 20, alignItems: "center", justifyContent: "center" }, emojiText: { fontSize: 18, lineHeight: 20, color: "#FFFFFF", includeFontPadding: false },
   toolsRow: { paddingLeft: 44, paddingRight: 10, flexDirection: "row", alignItems: "center" },
   tool: { width: 20, height: 24, marginRight: 20, alignItems: "center", justifyContent: "center" },

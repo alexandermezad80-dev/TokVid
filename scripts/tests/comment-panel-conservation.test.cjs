@@ -51,11 +51,11 @@ test('reference UI positions preserve short field, touch target and readable lis
   assert.ok(closed); assert.equal(flatten(closed.props.style).height, 38);
   assert.equal(h.styles.close.width, 40); assert.equal(h.styles.close.height, 40);
   h.openKeyboard();
-  const emojiRow = h.nodes().find(n => flatten(n.props.style).gap === 12);
-  assert.equal(flatten(emojiRow.props.style).height, 20);
-  assert.equal(flatten(emojiRow.props.style).marginTop, 1);
+  const emojiRow = h.nodes().find(n => flatten(n.props.style).width === 300);
+  assert.equal(flatten(emojiRow.props.style).height, 18);
+  assert.equal(flatten(emojiRow.props.style).marginTop, 6);
   assert.equal(flatten(emojiRow.props.style).marginLeft, 44);
-  const field = h.nodes().find(n => flatten(n.props.style).width === 340);
+  const field = h.nodes().find(n => flatten(n.props.style).width === 334);
   assert.equal(flatten(field.props.style).height, 36);
   assert.equal(h.styles.sendKeyboard.height, 24);
   assert.equal(h.nodes().filter(n => n.props.accessibilityState?.disabled === true).length, 4);
@@ -95,7 +95,7 @@ test('late failure from another video never replaces the current draft', async (
 test('native Unicode emoji insertion updates quick reactions without duplicate or deletion promotion', () => {
   const h=harness(); h.render(); h.openKeyboard(); h.input().props.onChangeText('Hola 👩🏽‍💻'); h.render();
   let labels=h.nodes().filter(n=>n.props.accessibilityLabel?.startsWith('Añadir emoji')).map(n=>n.props.accessibilityLabel);
-  assert.equal(labels.length,7); assert.equal(labels[0],'Añadir emoji 👩🏽‍💻 al comentario');
+  assert.equal(labels.length,8); assert.equal(labels[0],'Añadir emoji 👩🏽‍💻 al comentario');
   h.input().props.onChangeText('Hola '); h.render();
   assert.equal(h.nodes().find(n=>n.props.accessibilityLabel?.startsWith('Añadir emoji')).props.accessibilityLabel,labels[0]);
 });
@@ -118,4 +118,18 @@ test('failed reply restores its target and successful edit restores the pre-edit
  h.nodes().find(n=>n.type==='Popover').props.actions.find(a=>a.key==='reply').onPress(); h.render();
  h.comments.publish=async()=>null; findLabel(h,'Publicar comentario').props.onPress(); await tick(); h.render();
  assert.ok(findLabel(h,'Cancelar respuesta')); assert.equal(h.input().props.value,'Borrador previo');
+});
+
+test('K4 opaque white surfaces and pill colors retain existing header and row dimensions',()=>{
+ const h=harness();h.render();assert.equal(h.styles.headerGlass.backgroundColor,'#FFFFFF');
+ assert.equal(h.styles.countBadge.backgroundColor,'#F0EFEC'); assert.equal(h.styles.countBadge.borderColor,'#DCDCDC');
+ assert.equal(h.styles.title.color,'#131313');assert.equal(h.styles.handle.backgroundColor,'#1C1C1E');
+ assert.equal(h.styles.comment.paddingVertical,7);assert.equal(h.styles.commentText.fontSize,15);
+ h.openKeyboard();const tools=h.nodes().find(n=>flatten(n.props.style).paddingLeft===44);
+ assert.equal(flatten(tools.props.style).marginTop,14); assert.equal(flatten(tools.props.style).paddingRight,16);
+ assert.equal(h.input().props.placeholderTextColor,'#6B6B66');
+});
+test('quick row never inserts half a composite emoji at the 300 character limit',()=>{
+ const h=harness();h.render();h.openKeyboard();h.input().props.onChangeText('x'.repeat(299));h.render();
+ h.nodes().find(n=>n.type==='EmojiStrip').props.onSelect('👩🏽‍💻');h.render();assert.equal(h.input().props.value,'x'.repeat(299));
 });

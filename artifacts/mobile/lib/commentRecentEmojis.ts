@@ -10,7 +10,7 @@ export function normalizeCommentEmojis(value: unknown): string[] {
     const matches = [...candidate.matchAll(EMOJI)];
     if (matches.length !== 1 || matches[0][0] !== candidate) continue;
     if (!result.some(existing => identity(existing) === identity(candidate))) result.push(candidate);
-    if (result.length === 7) break;
+    if (result.length === 20) break;
   }
   return result;
 }

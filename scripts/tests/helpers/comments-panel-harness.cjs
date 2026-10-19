@@ -3,7 +3,10 @@ const path = require('node:path');
 const vm = require('node:vm');
 const ts = require('typescript');
 const root = path.resolve(__dirname, '../../../artifacts/mobile');
-const element = (type, props, ...children) => ({ type, props: { ...props, ...(children.length ? { children } : {}) } });
+const element = (type, props, ...children) => {
+  if (type === 'EmojiStrip') children = props.recent.map(emoji => ({type:'Pressable',props:{accessibilityLabel:`Añadir emoji ${emoji} al comentario`,onPress:()=>props.onSelect(emoji)}}));
+  return { type, props: { ...props, ...(children.length ? { children } : {}) } };
+};
 const nodes = tree => !tree || typeof tree !== 'object' ? [] : Array.isArray(tree) ? tree.flatMap(nodes) : [tree, ...nodes(tree.props?.children)];
 const flatten = style => Object.assign({}, ...[style].flat(Infinity).filter(Boolean));
 function pure(file) {
@@ -39,6 +42,7 @@ function harness({ hidden = false, safeBottom = 24, roots = [], width = 360 } = 
     'react-native-svg': { __esModule: true, default: 'Svg', Line: 'Line' },
     'expo-router': { router: { push: x => calls.routes.push(x) } }, 'react-native-keyboard-controller': { KeyboardProvider: 'KeyboardProvider' },
     'react-native-reanimated': { __esModule: true, default: { View: 'AnimatedView', createAnimatedComponent: x => x }, FadeIn: { duration: () => ({}) }, LinearTransition: { duration: () => ({}) }, View: 'AnimatedView', useAnimatedStyle: fn => fn(), useSharedValue: value => hooks.useRef({ value }).current, withTiming: x => x, Easing: { out: x => x, cubic: x => x } },
+    './CommentEmojiStrip': { __esModule: true, default: 'EmojiStrip' },
     './CommentActionsPopover': { __esModule: true, default: 'Popover' }, '../lib/commentPopoverGeometry': pure('lib/commentPopoverGeometry.ts'),
     '../constants/palette': { palette: { text: '#0E1216', secondary: '#6B7580', teal: '#15868B', destructive: '#FE0979', button: '#0E1216', onButton: '#FFFFFF', magenta: '#FE0979' } },
     '../context/RegistrationContext': { useRegistration: () => ({ tabBarHeight: 70 }) }, '../context/AuthContext': { useAuth: () => ({ user: { id: 'me' }, profile: { username: 'Alexander', avatar_url: null } }) },
