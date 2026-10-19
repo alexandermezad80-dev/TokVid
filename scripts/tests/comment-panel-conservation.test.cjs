@@ -133,3 +133,13 @@ test('quick row never inserts half a composite emoji at the 300 character limit'
  const h=harness();h.render();h.openKeyboard();h.input().props.onChangeText('x'.repeat(299));h.render();
  h.nodes().find(n=>n.type==='EmojiStrip').props.onSelect('👩🏽‍💻');h.render();assert.equal(h.input().props.value,'x'.repeat(299));
 });
+
+test('reply and edit cancellation remain legible after the K4 sheet turns white',()=>{
+ const h=harness({roots:[own]});h.render();
+ assert.equal(h.styles.composerLabel.color,'#131313');
+ assert.equal(h.styles.replyBubble.backgroundColor,'#F0EFEC');
+ assert.equal(h.styles.replyBubble.borderColor,'#DCDCDC');
+ h.rowNodes().find(n=>n.props.accessibilityLabel==='Opciones del comentario').props.onPress({stopPropagation(){}});h.render();
+ h.nodes().find(n=>n.type==='Popover').props.actions.find(a=>a.key==='edit').onPress();h.render();
+ assert.ok(findLabel(h,'Cancelar edición'));
+});
