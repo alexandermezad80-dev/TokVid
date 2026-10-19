@@ -81,7 +81,7 @@ export default function CreateScreen() {
         .from("videos")
         .insert({
           user_id: user.id,
-          url: urlData.publicUrl,
+          video_url: urlData.publicUrl,
           caption: trimmedCaption,
         })
         .select("id")

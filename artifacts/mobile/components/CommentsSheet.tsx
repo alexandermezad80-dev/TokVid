@@ -100,7 +100,28 @@ export default function CommentsSheet({ visible, onClose, commentCount, videoId 
       text: text.trim(),
     };
     setText("");
-    await supabase.from("comments").insert(newComment);
+    const { error } = await supabase.from("comments").insert(newComment);
+
+    if (!error) {
+      const { data: video } = await supabase
+        .from("videos")
+        .select("user_id")
+        .eq("id", videoId)
+        .maybeSingle();
+
+      if (video?.user_id && video.user_id !== user.id) {
+        await supabase.from("notifications").insert({
+          user_id: video.user_id,
+          actor_id: user.id,
+          actor_name: profile?.username ?? user.email?.split("@")[0] ?? "usuario",
+          actor_avatar: profile?.avatar_url ?? null,
+          type: "comment",
+          message: "Comentó tu video",
+          data: { video_id: videoId },
+        });
+      }
+    }
+
     setSending(false);
   };
 
