@@ -195,7 +195,7 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  accountButton:{width:84,minHeight:32,borderRadius:7,backgroundColor:v.white,alignItems:"center",justifyContent:"center",opacity:1},accountLabel:{color:v.ink,fontSize:11},bioMore:{color:v.ink,fontSize:12},
+  accountButton:{width:84,minHeight:32,borderRadius:7,backgroundColor:v.white,alignItems:"center",justifyContent:"center",opacity:1},accountLabel:{ fontFamily: "Inter_400Regular",color:v.ink,fontSize:11},bioMore:{ fontFamily: "Inter_400Regular",color:v.ink,fontSize:12},
   container: { flex: 1, backgroundColor: "#FFFFFF" },
   header: {
     flexDirection: "row",
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  handle: { flex: 1, minWidth: 0, textAlign: "center", color: "#fff", fontSize: 17, fontWeight: "700" },
+  handle: { fontFamily: "Inter_600SemiBold", flex: 1, minWidth: 0, textAlign: "center", color: "#fff", fontSize: 17, },
   profileSection: {
     flexDirection:"row",
     paddingTop:4,paddingBottom:8,
@@ -240,13 +240,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#000",
   },
-  displayName: { color: v.ink, fontSize: 16, fontWeight: "700" },
-  email: { color: "#555", fontSize: 13 },
-  bio: { color: v.ink, fontSize: 12,lineHeight:16 },
+  displayName: { fontFamily: "Inter_600SemiBold", color: v.ink, fontSize: 16, },
+  email: { fontFamily: "Inter_400Regular", color: "#555", fontSize: 13 },
+  bio: { fontFamily: "Inter_400Regular", color: v.ink, fontSize: 12,lineHeight:16 },
   stats: { flexDirection: "row",gap:4,marginTop:12,marginBottom:4 },
   stat: { flex:1,alignItems: "center",gap:2 },
-  statValue: { color: v.ink, fontSize: 16, fontWeight: "800" },
-  statLabel: { color: v.label, fontSize: 10.5 },
+  statValue: { fontFamily: "Inter_600SemiBold", color: v.ink, fontSize: 16, },
+  statLabel: { fontFamily: "Inter_400Regular", color: v.label, fontSize: 10.5 },
   actions: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 8 },
   editBtn: {
     backgroundColor: "#1C1C1E",
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 52,
     paddingVertical: 10,
   },
-  editBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
+  editBtnText: { fontFamily: "Inter_500Medium", color: "#fff", fontSize: 14 },
   shareBtn: {
     backgroundColor: "#1C1C1E",
     borderRadius: 10,
@@ -285,10 +285,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 3,
   },
-  viewsText: {
+  viewsText: { fontFamily: "Inter_500Medium",
     color: "#fff",
     fontSize: 11,
-    fontWeight: "700",
     textShadowColor: "rgba(0,0,0,0.9)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
@@ -304,12 +303,11 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 40,
   },
-  emptyTitle: {
+  emptyTitle: { fontFamily: "Inter_500Medium",
     color: "#101010",
     fontSize: 18,
-    fontWeight: "700",
-  },
-  emptyText: {
+    },
+  emptyText: { fontFamily: "Inter_400Regular",
     color: "#555",
     fontSize: 14,
     textAlign: "center",
