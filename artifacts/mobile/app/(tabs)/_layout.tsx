@@ -4,7 +4,7 @@ import { requestRegistration } from "../../lib/features/auth/services/registrati
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { isLiquidGlassAvailable } from "expo-glass-effect";
-import { Tabs } from "expo-router";
+import { Tabs, usePathname } from "expo-router";
 import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
 import { SymbolView } from "expo-symbols";
 import { Feather } from "@expo/vector-icons";
@@ -17,7 +17,7 @@ import { router } from "expo-router";
 
 const PRIMARY = "#FE2C55";
 const CYAN = "#00F2FE";
-const DARK = "#0E1216";
+const DARK = "#000000";
 const BORDER = "#2C2C2E";
 
 function UnreadBadge({ count }: { count: number }) {
@@ -101,7 +101,10 @@ function ClassicTabLayout() {
   const insets = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
   const bottomInset = Math.max(insets.bottom, isWeb ? 12 : 0);
-  const barBody = 64;
+  const barBody = 56;
+  const path = usePathname();
+  const light = path === "/inbox";
+  const barColor = light ? "#FFFFFF" : DARK;
   const { setTabBarHeight } = useRegistration();
 
   return (
@@ -112,27 +115,27 @@ function ClassicTabLayout() {
         tabBarAllowFontScaling:false,
         tabBarItemStyle: { minHeight: barBody, paddingVertical: 4 },
         tabBarActiveTintColor: PRIMARY,
-        tabBarInactiveTintColor: v.inactive,
+        tabBarInactiveTintColor: light ? v.label : v.inactive,
         headerShown: false,
         tabBarStyle: {
           position: "absolute",
-          backgroundColor: isIOS ? "transparent" : DARK,
+          backgroundColor: isIOS ? "transparent" : barColor,
           borderTopWidth: 1,
-          borderTopColor: BORDER,
+          borderTopColor: light ? v.inboxLine : BORDER,
           elevation: 0,
           height: barBody + bottomInset,
           paddingBottom: bottomInset,
           paddingTop: 0,
         },
-        tabBarLabelStyle: {
+        tabBarLabelStyle: { fontFamily: "Inter_500Medium",
           fontSize: 10,
-          fontWeight: "600",
+          fontWeight: "normal",
         },
         tabBarBackground: () =>
           isIOS ? (
-            <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
+            <BlurView intensity={100} tint={light ? "light" : "dark"} style={StyleSheet.absoluteFill} />
           ) : isWeb ? (
-            <View onLayout={event => setTabBarHeight(event.nativeEvent.layout.height)} style={[StyleSheet.absoluteFill, { backgroundColor: DARK }]} />
+            <View onLayout={event => setTabBarHeight(event.nativeEvent.layout.height)} style={[StyleSheet.absoluteFill, { backgroundColor: barColor }]} />
           ) : <View style={StyleSheet.absoluteFill} onLayout={event => setTabBarHeight(event.nativeEvent.layout.height)} />,
       }}
     >
@@ -234,10 +237,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 58,
+    minHeight: 56,
     gap: 2,
   },
-  guestLabel: { color: v.inactive, fontSize: 10, fontWeight: "600" },
+  guestLabel: { fontFamily: "Inter_500Medium", color: v.inactive, fontSize: 10, fontWeight: "normal" },
   createBtn: {
     width: 49,
     height: 30,
@@ -265,5 +268,5 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: DARK,
   },
-  badgeText: { color: "#fff", fontSize: 9, fontWeight: "800" },
+  badgeText: { fontFamily: "Inter_500Medium", color: "#fff", fontSize: 9, fontWeight: "normal" },
 });

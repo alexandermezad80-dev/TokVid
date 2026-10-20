@@ -41,10 +41,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
-  text: {
+  text: { fontFamily: "Inter_500Medium",
     color: palette.text,
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "normal",
   },
 });
 

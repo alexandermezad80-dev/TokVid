@@ -721,10 +721,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: "rgba(0,0,0,0.65)",
   },
-  nameText: {
+  nameText: { fontFamily: "Inter_500Medium",
     color: "#fff",
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "normal",
   },
   topBar: {
     position: "absolute",
@@ -735,12 +735,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  title: {
+  title: { fontFamily: "Inter_500Medium",
     color: "#fff",
     fontSize: 17,
-    fontWeight: "800",
+    fontWeight: "normal",
   },
-  meta: {
+  meta: { fontFamily: "Inter_400Regular",
     color: "#bbb",
     fontSize: 12,
     marginTop: 3,
@@ -759,10 +759,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
   },
-  manageButtonText: {
+  manageButtonText: { fontFamily: "Inter_500Medium",
     color: "#fff",
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "normal",
   },
   closeButton: {
     width: 38,
@@ -795,10 +795,10 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 5,
   },
-  actionText: {
+  actionText: { fontFamily: "Inter_500Medium",
     color: "#fff",
     fontSize: 10,
-    fontWeight: "600",
+    fontWeight: "normal",
   },
   disabled: {
     opacity: 0.4,
@@ -819,20 +819,20 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: "#222",
   },
-  buttonText: {
+  buttonText: { fontFamily: "Inter_500Medium",
     color: "#fff",
-    fontWeight: "800",
+    fontWeight: "normal",
   },
-  muted: {
+  muted: { fontFamily: "Inter_400Regular",
     color: "#999",
     fontSize: 12,
   },
-  emptyTitle: {
+  emptyTitle: { fontFamily: "Inter_500Medium",
     color: "#fff",
     fontSize: 19,
-    fontWeight: "800",
+    fontWeight: "normal",
   },
-  error: {
+  error: { fontFamily: "Inter_400Regular",
     color: "#ff8a8a",
     textAlign: "center",
     fontSize: 14,

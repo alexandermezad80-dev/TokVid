@@ -173,10 +173,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 4,
   },
-  count: {
+  count: { fontFamily: "Inter_500Medium",
     color: "#fff",
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "normal",
     textShadowColor: "rgba(0,0,0,0.6)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,

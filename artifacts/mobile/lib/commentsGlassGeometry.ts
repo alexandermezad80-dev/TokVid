@@ -8,11 +8,9 @@ export function commentsGlassGeometry({
   screenHeight?: number; viewportTop?: number; scale?: number;
 }) {
   const headerHeight = 56 * scale;
-  const closedComposerHeight = 74 * scale;
-  // The reference's 23.5dp bottom clearance already contains compact gesture
-  // insets (rounded to 24dp). Reserve larger system bars outside the composer.
-  // Their measured inset is used; never assume a fixed 42dp navigation bar.
-  const systemBottom = safeBottom > 24 * scale ? safeBottom : 0;
+  const closedComposerHeight = 54.5 * scale;
+  // Always reserve the measured system inset; the field ends 4dp above it.
+  const systemBottom = Math.max(0, safeBottom);
   // A Modal may already exclude system bars; do not subtract them twice.
   const closedBottom = Math.max(0, Math.min(fullHeight, screenHeight - viewportTop - systemBottom));
   const keyboardGlassHeight = keyboardVisible ? Math.max(0, availableHeight - sheetTop) : 0;

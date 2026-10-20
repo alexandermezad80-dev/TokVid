@@ -55,12 +55,12 @@ export default function LiveCreateScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: palette.background },
   header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: palette.border },
-  back: { padding: 7, marginRight: 8 }, title: { color: palette.headerText, fontSize: 20, fontWeight: "800" }, subtitle: { color: palette.headerSecondary, fontSize: 12, marginTop: 2 },
+  back: { padding: 7, marginRight: 8 }, title: { fontFamily: "Inter_500Medium", color: palette.headerText, fontSize: 20, fontWeight: "normal" }, subtitle: { fontFamily: "Inter_400Regular", color: palette.headerSecondary, fontSize: 12, marginTop: 2 },
   body: { padding: 18, gap: 14 }, hero: { alignItems: "center", paddingVertical: 18 }, heroIcon: { width: 72, height: 72, borderRadius: 36, backgroundColor: palette.button, alignItems: "center", justifyContent: "center" },
-  heroTitle: { color: palette.text, fontSize: 21, fontWeight: "800", marginTop: 12 }, heroText: { color: palette.secondary, fontSize: 13, textAlign: "center", lineHeight: 19, marginTop: 6 },
-  sectionTitle: { color: palette.secondary, fontSize: 13, fontWeight: "800", marginTop: 5 }, modeRow: { flexDirection: "row", gap: 10 },
+  heroTitle: { fontFamily: "Inter_500Medium", color: palette.text, fontSize: 21, fontWeight: "normal", marginTop: 12 }, heroText: { fontFamily: "Inter_400Regular", color: palette.secondary, fontSize: 13, textAlign: "center", lineHeight: 19, marginTop: 6 },
+  sectionTitle: { fontFamily: "Inter_500Medium", color: palette.secondary, fontSize: 13, fontWeight: "normal", marginTop: 5 }, modeRow: { flexDirection: "row", gap: 10 },
   modeCard: { flex: 1, minHeight: 116, borderRadius: 16, backgroundColor: palette.input, borderWidth: 1, borderColor: palette.border, padding: 14, gap: 6 }, modeActive: { borderColor: palette.selectedBorder, backgroundColor: palette.selected },
-  modeTitle: { color: palette.text, fontSize: 16, fontWeight: "800" }, modeText: { color: palette.secondary, fontSize: 12, lineHeight: 17 },
-  input: { minHeight: 48, borderRadius: 13, backgroundColor: palette.input, borderWidth: 1, borderColor: palette.border, color: palette.text, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15 }, description: { minHeight: 90, textAlignVertical: "top" },
-  createButton: { minHeight: 54, borderRadius: 15, backgroundColor: palette.button, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, marginTop: 4 }, createText: { color: palette.onButton, fontSize: 16, fontWeight: "800" }, disabled: { opacity: 0.6 },
+  modeTitle: { fontFamily: "Inter_500Medium", color: palette.text, fontSize: 16, fontWeight: "normal" }, modeText: { fontFamily: "Inter_400Regular", color: palette.secondary, fontSize: 12, lineHeight: 17 },
+  input: { fontFamily: "Inter_400Regular", minHeight: 48, borderRadius: 13, backgroundColor: palette.input, borderWidth: 1, borderColor: palette.border, color: palette.text, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15 }, description: { minHeight: 90, textAlignVertical: "top" },
+  createButton: { minHeight: 54, borderRadius: 15, backgroundColor: palette.button, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, marginTop: 4 }, createText: { fontFamily: "Inter_500Medium", color: palette.onButton, fontSize: 16, fontWeight: "normal" }, disabled: { opacity: 0.6 },
 });

@@ -22,13 +22,13 @@ test('seven glyphs occupy x44..344 and the last page snaps without a partial lea
  }
 });
 function harness(){
- const slots=[];let cursor=0,effects=[],dirty=false,output,props={recent:recent.DEFAULT_COMMENT_EMOJIS,scale:1,disabled:false,onSelect:e=>selected.push(e)};const selected=[];
+ const slots=[];let cursor=0,effects=[],dirty=false,output,props={recent:recent.DEFAULT_COMMENT_EMOJIS,scale:1,disabled:false,onSelect:e=>selected.push(e)};const selected=[],scrolls=[];
  const same=(a,b)=>a&&a.length===b.length&&a.every((x,i)=>Object.is(x,b[i]));
  const hooks={useState:v=>{const i=cursor++;slots[i]??={value:v};return[slots[i].value,n=>{if(slots[i].value!==n){slots[i].value=n;dirty=true;}}];},useRef:v=>slots[cursor++]??={current:v},useMemo:(fn,deps)=>{const i=cursor++;if(!same(slots[i]?.deps,deps))slots[i]={value:fn(),deps};return slots[i].value;},useEffect:(fn,deps)=>{const i=cursor++;if(!same(slots[i]?.deps,deps)){slots[i]={deps};effects.push(fn);}}};
  const el=(type,props)=>({type,props});const mocks={react:{...hooks,default:{createElement:el}},'react/jsx-runtime':{jsx:el,jsxs:el},'react-native':{Pressable:'Pressable',Text:'Text'},'react-native-reanimated':{__esModule:true,default:{FlatList:'AnimatedFlatList',View:'AnimatedView'},FadeIn:{duration:()=>({})},LinearTransition:{duration:()=>({})}}};
  const Strip=load('components/CommentEmojiStrip.tsx',mocks).default;
- const render=()=>{for(let i=0;i<8;i++){dirty=false;cursor=0;effects=[];output=Strip(props);effects.forEach(fn=>fn());if(!dirty)return output;}throw Error('render did not settle');};
- return{props,selected,render,get list(){return output;}};
+ const render=()=>{for(let i=0;i<8;i++){dirty=false;cursor=0;effects=[];output=Strip(props);if(output.props.ref)output.props.ref.current={scrollToOffset:args=>scrolls.push(args)};effects.forEach(fn=>fn());if(!dirty)return output;}throw Error('render did not settle');};
+ return{props,selected,scrolls,render,get list(){return output;}};
 }
 const event=x=>({nativeEvent:{contentOffset:{x}}});
 test('browsing the row freezes visible order until returning to start, while taps still insert',()=>{
@@ -49,4 +49,15 @@ test('Android emoji paint gets breathing room without enlarging the icon or appl
  const h=harness();h.render();const item=h.list.props.data[0];const cell=h.list.props.renderItem({item,index:0}),button=cell.props.children,text=button.props.children;
  assert.equal(text.props.allowFontScaling,false);assert.equal(text.props.style.fontSize,18);assert.equal(button.props.style.width,24);assert.equal(h.list.props.style.height,24);
  assert.ok(text.props.style.lineHeight>text.props.style.fontSize);
+});
+
+test('reopening starts at the most recent emoji; selecting while browsing never jumps',()=>{
+ const h=harness();h.props.active=false;h.render();assert.equal(h.scrolls.length,0);
+ h.props.active=true;h.render();assert.equal(h.scrolls.length,1);
+ h.list.props.onScroll(event(920));h.list.props.onScrollEndDrag(event(920));
+ const before=h.list.props.data,chosen=before[20];
+ h.props.recent=[chosen,...h.props.recent];h.render();
+ assert.equal(h.scrolls.length,1);assert.equal(h.list.props.data,before);
+ h.props.active=false;h.render();h.props.active=true;h.render();
+ assert.equal(h.scrolls.length,2);assert.equal(h.scrolls.at(-1).offset,0);assert.equal(h.list.props.data[0],chosen);
 });

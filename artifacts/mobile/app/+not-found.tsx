@@ -32,15 +32,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 20,
   },
-  title: {
+  title: { fontFamily: "Inter_500Medium",
     fontSize: 20,
-    fontWeight: "bold",
+    fontWeight: "normal",
   },
   link: {
     marginTop: 15,
     paddingVertical: 15,
   },
-  linkText: {
+  linkText: { fontFamily: "Inter_400Regular",
     fontSize: 14,
   },
 });

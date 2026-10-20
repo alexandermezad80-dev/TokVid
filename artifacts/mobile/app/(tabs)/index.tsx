@@ -327,7 +327,7 @@ ${item.uri}`,
             if (hasMore) loadMore();
           }}
           onEndReachedThreshold={0.75}
-          ListEmptyComponent={<View style={{ height: SCREEN_HEIGHT * 0.75, justifyContent: "center", alignItems: "center", padding: 28, gap: 14 }}>{isLoading || isRefreshing ? <ActivityIndicator color="#91D9E0" /> : <><Feather name="users" size={36} color="#91C7D0" /><Text style={{ color: "#E7E7EF", fontSize: 18, textAlign: "center" }}>{error ? "No se pudo cargar el feed" : feedMode === "following" ? "Publicaciones de quienes sigues" : "Todavía no hay publicaciones"}</Text><Text style={{ color: "#A6ABB8", textAlign: "center", lineHeight: 21 }}>{error || "Sigue a un creador y sus fotos y videos aparecerán aquí."}</Text>{!!error && <TouchableOpacity onPress={refreshFeed}><Text style={{color:"#A4E0E5",padding:12}}>Reintentar</Text></TouchableOpacity>}</>}</View>}
+          ListEmptyComponent={<View style={{ height: SCREEN_HEIGHT * 0.75, justifyContent: "center", alignItems: "center", padding: 28, gap: 14 }}>{isLoading || isRefreshing ? <ActivityIndicator color="#91D9E0" /> : <><Feather name="users" size={36} color="#91C7D0" /><Text style={{ fontFamily: "Inter_400Regular", color: "#E7E7EF", fontSize: 18, textAlign: "center" }}>{error ? "No se pudo cargar el feed" : feedMode === "following" ? "Publicaciones de quienes sigues" : "Todavía no hay publicaciones"}</Text><Text style={{ color: "#A6ABB8", textAlign: "center", lineHeight: 21 }}>{error || "Sigue a un creador y sus fotos y videos aparecerán aquí."}</Text>{!!error && <TouchableOpacity onPress={refreshFeed}><Text style={{color:"#A4E0E5",padding:12}}>Reintentar</Text></TouchableOpacity>}</>}</View>}
           ListFooterComponent={
             hasMore ? (
               <View style={styles.footer}>
@@ -383,18 +383,18 @@ const styles = StyleSheet.create({
     justifyContent:"center",
     paddingRight:44,
   },
-  feedModeActive: {
+  feedModeActive: { fontFamily: "Inter_500Medium",
     color: "#fff",
     fontSize: 17,
-    fontWeight: "800",
+    fontWeight: "normal",
     textShadowColor: "rgba(0,0,0,0.65)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
-  feedModeInactive: {
+  feedModeInactive: { fontFamily: "Inter_500Medium",
     color: "rgba(255,255,255,0.68)",
     fontSize: 17,
-    fontWeight: "600",
+    fontWeight: "normal",
     textShadowColor: "rgba(0,0,0,0.65)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(30,30,36,0.96)",
     zIndex: 30,
   },
-  errorText: { color: "#fff", fontSize: 13, textAlign: "center" },
+  errorText: { fontFamily: "Inter_400Regular", color: "#fff", fontSize: 13, textAlign: "center" },
   footer: { paddingVertical: 16, alignItems: "center" },
 });
 

@@ -183,7 +183,7 @@ export default function EditProfileScreen() {
         {/* Compact, editable profile information follows the supplied reference. */}
         <View style={styles.section}>
           <View style={styles.nameRow}>
-            <Text style={styles.label}>Nombre:</Text>
+            <Text style={styles.label}>Nombre</Text>
             <TextInput
               accessibilityLabel="Nombre completo"
               value={fullName}
@@ -236,18 +236,18 @@ export default function EditProfileScreen() {
         <BrandDivider/>
         <View style={styles.emailSection}>
           <View style={styles.emailBox} accessibilityLabel={`Correo: ${user.email ?? ""}. No editable.`}>
-            <Text selectable style={styles.emailText}>Correo: {user.email ?? ""}</Text>
+            <Text selectable numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={styles.emailText}>{user.email ?? ""}</Text>
           </View>
         </View>
       </KeyboardAwareScrollViewCompat>
-      <Modal visible={photoMenu} transparent animationType="slide" onRequestClose={()=>setPhotoMenu(false)}><View style={{flex:1,justifyContent:"flex-end",backgroundColor:"#0008"}}><Pressable style={StyleSheet.absoluteFill} onPress={()=>setPhotoMenu(false)}/><View style={{backgroundColor:"#FFFFFF",borderTopLeftRadius:20,borderTopRightRadius:20,padding:20,paddingBottom:insets.bottom+32}}>{[{title:"Cargar foto",icon:"image" as const,run:()=>pickImage(false)},{title:"Tomar foto",icon:"camera" as const,run:()=>pickImage(true)},{title:"Ver foto",icon:"maximize" as const,run:()=>{setPhotoMenu(false);router.push({pathname:"/profile-photo",params:{uri:currentAvatar}});}}].map(a=><Pressable key={a.title} accessibilityLabel={a.title} onPress={a.run} style={{minHeight:54,flexDirection:"row",gap:14,alignItems:"center"}}><Feather name={a.icon} color={v.ink} size={22}/><Text style={{color:v.ink,fontSize:16}}>{a.title}</Text></Pressable>)}</View></View></Modal>
+      <Modal visible={photoMenu} transparent animationType="slide" onRequestClose={()=>setPhotoMenu(false)}><View style={{flex:1,justifyContent:"flex-end",backgroundColor:"#0008"}}><Pressable style={StyleSheet.absoluteFill} onPress={()=>setPhotoMenu(false)}/><View style={{backgroundColor:"#FFFFFF",borderTopLeftRadius:20,borderTopRightRadius:20,padding:20,paddingBottom:insets.bottom+32}}>{[{title:"Cargar foto",icon:"image" as const,run:()=>pickImage(false)},{title:"Tomar foto",icon:"camera" as const,run:()=>pickImage(true)},{title:"Ver foto",icon:"maximize" as const,run:()=>{setPhotoMenu(false);router.push({pathname:"/profile-photo",params:{uri:currentAvatar}});}}].map(a=><Pressable key={a.title} accessibilityLabel={a.title} onPress={a.run} style={{minHeight:54,flexDirection:"row",gap:14,alignItems:"center"}}><Feather name={a.icon} color={v.ink} size={22}/><Text style={{ fontFamily: "Inter_400Regular",color:v.ink,fontSize:16}}>{a.title}</Text></Pressable>)}</View></View></Modal>
       <ProfilePhotoCrop uri={cropUri} onClose={()=>setCropUri(null)} onSave={photo=>setSelectedPhoto({uri:photo.uri,width:photo.initWidth,height:photo.initHeight,base64:photo.base64,mimeType:"image/jpeg",type:"image"})}/>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  cameraBadge:{position:"absolute",bottom:6,right:6,width:30,height:30,borderRadius:15,backgroundColor:"#161823DD",alignItems:"center",justifyContent:"center"},photoAction:{minHeight:36,flexDirection:"row",alignItems:"center",gap:8},photoActionText:{color:v.ink,fontSize:13},
+  cameraBadge:{position:"absolute",bottom:6,right:6,width:30,height:30,borderRadius:15,backgroundColor:"#161823DD",alignItems:"center",justifyContent:"center"},photoAction:{minHeight:36,flexDirection:"row",alignItems:"center",gap:8},photoActionText:{ fontFamily: "Inter_400Regular",color:v.ink,fontSize:13},
   root: { flex: 1, backgroundColor: v.white },
   header: {
     flexDirection: "row",
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     backgroundColor:v.ink,borderBottomLeftRadius:20,borderBottomRightRadius:20,zIndex:2,
   },
   headerBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
-  headerTitle: { color: v.ink, fontSize: 17, fontWeight: "700" },
+  headerTitle: { fontFamily: "Inter_500Medium", color: v.ink, fontSize: 17, fontWeight: "normal" },
   saveBtn: {
     backgroundColor: v.white,
     borderRadius: 8,
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   saveBtnDisabled: { opacity: 0.6 },
-  saveBtnText: { color: v.ink, fontWeight: "800", fontSize: 14 },
+  saveBtnText: { fontFamily: "Inter_500Medium", color: v.ink, fontWeight: "normal", fontSize: 14 },
   container: { flexGrow: 1, paddingTop: 0 },
   avatarSection: { flexDirection:"row",alignItems: "center",gap:20 },
   avatarWrap: {
@@ -286,8 +286,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 4,
   },
-  avatarOverlayText: { color: "#fff", fontSize: 11, fontWeight: "600" },
-  avatarHint: { color: "#555", fontSize: 12 },
+  avatarOverlayText: { fontFamily: "Inter_500Medium", color: "#fff", fontSize: 11, fontWeight: "normal" },
+  avatarHint: { fontFamily: "Inter_400Regular", color: "#555", fontSize: 12 },
   errorBox: {
     flexDirection: "row",
     alignItems: "center",
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 12,
   },
-  errorText: { color: "#FE2C55", fontSize: 13, flex: 1 },
+  errorText: { fontFamily: "Inter_400Regular", color: "#FE2C55", fontSize: 13, flex: 1 },
   section: {
     backgroundColor:"#FFFFFF",
     paddingHorizontal: 20,
@@ -307,27 +307,28 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   field: { gap: 2 },
-  label: { color: "#737373", fontSize: 14, lineHeight: 20 },
-  nameRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+  label: { fontFamily: "Inter_400Regular", color: "#737373", fontSize: 14, lineHeight: 20 },
+  nameRow: { gap: 2 },
   usernameRow: { flexDirection: "row", alignItems: "center" },
-  usernamePrefix: { color: v.ink, fontSize: 15, fontWeight: "700" },
-  inlineInput: {
+  usernamePrefix: { fontFamily: "Inter_500Medium", color: v.ink, fontSize: 15, fontWeight: "normal" },
+  inlineInput: { fontFamily: "Inter_400Regular",
     flex: 1,
     minWidth: 0,
     color: v.ink,
     fontSize: 15,
     lineHeight: 21,
-    fontWeight: "700",
+    fontWeight: "normal",
     paddingHorizontal: 0,
     paddingVertical: 2,
     backgroundColor: "transparent",
   },
-  nameInput: { minHeight: 28 },
-  bioInput: {
+  nameInput: { minHeight: 28, flex: 0, width: "100%" },
+  bioInput: { fontFamily: "Inter_400Regular",
     color: v.ink,
     fontSize: 15,
     lineHeight: 21,
-    fontWeight: "700",
+    fontWeight: "normal",
+    textAlign: "justify",
     minHeight: 80,
     paddingHorizontal: 0,
     paddingTop: 2,
@@ -335,7 +336,7 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
     backgroundColor: "transparent",
   },
-  counter: { alignSelf: "flex-end", color: v.darkGray, fontSize: 12, marginTop: 2 },
+  counter: { fontFamily: "Inter_400Regular", alignSelf: "flex-end", color: v.darkGray, fontSize: 12, marginTop: 2 },
   emailSection: { paddingHorizontal:20,paddingTop:13,flex:1,backgroundColor:v.white },
   emailBox: {
     minHeight: 46,
@@ -347,5 +348,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  emailText: { color: v.secondary, fontSize: 15, lineHeight: 21, fontWeight: "600", flexShrink: 1 },
+  emailText: { fontFamily: "Inter_400Regular", color: v.secondary, fontSize: 14, lineHeight: 20, fontWeight: "normal", flexShrink: 1 },
 });

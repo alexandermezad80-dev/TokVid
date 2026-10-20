@@ -13,11 +13,11 @@ vm.runInNewContext(js, { exports: moduleExports });
 const geometry = moduleExports.commentsGlassGeometry;
 const reference = (more = {}) => geometry({ fullHeight: 802, availableHeight: 802, sheetTop: 325, safeBottom: 24, keyboardVisible: false, ...more });
 
-test('closed keyboard: comments header 56dp and glass bar y728/h74', () => {
+test('closed editor ends 4dp above measured gesture area', () => {
   const a = reference();
   assert.equal(a.headerHeight, 56);
-  assert.equal(a.composerTop, 728);
-  assert.equal(a.composerHeight, 74);
+  assert.equal(a.composerTop, 723.5);
+  assert.equal(a.composerHeight, 54.5);
 });
 test('open keyboard: glass runs y325 to y471.5 and composer follows header', () => {
   const a = reference({ keyboardVisible: true, availableHeight: 471.5 });
@@ -41,20 +41,20 @@ test('modal-local keyboard top stays aligned when the stable window includes sys
   assert.equal(a.keyboardGlassHeight, 146.5);
   assert.equal(a.composerTop + a.composerHeight, 447.5);
 });
-test('three-button navigation reserves its measured inset outside the 74dp composer', () => {
+test('three-button navigation reserves its measured inset with compact bottom clearance', () => {
   const a = reference({ safeBottom: 42 });
   assert.equal(a.closedBottom, 760);
   assert.equal(a.closedSheetHeight, 435);
-  assert.equal(a.composerTop, 686);
-  assert.equal(a.composerHeight, 74);
-  assert.equal(a.composerTop + 12.5, 698.5);
-  assert.equal(a.composerTop + 12.5 + 38, 736.5);
+  assert.equal(a.composerTop, 705.5);
+  assert.equal(a.composerHeight, 54.5);
+  assert.equal(a.composerTop + 12.5, 718);
+  assert.equal(a.composerTop + 12.5 + 38, 756);
   assert.equal(reference({ safeBottom: 42, availableHeight: 471.5, keyboardVisible: true }).composerHeight, 90.5);
 });
 test('already inset modal never subtracts the system navigation bar twice', () => {
   const a = reference({ fullHeight: 736, screenHeight: 802, viewportTop: 24, sheetTop: 301, safeBottom: 42 });
   assert.equal(a.closedBottom + 24, 760);
-  assert.equal(a.composerTop + 24, 686);
+  assert.equal(a.composerTop + 24, 705.5);
 });
 test('measured navigation bar heights keep the field entirely above system controls', () => {
   for (const safeBottom of [0, 16, 24, 34, 42, 48, 60]) {

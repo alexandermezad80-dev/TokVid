@@ -4,15 +4,15 @@ import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
 import { createDatabaseChannel } from "../lib/realtimeSubscriptions";
 import { COMMENT_PAGE_SIZE, COMMENT_FIELDS, FeedComment, REPLY_PAGE_SIZE, commentCapabilities, mergeComments } from "../lib/features/comments/model";
-import { createComment, deleteComment, editComment, hideCommentThread, readComments, readHiddenThreads, readOwnCommentLikes, readPublicationOwner, readReplies, restoreCommentThreads, setCommentLike } from "../lib/features/comments/services";
+import { createComment, deleteComment, dismissComment, readDismissedComments, editComment, hideCommentThread, readComments, readHiddenThreads, readOwnCommentLikes, readPublicationOwner, readReplies, restoreCommentThreads, setCommentLike } from "../lib/features/comments/services";
 
 interface ThreadPage { rows: FeedComment[]; hasMore: boolean }
 interface State {
   key: string; roots: FeedComment[]; threads: Record<string, ThreadPage>;
-  liked: Set<string>; hiddenThreads: Set<string>; total: number | null; hasMore: boolean;
+  liked: Set<string>; hiddenThreads: Set<string>; dismissedComments: Set<string>; total: number | null; hasMore: boolean;
   publicationOwnerId: string | null;
 }
-const emptyState = (key: string): State => ({ key, roots: [], threads: {}, liked: new Set(), hiddenThreads: new Set(), total: null, hasMore: false, publicationOwnerId: null });
+const emptyState = (key: string): State => ({ key, roots: [], threads: {}, liked: new Set(), hiddenThreads: new Set(), dismissedComments: new Set(), total: null, hasMore: false, publicationOwnerId: null });
 const errorText = (error: unknown) => error instanceof Error ? error.message : "No se pudo completar la operación. Inténtalo de nuevo.";
 
 export function useFeedComments(visible: boolean, videoId: string, onCountChange?: (videoId: string, total: number) => void, focusCommentId?:string) {
@@ -70,11 +70,11 @@ export function useFeedComments(visible: boolean, videoId: string, onCountChange
         }else if(epoch.current===currentEpoch){setOperationError('Este comentario ya no está disponible.');}
       }
       const ids = [...roots.rows, ...Object.values(threads).flatMap(page => page.rows)].map(row => row.id);
-      const [liked, hiddenThreads] = await Promise.all([readOwnCommentLikes(user?.id, ids), readHiddenThreads(user?.id, videoId)]);
+      const [liked, hiddenThreads, dismissedComments] = await Promise.all([readOwnCommentLikes(user?.id, ids), readHiddenThreads(user?.id, videoId), readDismissedComments(user?.id, videoId)]);
       if (epoch.current !== currentEpoch || requestSequence.current !== sequence) return;
       const focusedRow=[...roots.rows,...Object.values(threads).flatMap(page=>page.rows)].find(r=>r.id===focusCommentId);
       if(focusedRow&&hiddenThreads.has(focusedRow.root_id??focusedRow.id))setOperationError("Este comentario pertenece a un hilo oculto. Usa Mostrar para verlo.");
-      setState({ key, roots: roots.rows, threads, liked, hiddenThreads, total: roots.total, hasMore: roots.hasMore, publicationOwnerId });
+      setState({ key, roots: roots.rows, threads, liked, hiddenThreads, dismissedComments, total: roots.total, hasMore: roots.hasMore, publicationOwnerId });
       setError("");
       countCallback.current?.(videoId, roots.total);
     } catch (failure) {
@@ -248,6 +248,10 @@ export function useFeedComments(visible: boolean, videoId: string, onCountChange
       });
     });
   };
+  const removeForMe = (comment: FeedComment) => {
+    if (!user || comment.user_id !== user.id || comment.deleted_at || comment.video_id !== videoId) return Promise.resolve(null);
+    return mutate(() => dismissComment(user.id, comment), () => setState(previous => ({ ...previous, dismissedComments: new Set(previous.dismissedComments).add(comment.id) })));
+  };
   const hideThread = (comment: FeedComment) => {
     if (!user || comment.video_id !== videoId) return Promise.resolve(null);
     const rootId = comment.root_id ?? comment.id;
@@ -259,6 +263,6 @@ export function useFeedComments(visible: boolean, videoId: string, onCountChange
   };
 
   return { ...(state.key === key ? state : emptyState(key)), loading, error: operationError || error, sending, pendingLikes, paging, mutating, expanded,
-    refresh, loadMore, toggleThread, moreReplies, publish, like, edit, remove, hideThread, restoreThreads };
+    refresh, loadMore, toggleThread, moreReplies, publish, like, edit, remove, removeForMe, hideThread, restoreThreads };
 }
 

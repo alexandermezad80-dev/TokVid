@@ -68,9 +68,9 @@ const styles = StyleSheet.create({
     color: "#4285F4",
     fontFamily: "serif",
   },
-  label: {
+  label: { fontFamily: "Inter_500Medium",
     color: "#111",
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "normal",
   },
 });

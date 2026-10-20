@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
   overlay: { position: "absolute", top: 0, left: 0, right: 0, zIndex: 1000, paddingHorizontal: 12, paddingTop: 54 },
   card: { minHeight: 76, borderRadius: 18, backgroundColor: palette.background, flexDirection: "row", alignItems: "center", paddingHorizontal: 14, borderWidth: 1, borderColor: palette.border },
   icon: { width: 46, height: 46, borderRadius: 23, backgroundColor: palette.button, alignItems: "center", justifyContent: "center" },
-  info: { flex: 1, marginLeft: 12 }, title: { color: palette.text, fontSize: 15, fontWeight: "700" }, subtitle: { color: palette.secondary, fontSize: 12, marginTop: 3 },
+  info: { flex: 1, marginLeft: 12 }, title: { fontFamily: "Inter_500Medium", color: palette.text, fontSize: 15, fontWeight: "normal" }, subtitle: { fontFamily: "Inter_400Regular", color: palette.secondary, fontSize: 12, marginTop: 3 },
   actions: { flexDirection: "row", gap: 10 }, action: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
   reject: { backgroundColor: "#d7193f" }, accept: { backgroundColor: palette.input },
 });

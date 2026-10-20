@@ -108,6 +108,26 @@ export async function readHiddenThreads(userId: string | undefined, videoId: str
   return new Set(requireResult(result).map(row => row.root_id as string));
 }
 
+export async function readDismissedComments(userId: string | undefined, videoId: string): Promise<Set<string>> {
+  const ids = new Set<string>();
+  if (!userId) return ids;
+  for (let offset = 0; ; offset += 500) {
+    const result = await supabase.from("dismissed_feed_comments").select("comment_id")
+      .eq("user_id", userId).eq("video_id", videoId).order("comment_id").range(offset, offset + 499);
+    const rows = requireResult(result);
+    for (const row of rows) ids.add(row.comment_id as string);
+    if (rows.length < 500) return ids;
+  }
+}
+
+export async function dismissComment(userId: string, comment: FeedComment): Promise<boolean> {
+  if (comment.user_id !== userId || comment.deleted_at) throw new Error("Solo puedes eliminar tus propios comentarios.");
+  const result = await supabase.from("dismissed_feed_comments").upsert({ user_id: userId, video_id: comment.video_id, comment_id: comment.id }, { onConflict: "user_id,comment_id", ignoreDuplicates: true });
+  if (result.error) throw new Error(result.error.message);
+  if (!(await readDismissedComments(userId, comment.video_id)).has(comment.id)) throw new Error("No se pudo confirmar la eliminación de tu vista.");
+  return true;
+}
+
 export async function hideCommentThread(userId: string, videoId: string, rootId: string): Promise<void> {
   const result = await supabase.from("hidden_feed_comment_threads").upsert({ user_id: userId, video_id: videoId, root_id: rootId }, { onConflict: "user_id,root_id", ignoreDuplicates: true });
   if (result.error) throw new Error(result.error.message);

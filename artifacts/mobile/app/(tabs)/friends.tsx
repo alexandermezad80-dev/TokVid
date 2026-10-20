@@ -344,8 +344,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   headerTitleWrap: { flex: 1, alignItems: "center" },
-  headerTitle: { color: palette.headerText, fontSize: 21, fontWeight: "800" },
-  headerSubtitle: { color: palette.headerSecondary, fontSize: 11, marginTop: 2 },
+  headerTitle: { fontFamily: "Inter_500Medium", color: palette.headerText, fontSize: 21, fontWeight: "normal" },
+  headerSubtitle: { fontFamily: "Inter_400Regular", color: palette.headerSecondary, fontSize: 11, marginTop: 2 },
   tabs: {
     flexDirection: "row",
     marginHorizontal:16,marginVertical:12,
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 5,
   },
-  tabText: { color: palette.muted, fontSize: 12, fontWeight: "700" },
+  tabText: { fontFamily: "Inter_500Medium", color: palette.muted, fontSize: 12, fontWeight: "normal" },
   tabTextActive: { color: palette.text },
   searchBox: {
     flexDirection: "row",
@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.border,
   },
-  searchInput: {
+  searchInput: { fontFamily: "Inter_400Regular",
     flex: 1,
     color: palette.text,
     fontSize: 14,
@@ -399,8 +399,8 @@ const styles = StyleSheet.create({
     borderColor: palette.border,
   },
   personInfo: { flex: 1, marginHorizontal: 12, minWidth: 0 },
-  username: { color: palette.text, fontSize: 15, fontWeight: "700" },
-  secondaryText: { color: palette.secondary, fontSize: 12.5, marginTop: 3 },
+  username: { fontFamily: "Inter_500Medium", color: palette.text, fontSize: 15, fontWeight: "normal" },
+  secondaryText: { fontFamily: "Inter_400Regular", color: palette.secondary, fontSize: 12.5, marginTop: 3 },
   followButton: {
     minWidth: 96,
     height: 32,
@@ -417,10 +417,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#FE0979",
   },
-  followButtonText: { color: palette.onButton, fontSize: 12, fontWeight: "800" },
+  followButtonText: { fontFamily: "Inter_500Medium", color: palette.onButton, fontSize: 12, fontWeight: "normal" },
   followingButtonText: { color: palette.onButton },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10 },
-  centerText: { color: palette.secondary, fontSize: 13 },
+  centerText: { fontFamily: "Inter_400Regular", color: palette.secondary, fontSize: 13 },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 35, gap: 10 },
   emptyIcon: {
     width: 64,
@@ -433,8 +433,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 4,
   },
-  emptyTitle: { color: palette.text, fontSize: 17, fontWeight: "800", textAlign: "center" },
-  emptyText: { color: palette.secondary, fontSize: 13, textAlign: "center", lineHeight: 19 },
+  emptyTitle: { fontFamily: "Inter_500Medium", color: palette.text, fontSize: 17, fontWeight: "normal", textAlign: "center" },
+  emptyText: { fontFamily: "Inter_400Regular", color: palette.secondary, fontSize: 13, textAlign: "center", lineHeight: 19 },
 
   modalBackdrop: {
     flex: 1,
@@ -483,8 +483,8 @@ const styles = StyleSheet.create({
     backgroundColor: palette.input,
     marginTop: 2,
   },
-  modalName: { color: palette.text, fontSize: 20, fontWeight: "800", marginTop: 10 },
-  modalHandleText: { color: palette.secondary, fontSize: 13, marginTop: 2 },
+  modalName: { fontFamily: "Inter_500Medium", color: palette.text, fontSize: 20, fontWeight: "normal", marginTop: 10 },
+  modalHandleText: { fontFamily: "Inter_400Regular", color: palette.secondary, fontSize: 13, marginTop: 2 },
   modalStats: {
     width: "100%",
     flexDirection: "row",
@@ -496,9 +496,9 @@ const styles = StyleSheet.create({
     borderColor: palette.border,
   },
   modalStat: { alignItems: "center", minWidth: 80 },
-  modalStatValue: { color: palette.text, fontSize: 17, fontWeight: "800" },
-  modalStatLabel: { color: palette.secondary, fontSize: 11, marginTop: 2 },
-  modalBio: { color: palette.text, fontSize: 13, lineHeight: 19, textAlign: "center", marginTop: 12 },
+  modalStatValue: { fontFamily: "Inter_500Medium", color: palette.text, fontSize: 17, fontWeight: "normal" },
+  modalStatLabel: { fontFamily: "Inter_400Regular", color: palette.secondary, fontSize: 11, marginTop: 2 },
+  modalBio: { fontFamily: "Inter_400Regular", color: palette.text, fontSize: 13, lineHeight: 19, textAlign: "center", marginTop: 12 },
   modalActions: {
     width: "100%",
     flexDirection: "row",
@@ -518,6 +518,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 7,
   },
-  messageButtonText: { color: palette.onButton, fontSize: 13, fontWeight: "800" },
+  messageButtonText: { fontFamily: "Inter_500Medium", color: palette.onButton, fontSize: 13, fontWeight: "normal" },
 });
 

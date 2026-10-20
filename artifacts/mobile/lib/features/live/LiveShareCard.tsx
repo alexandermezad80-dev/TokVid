@@ -30,8 +30,8 @@ const styles = StyleSheet.create({
   card:{ flexDirection:"row", alignItems:"center", gap:11, width:"92%", alignSelf:"center", padding:12, borderRadius:16, backgroundColor:palette.input, borderWidth:1, borderColor:palette.border },
   icon:{ width:42, height:42, borderRadius:13, backgroundColor:palette.button, alignItems:"center", justifyContent:"center" },
   copy:{ flex:1 },
-  title:{ color:palette.text, fontSize:14, fontWeight:"800" },
-  subtitle:{ color:palette.secondary, fontSize:12, marginTop:3 },
+  title:{ fontFamily: "Inter_500Medium", color:palette.text, fontSize:14, fontWeight:"normal" },
+  subtitle:{ fontFamily: "Inter_400Regular", color:palette.secondary, fontSize:12, marginTop:3 },
   open:{ paddingHorizontal:13, paddingVertical:9, borderRadius:15, backgroundColor:palette.button },
-  openText:{ color:palette.onButton, fontSize:12, fontWeight:"800" },
+  openText:{ fontFamily: "Inter_500Medium", color:palette.onButton, fontSize:12, fontWeight:"normal" },
 });

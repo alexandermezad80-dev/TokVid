@@ -11,6 +11,29 @@ import com.google.mlkit.nl.languageid.LanguageIdentification
 import com.google.mlkit.nl.translate.*
 import com.google.mlkit.common.model.DownloadConditions
 class ChatToolsModule(context: ReactApplicationContext) : ReactContextBaseJavaModule(context) {
+ @ReactMethod fun setNavigationAppearance(color: String, darkIcons: Boolean) {
+  val activity = reactApplicationContext.currentActivity ?: return
+  activity.runOnUiThread {
+   val parsed = android.graphics.Color.parseColor(color)
+   applyNavigationAppearance(activity.window, parsed, darkIcons)
+   applyModalNavigation(activity.window.decorView, parsed, darkIcons)
+  }
+ }
+ @Suppress("DEPRECATION")
+ private fun applyNavigationAppearance(window: android.view.Window, color: Int, darkIcons: Boolean) {
+  window.navigationBarColor = color
+  if (android.os.Build.VERSION.SDK_INT >= 28) window.navigationBarDividerColor = color
+  if (android.os.Build.VERSION.SDK_INT >= 29) window.isNavigationBarContrastEnforced = false
+  androidx.core.view.WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightNavigationBars = darkIcons
+ }
+ private fun applyModalNavigation(view: android.view.View, color: Int, darkIcons: Boolean) {
+  if (view is com.facebook.react.views.modal.ReactModalHostView) {
+   view.dialog?.takeIf { it.isShowing }?.window?.let { applyNavigationAppearance(it, color, darkIcons) }
+  }
+  if (view is android.view.ViewGroup) {
+   for (index in 0 until view.childCount) view.getChildAt(index)?.let { applyModalNavigation(it, color, darkIcons) }
+  }
+ }
  override fun getName() = "TokVidChatTools"
  private fun packages(): List<String> = listOf("com.whatsapp", "com.whatsapp.w4b", "jp.naver.line.android", "com.facebook.katana", "com.facebook.orca") + listOfNotNull(Telephony.Sms.getDefaultSmsPackage(reactApplicationContext))
  private fun shareIntent(packageName: String, text: String): Intent {

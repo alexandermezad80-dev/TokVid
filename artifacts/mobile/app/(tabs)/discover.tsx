@@ -304,12 +304,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     gap: 8,
   },
-  input: { flex: 1, color: palette.text, fontSize: 15 },
-  cancelText: { color: palette.headerText, fontSize: 15, fontWeight: "600" },
+  input: { fontFamily: "Inter_400Regular", flex: 1, color: palette.text, fontSize: 15 },
+  cancelText: { fontFamily: "Inter_500Medium", color: palette.headerText, fontSize: 15, fontWeight: "normal" },
 
   // Search results
   resultsList: { paddingBottom: 100 },
-  resultsHeader: {
+  resultsHeader: { fontFamily: "Inter_400Regular",
     color: palette.secondary,
     fontSize: 13,
     paddingHorizontal: 16,
@@ -324,9 +324,9 @@ const styles = StyleSheet.create({
   },
   resultAvatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: palette.input },
   resultInfo: { flex: 1, gap: 2 },
-  resultUsername: { color: palette.text, fontSize: 15, fontWeight: "700" },
-  resultBio: { color: palette.secondary, fontSize: 13 },
-  resultFollowers: { color: palette.secondary, fontSize: 12 },
+  resultUsername: { fontFamily: "Inter_500Medium", color: palette.text, fontSize: 15, fontWeight: "normal" },
+  resultBio: { fontFamily: "Inter_400Regular", color: palette.secondary, fontSize: 13 },
+  resultFollowers: { fontFamily: "Inter_400Regular", color: palette.secondary, fontSize: 12 },
   separator: { height: 1, backgroundColor: palette.border, marginLeft: 80 },
 
   // Empty / loading states
@@ -339,14 +339,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  emptyTitle: { color: palette.text, fontSize: 18, fontWeight: "700" },
-  emptyText: { color: palette.secondary, fontSize: 14, textAlign: "center" },
+  emptyTitle: { fontFamily: "Inter_500Medium", color: palette.text, fontSize: 18, fontWeight: "normal" },
+  emptyText: { fontFamily: "Inter_400Regular", color: palette.secondary, fontSize: 14, textAlign: "center" },
 
   // Default explore sections
-  sectionTitle: {
+  sectionTitle: { fontFamily: "Inter_500Medium",
     color: palette.text,
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "normal",
     paddingHorizontal: 14,
     marginTop: 20,
     marginBottom: 12,
@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
-  tagText: { color: palette.text, fontSize: 14, fontWeight: "600" },
+  tagText: { fontFamily: "Inter_500Medium", color: palette.text, fontSize: 14, fontWeight: "normal" },
 
   // Creator cards
   creatorList: { paddingHorizontal: 14, gap: 12 },
@@ -373,8 +373,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   creatorAvatar: { width: 64, height: 64, borderRadius: 32 },
-  creatorHandle: { color: palette.text, fontSize: 12, fontWeight: "700", textAlign: "center" },
-  creatorFollowers: { color: palette.secondary, fontSize: 11, textAlign: "center" },
+  creatorHandle: { fontFamily: "Inter_500Medium", color: palette.text, fontSize: 12, fontWeight: "normal", textAlign: "center" },
+  creatorFollowers: { fontFamily: "Inter_400Regular", color: palette.secondary, fontSize: 11, textAlign: "center" },
 
   // Follow button
   followBtn: {
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
     borderColor: palette.selectedBorder,
   },
   followBtnSm: { paddingHorizontal: 12, paddingVertical: 5 },
-  followBtnText: { color: palette.onButton, fontSize: 12, fontWeight: "700" },
+  followBtnText: { fontFamily: "Inter_500Medium", color: palette.onButton, fontSize: 12, fontWeight: "normal" },
   followBtnTextActive: { color: palette.teal },
 
   // Trending grid
@@ -417,10 +417,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 3,
   },
-  viewsText: {
+  viewsText: { fontFamily: "Inter_500Medium",
     color: palette.mediaText,
     fontSize: 11,
-    fontWeight: "600",
+    fontWeight: "normal",
     textShadowColor: "rgba(0,0,0,0.8)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,

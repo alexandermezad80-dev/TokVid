@@ -7,7 +7,7 @@ import {
   useFonts,
 } from "@expo-google-fonts/inter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
+import { Stack, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
 import { ActivityIndicator, View } from "react-native";
@@ -24,6 +24,8 @@ import { usePushNotifications } from "../hooks/usePushNotifications";
 import { ActivityBanner } from "../components/ActivityBanner";
 import { IncomingCallListener } from "../components/IncomingCallListener";
 
+import { useSystemNavigation } from "../hooks/useSystemNavigation";
+
 const queryClient = new QueryClient();
 
 function PushNotificationSetup() {
@@ -34,6 +36,9 @@ function PushNotificationSetup() {
 
 function RootLayoutNav() {
   const { loading } = useAuth();
+  const pathname = usePathname();
+  const darkBottom = loading || ["/", "/profile", "/user-profile", "/friends", "/create", "/publication", "/saved-feed", "/liked-feed", "/tag"].includes(pathname);
+  useSystemNavigation(darkBottom ? "#000000" : "#FFFFFF", !darkBottom);
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: palette.media, alignItems: "center", justifyContent: "center" }}>

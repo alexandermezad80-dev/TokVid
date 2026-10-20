@@ -205,13 +205,13 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 600,
   },
-  title: {
+  title: { fontFamily: "Inter_500Medium",
     fontSize: 28,
-    fontWeight: "700",
+    fontWeight: "normal",
     textAlign: "center",
     lineHeight: 40,
   },
-  message: {
+  message: { fontFamily: "Inter_400Regular",
     fontSize: 16,
     textAlign: "center",
     lineHeight: 24,
@@ -241,8 +241,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  buttonText: {
-    fontWeight: "600",
+  buttonText: { fontFamily: "Inter_500Medium",
+    fontWeight: "normal",
     textAlign: "center",
     fontSize: 16,
   },
@@ -266,9 +266,9 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderBottomWidth: 1,
   },
-  modalTitle: {
+  modalTitle: { fontFamily: "Inter_500Medium",
     fontSize: 20,
-    fontWeight: "600",
+    fontWeight: "normal",
   },
   closeButton: {
     width: 44,
@@ -288,12 +288,12 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     padding: 16,
   },
-  errorText: {
+  errorText: { fontFamily: "Inter_400Regular",
     fontSize: 12,
     lineHeight: 18,
     width: "100%",
   },
   diagnosticButton: { minHeight: 44, paddingVertical: 12, paddingHorizontal: 18, borderRadius: 8, borderWidth: 1, borderColor: "#888", alignItems: "center", justifyContent: "center" },
-  diagnosticButtonText: { fontSize: 15, fontWeight: "600" },
-  diagnosticHint: { fontSize: 13, marginBottom: 12, lineHeight: 19 },
+  diagnosticButtonText: { fontFamily: "Inter_500Medium", fontSize: 15, fontWeight: "normal" },
+  diagnosticHint: { fontFamily: "Inter_400Regular", fontSize: 13, marginBottom: 12, lineHeight: 19 },
 });

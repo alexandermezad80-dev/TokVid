@@ -284,10 +284,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  badgeText: {
+  badgeText: { fontFamily: "Inter_500Medium",
     color: palette.onButton,
     fontSize: 9,
-    fontWeight: "800",
+    fontWeight: "normal",
   },
   promptPosition: {
     position: "absolute",
@@ -323,12 +323,12 @@ const styles = StyleSheet.create({
   promptCopy: {
     flex: 1,
   },
-  promptTitle: {
+  promptTitle: { fontFamily: "Inter_500Medium",
     color: palette.text,
     fontSize: 15,
-    fontWeight: "800",
+    fontWeight: "normal",
   },
-  promptText: {
+  promptText: { fontFamily: "Inter_400Regular",
     color: palette.text,
     fontSize: 12,
     lineHeight: 17,
@@ -347,10 +347,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: palette.input,
   },
-  rejectText: {
+  rejectText: { fontFamily: "Inter_500Medium",
     color: palette.text,
     fontSize: 12,
-    fontWeight: "800",
+    fontWeight: "normal",
   },
   acceptButton: {
     flex: 1,
@@ -360,10 +360,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: palette.button,
   },
-  acceptText: {
+  acceptText: { fontFamily: "Inter_500Medium",
     color: palette.onButton,
     fontSize: 12,
-    fontWeight: "800",
+    fontWeight: "normal",
   },
   listPosition: {
     position: "absolute",
@@ -387,12 +387,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
-  listTitle: {
+  listTitle: { fontFamily: "Inter_500Medium",
     color: palette.text,
     fontSize: 15,
-    fontWeight: "800",
+    fontWeight: "normal",
   },
-  emptyText: {
+  emptyText: { fontFamily: "Inter_400Regular",
     color: palette.secondary,
     fontSize: 12,
     paddingVertical: 12,
@@ -408,12 +408,12 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingRight: 8,
   },
-  listName: {
+  listName: { fontFamily: "Inter_500Medium",
     color: palette.text,
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "normal",
   },
-  listMeta: {
+  listMeta: { fontFamily: "Inter_400Regular",
     color: palette.secondary,
     fontSize: 11,
     marginTop: 2,

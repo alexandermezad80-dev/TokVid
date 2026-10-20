@@ -102,9 +102,9 @@ export default function ProfileScreen() {
         <View style={{flex:1}}/><TouchableOpacity style={styles.menuBtn} onPress={()=>router.push("/edit-profile")} accessibilityLabel="Información de perfil"><Feather name="more-horizontal" size={24} color="#FFF"/></TouchableOpacity>
       </ReferenceHeader>
       <View style={styles.profileSection}>
-        <View style={{width:84,gap:8}}>
+        <View style={{width:90,gap:8}}>
           <TouchableOpacity style={styles.avatarWrap} onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})} accessibilityLabel="Ver mis historias">
-            <BrandAvatar uri={avatarUrl(user,profile)} size={84} radius={12} reference/>
+            <BrandAvatar uri={avatarUrl(user,profile)} size={90} radius={12} reference/>
             <TouchableOpacity style={styles.editBadge} onPress={()=>router.push("/story-create")} accessibilityLabel="Añadir historia"><Feather name="plus" size={18} color="#FFF"/></TouchableOpacity>
           </TouchableOpacity>
           <Pressable onPress={()=>router.push({pathname:"/user-tools",params:{section:"balance"}})} style={styles.accountButton}><BrandOutline radius={7}/><Text style={styles.accountLabel}>Saldo</Text></Pressable>
@@ -119,7 +119,7 @@ export default function ProfileScreen() {
           ].map(stat=><TouchableOpacity key={stat.target} style={styles.stat} onPress={()=>stat.target==="liked"?setTab("liked"):router.push({pathname:"/(tabs)/friends",params:{tab:stat.target}})}><Text maxFontSizeMultiplier={1.2} style={styles.statValue}>{stat.value}</Text><Text maxFontSizeMultiplier={1.2} numberOfLines={1} style={styles.statLabel}>{stat.label}</Text></TouchableOpacity>)}</View>
           <Text onPress={()=>setExpanded(true)} accessibilityRole="button" accessibilityState={{expanded}} accessibilityLabel="Biografía" maxFontSizeMultiplier={1.2} style={styles.bio} numberOfLines={expanded?undefined:3}>{bio}</Text>
           {!!bio&&expanded&&<TouchableOpacity onPress={()=>setExpanded(false)}><Text style={styles.bioMore}>Ver menos</Text></TouchableOpacity>}
-          {!!connections.error&&<TouchableOpacity onPress={()=>void connections.refresh()}><Text style={{color:"#D32F3F",fontSize:12}}>{connections.error}</Text></TouchableOpacity>}
+          {!!connections.error&&<TouchableOpacity onPress={()=>void connections.refresh()}><Text style={{ fontFamily: "Inter_400Regular",color:"#D32F3F",fontSize:12}}>{connections.error}</Text></TouchableOpacity>}
         </View>
       </View>
       <View style={styles.tabBar}>{([
@@ -181,7 +181,7 @@ export default function ProfileScreen() {
         <View>
           {publications.loading && publications.items.length === 0 ? <ActivityIndicator color="#85D5DB" style={{ padding: 24 }} /> : null}
           {!!publications.error && <TouchableOpacity onPress={() => void publications.refresh()} style={styles.emptyState}><Text style={styles.emptyText}>{publications.error}</Text><Text style={{color:"#9CDEE1"}}>Reintentar</Text></TouchableOpacity>}
-          {!publications.loading && !publications.error && publications.items.length === 0 && <TouchableOpacity style={styles.emptyState} onPress={() => router.push("/(tabs)/create")}><Feather name="plus-circle" size={36} color="#8DCBD0" /><Text style={styles.emptyTitle}>Tu primera publicación</Text><Text style={styles.emptyText}>Comparte una foto o un video desde Galería.</Text></TouchableOpacity>}
+          {!publications.loading && !publications.error && publications.items.length === 0 && <TouchableOpacity style={styles.emptyState} onPress={() => router.push("/(tabs)/create")}><Feather name="plus" size={24} color="#6B7580" /><Text style={[styles.emptyText,{ fontFamily: "Inter_400Regular",fontSize:14,lineHeight:20}]}>Comparte tu primera foto o video</Text></TouchableOpacity>}
           <View style={styles.grid}>{publications.items.filter(item=>tab!=="gallery"||item.mediaType==="image").map(item => <TouchableOpacity key={item.id} style={[styles.gridItem,gridLayout.tile]} accessibilityRole="button" accessibilityLabel={`Abrir publicación: ${item.caption || "Sin descripción"}`} onPress={() => router.push({ pathname:"/publication", params:{id:item.id} })}><PublicationThumbnail item={item} /></TouchableOpacity>)}</View>
           {publications.hasMore && <TouchableOpacity onPress={() => void publications.loadMore()} disabled={publications.loading} style={{padding:20,alignItems:"center"}}><Text style={{color:"#A6E1E5"}}>{publications.loading ? "Cargando…" : "Ver más"}</Text></TouchableOpacity>}
         </View>
@@ -195,7 +195,7 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  accountButton:{width:84,minHeight:32,borderRadius:7,backgroundColor:v.white,alignItems:"center",justifyContent:"center",opacity:1},accountLabel:{color:v.ink,fontSize:11},bioMore:{color:v.ink,fontSize:12},
+  accountButton:{width:84,minHeight:29,borderRadius:7,backgroundColor:v.white,alignItems:"center",justifyContent:"center",opacity:1},accountLabel:{ fontFamily: "Inter_400Regular",color:v.ink,fontSize:11},bioMore:{ fontFamily: "Inter_400Regular",color:v.ink,fontSize:12},
   container: { flex: 1, backgroundColor: "#FFFFFF" },
   header: {
     flexDirection: "row",
@@ -211,12 +211,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  handle: { flex: 1, minWidth: 0, textAlign: "center", color: "#fff", fontSize: 17, fontWeight: "700" },
+  handle: { fontFamily: "Inter_500Medium", flex: 1, minWidth: 0, textAlign: "center", color: "#fff", fontSize: 17, fontWeight: "normal" },
   profileSection: {
     flexDirection:"row",
     paddingTop:4,paddingBottom:8,
     paddingHorizontal: 16,
-    gap: 16,
+    gap: 10,
   },
   avatarWrap: { position: "relative" },
   avatar: {
@@ -240,13 +240,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#000",
   },
-  displayName: { color: v.ink, fontSize: 16, fontWeight: "700" },
-  email: { color: "#555", fontSize: 13 },
-  bio: { color: v.ink, fontSize: 12,lineHeight:16 },
+  displayName: { fontFamily: "Inter_500Medium", color: v.ink, fontSize: 16, fontWeight: "normal" },
+  email: { fontFamily: "Inter_400Regular", color: "#555", fontSize: 13 },
+  bio: { fontFamily: "Inter_400Regular", color: v.ink, fontSize: 12,lineHeight:17,textAlign:"justify",marginRight:24 },
   stats: { flexDirection: "row",gap:4,marginTop:12,marginBottom:4 },
   stat: { flex:1,alignItems: "center",gap:2 },
-  statValue: { color: v.ink, fontSize: 16, fontWeight: "800" },
-  statLabel: { color: v.label, fontSize: 10.5 },
+  statValue: { fontFamily: "Inter_500Medium", color: v.ink, fontSize: 16, fontWeight: "normal" },
+  statLabel: { fontFamily: "Inter_400Regular", color: v.label, fontSize: 10.5 },
   actions: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 8 },
   editBtn: {
     backgroundColor: "#1C1C1E",
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 52,
     paddingVertical: 10,
   },
-  editBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
+  editBtnText: { fontFamily: "Inter_500Medium", color: "#fff", fontWeight: "normal", fontSize: 14 },
   shareBtn: {
     backgroundColor: "#1C1C1E",
     borderRadius: 10,
@@ -285,10 +285,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 3,
   },
-  viewsText: {
+  viewsText: { fontFamily: "Inter_500Medium",
     color: "#fff",
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "normal",
     textShadowColor: "rgba(0,0,0,0.9)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
@@ -304,12 +304,12 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 40,
   },
-  emptyTitle: {
+  emptyTitle: { fontFamily: "Inter_500Medium",
     color: "#101010",
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "normal",
   },
-  emptyText: {
+  emptyText: { fontFamily: "Inter_400Regular",
     color: "#555",
     fontSize: 14,
     textAlign: "center",

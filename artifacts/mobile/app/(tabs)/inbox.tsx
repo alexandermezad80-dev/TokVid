@@ -187,7 +187,7 @@ export default function InboxScreen() {
               </Text>
               {t === "activity" && unreadCount > 0 && (
                 <View style={[styles.badge,{minWidth:17,minHeight:17,paddingHorizontal:4}]}>
-                  <Text style={[styles.badgeText,{fontSize:11}]}>{unreadCount > 99 ? "99+" : unreadCount}</Text>
+                  <Text style={[styles.badgeText,{ fontFamily: "Inter_400Regular",fontSize:11}]}>{unreadCount > 99 ? "99+" : unreadCount}</Text>
                 </View>
               )}
             </View>
@@ -265,9 +265,9 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     paddingHorizontal: 16, marginBottom: 16,
   },
-  pageTitle: { flex:1,color: "#fff", fontSize: 22, fontWeight: "700" },
+  pageTitle: { fontFamily: "Inter_500Medium", flex:1,color: "#fff", fontSize: 22, fontWeight: "normal" },
   markAllBtn: { paddingVertical: 6, paddingHorizontal: 12 },
-  markAllText: { color: "#FFFFFF", fontSize: 14, fontWeight: "600" },
+  markAllText: { fontFamily: "Inter_500Medium", color: "#FFFFFF", fontSize: 14, fontWeight: "normal" },
   tabs: {
     backgroundColor:v.white,marginTop:0,paddingTop:10,minHeight:44,
     flexDirection: "row",
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   },
   tabBtn: { flex: 1, alignItems: "center", paddingBottom: 8 },
   tabLabelRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  tabText: { color: v.secondary, fontSize: 16, fontWeight: "600" },
+  tabText: { fontFamily: "Inter_500Medium", color: v.secondary, fontSize: 16, fontWeight: "normal" },
   tabTextActive: { color: v.ink },
   tabIndicator: {
     position: "absolute", bottom: 0,
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6, paddingVertical: 1,
     minWidth: 20,minHeight:20,justifyContent:"center", alignItems: "center",
   },
-  badgeText: { color: "#fff", fontSize: 12, fontWeight: "700" },
+  badgeText: { fontFamily: "Inter_500Medium", color: "#fff", fontSize: 12, fontWeight: "normal" },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   list: { flex: 1 },
   notif: {
@@ -304,9 +304,9 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: "#FFFFFF",
   },
   notifBody: { flex: 1 },
-  notifUser: { color: v.ink, fontWeight: "700", fontSize: 15 },
-  notifText: { color: "#3F3F46", fontSize: 14, lineHeight: 20 },
-  notifTime: { color: v.secondary, fontSize: 13, marginTop: 3 },
+  notifUser: { fontFamily: "Inter_500Medium", color: v.ink, fontWeight: "normal", fontSize: 15 },
+  notifText: { fontFamily: "Inter_400Regular", color: "#3F3F46", fontSize: 14, lineHeight: 20 },
+  notifTime: { fontFamily: "Inter_400Regular", color: v.secondary, fontSize: 13, marginTop: 3 },
   unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#FE2C55" },
   emptyState: {
     flex: 1, alignItems: "center", justifyContent: "center",
@@ -314,9 +314,9 @@ const styles = StyleSheet.create({
   },
   emptyIcon: {
     width: 80, height: 80, borderRadius: 40,
-    backgroundColor: "#111", alignItems: "center", justifyContent: "center",
+    backgroundColor: "#F0EFEC", alignItems: "center", justifyContent: "center",
   },
-  emptyTitle: { color: v.ink, fontSize: 18, fontWeight: "700" },
-  emptyText: { color: "#555", fontSize: 14, textAlign: "center", lineHeight: 20 },
+  emptyTitle: { fontFamily: "Inter_500Medium", color: v.ink, fontSize: 18, fontWeight: "normal" },
+  emptyText: { fontFamily: "Inter_400Regular", color: "#555", fontSize: 14, textAlign: "center", lineHeight: 20 },
 });
 

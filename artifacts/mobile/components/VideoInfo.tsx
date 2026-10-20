@@ -122,7 +122,7 @@ export default function VideoInfo({
 
       </View>
 
-      <CaptionText caption={caption} expanded={expanded}/>{!!caption&&<TouchableOpacity accessibilityRole="button" onPress={()=>setExpanded(!expanded)}><Text style={[styles.caption,{fontWeight:"700"}]}>{expanded?"menos":"más…"}</Text></TouchableOpacity>}
+      <CaptionText caption={caption} expanded={expanded}/>{!!caption&&<TouchableOpacity accessibilityRole="button" onPress={()=>setExpanded(!expanded)}><Text style={[styles.caption,{ fontFamily: "Inter_500Medium",fontWeight:"normal"}]}>{expanded?"menos":"más…"}</Text></TouchableOpacity>}
 
       <View style={styles.songRow}>
         <Feather name="music" size={14} color="#fff" />
@@ -160,10 +160,10 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#fff",
   },
-  creatorName: {
+  creatorName: { fontFamily: "Inter_500Medium",
     color: "#fff",
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "normal",
     textShadowColor: "rgba(0,0,0,0.6)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
@@ -178,12 +178,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 4,
   },
-  followText: {
+  followText: { fontFamily: "Inter_500Medium",
     color: "#fff",
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "normal",
   },
-  caption: {
+  caption: { fontFamily: "Inter_400Regular",
     color: "#fff",
     fontSize: 13,
     lineHeight: 18,
@@ -191,9 +191,9 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
-  tag: {
+  tag: { fontFamily: "Inter_500Medium",
     color: "#62D6FF",
-    fontWeight: "600",
+    fontWeight: "normal",
   },
   songRow: {
     flexDirection: "row",
@@ -206,10 +206,10 @@ const styles = StyleSheet.create({
     flex: 1,
     overflow: "hidden",
   },
-  songText: {
+  songText: { fontFamily: "Inter_500Medium",
     color: "#fff",
     fontSize: 12,
-    fontWeight: "500",
+    fontWeight: "normal",
     width: 600,
   },
 });

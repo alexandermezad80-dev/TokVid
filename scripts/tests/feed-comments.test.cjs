@@ -52,6 +52,7 @@ function serviceHarness(responder) {
     from(table) {
       const spec = { table, filters: [], orders: [] };
       const query = {
+        upsert(values, options) { spec.upsert = values; spec.upsertOptions = options; return query; },
         select(fields, options) { spec.fields = fields; spec.options = options; return query; },
         eq(...value) { spec.filters.push(value); return query; }, is(...value) { spec.filters.push(value); return query; },
         in(...value) { spec.filters.push(value); return query; }, order(...value) { spec.orders.push(value); return query; },
@@ -62,7 +63,7 @@ function serviceHarness(responder) {
     },
     async rpc(name, args) { const spec = { name, args }; calls.push(spec); return responder(spec); },
   };
-  return { calls, ...load('lib/features/comments/services.ts', ['readComments', 'readReplies', 'readOwnCommentLikes', 'createComment', 'setCommentLike', 'readCommentCounts', 'editComment', 'deleteComment', 'readHiddenThreads', 'readPublicationOwner'], { supabase, ...model }) };
+  return { calls, ...load('lib/features/comments/services.ts', ['readComments', 'readReplies', 'readOwnCommentLikes', 'createComment', 'setCommentLike', 'readCommentCounts', 'editComment', 'deleteComment', 'readHiddenThreads', 'readPublicationOwner', 'readDismissedComments', 'dismissComment'], { supabase, ...model }) };
 }
 test('publishing sends no fabricated identity and returns only server-confirmed rows', async () => {
   const service = serviceHarness(() => ({ data: [row()], error: null }));
@@ -122,6 +123,8 @@ function hookHarness(overrides = {}) {
     async readPublicationOwner() { return null; },
     async readOwnCommentLikes() { return state.liked; },
     async readHiddenThreads() { return new Set(); },
+    async readDismissedComments() { return new Set(); },
+    async dismissComment(user, comment) { calls.push({dismiss:comment.id,user}); return true; },
     async editComment(comment, text) { calls.push({ edit: comment.id, text }); return { ...comment, text, edited_at: '2026-10-07T15:00:00Z' }; },
     async deleteComment(id) { calls.push({ remove: id }); return { id, removed: true, deleted_at: null }; },
     async hideCommentThread(user, video, root) { calls.push({ hide: root, user, video }); },
@@ -345,4 +348,28 @@ test('emoji-only and mixed comments reach and return from the existing RPC witho
  const service=serviceHarness(spec=>({data:[row('emoji',{text:spec.args.p_text})],error:null}));
  for(const text of samples){const result=await service.createComment('v1',text,null,'unicode-test');assert.equal(result.text,text);assert.equal(service.calls.at(-1).args.p_text,text);}
  assert.equal(model.commentLength('👨‍👩‍👧‍👦'),7);
+});
+
+test('personal deletion reads all pages and verifies persisted own marker without a global RPC',async()=>{
+ const service=serviceHarness(spec=>spec.upsert?{error:null}:{data:Array.from({length:spec.range[0]===0?500:1},(_,i)=>({comment_id:'c'+(spec.range[0]+i)})),error:null});
+ assert.equal((await service.readDismissedComments(undefined,'v1')).size,0);assert.equal(service.calls.length,0);
+ assert.equal((await service.readDismissedComments('u1','v1')).size,501);
+ assert.ok(service.calls.every(c=>c.table==='dismissed_feed_comments'&&c.filters.some(f=>f[0]==='user_id'&&f[1]==='u1')));
+ assert.equal(await service.dismissComment('u1',row()),true);assert.equal(service.calls.some(c=>c.name),false);
+ await assert.rejects(service.dismissComment('u2',row()),/propios/);
+ const missing=serviceHarness(()=>({data:[],error:null}));await assert.rejects(missing.dismissComment('u1',row()),/confirmar/);
+ const failed=serviceHarness(()=>({error:{message:'Offline'}}));await assert.rejects(failed.dismissComment('u1',row()),/Offline/);
+});
+test('personal deletion persists across refresh without changing rows or counters and refuses foreign ownership',async()=>{
+ const dismissed=new Set();let writes=0;
+ const h=hookHarness({readDismissedComments:async()=>new Set(dismissed),dismissComment:async(user,comment)=>{writes++;dismissed.add(comment.id);return true;}});await h.rt.flush();
+ assert.equal(await h.rt.output.removeForMe(row('foreign',{user_id:'u2'})),null);assert.equal(writes,0);
+ assert.equal(await h.rt.output.removeForMe(row()),true);await h.rt.flush();assert.equal(h.rt.output.dismissedComments.has('c1'),true);assert.equal(h.rt.output.roots.length,1);assert.equal(h.rt.output.total,1);
+ await h.rt.output.restoreThreads();await h.rt.flush();assert.equal(h.rt.output.dismissedComments.has('c1'),true);h.rt.unmount();
+});
+test('failed and stale personal deletion never hides current content or another account',async()=>{
+ const wait=deferred();const h=hookHarness({dismissComment:()=>wait.promise});await h.rt.flush();const pending=h.rt.output.removeForMe(row());
+ assert.equal(await h.rt.output.removeForMe(row()),null);
+ h.state.video='v2';h.rt.update();await h.rt.flush();wait.resolve(true);assert.equal(await pending,null);await h.rt.flush();assert.equal(h.rt.output.dismissedComments.size,0);h.rt.unmount();
+ const failed=hookHarness({dismissComment:async()=>{throw Error('Offline');}});await failed.rt.flush();assert.equal(await failed.rt.output.removeForMe(row()),null);await failed.rt.flush();assert.equal(failed.rt.output.dismissedComments.size,0);assert.equal(failed.rt.output.roots.length,1);failed.rt.unmount();
 });

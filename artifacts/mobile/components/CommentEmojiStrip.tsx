@@ -1,14 +1,24 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { NativeScrollEvent, NativeSyntheticEvent, Pressable, Text } from "react-native";
+import { FlatList, NativeScrollEvent, NativeSyntheticEvent, Pressable, Text } from "react-native";
 import Animated, { FadeIn, LinearTransition } from "react-native-reanimated";
 import { commentEmojiOrder, commentEmojiStripGeometry } from "../lib/commentEmojiOrder";
 
-export default function CommentEmojiStrip({ recent, scale, disabled, onSelect }: {
-  recent: string[]; scale: number; disabled: boolean; onSelect: (emoji: string) => void;
+export default function CommentEmojiStrip({ recent, scale, disabled, onSelect, active = true }: {
+  recent: string[]; scale: number; disabled: boolean; onSelect: (emoji: string) => void; active?: boolean;
 }) {
   const desired = useMemo(() => commentEmojiOrder(recent), [recent]);
   const [items, setItems] = useState(desired);
   const pending = useRef(desired), offset = useRef(0), dragging = useRef(false);
+  const list = useRef<FlatList<string>>(null);
+  const wasActive = useRef(false);
+  useEffect(() => {
+    if (active && !wasActive.current) {
+      offset.current = 0; dragging.current = false;
+      pending.current = desired; setItems(desired);
+      list.current?.scrollToOffset({ offset: 0, animated: false });
+    }
+    wasActive.current = active;
+  }, [active, desired]);
   const { pitch, glyph, width } = commentEmojiStripGeometry(scale, items.length);
   useEffect(() => {
     pending.current = desired;
@@ -19,7 +29,7 @@ export default function CommentEmojiStrip({ recent, scale, disabled, onSelect }:
     dragging.current = false;
     if (offset.current <= .5 * scale) setItems(pending.current);
   };
-  return <Animated.FlatList<string> horizontal data={items} keyExtractor={emoji => emoji}
+  return <Animated.FlatList<string> ref={list} horizontal data={items} keyExtractor={emoji => emoji}
     style={{ width, height: 24 * scale, flexGrow: 0 }}
     initialNumToRender={14} maxToRenderPerBatch={14} windowSize={3}
     showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always"

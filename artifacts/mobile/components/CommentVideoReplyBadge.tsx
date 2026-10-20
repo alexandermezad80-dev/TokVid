@@ -21,5 +21,5 @@ export default function CommentVideoReplyBadge({ commentId }: { commentId?: stri
 }
 const styles = StyleSheet.create({
   badge: { backgroundColor: "rgba(255,255,255,0.92)", padding: 10, borderRadius: 12, gap: 4, alignSelf: "flex-start" },
-  name: { color: "#6B6B66", fontSize: 12 }, text: { color: "#131313", fontSize: 14 },
+  name: { fontFamily: "Inter_400Regular", color: "#6B6B66", fontSize: 12 }, text: { fontFamily: "Inter_400Regular", color: "#131313", fontSize: 14 },
 });

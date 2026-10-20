@@ -76,7 +76,7 @@ export default function ProfileConnections() {
         <Text style={s.name} numberOfLines={1}>@{person.username}</Text>
       </Pressable>
       {user?.id !== person.id && <Pressable disabled={follow.loadingIds.has(person.id)} style={s.follow} accessibilityLabel={`${follow.isFollowing(person.id) ? 'Dejar de seguir a' : 'Seguir a'} ${person.username}`} onPress={() => void follow.toggleFollow(person.id)}>
-        <Text style={{color: '#FFF', fontSize: 13}}>{connectionLabel(kind)}</Text>
+        <Text style={{ fontFamily: "Inter_400Regular",color: '#FFF', fontSize: 13}}>{connectionLabel(kind)}</Text>
       </Pressable>}
     </View>)}
     {!!error && <View><Text style={s.empty}>{error}</Text><Pressable onPress={() => setRetry(n => n + 1)}><Text style={s.empty}>Reintentar</Text></Pressable></View>}
@@ -89,11 +89,11 @@ const s = StyleSheet.create({
   back: {width: 44, height: 44, alignItems: 'center', justifyContent: 'center'},
   tabs: {flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#E5E5E5'},
   tab: {flex: 1, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5},
-  tabText: {fontSize: 12, fontWeight: '600'},
+  tabText: { fontFamily: "Inter_500Medium",fontSize: 12, fontWeight: "normal"},
   row: {minHeight: 80, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12},
   person: {flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12},
   avatar: {width: 48, height: 48, borderRadius: 24},
-  name: {flex: 1, color: '#101010', fontWeight: '600', fontSize: 15},
+  name: { fontFamily: "Inter_500Medium",flex: 1, color: '#101010', fontWeight: "normal", fontSize: 15},
   follow: {backgroundColor: '#161616', paddingHorizontal: 14, minHeight: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 8},
   empty: {color: '#737373', textAlign: 'center', padding: 24},
 });

@@ -48,5 +48,5 @@ export default function AuthCallback() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: palette.background, alignItems: "center", justifyContent: "center", gap: 20 },
-  text: { color: palette.secondary, fontSize: 15 },
+  text: { fontFamily: "Inter_400Regular", color: palette.secondary, fontSize: 15 },
 });

@@ -65,6 +65,6 @@ const styles = StyleSheet.create({
   storyRing: { width: 58, height: 58, borderRadius: 29, borderWidth: 2, borderColor: "#FE2C55", alignItems: "center", justifyContent: "center" },
   addCircle: { width: 58, height: 58, borderRadius: 29, backgroundColor: "#1C1C1E", borderWidth: 1, borderColor: "#444", alignItems: "center", justifyContent: "center" },
   avatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: "#111" },
-  label: { color: "#fff", fontSize: 11, fontWeight: "600", maxWidth: 68, textAlign: "center" },
+  label: { fontFamily: "Inter_500Medium", color: "#fff", fontSize: 11, fontWeight: "normal", maxWidth: 68, textAlign: "center" },
   loader: { width: 44, alignItems: "center", justifyContent: "center" },
 });

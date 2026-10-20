@@ -397,7 +397,7 @@ type CallRecord = {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000", alignItems: "center", justifyContent: "center" },
-  connectingText: { color: "#aaa", marginTop: 16, fontSize: 15 },
+  connectingText: { fontFamily: "Inter_400Regular", color: "#aaa", marginTop: 16, fontSize: 15 },
   videoStage: { ...StyleSheet.absoluteFillObject, backgroundColor: "#101010" },
   remoteVideo: { ...StyleSheet.absoluteFillObject },
   localVideo: {
@@ -421,11 +421,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   waiting: { flex: 1, alignItems: "center", justifyContent: "center", gap: 14 },
-  waitingText: { color: "#777", fontSize: 14, textAlign: "center", paddingHorizontal: 24 },
+  waitingText: { fontFamily: "Inter_400Regular", color: "#777", fontSize: 14, textAlign: "center", paddingHorizontal: 24 },
   voiceStage: { alignItems: "center", gap: 12 },
-  voiceTitle: { color: "#fff", fontSize: 22, fontWeight: "700" },
-  voiceStatus: { color: "#999", fontSize: 14 },
-  rtcStatus: { color: "#aaa", fontSize: 13 },
+  voiceTitle: { fontFamily: "Inter_500Medium", color: "#fff", fontSize: 22, fontWeight: "normal" },
+  voiceStatus: { fontFamily: "Inter_400Regular", color: "#999", fontSize: 14 },
+  rtcStatus: { fontFamily: "Inter_400Regular", color: "#aaa", fontSize: 13 },
   controls: {
     position: "absolute",
     left: 0,
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.72)",
   },
   control: { alignItems: "center", gap: 6, minWidth: 64 },
-  controlLabel: { color: "#fff", fontSize: 11 },
+  controlLabel: { fontFamily: "Inter_400Regular", color: "#fff", fontSize: 11 },
   endButton: {
     width: 58,
     height: 58,

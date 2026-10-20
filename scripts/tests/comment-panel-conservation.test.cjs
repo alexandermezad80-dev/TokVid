@@ -33,12 +33,12 @@ test('existing own/foreign menus, cancellation, likes and restore remain connect
   h.rowNodes().find(n => n.props.accessibilityLabel === 'Me gusta').props.onPress(); assert.deepEqual(h.calls.like, ['own']);
   h.rowNodes().find(n => n.props.accessibilityLabel === 'Opciones del comentario').props.onPress({ stopPropagation() {} }); h.render();
   let actions = h.nodes().find(n => n.type === 'Popover').props.actions;
-  assert.deepEqual(Array.from(actions, a => a.title), ['Editar', 'Eliminar', 'Ocultar mensajes', 'Copiar', 'Responder con video', 'Guardar']);
+  assert.deepEqual(Array.from(actions, a => a.title), ['Editar', 'Eliminar', 'Eliminar para todos', 'Ocultar mensajes', 'Copiar', 'Responder con video', 'Guardar']);
   actions.find(a => a.key === 'edit').onPress(); h.render(); h.openKeyboard();
   assert.equal(h.input().props.value, 'Original');
-  assert.ok(findLabel(h, 'Cancelar edición'));
+  assert.equal(findLabel(h, 'Cancelar edición'), undefined);
   assert.equal(h.nodes().filter(n => n.props.accessibilityLabel?.startsWith('Añadir emoji')).length, 7);
-  findLabel(h, 'Cancelar edición').props.onPress(); h.render();
+  findLabel(h, 'Cerrar comentarios').props.onPress(); h.render();
   assert.equal(h.input().props.value, '');
   h.rowNodes(1).find(n => n.props.accessibilityLabel === 'Opciones del comentario').props.onPress({ stopPropagation() {} }); h.render();
   actions = h.nodes().find(n => n.type === 'Popover').props.actions;
@@ -135,13 +135,15 @@ test('quick row never inserts half a composite emoji at the 300 character limit'
  h.nodes().find(n=>n.type==='EmojiStrip').props.onSelect('👩🏽‍💻');h.render();assert.equal(h.input().props.value,'x'.repeat(299));
 });
 
-test('edit cancellation stays legible while the separate reply pill is removed',()=>{
+test('editing uses the existing input and removes the intrusive edit/cancel heading',()=>{
  const h=harness({roots:[own]});h.render();
  assert.equal(h.styles.composerLabel.color,'#131313');
  assert.equal(h.styles.replyBubble,undefined);
  h.rowNodes().find(n=>n.props.accessibilityLabel==='Opciones del comentario').props.onPress({stopPropagation(){}});h.render();
  h.nodes().find(n=>n.type==='Popover').props.actions.find(a=>a.key==='edit').onPress();h.render();
- assert.ok(findLabel(h,'Cancelar edición'));
+ assert.equal(findLabel(h,'Cancelar edición'),undefined);
+ assert.equal(h.input().props.value,'Original');
+ assert.ok(findLabel(h,'Guardar cambios'));
 });
 
 
@@ -157,8 +159,25 @@ test('bottom actions copy the exact comment, save the host video and open a link
 test('reply target appears inside the existing editor; cancelling keeps the draft and sends a root comment',async()=>{
  const h=harness({roots:[own]});h.render();
  h.rowNodes().find(n=>n.props.accessibilityLabel==='Responder a @Alexander').props.onPress({stopPropagation(){}});h.render();
- assert.equal(h.input().props.placeholder,'Responder a @Alexander');assert.equal(h.nodes().some(n=>n.type==='Text' && n.props.children?.includes?.('Respondiendo')),false);
- h.openKeyboard();assert.equal(h.input().props.placeholder,'Responder a @Alexander');
+ assert.equal(h.input().props.accessibilityLabel,'Responder a @Alexander');assert.ok(h.nodes().some(n=>n.type==='Text' && n.props.children?.flat?.().join('')==='Responder a @Alexander'));assert.equal(h.nodes().some(n=>n.type==='Text' && n.props.children?.includes?.('Respondiendo')),false);
+ h.openKeyboard();assert.equal(h.input().props.accessibilityLabel,'Responder a @Alexander');assert.ok(h.nodes().some(n=>n.type==='Text' && n.props.children?.flat?.().join('')==='Responder a @Alexander'));
  h.input().props.onChangeText('Mi respuesta');h.render();findLabel(h,'Cancelar respuesta').props.onPress();h.render();
  assert.equal(h.input().props.value,'Mi respuesta');findLabel(h,'Publicar comentario').props.onPress();await tick();assert.equal(h.calls.publish[0][1],null);
+});
+
+test('personal and global removal use different confirmed actions for own roots and replies',async()=>{
+ for(const parent of [null,'root']){
+  const h=harness({roots:[{...own,parent_id:parent,root_id:parent}]});h.render();
+  const open=()=>{h.rowNodes().find(n=>n.props.accessibilityLabel==='Opciones del comentario').props.onPress({stopPropagation(){}});h.render();return h.nodes().find(n=>n.type==='Popover').props.actions;};
+  open().find(a=>a.key==='delete').onPress();await tick();h.render();assert.deepEqual(h.calls.removeForMe,['own']);assert.deepEqual(h.calls.remove,[]);
+  open().find(a=>a.key==='delete-everyone').onPress();await tick();h.render();assert.deepEqual(h.calls.remove,['own']);
+ }
+});
+test('personal root removal filters its thread; personal reply removal preserves siblings and Show cannot restore it',()=>{
+ const h=harness({roots:[own,{...own,id:'other'}],hidden:true});
+ h.comments.expanded.add('own');h.comments.threads.own={rows:[{...own,id:'reply',root_id:'own',parent_id:'own'},{...own,id:'foreign',user_id:'other',root_id:'own',parent_id:'reply'}],hasMore:false};
+ h.comments.dismissedComments.add('reply');h.render();
+ const ids=()=>Array.from(list(h).props.data).filter(r=>r.kind==='comment').map(r=>r.comment.id);
+ assert.deepEqual(ids(),['own','foreign','other']);findLabel(h,'Mostrar mensajes ocultos').props.onPress();h.render();assert.deepEqual(ids(),['own','foreign','other']);
+ h.comments.dismissedComments.add('own');h.comments.dismissedComments=new Set(h.comments.dismissedComments);h.render();assert.deepEqual(ids(),['other']);
 });

@@ -259,10 +259,10 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.4)",
     borderRadius: 20,
   },
-  backTitle: {
+  backTitle: { fontFamily: "Inter_500Medium",
     color: "#fff",
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "normal",
     textShadowColor: "rgba(0,0,0,0.8)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
@@ -274,8 +274,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 12,
   },
-  emptyTitle: { color: "#fff", fontSize: 20, fontWeight: "700" },
-  emptyText: {
+  emptyTitle: { fontFamily: "Inter_500Medium", color: "#fff", fontSize: 20, fontWeight: "normal" },
+  emptyText: { fontFamily: "Inter_400Regular",
     color: "#555",
     fontSize: 14,
     textAlign: "center",

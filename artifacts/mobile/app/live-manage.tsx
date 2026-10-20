@@ -603,8 +603,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   headerButton: { padding: 8 },
-  headerButtonText: { color: palette.headerText, fontWeight: "700" },
-  title: { color: palette.headerText, fontSize: 18, fontWeight: "800" },
+  headerButtonText: { fontFamily: "Inter_500Medium", color: palette.headerText, fontWeight: "normal" },
+  title: { fontFamily: "Inter_500Medium", color: palette.headerText, fontSize: 18, fontWeight: "normal" },
   content: { padding: 12, gap: 12 },
   card: {
     backgroundColor: palette.input,
@@ -614,9 +614,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.border,
   },
-  sectionTitle: { color: palette.text, fontSize: 16, fontWeight: "800" },
-  subTitle: { color: "#ddd", fontSize: 13, fontWeight: "700", marginTop: 8 },
-  muted: { color: palette.secondary, fontSize: 12 },
+  sectionTitle: { fontFamily: "Inter_500Medium", color: palette.text, fontSize: 16, fontWeight: "normal" },
+  subTitle: { fontFamily: "Inter_500Medium", color: "#ddd", fontSize: 13, fontWeight: "normal", marginTop: 8 },
+  muted: { fontFamily: "Inter_400Regular", color: palette.secondary, fontSize: 12 },
   input: {
     color: palette.text,
     backgroundColor: palette.input,
@@ -644,7 +644,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
-  buttonText: { color: palette.onButton, fontSize: 12, fontWeight: "700" },
+  buttonText: { fontFamily: "Inter_500Medium", color: palette.onButton, fontSize: 12, fontWeight: "normal" },
   row: {
     paddingVertical: 8,
     gap: 8,
@@ -657,7 +657,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     gap: 8,
   },
-  rowTitle: { color: palette.text, fontSize: 12, fontWeight: "700", flex: 1 },
+  rowTitle: { fontFamily: "Inter_500Medium", color: palette.text, fontSize: 12, fontWeight: "normal", flex: 1 },
   rowActions: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
   rowBetween: {
     flexDirection: "row",

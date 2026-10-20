@@ -17,7 +17,7 @@ function pure(file) {
 function harness({ hidden = false, safeBottom = 24, roots = [], width = 360 } = {}) {
   const props = { visible: true, videoId: 'video' };
   const slots = []; let cursor = 0, effects = [], dirty = false, last, keyboardVisible = false;
-  const calls = { publish: [], edit: [], like: [], remove: [], hide: [], restore: 0, dismiss: 0, focus: 0, blur: 0, close: 0, routes: [], copy: [], save: 0 };
+  const calls = { publish: [], edit: [], like: [], remove: [], removeForMe: [], hide: [], restore: 0, dismiss: 0, focus: 0, blur: 0, close: 0, routes: [], copy: [], save: 0 };
   const same = (a, b) => a && b && a.length === b.length && a.every((x, i) => Object.is(x, b[i]));
   const hooks = {
     useState(initial) { const i = cursor++; slots[i] ??= { value: typeof initial === 'function' ? initial() : initial }; return [slots[i].value, next => { const value = typeof next === 'function' ? next(slots[i].value) : next; if (!Object.is(value, slots[i].value)) { slots[i].value = value; dirty = true; } }]; },
@@ -27,9 +27,9 @@ function harness({ hidden = false, safeBottom = 24, roots = [], width = 360 } = 
   };
   const viewport = { fullHeight: 802, availableHeight: 802, viewportTop: 0, keyboardInset: 0, keyboardVisible: false,
     insets: { top: 25, bottom: safeBottom, left: 0, right: 0 }, viewportRef: { current: { measureInWindow(fn) { fn(0, 0); } } }, onLayout() {} };
-  const comments = { roots, threads: {}, expanded: new Set(), hiddenThreads: new Set(hidden ? ['hidden'] : []), liked: new Set(), pendingLikes: new Set(), loading: false, sending: false, mutating: false, paging: false, hasMore: false, error: null, total: roots.length, publicationOwnerId: 'owner',
+  const comments = { roots, threads: {}, expanded: new Set(), dismissedComments: new Set(), hiddenThreads: new Set(hidden ? ['hidden'] : []), liked: new Set(), pendingLikes: new Set(), loading: false, sending: false, mutating: false, paging: false, hasMore: false, error: null, total: roots.length, publicationOwnerId: 'owner',
     publish: async (...args) => { calls.publish.push(args); const row = { id: 'confirmed' }; args[2]?.(row); return row; }, edit: async (...args) => { calls.edit.push(args); return true; },
-    like: row => calls.like.push(row.id), remove: async row => { calls.remove.push(row.id); return true; }, hideThread: row => calls.hide.push(row.id),
+    like: row => calls.like.push(row.id), remove: async row => { calls.remove.push(row.id); return true; }, removeForMe: async row => { calls.removeForMe.push(row.id); return true; }, hideThread: row => calls.hide.push(row.id),
     restoreThreads: () => { calls.restore++; }, toggleThread() {}, moreReplies() {}, loadMore() {}, refresh() {},
   };
   const native = Object.fromEntries(['ActivityIndicator', 'FlatList', 'Image', 'Modal', 'Pressable', 'ScrollView', 'Text', 'TextInput', 'View'].map(k => [k, k]));
@@ -47,6 +47,7 @@ function harness({ hidden = false, safeBottom = 24, roots = [], width = 360 } = 
     './CommentActionsPopover': { __esModule: true, default: 'Popover' }, '../lib/commentPopoverGeometry': pure('lib/commentPopoverGeometry.ts'),
     '../constants/palette': { palette: { text: '#0E1216', secondary: '#6B7580', teal: '#15868B', destructive: '#FE0979', button: '#0E1216', onButton: '#FFFFFF', magenta: '#FE0979' } },
     '../context/RegistrationContext': { useRegistration: () => ({ tabBarHeight: 70 }) }, '../context/AuthContext': { useAuth: () => ({ user: { id: 'me' }, profile: { username: 'Alexander', avatar_url: null } }) },
+    '../hooks/useSystemNavigation': { useSystemNavigation() {} },
     '../hooks/useCommentKeyboardMotion': { useCommentKeyboardMotion: () => ({ height: { value: viewport.keyboardInset }, progress: { value: keyboardVisible ? 1 : 0 }, bodyOpacity: { value: keyboardVisible ? 0 : 1 }, controlsOpacity: { value: keyboardVisible ? 1 : 0 }, controlsOpen: keyboardVisible }) },
     '../hooks/useRecentCommentEmojis': { useRecentCommentEmojis: () => { const [recent, setRecent] = hooks.useState(pure('lib/commentRecentEmojis.ts').DEFAULT_COMMENT_EMOJIS); return { recent, remember: used => { if (used.length) setRecent(pure('lib/commentRecentEmojis.ts').rememberCommentEmojis(recent, used)); } }; } },
     '../lib/commentSheetMotion': pure('lib/commentSheetMotion.ts'), '../lib/commentRecentEmojis': pure('lib/commentRecentEmojis.ts'),
