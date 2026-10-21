@@ -25,6 +25,7 @@ import { refreshSystemNavigation, useSystemNavigation } from "../hooks/useSystem
 import CommentEmojiStrip from "./CommentEmojiStrip";
 import CommentEmojiPicker from "./CommentEmojiPicker";
 import CommentPhoto from "./CommentPhoto";
+import CommentMicrophone from "./CommentMicrophone";
 import { useCommentDictation } from "../hooks/useCommentDictation";
 import { insertCommentText, activeCommentMention } from "../lib/commentComposerText";
 import { pickCommentPhoto, uploadCommentPhoto, discardCommentPhoto, suggestCommentMentions, commentMentionProfile, CommentPhoto as PhotoDraft, CommentMention } from "../lib/features/comments/composerTools";
@@ -391,12 +392,12 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, isVideoSaved
                     selectionColor="#4682B4" accessibilityLabel={reply ? `Responder a @${reply.username.replace(/^@/, "")}` : "Escribe tu comentario"}
                     multiline={controlsOpen} scrollEnabled maxLength={COMMENT_LIMIT * 2} textAlignVertical="center" />
                   {reply && !text && <View pointerEvents="none" accessible={false} importantForAccessibility="no-hide-descendants"
-                    style={{ position: "absolute", left: (controlsOpen ? 10 : 4) * scale, right: (controlsOpen ? 80 : 28) * scale, top: 0, bottom: 0, justifyContent: "center" }}>
+                    style={{ position: "absolute", left: (controlsOpen ? 10 : 0) * scale, right: (controlsOpen ? 80 : 28) * scale, top: 0, bottom: 0, justifyContent: "center" }}>
                     <Text numberOfLines={1} maxFontSizeMultiplier={1.1} style={{ color: "#6B6B66", fontSize: 14, lineHeight: 20, includeFontPadding: false }}>Responder</Text>
                   </View>}
                   {reply && <Pressable accessibilityRole="button" accessibilityLabel="Cancelar respuesta" disabled={busy} onPress={() => setReply(null)}
                     style={{ position: "absolute", right: (controlsOpen ? 50 : 0) * scale, top: 0, bottom: 0, width: 28 * scale, alignItems: "center", justifyContent: "center" }}>
-                    <Feather name="x" size={14 * scale} color="#6B6B66" />
+                    <Feather name="x" size={(controlsOpen ? 14 : 10) * scale} color="#6B6B66" />
                   </Pressable>}
                   <Animated.View pointerEvents="none" style={[{ position: "absolute", right: 10 * scale, top: 0, bottom: 0, justifyContent: "center" }, counterMotion]}><Text style={{ fontFamily: "Inter_400Regular", color: "#6B6B66", fontSize: 11, includeFontPadding: false }}>{commentLength(text)}/{COMMENT_LIMIT}</Text></Animated.View>
                 </Animated.View>
@@ -410,7 +411,7 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, isVideoSaved
                 <Pressable accessibilityRole="button" accessibilityLabel="Añadir imagen al comentario" disabled={busy} onPress={() => { void choosePhoto(); }} style={styles.tool}><Feather name="image" size={20 * scale} color="#3A3F47" /></Pressable>
                 <Pressable accessibilityRole="button" accessibilityLabel="Abrir emojis" disabled={busy} onPress={() => { if (!requireUser()) return; dictation.cancel(); setEmojiPickerHeight(Math.max(220, motion.height.value || 280)); Keyboard.dismiss(); }} style={styles.tool}><Feather name="smile" size={20 * scale} color="#3A3F47" /></Pressable>
                 <Pressable accessibilityRole="button" accessibilityLabel="Mencionar usuario" disabled={busy} onPress={() => { if (!requireUser()) return; dictation.cancel(); const next = insertCommentText(text, "@", selection.current); if (next) { setText(next.text); selection.current = { start: next.cursor, end: next.cursor }; setCursor(next.cursor); input.current?.focus(); } }} style={styles.tool}><Feather name="at-sign" size={20 * scale} color="#3A3F47" /></Pressable>
-                <Pressable accessibilityRole="button" accessibilityLabel={dictation.listening ? "Detener dictado" : "Dictar comentario"} accessibilityState={{ selected: dictation.listening }} disabled={busy} onPress={() => { if (!requireUser()) return; if (!dictation.listening) dictationDraft.current = { text, selection: { ...selection.current } }; void dictation.toggle(); }} style={styles.tool}>{dictation.listening ? <ActivityIndicator size={20 * scale} color="#FE0979" /> : <Feather name="mic" size={20 * scale} color="#3A3F47" />}</Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={dictation.listening ? "Detener dictado" : "Dictar comentario"} accessibilityState={{ selected: dictation.listening }} disabled={busy} onPress={() => { if (!requireUser()) return; if (!dictation.listening) dictationDraft.current = { text, selection: { ...selection.current } }; void dictation.toggle(); }} style={styles.tool}><CommentMicrophone active={dictation.listening} size={20 * scale} /></Pressable>
                 <View style={styles.toolSpacer} />
                 <Pressable accessibilityRole="button" accessibilityLabel={editing ? "Guardar cambios" : "Publicar comentario"} disabled={!canSend} onPress={() => { void send(); }} style={[styles.sendKeyboard, { backgroundColor: canSend ? "#4682B4" : "rgba(70,130,180,0.60)" }]}>
                   {busy ? <ActivityIndicator color="#FFFFFF" size={12} /> : <Feather name="arrow-up" size={20 * scale} color="#FFFFFF" />}

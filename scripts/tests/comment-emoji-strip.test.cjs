@@ -36,7 +36,7 @@ test('browsing the row freezes visible order until returning to start, while tap
  const before=h.list.props.data;h.list.props.onScrollBeginDrag();h.list.props.onScroll(event(470));h.list.props.onScrollEndDrag(event(470));
  const item=before[10],cell=h.list.props.renderItem({item,index:10});cell.props.children.props.onPress();assert.deepEqual(h.selected,[item]);
  h.props.recent=['💙',...recent.DEFAULT_COMMENT_EMOJIS];h.render();assert.equal(h.list.props.data,before,'no reordered data while browsing');
- h.list.props.onMomentumScrollEnd(event(0));h.render();assert.equal(h.list.props.data[0],'💙');assert.equal(h.list.props.snapToInterval,undefined); assert.equal(h.list.props.disableIntervalMomentum,undefined); assert.equal(h.list.props.decelerationRate,'normal');
+ h.list.props.onMomentumScrollEnd(event(0));h.render();assert.equal(h.list.props.data[0],'💙');assert.equal(h.list.props.snapToInterval,46); assert.equal(h.list.props.disableIntervalMomentum,undefined); assert.equal(h.list.props.decelerationRate,'normal');
  assert.equal(h.list.props.keyboardShouldPersistTaps,'always');
 });
 test('at the start a recent change is reflected immediately and final cell excludes trailing gap',()=>{

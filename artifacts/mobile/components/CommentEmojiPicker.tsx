@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { FlatList, KeyboardAvoidingView, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { COMMENT_EMOJI_CATALOG } from "../lib/commentEmojiCatalog";
 import { COMMENT_EMOJI_NAMES } from "../lib/commentEmojiNames";
+import { refreshSystemNavigation } from "../hooks/useSystemNavigation";
 const groups = [["Recientes", ""], ["Caras", "😀"], ["Personas", "👋"], ["Naturaleza", "🐵"], ["Comida", "🍇"], ["Viajes", "🌍"], ["Actividades", "🎃"], ["Objetos", "👓"], ["Símbolos", "🏧"], ["Banderas", "🏁"]] as const;
 const normalized = (text: string) => text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
 export default function CommentEmojiPicker({ recent, height, safeBottom, onSelect, onClose }: {
@@ -18,7 +19,7 @@ export default function CommentEmojiPicker({ recent, height, safeBottom, onSelec
     const end = category === groups.length - 1 ? COMMENT_EMOJI_CATALOG.length : COMMENT_EMOJI_CATALOG.indexOf(groups[category + 1][1]);
     return COMMENT_EMOJI_CATALOG.slice(Math.max(0, start), end < 0 ? undefined : end);
   }, [recent, category, search]);
-  return <Modal transparent animationType="none" onRequestClose={onClose}>
+  return <Modal transparent statusBarTranslucent navigationBarTranslucent onShow={refreshSystemNavigation} animationType="none" onRequestClose={onClose}>
     <KeyboardAvoidingView behavior="padding" style={{ flex: 1, justifyContent: "flex-end" }}>
       <Pressable accessibilityLabel="Cerrar selector de emojis" onPress={onClose} style={{ flex: 1 }} />
       <View style={{ height: Math.max(220, height), paddingBottom: safeBottom, backgroundColor: "#F0EFEC", borderTopWidth: 1, borderTopColor: "#DCDCDC" }}>

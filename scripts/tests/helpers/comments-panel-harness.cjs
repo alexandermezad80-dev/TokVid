@@ -44,6 +44,7 @@ function harness({ hidden = false, safeBottom = 24, roots = [], width = 360 } = 
     'expo-router': { router: { push: x => calls.routes.push(x) } }, 'react-native-keyboard-controller': { KeyboardProvider: 'KeyboardProvider' },
     'react-native-reanimated': { __esModule: true, default: { View: 'AnimatedView', createAnimatedComponent: x => x }, FadeIn: { duration: () => ({}) }, LinearTransition: { duration: () => ({}) }, View: 'AnimatedView', useAnimatedStyle: fn => fn(), useSharedValue: value => hooks.useRef({ value }).current, withTiming: x => x, Easing: { out: x => x, cubic: x => x } },
     './CommentEmojiPicker': { __esModule: true, default: 'EmojiPicker' },
+    './CommentMicrophone': { __esModule: true, default: 'CommentMicrophone' },
     './CommentPhoto': { __esModule: true, default: 'CommentPhoto' },
     '../hooks/useCommentDictation': { useCommentDictation: () => ({ listening: false, toggle() {}, cancel() {} }) },
     '../lib/commentComposerText': pure('lib/commentComposerText.ts'),

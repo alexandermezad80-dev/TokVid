@@ -16,10 +16,10 @@ Las aclaraciones habladas prevalecen: barra inferior del perfil visitado BLANCA 
 | Feed invitado/autenticado | Comparten VideoActions. Separación vertical18→10dp; Compartir siempre tiene un texto numérico de respaldo0. | Iconos28dp, contadores reales, acciones, permisos, reproducción y barra inferior. |
 | Píldora de comentario | Texto14dp nativo sin multiplicarlo por el ancho; sin padding vertical que empuje/recorte. «Responder» en una línea centrada. | Campo cerrado265×38 y abierto36 de alto, escalado geométrico existente; límites300 y envío. |
 | Márgenes del ZIP7 | Cerrado: izquierda16, final12 por encima del área segura medida. No restar dos veces insets que ya excluye el Modal. | Encabezado56, dimensiones y posición del video minimizado, teclado y controles abiertos. |
-| Emojis rápidos | Sin snapToInterval, disableIntervalMomentum ni desaceleración rápida: desplazamiento con inercia normal. | Catálogo completo3781, animaciones, inserción sin cortar secuencias, MRU20; no saltar mientras se busca. Al reabrir, inicio de recientes. |
+| Emojis rápidos | Sin disableIntervalMomentum ni desaceleración rápida: desplazamiento con inercia normal y alineación de un emoji completo al terminar. | Catálogo completo3781, animaciones, inserción sin cortar secuencias, MRU20; no saltar mientras se busca. Al reabrir, inicio de recientes. |
 | Contadores | Hoja y feed usan el mismo total visible para la cuenta.0: «Comentarios»;1: «1 comentario»;≥2 plural. Borrado personal invalida también el contador montado del feed. | El total público del video sigue intacto para otros cuando se usa Eliminar; Ocultar/Mostrar no equivale a borrar. |
 | Borrado global | Confirmación blanca de radio24 antes de Eliminar para todos, en principal/respuesta propios. | Principal borra hilo; respuesta propia se borra sin eliminar respuestas ajenas, que se enlazan al padre. No permisos sobre mensajes ajenos. Cancelar existe solo en esta confirmación, no en el menú. |
-| Menú | Fuente nativa17dp; filas51dp. | Menú desde abajo: editar, eliminar, eliminar para todos, ocultar, copiar, responder con video y favorito del video según permisos. Sin Responder/Cancelar como acciones del menú. |
+| Menú | Fuente nativa17dp; filas51dp y separador fino entre las dos eliminaciones. | Menú desde abajo: editar, eliminar, eliminar para todos, ocultar, copiar, responder con video y favorito del video según permisos. Sin Responder/Cancelar como acciones del menú. |
 
 ## Herramientas inferiores de comentarios
 
@@ -28,7 +28,7 @@ Antes estaban deshabilitadas. Ahora:
 - Imagen abre selector nativo de una foto; convierte aJPEG, limita8MB, muestra miniatura56×56 con quitar. Permite foto sola o con texto. Subida por cuenta, referencia confirmada del servidor, conservación del adjunto y request_id al reintentar. La imagen publicada abre completa con contain. Editar conserva el adjunto existente; reemplazar una foto durante edición no forma parte de este cambio.
 - Carita abre panel de emojis con categorías, recientes y búsqueda en español mediante CLDR. Altura tomada del teclado, ABC regresa al campo. Durante el selector se reserva la altura del compositor; no cambia el recorrido habitual del teclado nativo.
 - @ inserta en el cursor y sugiere cuentas seguidas o participantes de ese video. Filtra y sustituye la mención incompleta; una mención publicada abre el perfil correspondiente.
-- Micrófono usa SpeechRecognizer deAndroid y el idioma del teléfono para dictado de texto, con permiso, resultados parciales/finales e indicador activo. Otro toque detiene; salir/cambiar contexto cancela y destruye el reconocedor. Si el teléfono no ofrece dictado, informa el motivo. No introduce mensajes de audio ni modifica el chat privado.
+- Micrófono usa SpeechRecognizer deAndroid y el idioma del teléfono para dictado de texto, con permiso, resultados parciales/finales e indicador azul #4682B4 con pulso suave. Otro toque detiene; salir/cambiar contexto cancela y destruye el reconocedor. Si el teléfono no ofrece dictado, informa el motivo. No introduce mensajes de audio ni modifica el chat privado.
 
 ## Servidor y conservación
 

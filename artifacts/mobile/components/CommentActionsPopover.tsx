@@ -33,7 +33,7 @@ export default function CommentActionsPopover({ actions, onClose, safeBottom, sa
         {groups.map((group, groupIndex) => <View key={groupIndex} style={styles.group}>
           {group.map((action, index) => <Pressable key={action.key} ref={groupIndex === 0 && index === 0 ? first : undefined}
             accessibilityRole="button" accessibilityState={{ disabled: !!action.disabled }} disabled={action.disabled}
-            onPress={action.onPress} style={({ pressed }) => [styles.action, pressed && styles.pressed, action.disabled && styles.disabled]}>
+            onPress={action.onPress} style={({ pressed }) => [styles.action, action.destructive && index > 0 && styles.separator, pressed && styles.pressed, action.disabled && styles.disabled]}>
             <Feather name={action.icon} size={24} color="#131313" />
             <Text style={styles.label}>{action.title}</Text>
           </Pressable>)}
@@ -50,4 +50,5 @@ const styles = StyleSheet.create({
   action: { minHeight: 51, paddingVertical: 13, paddingHorizontal: 18, flexDirection: "row", alignItems: "center", gap: 16 },
   label: { color: "#131313", fontSize: 17, lineHeight: 25, flex: 1 },
   pressed: { backgroundColor: "#F0EFEC" }, disabled: { opacity: 0.45 },
+  separator: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: "#E5E5E5" },
 });
