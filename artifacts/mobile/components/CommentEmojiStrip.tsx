@@ -33,7 +33,7 @@ export default function CommentEmojiStrip({ recent, scale, disabled, onSelect, a
     style={{ width, height: 24 * scale, flexGrow: 0 }}
     initialNumToRender={14} maxToRenderPerBatch={14} windowSize={3}
     showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always"
-    snapToInterval={pitch} snapToAlignment="start" decelerationRate="fast" disableIntervalMomentum
+    decelerationRate="normal"
     itemLayoutAnimation={LinearTransition.duration(150)}
     getItemLayout={(_data, index) => ({ index, offset: index * pitch, length: index === items.length - 1 ? glyph : pitch })}
     onScroll={event => { offset.current = Math.max(0, event.nativeEvent.contentOffset.x); }} scrollEventThrottle={16}

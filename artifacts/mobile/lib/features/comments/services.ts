@@ -1,4 +1,5 @@
 import { supabase } from "../../supabase";
+import { invalidateCommentCounts } from "./countEvents";
 import { COMMENT_FIELDS, COMMENT_PAGE_SIZE, COMMENT_LIMIT, FeedComment, REPLY_PAGE_SIZE, commentLength } from "./model";
 
 function requireResult<T>(result: { data: T | null; error: { message: string } | null }): T {
@@ -10,11 +11,10 @@ function requireResult<T>(result: { data: T | null; error: { message: string } |
 export async function readComments(videoId: string, limit = COMMENT_PAGE_SIZE) {
   const [page, counted] = await Promise.all([
     readCommentPage(videoId, null, limit),
-    supabase.from("comments").select("id", { count: "exact", head: true }).eq("video_id", videoId).is("deleted_at", null),
+    readCommentCounts([videoId]),
   ]);
-  if (counted.error) throw new Error(counted.error.message);
-  if (counted.count === null) throw new Error("No se pudo comprobar el total de comentarios.");
-  return { ...page, total: counted.count };
+  if (!Number.isFinite(counted[videoId])) throw new Error("No se pudo comprobar el total de comentarios.");
+  return { ...page, total: counted[videoId] };
 }
 
 export async function readReplies(videoId: string, rootId: string, limit = REPLY_PAGE_SIZE) {
@@ -38,7 +38,16 @@ async function readCommentPage(videoId: string, rootId: string | null, limit: nu
     if (batch.length < size) break;
     cursor = batch[batch.length - 1];
   }
-  return { rows: rows.slice(0, limit), hasMore: rows.length > limit };
+  const page = rows.slice(0, limit);
+  if (!rootId && page.length) {
+    for (let offset = 0; offset < page.length; offset += 100) {
+      const group = page.slice(offset, offset + 100);
+      const counted = requireResult(await supabase.rpc("get_feed_reply_counts", { p_root_ids: group.map(row => row.id) })) as { root_id: string; total: number }[];
+      const counts = new Map(counted.map(row => [row.root_id, row.total]));
+      for (const row of group) { if (!counts.has(row.id)) throw new Error("No se pudo comprobar el total de respuestas."); row.reply_count = counts.get(row.id)!; }
+    }
+  }
+  return { rows: page, hasMore: rows.length > limit };
 }
 
 export async function readOwnCommentLikes(userId: string | undefined, ids: string[]): Promise<Set<string>> {
@@ -52,11 +61,12 @@ export async function readOwnCommentLikes(userId: string | undefined, ids: strin
   return liked;
 }
 
-export async function createComment(videoId: string, text: string, parentId: string | null, requestId: string): Promise<FeedComment> {
+export async function createComment(videoId: string, text: string, parentId: string | null, requestId: string, imagePath?: string | null): Promise<FeedComment> {
   const content = text.trim();
-  if (!content || commentLength(content) > COMMENT_LIMIT) throw new Error("Escribe entre 1 y 300 caracteres.");
-  const result = await supabase.rpc("create_feed_comment", {
+  if ((!content && !imagePath) || commentLength(content) > COMMENT_LIMIT) throw new Error("Escribe un comentario o añade una imagen; máximo 300 caracteres.");
+  const result = await supabase.rpc(imagePath ? "create_feed_comment_with_image" : "create_feed_comment", {
     p_video_id: videoId, p_text: content, p_parent_id: parentId, p_request_id: requestId,
+    ...(imagePath ? { p_image_path: imagePath } : {}),
   });
   const rows = requireResult(result) as FeedComment[];
   if (!rows[0]?.id || rows[0].video_id !== videoId) throw new Error("No se pudo confirmar la publicación.");
@@ -82,7 +92,7 @@ export async function readCommentCounts(videoIds: string[]): Promise<Record<stri
 
 export async function editComment(comment: FeedComment, text: string): Promise<FeedComment> {
   const content = text.trim();
-  if (!content || commentLength(content) > COMMENT_LIMIT) throw new Error("Escribe entre 1 y 300 caracteres.");
+  if ((!content && !comment.image_path) || commentLength(content) > COMMENT_LIMIT) throw new Error("Escribe entre 1 y 300 caracteres.");
   const result = await supabase.rpc("edit_feed_comment", { p_comment_id: comment.id, p_text: content });
   const rows = requireResult(result) as FeedComment[];
   if (!rows[0]?.id || rows[0].id !== comment.id || rows[0].video_id !== comment.video_id || rows[0].text !== content || rows[0].deleted_at) throw new Error("No se pudo confirmar la edición.");
@@ -125,6 +135,7 @@ export async function dismissComment(userId: string, comment: FeedComment): Prom
   const result = await supabase.from("dismissed_feed_comments").upsert({ user_id: userId, video_id: comment.video_id, comment_id: comment.id }, { onConflict: "user_id,comment_id", ignoreDuplicates: true });
   if (result.error) throw new Error(result.error.message);
   if (!(await readDismissedComments(userId, comment.video_id)).has(comment.id)) throw new Error("No se pudo confirmar la eliminación de tu vista.");
+  invalidateCommentCounts(comment.video_id);
   return true;
 }
 

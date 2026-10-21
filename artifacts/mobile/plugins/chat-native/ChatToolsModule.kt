@@ -34,6 +34,66 @@ class ChatToolsModule(context: ReactApplicationContext) : ReactContextBaseJavaMo
    for (index in 0 until view.childCount) view.getChildAt(index)?.let { applyModalNavigation(it, color, darkIcons) }
   }
  }
+ private var commentRecognizer: android.speech.SpeechRecognizer? = null
+ private var commentToken: String? = null
+ private fun clearCommentRecognizer() {
+  val recognizer = commentRecognizer
+  commentRecognizer = null; commentToken = null
+  recognizer?.cancel(); recognizer?.destroy()
+ }
+ private fun dictationEvent(token: String, text: String?, error: String?, final: Boolean) {
+  if (token != commentToken) return
+  val event = Arguments.createMap()
+  event.putString("token", token); event.putString("text", text); event.putString("error", error); event.putBoolean("final", final)
+  reactApplicationContext.getJSModule(com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter::class.java).emit("TokVidCommentDictation", event)
+  if (final) clearCommentRecognizer()
+ }
+ @ReactMethod fun startCommentDictation(token: String, promise: Promise) {
+  UiThreadUtil.runOnUiThread {
+   if (commentRecognizer != null) { promise.reject("DICTATION_BUSY", "Espera a que termine el dictado actual."); return@runOnUiThread }
+   if (androidx.core.content.ContextCompat.checkSelfPermission(reactApplicationContext, android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+    promise.reject("DICTATION_PERMISSION", "Permite el micrófono para dictar."); return@runOnUiThread
+   }
+   if (!android.speech.SpeechRecognizer.isRecognitionAvailable(reactApplicationContext)) { promise.reject("DICTATION_UNAVAILABLE", "Este teléfono no tiene un servicio de dictado disponible."); return@runOnUiThread }
+   try {
+    val recognizer = android.speech.SpeechRecognizer.createSpeechRecognizer(reactApplicationContext)
+    commentRecognizer = recognizer; commentToken = token
+    recognizer.setRecognitionListener(object : android.speech.RecognitionListener {
+     override fun onReadyForSpeech(params: android.os.Bundle?) {}
+     override fun onBeginningOfSpeech() {}
+     override fun onRmsChanged(rmsdB: Float) {}
+     override fun onBufferReceived(buffer: ByteArray?) {}
+     override fun onEndOfSpeech() {}
+     override fun onEvent(eventType: Int, params: android.os.Bundle?) {}
+     override fun onPartialResults(results: android.os.Bundle?) {
+      dictationEvent(token, results?.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull(), null, false)
+     }
+     override fun onResults(results: android.os.Bundle?) {
+      dictationEvent(token, results?.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull(), null, true)
+     }
+     override fun onError(error: Int) {
+      val message = when(error) {
+       android.speech.SpeechRecognizer.ERROR_NO_MATCH, android.speech.SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> null
+       android.speech.SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Permite el micrófono para dictar."
+       android.speech.SpeechRecognizer.ERROR_NETWORK, android.speech.SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "No se pudo conectar el dictado. Revisa tu conexión."
+       else -> "No se pudo completar el dictado. Puedes volver a intentarlo."
+      }
+      dictationEvent(token, null, message, true)
+     }
+    })
+    val intent = Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+     .putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+     .putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, java.util.Locale.getDefault().toLanguageTag())
+     .putExtra(android.speech.RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+     .putExtra(android.speech.RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+    recognizer.startListening(intent)
+    promise.resolve(true)
+   } catch(e: Exception) { clearCommentRecognizer(); promise.reject("DICTATION_START", "No se pudo iniciar el dictado.", e) }
+  }
+ }
+ @ReactMethod fun stopCommentDictation(token: String) { UiThreadUtil.runOnUiThread { if (token == commentToken) commentRecognizer?.stopListening() } }
+ @ReactMethod fun cancelCommentDictation(token: String) { UiThreadUtil.runOnUiThread { if (token == commentToken) clearCommentRecognizer() } }
+ override fun invalidate() { UiThreadUtil.runOnUiThread { clearCommentRecognizer() }; super.invalidate() }
  override fun getName() = "TokVidChatTools"
  private fun packages(): List<String> = listOf("com.whatsapp", "com.whatsapp.w4b", "jp.naver.line.android", "com.facebook.katana", "com.facebook.orca") + listOfNotNull(Telephony.Sms.getDefaultSmsPackage(reactApplicationContext))
  private fun shareIntent(packageName: String, text: String): Intent {

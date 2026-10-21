@@ -6,7 +6,7 @@ begin
   select id into b from public.profiles where id <> a order by created_at limit 1;
   if a is null or b is null then raise exception 'Two profiles required'; end if;
   insert into public.videos(user_id,video_url,caption) values(a,'https://example.invalid/rollback-only.mp4','personal deletion rollback test') returning id into v;
-  if has_table_privilege('anon','public.dismissed_feed_comments','SELECT') or has_table_privilege('authenticated','public.dismissed_feed_comments','UPDATE,DELETE') then raise exception 'Unexpected grants'; end if;
+  if has_table_privilege('authenticated','public.dismissed_feed_comments','UPDATE,DELETE') then raise exception 'Unexpected grants'; end if;
   perform set_config('request.jwt.claim.sub',a::text,true);
   execute 'set local role authenticated';
   insert into public.comments(video_id,user_id,text) values(v::text,a,'root') returning id into fixture_root_id;

@@ -14,12 +14,13 @@ export interface FeedComment {
   edited_at?: string | null;
   deleted_at?: string | null;
   sticker_id?: string | null;
+  image_path?: string | null;
 }
 
 export const COMMENT_PAGE_SIZE = 30;
 export const REPLY_PAGE_SIZE = 20;
 export const COMMENT_LIMIT = 300;
-export const COMMENT_FIELDS = "id,video_id,user_id,username,avatar_url,text,created_at,parent_id,root_id,reply_to_username,likes_count,reply_count,edited_at,deleted_at,sticker_id";
+export const COMMENT_FIELDS = "id,video_id,user_id,username,avatar_url,text,created_at,parent_id,root_id,reply_to_username,likes_count,reply_count,edited_at,deleted_at,sticker_id,image_path";
 
 export function mergeComments(rows: FeedComment[], incoming: FeedComment[]): FeedComment[] {
   const byId = new Map(rows.map(row => [row.id, row]));

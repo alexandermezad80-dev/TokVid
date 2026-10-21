@@ -23,6 +23,11 @@ import { insertedCommentEmojis } from "../lib/commentRecentEmojis";
 
 import { refreshSystemNavigation, useSystemNavigation } from "../hooks/useSystemNavigation";
 import CommentEmojiStrip from "./CommentEmojiStrip";
+import CommentEmojiPicker from "./CommentEmojiPicker";
+import CommentPhoto from "./CommentPhoto";
+import { useCommentDictation } from "../hooks/useCommentDictation";
+import { insertCommentText, activeCommentMention } from "../lib/commentComposerText";
+import { pickCommentPhoto, uploadCommentPhoto, discardCommentPhoto, suggestCommentMentions, commentMentionProfile, CommentPhoto as PhotoDraft, CommentMention } from "../lib/features/comments/composerTools";
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
@@ -43,6 +48,10 @@ function commentEntrance() {
   return { initialValues: { opacity: 0, transform: [{ translateY: -8 }] }, animations: { opacity: withTiming(1, { duration: 200 }), transform: [{ translateY: withTiming(0, { duration: 200 }) }] } };
 }
 
+function commentExit() {
+  "worklet";
+  return { initialValues: { opacity: 1 }, animations: { opacity: withTiming(0, { duration: 200 }) } };
+}
 function Avatar({ uri, username, small = false, scale = 1 }: { uri?: string | null; username?: string | null; small?: boolean; scale?: number }) {
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [uri]);
@@ -67,19 +76,27 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, isVideoSaved
   const viewport = useOverlayKeyboard(visible);
   const scale = Math.max(.75, Math.min(1.5, (width - viewport.insets.left - viewport.insets.right) / 360));
   const styles = useMemo(() => scaledCommentStyles(scale), [scale]);
-  const motion = useCommentKeyboardMotion(visible);
+  const [emojiPickerHeight, setEmojiPickerHeight] = useState(0);
+  const motion = useCommentKeyboardMotion(visible, emojiPickerHeight);
   const { controlsOpen } = motion;
   const viewportTop = viewport.viewportTop, safeLeft = viewport.insets.left;
   const emojis = useRecentCommentEmojis(user?.id);
   const comments = useFeedComments(visible, videoId,undefined,focusCommentId);
   const listRef=useRef<FlatList<ListRow>>(null),focusScrolled=useRef<string|null>(null);
   const [text, setText] = useState("");
+  const [photo, setPhoto] = useState<PhotoDraft | null>(null);
+  const [pickingPhoto, setPickingPhoto] = useState(false);
+  const [mentions, setMentions] = useState<CommentMention[]>([]);
+  const [cursor, setCursor] = useState(0);
+  const selection = useRef({ start: 0, end: 0 });
+  const dictationDraft = useRef({ text: "", selection: { start: 0, end: 0 } });
   const [reply, setReply] = useState<FeedComment | null>(null);
   const [editing, setEditing] = useState<FeedComment | null>(null);
   const [actionComment, setActionComment] = useState<FeedComment | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<FeedComment | null>(null);
   const rowViews = useRef(new Map<string, View>());
   const selectionSequence = useRef(0);
-  const savedDraft = useRef<{ text: string; reply: FeedComment | null } | null>(null);
+  const savedDraft = useRef<{ text: string; reply: FeedComment | null; photo: PhotoDraft | null } | null>(null);
   const input = useRef<TextInput>(null);
   const [pending, setPending] = useState<FeedComment | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -89,11 +106,11 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, isVideoSaved
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const context = `${videoId}:${user?.id ?? "guest"}`;
   const currentContext = useRef(context); currentContext.current = context;
-  useEffect(() => { sendAttempt.current++; sendLocked.current = false; setPending(null); setSubmitting(false); setSubmissionError(""); setNewCommentId(null); selectionSequence.current++; setText(""); setReply(null); setEditing(null); setActionComment(null); savedDraft.current = null; }, [context]);
+  useEffect(() => { sendAttempt.current++; sendLocked.current = false; setPending(null); setSubmitting(false); setSubmissionError(""); setNewCommentId(null); selectionSequence.current++; setText(""); setPhoto(null); setPickingPhoto(false); setEmojiPickerHeight(0); setReply(null); setEditing(null); setActionComment(null); setDeleteTarget(null); savedDraft.current = null; }, [context]);
   useEffect(() => { if (!visible) { selectionSequence.current++; setActionComment(null); } }, [visible]);
   const dismissActions = () => { selectionSequence.current++; setActionComment(null); };
-  const close = () => { dismissActions(); if (editing) cancelEdit(); Keyboard.dismiss(); onClose(); };
-  backHandler.current = () => actionComment ? dismissActions() : close();
+  const close = () => { dismissActions(); setDeleteTarget(null); dictation.cancel(); setEmojiPickerHeight(0); if (editing) cancelEdit(); Keyboard.dismiss(); onClose(); };
+  backHandler.current = () => deleteTarget ? setDeleteTarget(null) : actionComment ? dismissActions() : close();
   const openProfile = (authorId: string) => {
     if (!authorId) return;
     close();
@@ -117,15 +134,36 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, isVideoSaved
   const focusIndex=rows.findIndex(r=>r.kind==='comment'&&r.comment.id===focusCommentId);
   useEffect(()=>{if(!visible){focusScrolled.current=null;return;}if(focusIndex<0||comments.loading||!focusCommentId||focusScrolled.current===focusCommentId)return;const timer=setTimeout(()=>{listRef.current?.scrollToIndex({index:focusIndex,viewPosition:.25,animated:true});focusScrolled.current=focusCommentId;},200);return()=>clearTimeout(timer);},[visible,focusCommentId,focusIndex,comments.loading]);
   const requireUser = () => { if (user) return true; close(); requestRegistration(); return false; };
-  const busy = comments.sending || comments.mutating || submitting;
+  const busy = comments.sending || comments.mutating || submitting || pickingPhoto;
+  const dictation = useCommentDictation(visible && !busy && !emojiPickerHeight, context, words => {
+    const draft = dictationDraft.current;
+    const next = draft.text.slice(0, draft.selection.start) + words + draft.text.slice(draft.selection.end);
+    setText(Array.from(next).slice(0, COMMENT_LIMIT).join(""));
+  }, setSubmissionError);
+  const mention = activeCommentMention(text, cursor);
+  useEffect(() => {
+    let active = true;
+    setMentions([]);
+    if (!mention || !user || !controlsOpen || busy) return;
+    const timer = setTimeout(() => { void suggestCommentMentions(videoId, mention.query).then(rows => { if (active) setMentions(rows); }).catch(() => {}); }, 180);
+    return () => { active = false; clearTimeout(timer); };
+  }, [mention?.query, mention?.start, videoId, user?.id, controlsOpen, busy]);
+  const choosePhoto = async () => {
+    if (busy || !requireUser()) return;
+    if (editing) { setSubmissionError("Termina de editar para añadir una imagen a un comentario nuevo."); return; }
+    const current = context; setPickingPhoto(true); dictation.cancel();
+    try { const picked = await pickCommentPhoto(); if (mounted.current && currentContext.current === current && picked) { void discardCommentPhoto(photo); setPhoto(picked); input.current?.focus(); } }
+    catch { if (mounted.current && currentContext.current === current) setSubmissionError("No se pudo abrir la galería. Revisa el permiso de fotos e inténtalo de nuevo."); }
+    finally { if (mounted.current && currentContext.current === current) setPickingPhoto(false); }
+  };
   const cancelEdit = () => {
     const draft = savedDraft.current;
-    setText(draft?.text ?? ""); setReply(draft?.reply ?? null); setEditing(null); savedDraft.current = null;
+    setText(draft?.text ?? ""); setReply(draft?.reply ?? null); setPhoto(draft?.photo ?? null); setEditing(null); savedDraft.current = null;
   };
   const startEdit = (row: FeedComment) => {
     if (busy || row.user_id !== user?.id || row.deleted_at) return;
-    if (!editing) savedDraft.current = { text, reply };
-    setEditing(row); setReply(null); setText(row.text); dismissActions(); input.current?.focus();
+    if (!editing) savedDraft.current = { text, reply, photo };
+    dictation.cancel(); setPhoto(null); setEditing(row); setReply(null); setText(row.text); selection.current = { start: row.text.length, end: row.text.length }; dismissActions(); input.current?.focus();
   };
   const openActions = (row: FeedComment) => {
     if (busy || !requireUser()) return;
@@ -150,7 +188,7 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, isVideoSaved
     if (busy || editing || row.deleted_at || !requireUser()) return;
     dismissActions(); setReply(row); input.current?.focus();
   };
-  const confirmDelete = (row: FeedComment, forEveryone = false) => {
+  const performDelete = (row: FeedComment, forEveryone = false) => {
     dismissActions();
     const root = !row.parent_id;
     if(busy||row.user_id!==user?.id)return;
@@ -160,6 +198,11 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, isVideoSaved
       if(editing&&(editing.id===row.id||(root&&editing.root_id===row.id)))cancelEdit();
       if(reply&&(reply.id===row.id||(root&&reply.root_id===row.id)))setReply(null);
     })();
+  };
+  const confirmDelete = (row: FeedComment, forEveryone = false) => {
+    if (busy || row.user_id !== user?.id) return;
+    if (forEveryone) { dismissActions(); setDeleteTarget(row); }
+    else performDelete(row);
   };
   const capabilities = actionComment ? commentCapabilities(actionComment, user?.id, comments.publicationOwnerId) : null;
   const actions: CommentAction[] = actionComment && capabilities ? [
@@ -188,15 +231,16 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, isVideoSaved
   const composerMotion = useAnimatedStyle(() => {
     const layout = commentSheetMotion({ sheetTop, closedBottom, screenHeight, viewportTop: viewportTop,
       keyboardHeight: motion.height.value, progress: motion.progress.value, scale });
-    return { top: layout.composerTop, height: layout.composerHeight };
+    const extra = photo ? Math.min(64 * scale, layout.bodyHeight) : 0;
+    return { top: layout.composerTop - extra, height: layout.composerHeight + extra };
   });
   const bodyMotion = useAnimatedStyle(() => {
     const layout = commentSheetMotion({ sheetTop, closedBottom, screenHeight, viewportTop: viewportTop,
       keyboardHeight: motion.height.value, progress: motion.progress.value, scale });
-    return { height: layout.bodyHeight, opacity: motion.bodyOpacity.value };
+    return { height: Math.max(0, layout.bodyHeight - (photo ? 64 * scale : 0)), opacity: motion.bodyOpacity.value };
   });
   const formMotion = useAnimatedStyle(() => ({ paddingTop: 12.5 * (1 - motion.progress.value) * scale,
-    paddingBottom: (4 + 5.5 * motion.progress.value) * scale }));
+    paddingBottom: (12 - 2.5 * motion.progress.value) * scale }));
   const emojiMotion = useAnimatedStyle(() => ({ height: 18 * motion.progress.value * scale,
     marginTop: 6 * motion.progress.value * scale, opacity: motion.controlsOpacity.value }));
   const toolsMotion = useAnimatedStyle(() => ({ height: 24 * motion.progress.value * scale,
@@ -204,7 +248,7 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, isVideoSaved
   const editorMotion = useAnimatedStyle(() => {
     const p = Math.max(0, Math.min(1, motion.progress.value));
     return { height: (38 - 2 * p) * scale, width: ((265 + 69 * p) * scale),
-      marginLeft: safeLeft + (10.5 - .5 * p) * scale, marginTop: 10 * p * scale,
+      marginLeft: safeLeft + (16 - 6 * p) * scale, marginTop: 10 * p * scale,
       paddingLeft: 8 * (1 - p) * scale, paddingRight: 2.5 * (1 - p) * scale,
       gap: (11 - 5 * p) * scale, borderWidth: (1 - p) * scale,
       borderRadius: (19 - 6 * p) * scale, backgroundColor: `rgba(240,239,236,${1 - p})` };
@@ -212,36 +256,37 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, isVideoSaved
   const fieldMotion = useAnimatedStyle(() => ({ borderWidth: motion.progress.value * scale,
     borderRadius: 13 * motion.progress.value * scale, marginRight: 40 * (1 - motion.progress.value) * scale,
     backgroundColor: `rgba(240,239,236,${motion.progress.value})` }));
-  const inputMotion = useAnimatedStyle(() => ({ fontFamily: "Inter_400Regular", fontSize: (15 - motion.progress.value) * scale,
+  const inputMotion = useAnimatedStyle(() => ({ fontSize: 14,
     paddingLeft: 10 * motion.progress.value * scale, paddingRight: ((reply ? 28 : 0) + 52 * motion.progress.value) * scale,
-    paddingVertical: (9 - motion.progress.value) * scale }));
+    paddingVertical: 0 }));
   const counterMotion = useAnimatedStyle(() => ({ opacity: motion.controlsOpacity.value }));
   const collapsedSendMotion = useAnimatedStyle(() => ({ opacity: 1 - motion.progress.value }));
-  const canSend = !!text.trim() && !busy;
+  const canSend = (!!text.trim() || !!photo || !!editing?.image_path) && !busy;
   const changeText = (value: string) => {
+    dictation.cancel();
     const next = Array.from(value).slice(0, COMMENT_LIMIT).join("");
     emojis.remember(insertedCommentEmojis(text, next));
-    setText(next); setSubmissionError("");
+    setText(next); selection.current = { start: next.length, end: next.length }; setCursor(next.length); setSubmissionError("");
   };
   const insertQuickEmoji = (emoji: string) => {
     if (busy) return;
-    if (commentLength(text) + commentLength(emoji) > COMMENT_LIMIT) return;
-    const next = text + emoji;
-    if (next !== text) emojis.remember([emoji]);
-    setText(next); input.current?.focus();
+    const next = insertCommentText(text, emoji, selection.current);
+    if (!next) return;
+    emojis.remember([emoji]); setText(next.text); selection.current = { start: next.cursor, end: next.cursor }; setCursor(next.cursor);
+    if (!emojiPickerHeight) input.current?.focus();
   };
   useEffect(() => {
     onPreviewFrame?.(visible && showVideoPreview ? { ...preview, y: preview.y + viewport.viewportTop } : null);
   }, [visible, showVideoPreview, preview.x, preview.y, preview.width, preview.height, viewport.viewportTop, onPreviewFrame]);
   useEffect(() => () => onPreviewFrame?.(null), [onPreviewFrame]);
   const send = async () => {
-    if (!text.trim() || busy || sendLocked.current || !requireUser()) return;
+    if (!canSend || busy || sendLocked.current || !requireUser()) return;
     sendLocked.current = true;
     const attempt = ++sendAttempt.current, sentContext = context;
-    const sentText = text, sentReply = reply, sentEditing = editing;
+    const sentText = text, sentReply = reply, sentEditing = editing, sentPhoto = photo;
     let committed = false;
     const isCurrent = () => mounted.current && currentContext.current === sentContext && sendAttempt.current === attempt;
-    setSubmitting(true); setSubmissionError(""); setText(""); setReply(null); setEditing(null);
+    dictation.cancel(); setEmojiPickerHeight(0); setSubmitting(true); setSubmissionError(""); setText(""); setPhoto(null); setReply(null); setEditing(null);
     if (!sentEditing) setPending({ id: `pending:${attempt}`, video_id: videoId, user_id: user!.id,
       username: profile?.username ?? "", avatar_url: profile?.avatar_url ?? null, text: sentText.trim(),
       created_at: new Date().toISOString(), parent_id: sentReply?.id ?? null,
@@ -254,19 +299,21 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, isVideoSaved
       if (isCurrent()) { setPending(null); setNewCommentId(row.id); }
     };
     try {
+      const imagePath = sentPhoto ? await uploadCommentPhoto(user!.id, sentPhoto) : null;
+      if (!isCurrent()) { if (sentPhoto) void discardCommentPhoto(sentPhoto); return; }
       const confirmed = sentEditing ? await comments.edit(sentEditing, sentText)
-        : await comments.publish(sentText, sentReply?.id ?? null, onCommitted);
+        : await comments.publish(sentText, sentReply?.id ?? null, onCommitted, imagePath);
       if (!isCurrent()) return;
       setPending(null);
       if (confirmed || committed) {
         if (sentEditing) cancelEdit();
       } else {
-        setText(sentText); setReply(sentReply); setEditing(sentEditing);
+        setText(sentText); setPhoto(sentPhoto); setReply(sentReply); setEditing(sentEditing);
         setSubmissionError("No se pudo enviar. Conservamos tu texto para reintentar.");
       }
     } catch {
       if (isCurrent() && !committed) {
-        setPending(null); setText(sentText); setReply(sentReply); setEditing(sentEditing);
+        setPending(null); setText(sentText); setPhoto(sentPhoto); setReply(sentReply); setEditing(sentEditing);
         setSubmissionError("No se pudo enviar. Conservamos tu texto para reintentar.");
       }
     } finally {
@@ -286,12 +333,13 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, isVideoSaved
     if (item.kind === "more") return <Pressable accessibilityRole="button" disabled={comments.paging} onPress={() => { void comments.moreReplies(item.rootId); }} style={styles.threadAction}><Text style={styles.link}>{comments.paging ? "Cargando…" : "Ver más respuestas"}</Text></Pressable>;
     const row = item.comment;
     const liked = comments.liked.has(row.id);
-    return <Animated.View entering={newCommentId === row.id ? commentEntrance : undefined}><View ref={view => { if (view) rowViews.current.set(row.id, view); else rowViews.current.delete(row.id); }} collapsable={false} style={[styles.comment, item.nested && styles.nested, actionComment?.id === row.id && styles.selectedComment]}>
+    return <Animated.View entering={newCommentId === row.id ? commentEntrance : undefined} exiting={commentExit}><View ref={view => { if (view) rowViews.current.set(row.id, view); else rowViews.current.delete(row.id); }} collapsable={false} style={[styles.comment, item.nested && styles.nested, actionComment?.id === row.id && styles.selectedComment]}>
       <Pressable accessibilityRole="button" accessibilityLabel={`Ver perfil de ${row.username}`} onPress={() => openProfile(row.user_id)} hitSlop={6}><Avatar uri={row.avatar_url} username={row.username} /></Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel={`Opciones del comentario de ${row.username}`} onPress={() => openActions(row)} onLongPress={() => openActions(row)} style={styles.body}>
         <View style={styles.commentHeader}><Text numberOfLines={1} ellipsizeMode="tail" style={[styles.username, styles.usernameHeading]}>@{row.username}</Text><Text style={styles.meta}>{commentTime(row.created_at)}{row.edited_at?" · editado":""}</Text><Pressable accessibilityRole="button" accessibilityLabel="Opciones del comentario" disabled={busy || comments.pendingLikes.has(row.id)} onPress={event => { event.stopPropagation(); openActions(row); }} hitSlop={10} style={styles.optionsButton}><Feather name="more-horizontal" size={18} color="#92929D" /></Pressable></View>
         {row.parent_id && !!row.reply_to_username && <Text numberOfLines={1} style={styles.replyTo}>↳ @{row.reply_to_username}</Text>}
-        <Text style={[styles.commentText, !!row.deleted_at && styles.deletedText]}>{row.deleted_at ? "Comentario eliminado" : row.text}</Text>
+        <Text style={[styles.commentText, !!row.deleted_at && styles.deletedText]}>{row.deleted_at ? "Comentario eliminado" : row.text.split(/(@[\p{L}\p{N}_.]+)/u).map((part, index) => part.startsWith("@") ? <Text key={index} style={{ color: "#15868B" }} onPress={event => { event.stopPropagation(); void commentMentionProfile(part.slice(1)).then(id => { if (id) openProfile(id); }).catch(() => setSubmissionError("No se pudo abrir el perfil.")); }}>{part}</Text> : part)}</Text>
+        {!row.deleted_at && !!row.image_path && <CommentPhoto path={row.image_path} />}
         <View style={styles.metaRow}>{!row.deleted_at && <Pressable accessibilityRole="button" accessibilityLabel={`Responder a @${row.username.replace(/^@/, "")}`} disabled={busy || !!editing} onPress={event => { event.stopPropagation(); startReply(row); }} hitSlop={8}><Text style={styles.meta}>Responder</Text></Pressable>}{!item.nested&&(row.reply_count>0||comments.expanded.has(row.id))&&<Pressable onPress={event=>{event.stopPropagation();void comments.toggleThread(row.id);}}><Text style={styles.link}>{comments.expanded.has(row.id)?"Ocultar respuestas":`Ver respuestas (${row.reply_count})`}</Text></Pressable>}</View>
       </Pressable>
       <View style={styles.like}>
@@ -312,7 +360,7 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, isVideoSaved
         <View accessibilityElementsHidden={!!actionComment} importantForAccessibility={actionComment ? "no-hide-descendants" : "auto"} style={styles.headerGlass}>
           <View style={styles.handle} />
           <View style={styles.header}>
-            <View style={[styles.countBadge, { left: 10.5 * scale + viewport.insets.left, maxWidth: Math.max(125 * scale, Math.min(280 * scale, width - viewport.insets.left - viewport.insets.right - 60 * scale)) }]}><Text numberOfLines={1} style={styles.title}>{comments.total === null ? "Comentarios" : `${comments.total} ${comments.total === 1 ? "comentario" : "comentarios"}`}</Text></View>
+            <View style={[styles.countBadge, { left: 10.5 * scale + viewport.insets.left, maxWidth: Math.max(125 * scale, Math.min(280 * scale, width - viewport.insets.left - viewport.insets.right - 60 * scale)) }]}><Text numberOfLines={1} style={styles.title}>{!comments.total ? "Comentarios" : `${comments.total} ${comments.total === 1 ? "comentario" : "comentarios"}`}</Text></View>
             <Pressable onPress={close} accessibilityLabel="Cerrar comentarios" accessibilityRole="button" style={[styles.close, { right: 2 * scale + viewport.insets.right }]}><Svg width={14 * scale} height={14 * scale} viewBox="0 0 14 14"><Line x1={1} y1={1} x2={13} y2={13} stroke="#1C1C1E" strokeWidth={2} /><Line x1={13} y1={1} x2={1} y2={13} stroke="#1C1C1E" strokeWidth={2} /></Svg></Pressable>
           </View>
         </View>
@@ -326,6 +374,10 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, isVideoSaved
         <Animated.View accessibilityElementsHidden={!!actionComment} importantForAccessibility={actionComment ? "no-hide-descendants" : "auto"} style={[styles.composer, { position: "absolute", left: 0, right: 0, overflow: "hidden" }, composerMotion]}>
           <ScrollView style={styles.composerScroll} scrollEnabled={controlsOpen && viewport.availableHeight - sheetTop - 56 * scale < 117.5 * scale} keyboardShouldPersistTaps="always" showsVerticalScrollIndicator={false}>
             <Animated.View style={formMotion}>
+              {photo && <View style={{ height: 64 * scale, paddingLeft: 44 * scale }}>
+                <Image source={{ uri: photo.uri }} style={{ width: 56 * scale, height: 56 * scale, borderRadius: 8 }} resizeMode="cover" />
+                <Pressable accessibilityLabel="Quitar imagen del comentario" disabled={busy} onPress={() => { void discardCommentPhoto(photo); setPhoto(null); }} hitSlop={8} style={{ position: "absolute", left: 84 * scale, top: 0, width: 16 * scale, height: 16 * scale, borderRadius: 8, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center" }}><Feather name="x" size={12 * scale} color="#333" /></Pressable>
+              </View>}
               <Animated.View pointerEvents={controlsOpen ? "auto" : "none"} accessibilityElementsHidden={!controlsOpen} importantForAccessibility={controlsOpen ? "auto" : "no-hide-descendants"} style={[styles.emojiRow, { marginLeft: viewport.insets.left + 44 * scale }, emojiMotion]}>
                 <CommentEmojiStrip key={user?.id ?? "guest"} active={controlsOpen} recent={emojis.recent} scale={scale} disabled={busy} onSelect={insertQuickEmoji} />
               </Animated.View>
@@ -333,19 +385,20 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, isVideoSaved
                 <Avatar uri={profile?.avatar_url} username={profile?.username} small scale={scale} />
                 <Animated.View style={[styles.editorBody, fieldMotion]}>
                   <AnimatedTextInput ref={input} value={text} editable={!busy} onChangeText={changeText}
-                    style={[styles.input, { flex: 0, width: "100%", height: "100%", lineHeight: 18 * scale }, inputMotion]}
+                    onSelectionChange={event => { selection.current = event.nativeEvent.selection; setCursor(event.nativeEvent.selection.start); }}
+                    style={[styles.input, { flex: 0, width: "100%", height: "100%", lineHeight: 20 }, inputMotion]}
                     placeholder={reply ? "" : controlsOpen ? "Agregar un comentario..." : "Agregar comentarios"} placeholderTextColor="#6B6B66"
                     selectionColor="#4682B4" accessibilityLabel={reply ? `Responder a @${reply.username.replace(/^@/, "")}` : "Escribe tu comentario"}
                     multiline={controlsOpen} scrollEnabled maxLength={COMMENT_LIMIT * 2} textAlignVertical="center" />
                   {reply && !text && <View pointerEvents="none" accessible={false} importantForAccessibility="no-hide-descendants"
                     style={{ position: "absolute", left: (controlsOpen ? 10 : 4) * scale, right: (controlsOpen ? 80 : 28) * scale, top: 0, bottom: 0, justifyContent: "center" }}>
-                    <Text numberOfLines={2} maxFontSizeMultiplier={1.1} style={{ fontFamily: "Inter_400Regular", color: "#6B6B66", fontSize: 12 * scale, lineHeight: 14 * scale, includeFontPadding: false }}>Responder a @{reply.username.replace(/^@/, "")}</Text>
+                    <Text numberOfLines={1} maxFontSizeMultiplier={1.1} style={{ color: "#6B6B66", fontSize: 14, lineHeight: 20, includeFontPadding: false }}>Responder</Text>
                   </View>}
                   {reply && <Pressable accessibilityRole="button" accessibilityLabel="Cancelar respuesta" disabled={busy} onPress={() => setReply(null)}
                     style={{ position: "absolute", right: (controlsOpen ? 50 : 0) * scale, top: 0, bottom: 0, width: 28 * scale, alignItems: "center", justifyContent: "center" }}>
                     <Feather name="x" size={14 * scale} color="#6B6B66" />
                   </Pressable>}
-                  <Animated.View pointerEvents="none" style={[{ position: "absolute", right: 10 * scale, top: 0, bottom: 0, justifyContent: "center" }, counterMotion]}><Text style={{ fontFamily: "Inter_400Regular", color: "#6B6B66", fontSize: 11 * scale, includeFontPadding: false }}>{commentLength(text)}/{COMMENT_LIMIT}</Text></Animated.View>
+                  <Animated.View pointerEvents="none" style={[{ position: "absolute", right: 10 * scale, top: 0, bottom: 0, justifyContent: "center" }, counterMotion]}><Text style={{ fontFamily: "Inter_400Regular", color: "#6B6B66", fontSize: 11, includeFontPadding: false }}>{commentLength(text)}/{COMMENT_LIMIT}</Text></Animated.View>
                 </Animated.View>
                 <Animated.View pointerEvents={controlsOpen ? "none" : "auto"} accessibilityElementsHidden={controlsOpen} importantForAccessibility={controlsOpen ? "no-hide-descendants" : "auto"} style={[styles.sendCollapsed, collapsedSendMotion]}>
                   <Pressable accessibilityRole="button" accessibilityLabel={editing ? "Guardar cambios" : "Publicar comentario"} disabled={!canSend} onPress={() => { void send(); }} style={StyleSheet.absoluteFill}>
@@ -354,10 +407,10 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, isVideoSaved
                 </Animated.View>
               </Animated.View>
               <Animated.View pointerEvents={controlsOpen ? "auto" : "none"} accessibilityElementsHidden={!controlsOpen} importantForAccessibility={controlsOpen ? "auto" : "no-hide-descendants"} style={[styles.toolsRow, { paddingLeft: viewport.insets.left + 44 * scale, paddingRight: viewport.insets.right + 16 * scale, overflow: "hidden" }, toolsMotion]}>
-                <Pressable accessibilityRole="button" accessibilityLabel="Imagen: adjuntos a comentarios pendientes" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="image" size={20 * scale} color="#3A3F47" /></Pressable>
-                <Pressable accessibilityRole="button" accessibilityLabel="Sticker: adjuntos a comentarios pendientes" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="smile" size={20 * scale} color="#3A3F47" /></Pressable>
-                <Pressable accessibilityRole="button" accessibilityLabel="Menciones: función pendiente" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="at-sign" size={20 * scale} color="#3A3F47" /></Pressable>
-                <Pressable accessibilityRole="button" accessibilityLabel="Micrófono: audio en comentarios pendiente" accessibilityState={{disabled:true}} disabled style={styles.tool}><Feather name="mic" size={20 * scale} color="#3A3F47" /></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel="Añadir imagen al comentario" disabled={busy} onPress={() => { void choosePhoto(); }} style={styles.tool}><Feather name="image" size={20 * scale} color="#3A3F47" /></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel="Abrir emojis" disabled={busy} onPress={() => { if (!requireUser()) return; dictation.cancel(); setEmojiPickerHeight(Math.max(220, motion.height.value || 280)); Keyboard.dismiss(); }} style={styles.tool}><Feather name="smile" size={20 * scale} color="#3A3F47" /></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel="Mencionar usuario" disabled={busy} onPress={() => { if (!requireUser()) return; dictation.cancel(); const next = insertCommentText(text, "@", selection.current); if (next) { setText(next.text); selection.current = { start: next.cursor, end: next.cursor }; setCursor(next.cursor); input.current?.focus(); } }} style={styles.tool}><Feather name="at-sign" size={20 * scale} color="#3A3F47" /></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={dictation.listening ? "Detener dictado" : "Dictar comentario"} accessibilityState={{ selected: dictation.listening }} disabled={busy} onPress={() => { if (!requireUser()) return; if (!dictation.listening) dictationDraft.current = { text, selection: { ...selection.current } }; void dictation.toggle(); }} style={styles.tool}>{dictation.listening ? <ActivityIndicator size={20 * scale} color="#FE0979" /> : <Feather name="mic" size={20 * scale} color="#3A3F47" />}</Pressable>
                 <View style={styles.toolSpacer} />
                 <Pressable accessibilityRole="button" accessibilityLabel={editing ? "Guardar cambios" : "Publicar comentario"} disabled={!canSend} onPress={() => { void send(); }} style={[styles.sendKeyboard, { backgroundColor: canSend ? "#4682B4" : "rgba(70,130,180,0.60)" }]}>
                   {busy ? <ActivityIndicator color="#FFFFFF" size={12} /> : <Feather name="arrow-up" size={20 * scale} color="#FFFFFF" />}
@@ -368,7 +421,22 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, isVideoSaved
         </Animated.View>
       </Animated.View>
       <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, top: closedBottom, bottom: 0, backgroundColor: "#FFFFFF" }}/>
+      {mentions.length > 0 && mention && <View style={{ position: "absolute", left: 44 * scale, right: 16 * scale, bottom: Math.max(viewport.keyboardInset, viewport.insets.bottom) + 120 * scale, maxHeight: 160, backgroundColor: "#FFFFFF", borderRadius: 12, borderWidth: 1, borderColor: "#DCDCDC" }}>
+        <ScrollView keyboardShouldPersistTaps="always">{mentions.map(person => <Pressable key={person.id} accessibilityLabel={`Mencionar a ${person.username}`} onPress={() => { const next = insertCommentText(text, `@${person.username} `, mention); if (next) { setText(next.text); selection.current = { start: next.cursor, end: next.cursor }; setCursor(next.cursor); setMentions([]); input.current?.focus(); } }} style={{ padding: 10, flexDirection: "row", alignItems: "center", gap: 8 }}><Avatar uri={person.avatar_url} username={person.username} /><Text style={{ fontSize: 14 }}>@{person.username}</Text></Pressable>)}</ScrollView>
+      </View>}
+      {emojiPickerHeight > 0 && <CommentEmojiPicker recent={emojis.recent} height={emojiPickerHeight} safeBottom={viewport.insets.bottom} onSelect={insertQuickEmoji} onClose={() => { Keyboard.dismiss(); setEmojiPickerHeight(0); requestAnimationFrame(() => input.current?.focus()); }} />}
       {actionComment && <CommentActionsPopover key={actionComment.id} actions={actions} onClose={dismissActions} safeBottom={viewport.insets.bottom} safeLeft={viewport.insets.left} safeRight={viewport.insets.right} maxHeight={Math.max(0, viewport.fullHeight - Math.max(0, viewport.insets.top - viewport.viewportTop) - 12)} />}
+      {deleteTarget && <View accessibilityViewIsModal style={[StyleSheet.absoluteFill, { zIndex: 20, alignItems: "center", justifyContent: "center", padding: 24 }]}>
+        <Pressable accessibilityLabel="Cerrar confirmación de eliminación" onPress={() => setDeleteTarget(null)} style={[StyleSheet.absoluteFill, { backgroundColor: "#00000066" }]} />
+        <View style={{ width: "100%", maxWidth: 320, borderRadius: 24, backgroundColor: "#FFFFFF", padding: 24, gap: 16 }}>
+          <Text style={{ fontSize: 17, fontWeight: "500", color: "#131313" }}>¿Eliminar para todos?</Text>
+          <Text style={{ fontSize: 14, lineHeight: 20, color: "#555" }}>{deleteTarget.parent_id ? "Se eliminará tu respuesta para todos. Las otras respuestas se conservan." : "Se eliminarán tu comentario y todas sus respuestas para todos."}</Text>
+          <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 16 }}>
+            <Pressable accessibilityLabel="Conservar comentario" onPress={() => setDeleteTarget(null)} style={{ minHeight: 44, justifyContent: "center" }}><Text style={{ fontSize: 14, color: "#555" }}>Cancelar</Text></Pressable>
+            <Pressable accessibilityLabel="Confirmar eliminar para todos" disabled={busy} onPress={() => { const target = deleteTarget; setDeleteTarget(null); performDelete(target, true); }} style={{ minHeight: 44, justifyContent: "center" }}><Text style={{ fontSize: 14, color: "#D21D59" }}>Eliminar</Text></Pressable>
+          </View>
+        </View>
+      </View>}
     </View>
   ;
 }
@@ -387,7 +455,7 @@ const styles = StyleSheet.create({
   handle: { width: 32, height: 4, borderRadius: 2, position: "absolute", top: 6.5, alignSelf: "center", backgroundColor: "#1C1C1E", zIndex: 1 },
   header: { height: 56, width: "100%" },
   countBadge: { position: "absolute", top: 14, minWidth: 125, height: 32, maxWidth: 280, borderRadius: 16, paddingHorizontal: 12, alignItems: "center", justifyContent: "center", backgroundColor: "#F0EFEC", borderWidth: 1, borderColor: "#DCDCDC" },
-  title: { fontFamily: "Inter_500Medium", color: "#131313", fontSize: 15, fontWeight: "normal" },
+  title: { color: "#131313", fontSize: 14, fontWeight: "500" },
   close: { position: "absolute", top: 10, width: 40, height: 40, alignItems: "center", justifyContent: "center" },
   hiddenNotice: { alignSelf: "stretch", paddingLeft: 11.5, paddingTop: 12, backgroundColor: "#FFFFFF" },
   showBadge: { width: 95, height: 36, borderRadius: 10, backgroundColor: "#F0EFEC", borderWidth: 1, borderColor: "#DCDCDC", overflow: "hidden", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
@@ -417,7 +485,7 @@ const styles = StyleSheet.create({
   editorKeyboard: { marginTop: 3, marginHorizontal: 10, paddingHorizontal: 0, gap: 6, borderWidth: 0, backgroundColor: "transparent" },
   editorBody: { flex: 1, minWidth: 0, height: 36, borderColor: "#DCDCDC" },
   editorBodyKeyboard: { height: 36, borderRadius: 13, borderWidth: 1, borderColor: "rgba(255,255,255,0.45)", backgroundColor: "rgba(255,255,255,0.20)", justifyContent: "center" },
-  input: { fontFamily: "Inter_400Regular", flex: 1, color: "#131313", fontSize: 15, paddingHorizontal: 4, paddingVertical: 0, height: 38, includeFontPadding: false },
+  input: { flex: 1, color: "#131313", fontSize: 15, paddingHorizontal: 4, paddingVertical: 0, height: 38, includeFontPadding: false },
   collapsedInput: { fontFamily: "Inter_400Regular", fontSize: 15, paddingHorizontal: 4 },
   expandedInput: { fontFamily: "Inter_400Regular", fontSize: 14, paddingLeft: 10, paddingRight: 52, height: 36 },
   counter: { fontFamily: "Inter_400Regular", position: "absolute", right: 10, top: 0, height: 34, textAlignVertical: "center", includeFontPadding: false, color: "rgba(255,255,255,0.65)", fontSize: 11 },
@@ -437,7 +505,7 @@ function scaledCommentStyles(scale: number) {
   for (const key of keys) {
     const original = styles[key] as Record<string, unknown>;
     (result as Record<string, unknown>)[key] = Object.fromEntries(Object.entries(original).map(([name, value]) => [name,
-      typeof value === "number" && !["flex", "zIndex", "opacity", "flexGrow", "flexShrink"].includes(name) ? value * scale : value]));
+      typeof value === "number" && !["flex", "zIndex", "opacity", "flexGrow", "flexShrink", "fontSize"].includes(name) ? value * scale : value]));
   }
   return result;
 }

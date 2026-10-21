@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   },
   displayName: { fontFamily: "Inter_500Medium", color: v.ink, fontSize: 16, fontWeight: "normal" },
   email: { fontFamily: "Inter_400Regular", color: "#555", fontSize: 13 },
-  bio: { fontFamily: "Inter_400Regular", color: v.ink, fontSize: 12,lineHeight:17,textAlign:"justify",marginRight:24 },
+  bio: { fontFamily: "Inter_400Regular", color: v.ink, fontSize: 12,lineHeight:17,textAlign:"left",marginRight:24 },
   stats: { flexDirection: "row",gap:4,marginTop:12,marginBottom:4 },
   stat: { flex:1,alignItems: "center",gap:2 },
   statValue: { fontFamily: "Inter_500Medium", color: v.ink, fontSize: 16, fontWeight: "normal" },

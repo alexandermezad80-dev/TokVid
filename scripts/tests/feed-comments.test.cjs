@@ -63,7 +63,7 @@ function serviceHarness(responder) {
     },
     async rpc(name, args) { const spec = { name, args }; calls.push(spec); return responder(spec); },
   };
-  return { calls, ...load('lib/features/comments/services.ts', ['readComments', 'readReplies', 'readOwnCommentLikes', 'createComment', 'setCommentLike', 'readCommentCounts', 'editComment', 'deleteComment', 'readHiddenThreads', 'readPublicationOwner', 'readDismissedComments', 'dismissComment'], { supabase, ...model }) };
+  return { calls, ...load('lib/features/comments/services.ts', ['readComments', 'readReplies', 'readOwnCommentLikes', 'createComment', 'setCommentLike', 'readCommentCounts', 'editComment', 'deleteComment', 'readHiddenThreads', 'readPublicationOwner', 'readDismissedComments', 'dismissComment'], { supabase, invalidateCommentCounts() {}, ...model }) };
 }
 test('publishing sends no fabricated identity and returns only server-confirmed rows', async () => {
   const service = serviceHarness(() => ({ data: [row()], error: null }));
@@ -77,7 +77,8 @@ test('publishing sends no fabricated identity and returns only server-confirmed 
 });
 test('paging remains functional above the API maximum and replies are scoped to their video', async () => {
   const service = serviceHarness(spec => {
-    if (spec.options?.head) return { data: null, count: 1250, error: null };
+    if (spec.name==='get_feed_comment_counts') return { data: [{video_id:'v1',total:1250}], error:null };
+    if (spec.name==='get_feed_reply_counts') return { data: spec.args.p_root_ids.map(root_id=>({root_id,total:0})),error:null };
     // A new newest row arrives after the first batch. Offset-based queries
     // repeat c1501; the timestamp/id boundary remains stable.
     const next = spec.cursor ? Number(spec.cursor.match(/id.lt.c(\d+)/)[1]) - 1 : spec.range[0] ? 2001 - spec.range[0] : 2000;
@@ -92,7 +93,7 @@ test('paging remains functional above the API maximum and replies are scoped to 
   assert.deepEqual(JSON.parse(JSON.stringify(replyQuery.filters)), [['video_id', 'v2'], ['root_id', 'parent']]);
 });
 test('a failed count cannot become a fabricated zero or demo total', async () => {
-  const service = serviceHarness(spec => spec.options?.head ? { data: null, count: null, error: { message: 'Count failed' } } : { data: [], error: null });
+  const service = serviceHarness(spec => spec.name==='get_feed_comment_counts' ? { data: null, count: null, error: { message: 'Count failed' } } : { data: [], error: null });
   await assert.rejects(service.readComments('v1'), /Count failed/);
 });
 test('like requests set an idempotent desired state and never synthesize success', async () => {

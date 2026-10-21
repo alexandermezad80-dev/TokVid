@@ -37,7 +37,7 @@ function PushNotificationSetup() {
 function RootLayoutNav() {
   const { loading } = useAuth();
   const pathname = usePathname();
-  const darkBottom = loading || ["/", "/profile", "/user-profile", "/friends", "/create", "/publication", "/saved-feed", "/liked-feed", "/tag"].includes(pathname);
+  const darkBottom = loading || ["/", "/profile", "/friends", "/create", "/publication", "/saved-feed", "/liked-feed", "/tag"].includes(pathname);
   useSystemNavigation(darkBottom ? "#000000" : "#FFFFFF", !darkBottom);
   if (loading) {
     return (

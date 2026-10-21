@@ -3,9 +3,12 @@ import { AppState } from "react-native";
 import { supabase } from "../lib/supabase";
 import { createDatabaseChannel } from "../lib/realtimeSubscriptions";
 import { readCommentCounts } from "../lib/features/comments/services";
+import { subscribeCommentCounts } from "../lib/features/comments/countEvents";
+import { useAuth } from "../context/AuthContext";
 
 // Only replace counter data. Feed geometry, icons, gestures and playback are unchanged.
 export function useFeedCommentCounts(videoIds: string[]) {
+  const { user } = useAuth();
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [error, setError] = useState("");
   const key = JSON.stringify(videoIds);
@@ -25,6 +28,8 @@ export function useFeedCommentCounts(videoIds: string[]) {
       }
     };
     const invalidate = () => { if (!active) return; clearTimeout(timer); timer = setTimeout(() => { void refresh(); }, 100); };
+    setCounts({});
+    const unsubscribe = subscribeCommentCounts(id => { if (ids.includes(id)) invalidate(); });
     void refresh();
     const channel = createDatabaseChannel("feed-comment-counts")
       .on("postgres_changes", { event: "*", schema: "public", table: "comments" }, invalidate)
@@ -34,8 +39,8 @@ export function useFeedCommentCounts(videoIds: string[]) {
         else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") setError("No se pudieron mantener los contadores de comentarios en tiempo real. Abre el panel para volver a comprobarlos.");
       });
     const appState = AppState.addEventListener("change", next => { if (next === "active") invalidate(); });
-    return () => { active = false; clearTimeout(timer); appState.remove(); void supabase.removeChannel(channel); };
-  }, [key]);
+    return () => { active = false; clearTimeout(timer); unsubscribe(); appState.remove(); void supabase.removeChannel(channel); };
+  }, [key, user?.id]);
   return { counts, error };
 }
 

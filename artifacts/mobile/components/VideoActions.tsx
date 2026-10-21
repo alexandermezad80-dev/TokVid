@@ -146,7 +146,7 @@ export default function VideoActions({
         <Animated.View style={{ transform: [{ scale: shareScale }] }}>
           <Feather name="share-2" size={28} color="#fff" />
         </Animated.View>
-        <Text style={styles.count}>{liveCounts.shares===null?shares:fmt(liveCounts.shares)}</Text>
+        <Text style={styles.count}>{liveCounts.shares===null?(/^\d/.test(shares?.trim() ?? "") ? shares : "0"):fmt(liveCounts.shares)}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={isGuest ? onSave : handleSave} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Guardar">
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
     paddingRight: 12,
     alignItems: "center",
-    gap: 18,
+    gap: 10,
   },
   action: {
     width:52,minHeight:48,

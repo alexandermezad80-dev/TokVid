@@ -58,7 +58,7 @@ test('reference UI positions preserve short field, touch target and readable lis
   const field = h.nodes().find(n => flatten(n.props.style).width === 334);
   assert.equal(flatten(field.props.style).height, 36);
   assert.equal(h.styles.sendKeyboard.height, 24);
-  assert.equal(h.nodes().filter(n => n.props.accessibilityState?.disabled === true).length, 4);
+  for (const label of ['Añadir imagen al comentario','Abrir emojis','Mencionar usuario','Dictar comentario']) assert.equal(findLabel(h,label).props.disabled, false);
 });
 const deferred = () => { let resolve, reject; const promise = new Promise((a,b) => { resolve=a; reject=b; }); return { promise, resolve, reject }; };
 const list = h => h.nodes().find(n => n.type === 'FlatList');
@@ -104,7 +104,7 @@ test('360dp reference controls scale to the recording width, while input identit
   let input=h.input(), field=h.nodes().find(n=>Math.abs(flatten(n.props.style).width-265*width/360)<.001);
   assert.ok(field); assert.equal(input.props.placeholder,'Agregar comentarios');
   const editorRef=input.props.ref; h.openKeyboard(); input=h.input(); assert.equal(input.props.ref,editorRef);
-  assert.equal(flatten(input.props.style).paddingVertical,8*width/360);
+  assert.equal(flatten(input.props.style).paddingVertical,0); assert.equal(flatten(input.props.style).fontSize,14);
   const at=h.nodes().find(n=>n.props.name==='at-sign'); assert.ok(Math.abs(at.props.size-20*width/360)<.0001);
   h.closeKeyboard(); assert.equal(h.input().props.ref,editorRef);
 });
@@ -159,8 +159,8 @@ test('bottom actions copy the exact comment, save the host video and open a link
 test('reply target appears inside the existing editor; cancelling keeps the draft and sends a root comment',async()=>{
  const h=harness({roots:[own]});h.render();
  h.rowNodes().find(n=>n.props.accessibilityLabel==='Responder a @Alexander').props.onPress({stopPropagation(){}});h.render();
- assert.equal(h.input().props.accessibilityLabel,'Responder a @Alexander');assert.ok(h.nodes().some(n=>n.type==='Text' && n.props.children?.flat?.().join('')==='Responder a @Alexander'));assert.equal(h.nodes().some(n=>n.type==='Text' && n.props.children?.includes?.('Respondiendo')),false);
- h.openKeyboard();assert.equal(h.input().props.accessibilityLabel,'Responder a @Alexander');assert.ok(h.nodes().some(n=>n.type==='Text' && n.props.children?.flat?.().join('')==='Responder a @Alexander'));
+ assert.equal(h.input().props.accessibilityLabel,'Responder a @Alexander');assert.ok(h.nodes().some(n=>n.type==='Text' && [n.props.children].flat(2).join('')==='Responder'));assert.equal(h.nodes().some(n=>n.type==='Text' && n.props.children?.includes?.('Respondiendo')),false);
+ h.openKeyboard();assert.equal(h.input().props.accessibilityLabel,'Responder a @Alexander');assert.ok(h.nodes().some(n=>n.type==='Text' && [n.props.children].flat(2).join('')==='Responder'));
  h.input().props.onChangeText('Mi respuesta');h.render();findLabel(h,'Cancelar respuesta').props.onPress();h.render();
  assert.equal(h.input().props.value,'Mi respuesta');findLabel(h,'Publicar comentario').props.onPress();await tick();assert.equal(h.calls.publish[0][1],null);
 });
@@ -170,7 +170,7 @@ test('personal and global removal use different confirmed actions for own roots 
   const h=harness({roots:[{...own,parent_id:parent,root_id:parent}]});h.render();
   const open=()=>{h.rowNodes().find(n=>n.props.accessibilityLabel==='Opciones del comentario').props.onPress({stopPropagation(){}});h.render();return h.nodes().find(n=>n.type==='Popover').props.actions;};
   open().find(a=>a.key==='delete').onPress();await tick();h.render();assert.deepEqual(h.calls.removeForMe,['own']);assert.deepEqual(h.calls.remove,[]);
-  open().find(a=>a.key==='delete-everyone').onPress();await tick();h.render();assert.deepEqual(h.calls.remove,['own']);
+  open().find(a=>a.key==='delete-everyone').onPress();h.render();assert.deepEqual(h.calls.remove,[]);findLabel(h,'Conservar comentario').props.onPress();h.render();assert.deepEqual(h.calls.remove,[]);open().find(a=>a.key==='delete-everyone').onPress();h.render();findLabel(h,'Confirmar eliminar para todos').props.onPress();await tick();h.render();assert.deepEqual(h.calls.remove,['own']);
  }
 });
 test('personal root removal filters its thread; personal reply removal preserves siblings and Show cannot restore it',()=>{
@@ -180,4 +180,24 @@ test('personal root removal filters its thread; personal reply removal preserves
  const ids=()=>Array.from(list(h).props.data).filter(r=>r.kind==='comment').map(r=>r.comment.id);
  assert.deepEqual(ids(),['own','foreign','other']);findLabel(h,'Mostrar mensajes ocultos').props.onPress();h.render();assert.deepEqual(ids(),['own','foreign','other']);
  h.comments.dismissedComments.add('own');h.comments.dismissedComments=new Set(h.comments.dismissedComments);h.render();assert.deepEqual(ids(),['other']);
+});
+
+test('photo-only send uploads once, sends its path and leaves existing text send flow intact',async()=>{
+ const h=harness();h.render();h.openKeyboard();
+ findLabel(h,'Añadir imagen al comentario').props.onPress();await tick();h.render();
+ assert.ok(findLabel(h,'Quitar imagen del comentario'));assert.equal(findLabel(h,'Publicar comentario').props.disabled,false);
+ findLabel(h,'Publicar comentario').props.onPress();await tick();h.render();
+ assert.equal(h.calls.publish[0][0],'');assert.equal(h.calls.publish[0][3],'me/photo.jpg');assert.equal(findLabel(h,'Quitar imagen del comentario'),undefined);
+});
+test('emoji picker and mention button insert at the cursor without replacing the draft',()=>{
+ const h=harness();h.render();h.openKeyboard();h.input().props.onChangeText('Hola mundo');h.render();
+ h.input().props.onSelectionChange({nativeEvent:{selection:{start:5,end:5}}});h.render();
+ findLabel(h,'Mencionar usuario').props.onPress();h.render();assert.equal(h.input().props.value,'Hola @mundo');
+ findLabel(h,'Abrir emojis').props.onPress();h.render();const panel=h.nodes().find(n=>n.type==='EmojiPicker');assert.ok(panel);
+ panel.props.onSelect('😀');h.render();assert.equal(h.input().props.value,'Hola @😀mundo');
+});
+test('counter labels follow zero, singular and plural without truncating the value',()=>{
+ const h=harness();h.render();
+ const values=()=>h.nodes().filter(n=>n.type==='Text').map(n=>[n.props.children].flat(2).join(''));
+ for(const [total,label] of [[0,'Comentarios'],[1,'1 comentario'],[2,'2 comentarios']]){h.comments.total=total;h.render();assert.ok(values().includes(label));}
 });

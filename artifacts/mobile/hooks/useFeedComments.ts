@@ -146,14 +146,14 @@ export function useFeedComments(visible: boolean, videoId: string, onCountChange
     if (epoch.current === currentEpoch) { pagingLock.current = false; setPaging(false); }
   };
 
-  const publish = async (text: string, parentId: string | null, onCommitted?: (row: FeedComment) => void): Promise<FeedComment | null> => {
+  const publish = async (text: string, parentId: string | null, onCommitted?: (row: FeedComment) => void, imagePath?: string | null): Promise<FeedComment | null> => {
     if (!user || !visible || currentContext.current.key !== key || !currentContext.current.visible || sendLock.current || mutationLock.current) return null;
     const currentEpoch = epoch.current;
     sendLock.current = true; setSending(true); setOperationError("");
-    const payload = JSON.stringify([key, text.trim(), parentId]);
+    const payload = JSON.stringify([key, text.trim(), parentId, imagePath ?? null]);
     if (pendingSend.current?.payload !== payload) pendingSend.current = { payload, id: `${Date.now()}-${Math.random().toString(36).slice(2)}` };
     try {
-      const row = await createComment(videoId, text, parentId, pendingSend.current.id);
+      const row = await createComment(videoId, text, parentId, pendingSend.current.id, imagePath);
       if (epoch.current !== currentEpoch) return null;
       pendingSend.current = null;
       setState(previous => ({ ...previous,

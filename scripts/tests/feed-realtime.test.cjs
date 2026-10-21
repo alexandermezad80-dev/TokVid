@@ -63,7 +63,7 @@ function harness(file, name, args) {
   const helper = load('lib/realtimeSubscriptions.ts', ['createDatabaseChannel'], { supabase: client });
   const model = load('lib/features/comments/model.ts', ['COMMENT_PAGE_SIZE', 'REPLY_PAGE_SIZE', 'commentCapabilities', 'mergeComments']);
   const hooks = load(file, [name], {
-    supabase: client, ...helper, ...model, ...load('constants/palette.ts', ['palette']),
+    supabase: client, ...helper, ...model, ...load('lib/features/comments/countEvents.ts', ['subscribeCommentCounts']), ...load('constants/palette.ts', ['palette']),
     useState: initial => [typeof initial === 'function' ? initial() : initial, () => stateWrites++],
     createContext: () => ({ Provider: 'Provider' }), createElement: () => null, jsx: () => null, jsxs: () => null, StyleSheet: { create: value => value },
     useRef: current => ({ current }), useCallback: callback => callback,
@@ -73,7 +73,7 @@ function harness(file, name, args) {
     AppState: { addEventListener: () => ({ remove() {} }) },
     readCommentCounts: async () => ({}), readVideoLikes: async () => ({ counts: {}, liked: new Set() }),
     readComments: async () => ({ rows: [], total: 0, hasMore: false }), readReplies: async () => ({ rows: [], hasMore: false }),
-    readPublicationOwner: async () => null, readOwnCommentLikes: async () => new Set(), readHiddenThreads: async () => new Set(),
+    readPublicationOwner: async () => null, readOwnCommentLikes: async () => new Set(), readHiddenThreads: async () => new Set(), readDismissedComments: async () => new Set(),
     setTimeout: callback => { const id = Symbol('timer'); timers.set(id, callback); return id; },
     clearTimeout: id => timers.delete(id),
   });

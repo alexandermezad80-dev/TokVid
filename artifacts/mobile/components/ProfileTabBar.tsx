@@ -9,8 +9,8 @@ import { referenceVisual as v } from "../constants/referenceVisual";
 /** The visitor can leave a profile through the same five existing routes. */
 export default function ProfileTabBar() {
   const insets = useSafeAreaInsets();
-  return <View style={{ backgroundColor: "#000000", paddingBottom: insets.bottom }}>
-    <View style={{ height: 56, flexDirection: "row", borderTopWidth: 1, borderTopColor: "#2C2C2E" }}>
+  return <View style={{ backgroundColor: "#FFFFFF", paddingBottom: insets.bottom }}>
+    <View style={{ height: 56, flexDirection: "row", borderTopWidth: 1, borderTopColor: v.inboxLine }}>
       {([
         ["Inicio", "home", "/(tabs)"], ["Amigos", "users", "/(tabs)/friends"],
         ["Crear", "plus", "/(tabs)/create"], ["Mensajes", "message-circle", "/(tabs)/inbox"],
@@ -22,7 +22,7 @@ export default function ProfileTabBar() {
           <LinearGradient colors={v.createFill} start={{ x: 0, y: .5 }} end={{ x: 1, y: .5 }} style={{ flex: 1, borderRadius: 8, alignItems: "center", justifyContent: "center" }}>
             <Feather name="plus" size={24} color="#FFFFFF"/>
           </LinearGradient>
-        </View> : <><Feather name={icon} size={22} color={v.inactive}/><Text allowFontScaling={false} style={{ fontFamily: "Inter_400Regular", color: v.inactive, fontSize: 10 }}>{label}</Text></>}
+        </View> : <><Feather name={icon} size={22} color={v.label}/><Text allowFontScaling={false} style={{ fontFamily: "Inter_400Regular", color: v.label, fontSize: 10 }}>{label}</Text></>}
       </Pressable>)}
     </View>
   </View>;

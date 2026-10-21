@@ -1,0 +1,17 @@
+{
+  "apk_number": 239,
+  "branch": "feature/feed-mini-video-avatar",
+  "commit": "f170cd3a5c2e0744e0a0419d88920e7b95c744ab",
+  "run_id": 39429427644,
+  "job_id": 118650278642,
+  "tests": 191,
+  "failures": 0,
+  "typecheck": "passed",
+  "prebuild": "passed",
+  "android": "BUILD SUCCESSFUL in 25m 29s",
+  "apk_sha256": "6aebc1534684aa5f0a97b0995f53f046fc13615b4a548f27e00441ec3a466634",
+  "apk_artifact": 12268353521,
+  "source_map_artifact": 12268717822,
+  "physical_device_verified": false,
+  "note": "Usuario aprobó algunas áreas y solicitó las correcciones posteriores; no aprobación integral."
+}
