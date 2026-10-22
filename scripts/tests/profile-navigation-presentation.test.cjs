@@ -111,6 +111,11 @@ test('own profile scrolls its existing details while keeping filters sticky and 
   const scroll=nodes(tree).find(n=>n.type==='ScrollView');assert.deepEqual(Array.from(scroll.props.stickyHeaderIndices),[1]);
   const children=scroll.props.children.flat().filter(Boolean),bar=children[1];assert.equal(flat(bar.props.style).height,39);
   assert.equal(flat(bar.props.style).backgroundColor,'#FFFFFF');assert.equal(flat(bar.props.style).borderTopWidth,undefined);
+  assert.equal(flat(bar.props.style).width,'100%');
+  scroll.props.onLayout({nativeEvent:{layout:{height:600}}});
+  children[0].props.onLayout({nativeEvent:{layout:{height:210}}});
+  tree=r.render(Profile);
+  assert.equal(nodes(tree).find(n=>n.type==='ScrollView').props.contentContainerStyle.minHeight,810);
   assert.ok(!nodes(scroll).some(n=>n.type==='ReferenceHeader'));
   assert.ok(nodes(children[0]).some(n=>n.type==='BrandAvatar'));
   nodes(tree).find(n=>n.props.accessibilityLabel==='Abrir publicación: Video').props.onPress();assert.deepEqual(r.calls.at(-1),['push',{pathname:'/publication',params:{id:'video-one'}}]);
@@ -129,6 +134,11 @@ test('visited profile keeps its footer below a flexible body during loading, fai
     if(state.loading||state.missing){assert.equal(scroll,undefined);continue;}
     assert.deepEqual(Array.from(scroll.props.stickyHeaderIndices),[1]);assert.ok(!nodes(scroll).some(n=>n.type==='ReferenceHeader'));
     assert.equal(flat(scroll.props.children.flat().filter(Boolean)[1].props.style).height,39);
+    assert.equal(flat(scroll.props.children.flat().filter(Boolean)[1].props.style).width,'100%');
+    scroll.props.onLayout({nativeEvent:{layout:{height:580}}});
+    scroll.props.children.flat().filter(Boolean)[0].props.onLayout({nativeEvent:{layout:{height:180}}});
+    const rerendered=r.render(r.load('app/user-profile.tsx').default);
+    assert.equal(nodes(rerendered).find(n=>n.type==='ScrollView').props.contentContainerStyle.minHeight,760);
     all.find(n=>n.type==='TouchableOpacity'&&nodes(n).some(c=>c.type==='PublicationThumbnail')).props.onPress();assert.deepEqual(r.calls.at(-1),['push',{pathname:'/publication',params:{id:'video-one'}}]);
     all.find(n=>n.type==='TouchableOpacity'&&nodes(n).some(c=>c.type==='Text'&&[c.props.children].flat().includes('Mensajes'))).props.onPress();
     await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(r.calls.at(-1),['push','/chat?conversationId=conversation&otherUserId=other&otherUsername=Alexander&otherAvatar=photo']);

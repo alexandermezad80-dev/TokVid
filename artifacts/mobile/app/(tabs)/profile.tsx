@@ -44,6 +44,8 @@ export default function ProfileScreen() {
   const [expanded,setExpanded]=useState(false),[menu,setMenu]=useState(false);
   const connections=useMyConnections();
   const [tab, setTab] = useState<"videos" | "stories" | "gallery" | "liked" | "saved">("videos");
+  const [scrollViewportHeight, setScrollViewportHeight] = useState(0);
+  const [profileSectionHeight, setProfileSectionHeight] = useState(0);
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const { user, profile, signOut, refreshProfile } = useAuth();
@@ -101,8 +103,10 @@ export default function ProfileScreen() {
         <TouchableOpacity style={styles.menuBtn} onPress={()=>router.push({pathname:"/(tabs)/friends",params:{tab:"friends"}})} accessibilityLabel="Amigos"><Feather name="users" size={22} color="#0B0B0D"/></TouchableOpacity>
         <View style={{flex:1}}/><TouchableOpacity style={styles.menuBtn} onPress={()=>router.push("/edit-profile")} accessibilityLabel="Información de perfil"><Feather name="more-horizontal" size={24} color="#0B0B0D"/></TouchableOpacity>
       </ReferenceHeader>
-      <ScrollView style={{flex:1}} stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false}>
-      <View style={styles.profileSection}>
+      <ScrollView style={{flex:1}} stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false}
+        onLayout={event => setScrollViewportHeight(event.nativeEvent.layout.height)}
+        contentContainerStyle={scrollViewportHeight > 0 && profileSectionHeight > 0 ? {minHeight: scrollViewportHeight + profileSectionHeight} : undefined}>
+      <View style={styles.profileSection} onLayout={event => setProfileSectionHeight(event.nativeEvent.layout.height)}>
         <View style={{width:90,gap:8}}>
           <TouchableOpacity style={styles.avatarWrap} onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})} accessibilityLabel="Ver mis historias">
             <BrandAvatar uri={avatarUrl(user,profile)} size={90} radius={12} reference/>
@@ -263,6 +267,7 @@ const styles = StyleSheet.create({
   tabBar: {
     backgroundColor:v.white,
     flexDirection: "row",
+    width: "100%",
     zIndex: 1, elevation: 1,
     shadowColor: "#000000", shadowOpacity: 0.07, shadowRadius: 2, shadowOffset: { width: 0, height: 1 },
     height:39,
