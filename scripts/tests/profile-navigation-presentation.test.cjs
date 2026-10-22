@@ -21,7 +21,7 @@ function runtime({guest = false, route = '/', inset = 24, visited = false, loadi
     react,
     'react-native': {Platform:{OS:'android'}, StyleSheet:{create:s=>s,flatten:flat,absoluteFill:{position:'absolute'},hairlineWidth:0.5},
       useWindowDimensions:()=>({width:360,height:800,fontScale:1.4}), Alert:{alert(){}},
-      ...Object.fromEntries(['View','Text','ScrollView','TouchableOpacity','Pressable','Image','ActivityIndicator','Modal'].map(x=>[x,x]))},
+      ...Object.fromEntries(['View','Text','ScrollView','TouchableOpacity','Pressable','Image','ActivityIndicator','Modal','RefreshControl'].map(x=>[x,x]))},
     'expo-router': {Tabs, Stack, Redirect:'Redirect', usePathname:()=>route, useLocalSearchParams:()=>({userId:'other'}), useFocusEffect(){},
       router:{push:value=>calls.push(['push',json(value)]),dismissTo:value=>calls.push(['dismiss',value]),back:()=>calls.push(['back'])}},
     'react-native-safe-area-context': {useSafeAreaInsets:()=>({top:24,bottom:inset,left:0,right:0}),SafeAreaProvider:'SafeAreaProvider'},
@@ -47,10 +47,10 @@ function runtime({guest = false, route = '/', inset = 24, visited = false, loadi
       if(name.endsWith('/NotificationsContext')) return {useNotifications:()=>({unreadCount:7})};
       if(name.endsWith('/RegistrationContext')) return {useRegistration:()=>({setTabBarHeight:n=>calls.push(['height',n])})};
       if(name.endsWith('/useSystemNavigation')) return {useSystemNavigation:(...args)=>calls.push(['system',...args])};
-      if(name.endsWith('/useMyConnections')) return {useMyConnections:()=>({loading:false,following:[],followers:[]})};
-      if(name.endsWith('/usePublishedMedia')) return {usePublishedMedia:()=>({items:products,loading:false})};
-      if(name.endsWith('/useSavedVideos')) return {useSavedVideos:()=>({savedVideos:products})};
-      if(name.endsWith('/useVideoFeed')) return {useVideoFeed:()=>({likedVideos:products})};
+      if(name.endsWith('/useMyConnections')) return {useMyConnections:()=>({loading:false,following:[],followers:[],refresh:async()=>{calls.push(['refresh-connections']);}})};
+      if(name.endsWith('/usePublishedMedia')) return {usePublishedMedia:()=>({items:products,loading:false,refresh:async()=>{calls.push(['refresh-publications']);}})};
+      if(name.endsWith('/useSavedVideos')) return {useSavedVideos:()=>({savedVideos:products,refresh:async()=>{calls.push(['refresh-saved']);}})};
+      if(name.endsWith('/useVideoFeed')) return {useVideoFeed:()=>({likedVideos:products,refreshLikes:async()=>{calls.push(['refresh-liked']);}})};
       if(name.endsWith('/usePublicationGrid')) return {usePublicationGrid:()=>({onLayout(){},tile:{width:100}})};
       if(name.endsWith('/registrationBridge')) return {requestRegistration:value=>calls.push(['register',json(value)])};
       if(name.endsWith('/private-messages')) return {openPrivateConversation:async id=>{calls.push(['chat',id]);return 'conversation';}};
@@ -111,11 +111,20 @@ test('own profile scrolls its existing details while keeping filters sticky and 
   const scroll=nodes(tree).find(n=>n.type==='ScrollView');assert.deepEqual(Array.from(scroll.props.stickyHeaderIndices),[1]);
   const children=scroll.props.children.flat().filter(Boolean),bar=children[1];assert.equal(flat(bar.props.style).height,39);
   assert.equal(flat(bar.props.style).backgroundColor,'#FFFFFF');assert.equal(flat(bar.props.style).borderTopWidth,undefined);
-  assert.equal(flat(bar.props.style).width,'100%');
+  assert.equal(flat(bar.props.style).width,360);
+  assert.deepEqual(nodes(bar).filter(n=>n.type==='TouchableOpacity').map(n=>flat(n.props.style).width),[60,60,60,60,60,60]);
+  assert.equal(flat(bar.props.style).shadowOpacity,0);
   scroll.props.onLayout({nativeEvent:{layout:{height:600}}});
   children[0].props.onLayout({nativeEvent:{layout:{height:210}}});
   tree=r.render(Profile);
   assert.equal(nodes(tree).find(n=>n.type==='ScrollView').props.contentContainerStyle.minHeight,810);
+  const sc=nodes(tree).find(n=>n.type==='ScrollView');
+  sc.props.onScroll({nativeEvent:{contentOffset:{y:210}}});tree=r.render(Profile);
+  const scPinned=nodes(tree).find(n=>n.type==='ScrollView');
+  assert.equal(flat(scPinned.props.children.flat().filter(Boolean)[1].props.style).shadowOpacity,0.05);
+  assert.equal(scPinned.props.refreshControl.type,'RefreshControl');
+  scPinned.props.onScroll({nativeEvent:{contentOffset:{y:0}}});tree=r.render(Profile);
+  assert.equal(flat(nodes(tree).find(n=>n.type==='ScrollView').props.children.flat().filter(Boolean)[1].props.style).shadowOpacity,0);
   assert.ok(!nodes(scroll).some(n=>n.type==='ReferenceHeader'));
   assert.ok(nodes(children[0]).some(n=>n.type==='BrandAvatar'));
   nodes(tree).find(n=>n.props.accessibilityLabel==='Abrir publicación: Video').props.onPress();assert.deepEqual(r.calls.at(-1),['push',{pathname:'/publication',params:{id:'video-one'}}]);
@@ -134,11 +143,17 @@ test('visited profile keeps its footer below a flexible body during loading, fai
     if(state.loading||state.missing){assert.equal(scroll,undefined);continue;}
     assert.deepEqual(Array.from(scroll.props.stickyHeaderIndices),[1]);assert.ok(!nodes(scroll).some(n=>n.type==='ReferenceHeader'));
     assert.equal(flat(scroll.props.children.flat().filter(Boolean)[1].props.style).height,39);
-    assert.equal(flat(scroll.props.children.flat().filter(Boolean)[1].props.style).width,'100%');
+    assert.equal(flat(scroll.props.children.flat().filter(Boolean)[1].props.style).width,360);
+    assert.deepEqual(nodes(scroll.props.children.flat().filter(Boolean)[1]).filter(n=>n.type==='TouchableOpacity').map(n=>flat(n.props.style).width),[360]);
     scroll.props.onLayout({nativeEvent:{layout:{height:580}}});
     scroll.props.children.flat().filter(Boolean)[0].props.onLayout({nativeEvent:{layout:{height:180}}});
     const rerendered=r.render(r.load('app/user-profile.tsx').default);
     assert.equal(nodes(rerendered).find(n=>n.type==='ScrollView').props.contentContainerStyle.minHeight,760);
+    const sc=nodes(rerendered).find(n=>n.type==='ScrollView');
+    sc.props.onScroll({nativeEvent:{contentOffset:{y:180}}});
+    const scPinned=nodes(r.render(r.load('app/user-profile.tsx').default)).find(n=>n.type==='ScrollView');
+    assert.equal(flat(scPinned.props.children.flat().filter(Boolean)[1].props.style).shadowOpacity,0.05);
+    assert.equal(scPinned.props.refreshControl.type,'RefreshControl');
     all.find(n=>n.type==='TouchableOpacity'&&nodes(n).some(c=>c.type==='PublicationThumbnail')).props.onPress();assert.deepEqual(r.calls.at(-1),['push',{pathname:'/publication',params:{id:'video-one'}}]);
     all.find(n=>n.type==='TouchableOpacity'&&nodes(n).some(c=>c.type==='Text'&&[c.props.children].flat().includes('Mensajes'))).props.onPress();
     await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(r.calls.at(-1),['push','/chat?conversationId=conversation&otherUserId=other&otherUsername=Alexander&otherAvatar=photo']);

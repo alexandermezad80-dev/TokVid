@@ -22,6 +22,8 @@ import {
   Image,
   Platform,
   ScrollView,
+  RefreshControl,
+  useWindowDimensions,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -91,6 +93,7 @@ function FollowButton({ userId }: { userId: string }) {
 
 export default function UserProfileScreen() {
   const gridLayout=usePublicationGrid();
+  const {width}=useWindowDimensions();
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const { user } = useAuth();
 
@@ -115,6 +118,9 @@ export default function UserProfileScreen() {
   const [msgLoading, setMsgLoading] = useState(false);
   const [scrollViewportHeight, setScrollViewportHeight] = useState(0);
   const [profileSectionHeight, setProfileSectionHeight] = useState(0);
+  const [filtersPinned,setFiltersPinned]=useState(false);
+  const [refreshing,setRefreshing]=useState(false);
+  const refreshGuard=useRef(false);
 
   const openChat = async () => {
     if (!user || !userId || !profile) return;
@@ -126,24 +132,43 @@ export default function UserProfileScreen() {
     );
   };
 
-  const fetchProfile = useCallback(async () => {
+  const fetchProfile = useCallback(async (initial = true) => {
     if (!userId) return;
-    setLoading(true);
+    if(initial)setLoading(true);
     const { data } = await supabase
       .from("profiles")
       .select("id, username, avatar_url, bio, followers_count, following_count, likes_count")
       .eq("id", userId)
       .single();
-    setProfile(data as PublicProfile | null);
-    setLoading(false);
+    if(data || initial)setProfile(data as PublicProfile | null);
+    if(initial)setLoading(false);
   }, [userId]);
 
   useEffect(() => { void fetchProfile(); }, [fetchProfile]);
+  const onRefresh=useCallback(async()=>{
+    if(!userId || refreshGuard.current)return;
+    refreshGuard.current=true;setRefreshing(true);
+    try{
+      const tasks:Promise<unknown>[]=[
+        fetchProfile(false),
+        publications.refresh(),
+        readProfileVisibility(userId).then(next=>{
+          setVisibility(next);
+          setTab(current=>current==='liked'&&!next.show_likes||current==='shared'&&!next.show_shares?'videos':current);
+        }),
+      ];
+      if(tab!=='videos')tasks.push(readProfileActivity(userId,tab,0).then(page=>{
+        setActivity(page.items);setActivityMore(page.hasMore);setActivityOffset(0);setActivityError('');
+      }).catch(()=>setActivityError('No se pudieron cargar estas publicaciones.')));
+      await Promise.allSettled(tasks);
+    }finally{refreshGuard.current=false;setRefreshing(false);}
+  },[userId,fetchProfile,publications.refresh,tab]);
   const visit=useRef<{key:string;id:string}|null>(null);
   useEffect(()=>{if(!user||!userId||user.id===userId)return;const key=`${user.id}:${userId}`;if(visit.current?.key!==key)visit.current={key,id:publicationId()};void supabase.rpc("record_profile_visit",{p_other_id:userId,p_event_id:visit.current.id});},[user?.id,userId]);
   if (!user) return null;
   if(user.id===userId) return <Redirect href="/(tabs)/profile"/>;
 
+  const shownTabs=(['videos',...(visibility.show_likes?['liked']:[]),...(visibility.show_shares?['shared']:[])] as ('videos'|'liked'|'shared')[]);
   const shown=tab==='videos'?videos:activity;
   const error=tab==='videos'?publications.error:activityError;
   const isLoading=tab==='videos'?videosLoading:activityLoading;
@@ -152,6 +177,12 @@ export default function UserProfileScreen() {
    <ReferenceHeader variant="profile"><TouchableOpacity style={styles.backBtn} onPress={()=>router.back()} accessibilityLabel="Volver"><Feather name="arrow-left" size={24} color="#0B0B0D"/></TouchableOpacity><TouchableOpacity style={styles.backBtn} onPress={()=>connections('friends')} accessibilityLabel="Amigos y seguidores"><Feather name="users" size={22} color="#0B0B0D"/></TouchableOpacity><View style={{flex:1}}/></ReferenceHeader>
    <View testID="visited-profile-body" style={{flex:1,minHeight:0}}>
    {loading?<View style={[styles.center,{flex:1}]}><ActivityIndicator color="#2F9A9F"/></View>:!profile?<View style={[styles.center,{flex:1}]}><Text style={styles.gridStateTitle}>Usuario no encontrado</Text></View>:<ScrollView style={{flex:1}} stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#4B7194"]} tintColor="#4B7194"/>}
+      scrollEventThrottle={16}
+      onScroll={event=>{
+        const pinned=event.nativeEvent.contentOffset.y>=Math.max(1,profileSectionHeight-1);
+        setFiltersPinned(current=>current===pinned?current:pinned);
+      }}
       onLayout={event=>setScrollViewportHeight(event.nativeEvent.layout.height)}
       contentContainerStyle={scrollViewportHeight > 0 && profileSectionHeight > 0 ? {minHeight:scrollViewportHeight + profileSectionHeight} : undefined}>
     <View style={styles.profileSection} onLayout={event=>setProfileSectionHeight(event.nativeEvent.layout.height)}>
@@ -164,7 +195,7 @@ export default function UserProfileScreen() {
       {!!profile.bio&&<><Text onPress={()=>setExpanded(true)} accessibilityRole="button" accessibilityState={{expanded}} accessibilityLabel="Biografía" numberOfLines={expanded?undefined:3} style={styles.bio}>{profile.bio}</Text>{expanded&&<TouchableOpacity onPress={()=>setExpanded(false)}><Text style={styles.more}>Ver menos</Text></TouchableOpacity>}</>}
      </View>
     </View>
-    <View style={styles.tabBar}>{(['videos',...(visibility.show_likes?['liked']:[]),...(visibility.show_shares?['shared']:[])] as ('videos'|'liked'|'shared')[]).map(t=><TouchableOpacity key={t} onPress={()=>setTab(t)} accessibilityLabel={t==='videos'?'Publicaciones':t==='liked'?'Me gusta':'Compartidos'} accessibilityState={{selected:tab===t}} style={[styles.tabItem,tab===t&&styles.tabItemActive]}><Feather name={t==='videos'?'grid':t==='liked'?'heart':'share-2'} size={22} color={tab===t?v.ink:v.inactive}/></TouchableOpacity>)}</View>
+    <View style={[styles.tabBar,{width,elevation:filtersPinned?1:0,shadowOpacity:filtersPinned?0.05:0}]]}>{shownTabs.map(t=><TouchableOpacity key={t} onPress={()=>setTab(t)} accessibilityLabel={t==='videos'?'Publicaciones':t==='liked'?'Me gusta':'Compartidos'} accessibilityState={{selected:tab===t}} style={[styles.tabItem,{width:width/shownTabs.length,flex:0},tab===t&&styles.tabItemActive]}><Feather name={t==='videos'?'grid':t==='liked'?'heart':'share-2'} size={22} color={tab===t?v.ink:v.inactive}/></TouchableOpacity>)}</View>
     {!!error&&<Text style={styles.gridStateText}>{error}</Text>}
     <View style={styles.grid}>{shown.map(v=><TouchableOpacity key={v.id} style={[styles.gridItem,gridLayout.tile]} onPress={()=>router.push({pathname:'/publication',params:{id:v.id}})}><PublicationThumbnail item={v}/></TouchableOpacity>)}</View>
     {isLoading?<ActivityIndicator style={{margin:24}} color="#2F9A9F"/>:!shown.length&&!error?<View style={styles.center}><Text style={styles.gridStateText}>Todavía no hay publicaciones en esta sección.</Text></View>:null}
@@ -175,4 +206,4 @@ export default function UserProfileScreen() {
    <ProfileTabBar/>
   </View>;
 }
-const styles=StyleSheet.create({container:{flex:1,backgroundColor:'#FFF'},header:{backgroundColor:'#000',flexDirection:'row',alignItems:'center',paddingHorizontal:12},backBtn:{width:44,height:44,alignItems:'center',justifyContent:'center'},center:{minHeight:180,justifyContent:'center',alignItems:'center',padding:24},profileSection:{flexDirection:'row',paddingHorizontal:16,paddingTop:8,paddingBottom:8,gap:10},accountButton:{width:84,minHeight:29,borderRadius:7,backgroundColor:v.white,alignItems:'center',justifyContent:'center'},accountLabel:{ fontFamily: "Inter_400Regular",color:v.ink,fontSize:11},displayName:{ fontFamily: "Inter_500Medium",color:v.ink,fontSize:16,fontWeight:"normal"},stats:{flexDirection:'row',gap:4,marginTop:12,marginBottom:4},stat:{flex:1,alignItems:'center',gap:2},statValue:{ fontFamily: "Inter_500Medium",color:v.ink,fontSize:16,fontWeight:"normal"},statLabel:{ fontFamily: "Inter_400Regular",color:v.label,fontSize:10.5},bio:{ fontFamily: "Inter_400Regular",color:v.ink,fontSize:12,lineHeight:17,textAlign:'left',marginRight:24},more:{ fontFamily: "Inter_400Regular",color:v.ink,fontSize:12,textDecorationLine:'underline'},nameRow:{flexDirection:'row',alignItems:'center',gap:8,minWidth:0},followBtn:{flexDirection:'row',alignItems:'center',gap:4,flexShrink:0,backgroundColor:v.input,borderWidth:1,borderColor:v.border,borderRadius:16,paddingHorizontal:8,minHeight:26,justifyContent:'center'},followBtnText:{ fontFamily: "Inter_500Medium",color:v.darkGray,fontSize:12,fontWeight:"normal"},tabBar:{flexDirection:'row',width:'100%',backgroundColor:v.white,height:39,zIndex:1,elevation:1,shadowColor:'#000000',shadowOpacity:0.07,shadowRadius:2,shadowOffset:{width:0,height:1}},tabItem:{flex:1,alignItems:'center',justifyContent:'center'},tabItemActive:{},grid:{flexDirection:'row',flexWrap:'wrap',gap:6,paddingHorizontal:10,paddingVertical:10},gridItem:{aspectRatio:.75,borderRadius:8,overflow:'hidden'},gridStateTitle:{ fontFamily: "Inter_500Medium",fontSize:18,color:'#101010',fontWeight:"normal"},gridStateText:{ fontFamily: "Inter_400Regular",fontSize:14,color:'#737373',textAlign:'center',padding:16}});
+const styles=StyleSheet.create({container:{flex:1,backgroundColor:'#FFF'},header:{backgroundColor:'#000',flexDirection:'row',alignItems:'center',paddingHorizontal:12},backBtn:{width:44,height:44,alignItems:'center',justifyContent:'center'},center:{minHeight:180,justifyContent:'center',alignItems:'center',padding:24},profileSection:{flexDirection:'row',paddingHorizontal:16,paddingTop:8,paddingBottom:8,gap:10},accountButton:{width:84,minHeight:29,borderRadius:7,backgroundColor:v.white,alignItems:'center',justifyContent:'center'},accountLabel:{ fontFamily: "Inter_400Regular",color:v.ink,fontSize:11},displayName:{ fontFamily: "Inter_500Medium",color:v.ink,fontSize:16,fontWeight:"normal"},stats:{flexDirection:'row',gap:4,marginTop:12,marginBottom:4},stat:{flex:1,alignItems:'center',gap:2},statValue:{ fontFamily: "Inter_500Medium",color:v.ink,fontSize:16,fontWeight:"normal"},statLabel:{ fontFamily: "Inter_400Regular",color:v.label,fontSize:10.5},bio:{ fontFamily: "Inter_400Regular",color:v.ink,fontSize:12,lineHeight:17,textAlign:'left',marginRight:24},more:{ fontFamily: "Inter_400Regular",color:v.ink,fontSize:12,textDecorationLine:'underline'},nameRow:{flexDirection:'row',alignItems:'center',gap:8,minWidth:0},followBtn:{flexDirection:'row',alignItems:'center',gap:4,flexShrink:0,backgroundColor:v.input,borderWidth:1,borderColor:v.border,borderRadius:16,paddingHorizontal:8,minHeight:26,justifyContent:'center'},followBtnText:{ fontFamily: "Inter_500Medium",color:v.darkGray,fontSize:12,fontWeight:"normal"},tabBar:{flexDirection:'row',width:'100%',backgroundColor:v.white,height:39,zIndex:1,elevation:0,shadowColor:'#000000',shadowOpacity:0,shadowRadius:2,shadowOffset:{width:0,height:1}},tabItem:{flex:1,alignItems:'center',justifyContent:'center'},tabItemActive:{},grid:{flexDirection:'row',flexWrap:'wrap',gap:6,paddingHorizontal:10,paddingVertical:10},gridItem:{aspectRatio:.75,borderRadius:8,overflow:'hidden'},gridStateTitle:{ fontFamily: "Inter_500Medium",fontSize:18,color:'#101010',fontWeight:"normal"},gridStateText:{ fontFamily: "Inter_400Regular",fontSize:14,color:'#737373',textAlign:'center',padding:16}});

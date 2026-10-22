@@ -487,6 +487,7 @@ export function useVideoFeed(followedIds: Set<string>, mode: "forYou" | "followi
     followingVideos,
     likedIds,
     likedVideos,
+    refreshLikes: loadLikedIds,
     toggleLike,
     removeVideo,
     loadMore,

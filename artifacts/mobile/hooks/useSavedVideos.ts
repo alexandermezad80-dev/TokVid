@@ -98,5 +98,5 @@ export function useSavedVideos() {
     }
   }, [savedIds]);
 
-  return { savedIds, savedVideos, toggleSave, loading };
+  return { savedIds, savedVideos, toggleSave, loading, refresh: loadSaved };
 }

@@ -11,7 +11,7 @@ import { usePublishedMedia } from "../../hooks/usePublishedMedia";
 import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Modal,
@@ -21,6 +21,7 @@ import {
   Image,
   Platform,
   ScrollView,
+  RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -46,6 +47,9 @@ export default function ProfileScreen() {
   const [tab, setTab] = useState<"videos" | "stories" | "gallery" | "liked" | "saved">("videos");
   const [scrollViewportHeight, setScrollViewportHeight] = useState(0);
   const [profileSectionHeight, setProfileSectionHeight] = useState(0);
+  const [filtersPinned,setFiltersPinned]=useState(false);
+  const [refreshing,setRefreshing]=useState(false);
+  const refreshGuard=useRef(false);
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const { user, profile, signOut, refreshProfile } = useAuth();
@@ -54,9 +58,9 @@ export default function ProfileScreen() {
     if (!user) requestRegistration();
   }, [user]);
   const publications = usePublishedMedia({ userId: user?.id, enabled: !!user });
-  const { savedVideos } = useSavedVideos();
+  const { savedVideos, refresh: refreshSaved } = useSavedVideos();
   const { followedIds } = useFollow();
-  const { likedVideos } = useVideoFeed(followedIds);
+  const { likedVideos, refreshLikes } = useVideoFeed(followedIds);
 
   useFocusEffect(
     useCallback(() => {
@@ -64,6 +68,20 @@ export default function ProfileScreen() {
     }, [user?.id])
   );
 
+  const onRefresh=useCallback(async()=>{
+    if(!user || refreshGuard.current)return;
+    refreshGuard.current=true;setRefreshing(true);
+    try{
+      const tasks:Promise<unknown>[]=[
+        Promise.resolve(refreshProfile()),
+        connections.refresh(),
+        publications.refresh(),
+      ];
+      if(tab==="saved")tasks.push(refreshSaved());
+      if(tab==="liked")tasks.push(refreshLikes());
+      await Promise.allSettled(tasks);
+    }finally{refreshGuard.current=false;setRefreshing(false);}
+  },[user?.id,refreshProfile,connections.refresh,publications.refresh,refreshSaved,refreshLikes,tab]);
   if (!user) return null;
 
   const handleSignOut = () => {
@@ -104,6 +122,12 @@ export default function ProfileScreen() {
         <View style={{flex:1}}/><TouchableOpacity style={styles.menuBtn} onPress={()=>router.push("/edit-profile")} accessibilityLabel="Información de perfil"><Feather name="more-horizontal" size={24} color="#0B0B0D"/></TouchableOpacity>
       </ReferenceHeader>
       <ScrollView style={{flex:1}} stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#4B7194"]} tintColor="#4B7194"/>}
+        scrollEventThrottle={16}
+        onScroll={event=>{
+          const pinned=event.nativeEvent.contentOffset.y>=Math.max(1,profileSectionHeight-1);
+          setFiltersPinned(current=>current===pinned?current:pinned);
+        }}
         onLayout={event => setScrollViewportHeight(event.nativeEvent.layout.height)}
         contentContainerStyle={scrollViewportHeight > 0 && profileSectionHeight > 0 ? {minHeight: scrollViewportHeight + profileSectionHeight} : undefined}>
       <View style={styles.profileSection} onLayout={event => setProfileSectionHeight(event.nativeEvent.layout.height)}>
@@ -127,9 +151,9 @@ export default function ProfileScreen() {
           {!!connections.error&&<TouchableOpacity onPress={()=>void connections.refresh()}><Text style={{ fontFamily: "Inter_400Regular",color:"#D32F3F",fontSize:12}}>{connections.error}</Text></TouchableOpacity>}
         </View>
       </View>
-      <View style={styles.tabBar}>{([
+      <View style={[styles.tabBar,{width,elevation:filtersPinned?1:0,shadowOpacity:filtersPinned?0.05:0}]]}>{([
         {key:"videos",icon:"grid",label:"Videos"},{key:"stories",icon:"clock",label:"Historias"},{key:"gallery",icon:"image",label:"Galería"},{key:"liked",icon:"heart",label:"Me gusta"},{key:"saved",icon:"bookmark",label:"Guardados"},{key:"more",icon:"more-horizontal",label:"Más"},
-      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>item.key==="more"?router.push("/user-tools"):setTab(item.key)} style={[styles.tabItem,tab===item.key&&styles.tabItemActive]}><Feather name={item.icon} size={22} color={tab===item.key?v.ink:v.inactive}/></TouchableOpacity>)}</View>
+      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>item.key==="more"?router.push("/user-tools"):setTab(item.key)} style={[styles.tabItem,{width:width/6,flex:0},tab===item.key&&styles.tabItemActive]}><Feather name={item.icon} size={22} color={tab===item.key?v.ink:v.inactive}/></TouchableOpacity>)}</View>
       {tab==="stories"?<View style={styles.emptyState}><TouchableOpacity onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})}><Text style={styles.emptyTitle}>Ver mis historias</Text></TouchableOpacity><TouchableOpacity onPress={()=>router.push("/story-create")}><Text style={styles.bioMore}>Añadir historia</Text></TouchableOpacity></View>:
       tab === "saved" ? (
         savedVideos.length === 0 ? (
@@ -268,8 +292,8 @@ const styles = StyleSheet.create({
     backgroundColor:v.white,
     flexDirection: "row",
     width: "100%",
-    zIndex: 1, elevation: 1,
-    shadowColor: "#000000", shadowOpacity: 0.07, shadowRadius: 2, shadowOffset: { width: 0, height: 1 },
+    zIndex: 1, elevation: 0,
+    shadowColor: "#000000", shadowOpacity: 0, shadowRadius: 2, shadowOffset: { width: 0, height: 1 },
     height:39,
   },
   tabItem: { flex: 1, alignItems: "center", justifyContent: "center" },
