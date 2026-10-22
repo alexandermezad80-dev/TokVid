@@ -3,6 +3,7 @@ import {useVideoSaveCount} from "../hooks/useVideoSaveCount";
 import { useRegistration } from "../context/RegistrationContext";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Path } from "react-native-svg";
 import * as Haptics from "expo-haptics";
 import React, { useEffect, useRef } from "react";
 import {
@@ -98,7 +99,7 @@ export default function VideoActions({
   };
 
   return (
-    <View style={[styles.container,{paddingBottom:tabBarHeight+16}]}>
+    <View style={[styles.container,{paddingBottom:tabBarHeight+52}]}>
       <View style={[styles.action, styles.profileAction]}>
         <TouchableOpacity
           onPress={onAvatarPress}
@@ -116,15 +117,15 @@ export default function VideoActions({
             accessibilityRole="button"
             accessibilityLabel="Seguir creador"
             accessibilityState={{ disabled: followPending }}
-            style={{position:"absolute",bottom:-6,alignSelf:"center",opacity:followPending ? 0.5 : 1}}
+            style={{position:"absolute",bottom:-10,alignSelf:"center",opacity:followPending ? 0.5 : 1}}
           >
             <LinearGradient
-              colors={["#00F2FE", "#FE0979"]}
+              colors={["#3F6486", "#6F9CC4"]}
               start={{ x: 0, y: 0.5 }}
               end={{ x: 1, y: 0.5 }}
               style={styles.followPlus}
             >
-              <MaterialCommunityIcons name="plus" size={16} color="#fff" />
+              <MaterialCommunityIcons name="plus" size={14} color="#fff" />
             </LinearGradient>
           </TouchableOpacity>
         ) : null}
@@ -132,7 +133,7 @@ export default function VideoActions({
 
       <TouchableOpacity onPress={isGuest ? onLike : handleLike} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Me gusta">
         <Animated.View style={{ transform: [{ scale: heartScale }] }}>
-          <Feather name="heart" size={28} color={isLiked && !isGuest ? "#FF304F" : "#fff"} />
+          {isLiked && !isGuest ? <MaterialCommunityIcons name="heart" size={28} color="#FE0979"/> : <Feather name="heart" size={28} color="#fff"/>}
         </Animated.View>
         <Text style={styles.count}>{likes}</Text>
       </TouchableOpacity>
@@ -142,18 +143,28 @@ export default function VideoActions({
         <Text style={styles.count}>{comments}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={isGuest ? onShare : handleShare} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Compartir">
-        <Animated.View style={{ transform: [{ scale: shareScale }] }}>
-          <Feather name="share-2" size={28} color="#fff" />
-        </Animated.View>
-        <Text style={styles.count}>{liveCounts.shares===null?(/^\d/.test(shares?.trim() ?? "") ? shares : "0"):fmt(liveCounts.shares)}</Text>
-      </TouchableOpacity>
-
       <TouchableOpacity onPress={isGuest ? onSave : handleSave} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Guardar">
         <Animated.View style={{ transform: [{ scale: saveScale }] }}>
-          <Feather name="bookmark" size={28} color={isSaved && !isGuest ? "#FE0979" : "#fff"} />
+          {isSaved && !isGuest ? (
+            <Svg width={28} height={28} viewBox="0 0 24 24">
+              <Defs>
+                <SvgLinearGradient id="tokvidBookmarkBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <Stop offset="0%" stopColor="#3F6486" />
+                  <Stop offset="100%" stopColor="#6F9CC4" />
+                </SvgLinearGradient>
+              </Defs>
+              <Path d="M6 3.5A2.5 2.5 0 0 1 8.5 1h7A2.5 2.5 0 0 1 18 3.5V21l-6-4.3L6 21V3.5Z" fill="url(#tokvidBookmarkBlue)" stroke="#DCEFF7" strokeWidth={0.35} strokeLinejoin="round"/>
+            </Svg>
+          ) : <Feather name="bookmark" size={28} color="#fff"/>}
         </Animated.View>
         <Text style={styles.count}>{saves>=1000?`${(saves/1000).toFixed(1)}K`:saves}</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={isGuest ? onShare : handleShare} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Compartir">
+        <Animated.View style={{ transform: [{ scale: shareScale }] }}>
+          <Feather name="corner-up-right" size={28} color="#fff" />
+        </Animated.View>
+        <Text style={styles.count}>{liveCounts.shares===null?(/^\d/.test(shares?.trim() ?? "") ? shares : "0"):fmt(liveCounts.shares)}</Text>
       </TouchableOpacity>
 
 
@@ -166,7 +177,7 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
     paddingRight: 12,
     alignItems: "center",
-    gap: 10,
+    gap: 6,
   },
   action: {
     width:52,minHeight:48,
@@ -183,9 +194,9 @@ const styles = StyleSheet.create({
   },
   profileAction: { marginBottom: 6,height:48 },
   followPlus: {
-    width: 26,
-    height: 20,
-    borderRadius: 10,
+    width: 24,
+    height: 18,
+    borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
     marginTop: -2,

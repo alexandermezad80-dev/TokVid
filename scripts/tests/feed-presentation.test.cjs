@@ -58,7 +58,7 @@ test('the authenticated creator + follows only other unfollowed users and is dis
   const Actions = component('components/VideoActions.tsx', {
     react: { ...rt.hooks, createElement: element }, 'react-native': { ...native, Animated: { Value: class {}, View: 'AnimatedView', timing: animation, sequence: animation, loop: animation } },
     './reference/BrandAvatar':{__esModule:true,default:'BrandAvatar'},'../hooks/useVideoSaveCount':{useVideoSaveCount:()=>({saves:3,shares:null})},
-    '../context/RegistrationContext':{useRegistration:()=>({tabBarHeight:88})},'@expo/vector-icons': { Feather: 'Feather', MaterialCommunityIcons: 'Icon' }, 'expo-linear-gradient': { LinearGradient: 'Gradient' }, 'expo-haptics': {},
+    '../context/RegistrationContext':{useRegistration:()=>({tabBarHeight:88})},'@expo/vector-icons': { Feather: 'Feather', MaterialCommunityIcons: 'Icon' }, 'expo-linear-gradient': { LinearGradient: 'Gradient' }, 'expo-haptics': {impactAsync(){},ImpactFeedbackStyle:{Medium:'medium',Light:'light'}},'react-native-svg': {__esModule:true,default:'Svg',Defs:'Defs',LinearGradient:'SvgGradient',Stop:'Stop',Path:'Path'},
   });
   const props = { isGuest: false, isOwner: false, isFollowing: false, onFollow: () => follows++ };
   const follow = () => nodes(rt.render(() => Actions(props))).find(n => n.props?.accessibilityLabel === 'Seguir creador');
@@ -91,4 +91,34 @@ test('photo selection is retained on upload failure, saved explicitly on retry a
   assert.equal(writes, 0); assert.equal(backs, 0); assert.ok(nodes(render()).some(n => n.props?.source?.uri === 'file:///selected.jpg'));
   state.fail = false; await button('Guardar perfil').props.onPress(); assert.equal(writes, 1); assert.equal(refreshes, 1); assert.equal(backs, 1);
   state.user = null; assert.equal(render(), null);
+});
+
+test('TOKVID feed keeps actions while rendering approved heart, save, share and plus',()=>{
+  const rt=runtime(),events=[];
+  const Actions=component('components/VideoActions.tsx',{
+    react:{...rt.hooks,createElement:element},
+    'react-native':{...native,Animated:{Value:class{},View:'AnimatedView',timing:()=>({start(){}}),sequence:()=>({start(){}})}},
+    './reference/BrandAvatar':{__esModule:true,default:'BrandAvatar'},
+    '../hooks/useVideoSaveCount':{useVideoSaveCount:()=>({saves:3,shares:2})},
+    '../context/RegistrationContext':{useRegistration:()=>({tabBarHeight:74})},
+    '@expo/vector-icons':{Feather:'Feather',MaterialCommunityIcons:'Icon'},
+    'expo-linear-gradient':{LinearGradient:'Gradient'},
+    'expo-haptics':{impactAsync(){},ImpactFeedbackStyle:{Medium:'medium',Light:'light'}},
+    'react-native-svg':{__esModule:true,default:'Svg',Defs:'Defs',LinearGradient:'SvgGradient',Stop:'Stop',Path:'Path'},
+  });
+  const props={isGuest:false,isOwner:false,isFollowing:false,isLiked:true,isSaved:true,creatorAvatar:'https://example.test/avatar.png',
+    onLike:()=>events.push('like'),onComment:()=>events.push('comment'),onShare:()=>events.push('share'),
+    onSave:()=>events.push('save'),onAvatarPress:()=>events.push('avatar'),onFollow:()=>events.push('follow')};
+  const tree=rt.render(()=>Actions(props)),buttons=nodes(tree).filter(n=>n.props?.accessibilityRole==='button');
+  assert.deepEqual(buttons.map(n=>n.props.accessibilityLabel),['Perfil del creador','Seguir creador','Me gusta','Comentarios','Guardar','Compartir']);
+  assert.ok(nodes(tree).some(n=>n.type==='Icon'&&n.props.name==='heart'&&n.props.color==='#FE0979'));
+  assert.ok(nodes(tree).some(n=>n.type==='Feather'&&n.props.name==='corner-up-right'));
+  assert.ok(nodes(tree).some(n=>n.type==='SvgGradient'));
+  assert.deepEqual(nodes(tree).filter(n=>n.type==='Stop').map(n=>n.props.stopColor),['#3F6486','#6F9CC4']);
+  assert.equal(buttons[1].props.style.bottom,-10);
+  assert.equal(nodes(tree).find(n=>n.type==='Gradient').props.colors[0],'#3F6486');
+  assert.equal(tree.props.style[1].paddingBottom,126);
+  assert.equal(tree.props.style[0].gap,6);
+  buttons.filter(n=>n.props.accessibilityLabel!=='Seguir creador').forEach(b=>b.props.onPress());
+  assert.deepEqual(events,['avatar','like','comment','save','share']);
 });
