@@ -155,7 +155,7 @@ test('visited profile keeps its footer below a flexible body during loading, fai
     sc.props.onScroll({nativeEvent:{contentOffset:{y:180}}});
     const scPinned=nodes(r.render(r.load('app/user-profile.tsx').default)).find(n=>n.type==='ScrollView');
     assert.equal(flat(scPinned.props.children.flat().filter(Boolean)[1].props.style).shadowOpacity,0.05);
-    assert.ok(nodes(pinnedTree).some(n=>n.type==='ProfilePullRefresh'));
+    assert.ok(nodes(r.render(r.load('app/user-profile.tsx').default)).some(n=>n.type==='ProfilePullRefresh'));
     all.find(n=>n.type==='TouchableOpacity'&&nodes(n).some(c=>c.type==='PublicationThumbnail')).props.onPress();assert.deepEqual(r.calls.at(-1),['push',{pathname:'/publication',params:{id:'video-one'}}]);
     all.find(n=>n.type==='TouchableOpacity'&&nodes(n).some(c=>c.type==='Text'&&[c.props.children].flat().includes('Mensajes'))).props.onPress();
     await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(r.calls.at(-1),['push','/chat?conversationId=conversation&otherUserId=other&otherUsername=Alexander&otherAvatar=photo']);
