@@ -50,7 +50,7 @@ export default function CallHistoryScreen() {
     <View style={[styles.container, { paddingBottom: insets.bottom }]}>
       <HeaderSurface safeTop style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.back}>
-          <Feather name="arrow-left" size={24} color="#fff" />
+          <Feather name="arrow-left" size={24} color="#0B0B0D" />
         </TouchableOpacity>
         <Text style={styles.title}>Historial de llamadas</Text>
       </HeaderSurface>

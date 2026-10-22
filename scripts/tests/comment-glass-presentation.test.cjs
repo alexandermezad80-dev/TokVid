@@ -13,11 +13,11 @@ vm.runInNewContext(js, { exports: moduleExports });
 const geometry = moduleExports.commentsGlassGeometry;
 const reference = (more = {}) => geometry({ fullHeight: 802, availableHeight: 802, sheetTop: 325, safeBottom: 24, keyboardVisible: false, ...more });
 
-test('closed editor ends 12dp above measured gesture area', () => {
+test('closed editor ends 8dp above measured gesture area', () => {
   const a = reference();
   assert.equal(a.headerHeight, 56);
-  assert.equal(a.composerTop, 715.5);
-  assert.equal(a.composerHeight, 62.5);
+  assert.equal(a.composerTop, 719.5);
+  assert.equal(a.composerHeight, 58.5);
 });
 test('open keyboard: glass runs y325 to y471.5 and composer follows header', () => {
   const a = reference({ keyboardVisible: true, availableHeight: 471.5 });
@@ -45,16 +45,16 @@ test('three-button navigation reserves its measured inset with compact bottom cl
   const a = reference({ safeBottom: 42 });
   assert.equal(a.closedBottom, 760);
   assert.equal(a.closedSheetHeight, 435);
-  assert.equal(a.composerTop, 697.5);
-  assert.equal(a.composerHeight, 62.5);
-  assert.equal(a.composerTop + 12.5, 710);
-  assert.equal(a.composerTop + 12.5 + 38, 748);
+  assert.equal(a.composerTop, 701.5);
+  assert.equal(a.composerHeight, 58.5);
+  assert.equal(a.composerTop + 12.5, 714);
+  assert.equal(a.composerTop + 12.5 + 38, 752);
   assert.equal(reference({ safeBottom: 42, availableHeight: 471.5, keyboardVisible: true }).composerHeight, 90.5);
 });
 test('already inset modal never subtracts the system navigation bar twice', () => {
   const a = reference({ fullHeight: 736, screenHeight: 802, viewportTop: 24, sheetTop: 301, safeBottom: 42 });
   assert.equal(a.closedBottom + 24, 760);
-  assert.equal(a.composerTop + 24, 697.5);
+  assert.equal(a.composerTop + 24, 701.5);
 });
 test('measured navigation bar heights keep the field entirely above system controls', () => {
   for (const safeBottom of [0, 16, 24, 34, 42, 48, 60]) {

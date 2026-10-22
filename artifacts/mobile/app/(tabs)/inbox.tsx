@@ -265,9 +265,9 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     paddingHorizontal: 16, marginBottom: 16,
   },
-  pageTitle: { fontFamily: "Inter_500Medium", flex:1,color: "#fff", fontSize: 22, fontWeight: "normal" },
+  pageTitle: { fontFamily: "Inter_500Medium", flex:1,color: v.ink, fontSize: 22, fontWeight: "normal" },
   markAllBtn: { paddingVertical: 6, paddingHorizontal: 12 },
-  markAllText: { fontFamily: "Inter_500Medium", color: "#FFFFFF", fontSize: 14, fontWeight: "normal" },
+  markAllText: { fontFamily: "Inter_500Medium", color: v.ink, fontSize: 14, fontWeight: "normal" },
   tabs: {
     backgroundColor:v.white,marginTop:0,paddingTop:10,minHeight:44,
     flexDirection: "row",

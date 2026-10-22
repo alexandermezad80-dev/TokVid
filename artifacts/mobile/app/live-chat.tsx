@@ -26,6 +26,6 @@ export default function LiveChatScreen() {
     return null;
   }
 
-  return <View style={{flex:1,backgroundColor:palette.header[0],paddingTop:insets.top,paddingBottom:insets.bottom}}><StatusBar style="light"/><LiveChat roomId={roomId} userId={user.id} onClose={() => router.back()} /></View>;
+  return <View style={{flex:1,backgroundColor:palette.header[0],paddingTop:insets.top,paddingBottom:insets.bottom}}><StatusBar style="dark"/><LiveChat roomId={roomId} userId={user.id} onClose={() => router.back()} /></View>;
 }
 

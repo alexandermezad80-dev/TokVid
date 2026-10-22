@@ -8,8 +8,8 @@ export function commentsGlassGeometry({
   screenHeight?: number; viewportTop?: number; scale?: number;
 }) {
   const headerHeight = 56 * scale;
-  const closedComposerHeight = 62.5 * scale;
-  // Always reserve the measured system inset; the field ends 12dp above it.
+  const closedComposerHeight = 58.5 * scale;
+  // Always reserve the measured system inset; the field ends 8dp above it.
   const systemBottom = Math.max(0, safeBottom);
   // A Modal may already exclude system bars; do not subtract them twice.
   const closedBottom = Math.max(0, Math.min(fullHeight, screenHeight - viewportTop - systemBottom));

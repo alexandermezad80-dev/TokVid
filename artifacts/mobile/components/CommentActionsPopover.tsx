@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   sheet: { position: "absolute", left: 0, right: 0, bottom: 0, paddingTop: 18, backgroundColor: "#F5F5F5", borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "hidden" },
   content: { gap: 12 }, group: { backgroundColor: "#FFFFFF", borderRadius: 18, overflow: "hidden" },
   action: { minHeight: 51, paddingVertical: 13, paddingHorizontal: 18, flexDirection: "row", alignItems: "center", gap: 16 },
-  label: { color: "#131313", fontSize: 17, lineHeight: 25, flex: 1 },
+  label: { fontFamily: "Inter_300Light", color: "#131313", fontSize: 15, lineHeight: 25, flex: 1 },
   pressed: { backgroundColor: "#F0EFEC" }, disabled: { opacity: 0.45 },
   separator: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: "#E5E5E5" },
 });

@@ -167,7 +167,7 @@ export default function ShareLive() {
     <View style={[styles.container, { paddingBottom: insets.bottom }]}>
       <HeaderSurface safeTop style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.iconButton}>
-          <Feather name="arrow-left" size={23} color="#fff" />
+          <Feather name="arrow-left" size={23} color="#0B0B0D" />
         </TouchableOpacity>
         <View style={styles.headerCopy}>
           <Text style={styles.title}>Compartir Live</Text>

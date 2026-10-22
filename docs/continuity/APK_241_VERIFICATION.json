@@ -1,0 +1,18 @@
+{
+  "apk_number": 241,
+  "branch": "feature/feed-mini-video-avatar",
+  "code_commit": "70d2c828e054bcf552633480be7b4d1e92d3527e",
+  "tree": "188dbc0e3867188cbb46941e3d58d8c69417ff7d",
+  "run_id": 39605038448,
+  "run_url": "https://github.com/alexandermezad80-dev/TokVid/actions/runs/39605038448",
+  "apk_artifact_id": 12348508340,
+  "source_map_artifact_id": 12348774084,
+  "apk_sha256": "d96c62a64e45598e81440f05035777fde19d36dadd51d2fce8e191ce0c3c179a",
+  "build": "success",
+  "ci_tests_passed": 196,
+  "ci_tests_failed": 0,
+  "typecheck": "passed",
+  "prebuild": "passed",
+  "physical_device_verified": false,
+  "user_review": "Partial visual acceptance; requested focused refinements. Do not claim full functional approval."
+}

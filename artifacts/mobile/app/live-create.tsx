@@ -35,7 +35,7 @@ export default function LiveCreateScreen() {
 
   return (
     <View style={styles.container}>
-      <HeaderSurface safeTop style={styles.header}><Pressable onPress={() => router.back()} style={styles.back}><Feather name="arrow-left" size={23} color="#fff" /></Pressable><View><Text style={styles.title}>Crear LIVE</Text><Text style={styles.subtitle}>Inicia una transmisión en vivo</Text></View></HeaderSurface>
+      <HeaderSurface safeTop style={styles.header}><Pressable onPress={() => router.back()} style={styles.back}><Feather name="arrow-left" size={23} color="#0B0B0D" /></Pressable><View><Text style={styles.title}>Crear LIVE</Text><Text style={styles.subtitle}>Inicia una transmisión en vivo</Text></View></HeaderSurface>
       <View style={styles.body}>
         <View style={styles.hero}><View style={styles.heroIcon}><Feather name="radio" size={34} color="#fff" /></View><Text style={styles.heroTitle}>Tu LIVE empieza aquí</Text><Text style={styles.heroText}>Elige quién puede participar y luego entrarás directamente a tu sala.</Text></View>
         <Text style={styles.sectionTitle}>Tipo de LIVE</Text>

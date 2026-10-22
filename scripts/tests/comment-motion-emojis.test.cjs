@@ -17,10 +17,10 @@ test('every animation frame follows IME without changing sheet origin or leaving
     assert.ok(a.bodyHeight>=0&&a.composerHeight>=0); assert.equal(a.bottom,expected);
   }
 });
-test('reference endpoints keep header56, composer62.5/117.5 and aligned tools without dead space',()=>{
+test('reference endpoints keep header56, composer58.5/117.5 and aligned tools without dead space',()=>{
  const args={sheetTop:298,closedBottom:802,screenHeight:802,viewportTop:0};
  const closed=motion({...args,keyboardHeight:0,progress:0}),open=motion({...args,keyboardHeight:330.5,progress:1});
- assert.equal(closed.composerHeight,62.5); assert.equal(closed.composerTop+298,739.5);
+ assert.equal(closed.composerHeight,58.5); assert.equal(closed.composerTop+298,743.5);
  assert.equal(open.composerHeight,117.5); assert.equal(open.composerTop,56); assert.equal(open.bodyHeight,0);
  assert.equal(298+open.composerTop+6+18+10+36+14+24+9.5,471.5);
 });

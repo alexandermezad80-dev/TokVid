@@ -97,10 +97,11 @@ export default function ProfileScreen() {
   return (
     <View style={styles.container}>
       <ReferenceHeader variant="profile">
-        <TouchableOpacity style={styles.menuBtn} onPress={()=>router.push("/user-tools")} accessibilityLabel="Herramientas de usuario"><Feather name="menu" size={24} color="#FFF"/></TouchableOpacity>
-        <TouchableOpacity style={styles.menuBtn} onPress={()=>router.push({pathname:"/(tabs)/friends",params:{tab:"friends"}})} accessibilityLabel="Amigos"><Feather name="users" size={22} color="#FFF"/></TouchableOpacity>
-        <View style={{flex:1}}/><TouchableOpacity style={styles.menuBtn} onPress={()=>router.push("/edit-profile")} accessibilityLabel="Información de perfil"><Feather name="more-horizontal" size={24} color="#FFF"/></TouchableOpacity>
+        <TouchableOpacity style={styles.menuBtn} onPress={()=>router.push("/user-tools")} accessibilityLabel="Herramientas de usuario"><Feather name="menu" size={24} color="#0B0B0D"/></TouchableOpacity>
+        <TouchableOpacity style={styles.menuBtn} onPress={()=>router.push({pathname:"/(tabs)/friends",params:{tab:"friends"}})} accessibilityLabel="Amigos"><Feather name="users" size={22} color="#0B0B0D"/></TouchableOpacity>
+        <View style={{flex:1}}/><TouchableOpacity style={styles.menuBtn} onPress={()=>router.push("/edit-profile")} accessibilityLabel="Información de perfil"><Feather name="more-horizontal" size={24} color="#0B0B0D"/></TouchableOpacity>
       </ReferenceHeader>
+      <ScrollView style={{flex:1}} stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false}>
       <View style={styles.profileSection}>
         <View style={{width:90,gap:8}}>
           <TouchableOpacity style={styles.avatarWrap} onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})} accessibilityLabel="Ver mis historias">
@@ -125,7 +126,6 @@ export default function ProfileScreen() {
       <View style={styles.tabBar}>{([
         {key:"videos",icon:"grid",label:"Videos"},{key:"stories",icon:"clock",label:"Historias"},{key:"gallery",icon:"image",label:"Galería"},{key:"liked",icon:"heart",label:"Me gusta"},{key:"saved",icon:"bookmark",label:"Guardados"},{key:"more",icon:"more-horizontal",label:"Más"},
       ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>item.key==="more"?router.push("/user-tools"):setTab(item.key)} style={[styles.tabItem,tab===item.key&&styles.tabItemActive]}><Feather name={item.icon} size={22} color={tab===item.key?v.ink:v.inactive}/></TouchableOpacity>)}</View>
-      <ScrollView style={{flex:1}} showsVerticalScrollIndicator={false}>
       {tab==="stories"?<View style={styles.emptyState}><TouchableOpacity onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})}><Text style={styles.emptyTitle}>Ver mis historias</Text></TouchableOpacity><TouchableOpacity onPress={()=>router.push("/story-create")}><Text style={styles.bioMore}>Añadir historia</Text></TouchableOpacity></View>:
       tab === "saved" ? (
         savedVideos.length === 0 ? (
@@ -263,9 +263,8 @@ const styles = StyleSheet.create({
   tabBar: {
     backgroundColor:v.white,
     flexDirection: "row",
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: v.ink,
+    zIndex: 1, elevation: 1,
+    shadowColor: "#000000", shadowOpacity: 0.07, shadowRadius: 2, shadowOffset: { width: 0, height: 1 },
     height:39,
   },
   tabItem: { flex: 1, alignItems: "center", justifyContent: "center" },

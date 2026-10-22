@@ -218,7 +218,7 @@ export default function FriendsScreen() {
     <View style={styles.container}>
       <HeaderSurface safeTop style={[styles.header, { height:insets.top+52 }]}>
         <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
-          <Feather name="arrow-left" size={22} color="#fff" />
+          <Feather name="arrow-left" size={22} color="#0B0B0D" />
         </TouchableOpacity>
         <View style={styles.headerTitleWrap}>
           <Text style={styles.headerTitle}>{tab==="friends"?"Amigos":tab==="followers"?"Seguidores":"Siguiendo"}</Text>

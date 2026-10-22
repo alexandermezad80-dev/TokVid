@@ -7,7 +7,7 @@ export function commentSheetMotion({ sheetTop, closedBottom, screenHeight, viewp
   const p = Math.max(0, Math.min(1, progress));
   const headerHeight = 56 * scale;
   const bottom = Math.max(sheetTop, Math.min(closedBottom, screenHeight - viewportTop - Math.max(0, keyboardHeight)));
-  const composerHeight = Math.min((62.5 + 55 * p) * scale, Math.max(0, bottom - sheetTop - headerHeight));
+  const composerHeight = Math.min((58.5 + 59 * p) * scale, Math.max(0, bottom - sheetTop - headerHeight));
   const composerTop = Math.max(headerHeight, bottom - sheetTop - composerHeight);
   return { composerTop, composerHeight, bodyHeight: Math.max(0, composerTop - headerHeight), bottom, progress: p };
 }

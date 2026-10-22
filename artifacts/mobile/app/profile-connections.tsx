@@ -65,7 +65,7 @@ export default function ProfileConnections() {
   };
 
   return <View style={{flex: 1, backgroundColor: '#FFF', paddingBottom: insets.bottom}}>
-    <ReferenceHeader title="Amigos y seguidores" left={<Pressable style={s.back} accessibilityLabel="Volver" onPress={() => router.back()}><Feather name="arrow-left" size={24} color="#FFF"/></Pressable>}/>
+    <ReferenceHeader title="Amigos y seguidores" left={<Pressable style={s.back} accessibilityLabel="Volver" onPress={() => router.back()}><Feather name="arrow-left" size={24} color="#0B0B0D"/></Pressable>}/>
     <View style={s.tabs}>{connectionTabs.map(tab => <Pressable style={s.tab} key={tab.key} accessibilityRole="tab" accessibilityState={{selected: kind === tab.key}} onPress={() => setKind(tab.key)}>
       <Feather name={tab.icon} size={16} color={kind === tab.key ? '#101010' : '#6B6B75'}/>
       <Text style={[s.tabText, {color: kind === tab.key ? '#101010' : '#6B6B75'}]}>{tab.label}</Text>

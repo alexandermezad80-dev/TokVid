@@ -138,7 +138,7 @@ export default function StoryCreateScreen() {
           style={styles.iconButton}
           disabled={isUploading}
         >
-          <Feather name="x" size={24} color="#fff" />
+          <Feather name="x" size={24} color="#0B0B0D" />
         </TouchableOpacity>
         <Text style={styles.title}>Crear historia</Text>
         <View style={styles.iconButton} />

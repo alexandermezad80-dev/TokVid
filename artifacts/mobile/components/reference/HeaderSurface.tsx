@@ -1,6 +1,6 @@
-import React from 'react';
+import React, {useCallback, useState} from 'react';
+import {useFocusEffect} from 'expo-router';
 import {StyleSheet, View, type ViewProps} from 'react-native';
-import {LinearGradient} from 'expo-linear-gradient';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {StatusBar} from 'expo-status-bar';
 import {palette} from '../../constants/palette';
@@ -10,11 +10,12 @@ import {palette} from '../../constants/palette';
  */
 export default function HeaderSurface({children, style, safeTop=false, ...props}:ViewProps & {safeTop?:boolean}) {
   const insets=useSafeAreaInsets();
+  const [focused,setFocused]=useState(false);
+  useFocusEffect(useCallback(()=>{setFocused(true);return()=>setFocused(false);},[]));
   const layout=StyleSheet.flatten(style) ?? {};
   const top=layout.paddingTop ?? layout.paddingVertical ?? layout.padding ?? 0;
   return <View {...props} style={[style,s.shell,safeTop&&{paddingTop:insets.top+(typeof top==='number'?top:0)}]}>
-    {safeTop&&<StatusBar style="light"/>}
-    <LinearGradient pointerEvents="none" colors={palette.header} start={{x:0,y:0}} end={{x:1,y:.36}} style={StyleSheet.absoluteFill}/>
+    {safeTop&&focused&&<StatusBar style="dark"/>}
     {children}
   </View>;
 }

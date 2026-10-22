@@ -85,9 +85,9 @@ function GuestTabButton({
           </LinearGradient>
         </View>
       ) : (
-        <Feather name={icon as React.ComponentProps<typeof Feather>["name"]} size={22} color={v.inactive} />
+        <Feather name={icon as React.ComponentProps<typeof Feather>["name"]} size={21} color={v.inactive} />
       )}
-      {!create ? <Text style={styles.guestLabel}>{label}</Text> : null}
+      {!create ? <Text allowFontScaling={false} numberOfLines={1} style={styles.guestLabel}>{label}</Text> : null}
     </Pressable>
   );
 }
@@ -101,9 +101,9 @@ function ClassicTabLayout() {
   const insets = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
   const bottomInset = Math.max(insets.bottom, isWeb ? 12 : 0);
-  const barBody = 56;
+  const barBody = 50;
   const path = usePathname();
-  const light = path === "/inbox";
+  const light = path !== "/";
   const barColor = light ? "#FFFFFF" : DARK;
   const { setTabBarHeight } = useRegistration();
 
@@ -113,7 +113,8 @@ function ClassicTabLayout() {
       screenOptions={{
         tabBarLabelPosition: "below-icon",
         tabBarAllowFontScaling:false,
-        tabBarItemStyle: { minHeight: barBody, paddingVertical: 4 },
+        tabBarItemStyle: { minHeight: barBody - 1, paddingVertical: 0 },
+        tabBarIconStyle: { height: 25 },
         tabBarActiveTintColor: PRIMARY,
         tabBarInactiveTintColor: light ? v.label : v.inactive,
         headerShown: false,
@@ -129,6 +130,7 @@ function ClassicTabLayout() {
         },
         tabBarLabelStyle: { fontFamily: "Inter_500Medium",
           fontSize: 10,
+          width: "100%", textAlign: "center",
           fontWeight: "normal",
         },
         tabBarBackground: () =>
@@ -148,7 +150,7 @@ function ClassicTabLayout() {
             isIOS ? (
               <SymbolView name="house" tintColor={color} size={24} />
             ) : (
-              <Feather name="home" size={22} color={color} />
+              <Feather name="home" size={21} color={color} />
             ),
         }}
       />
@@ -161,7 +163,7 @@ function ClassicTabLayout() {
             isIOS ? (
               <SymbolView name="person.2" tintColor={color} size={24} />
             ) : (
-              <Feather name="users" size={22} color={color} />
+              <Feather name="users" size={21} color={color} />
             ),
         }}
       />
@@ -169,6 +171,7 @@ function ClassicTabLayout() {
         name="create"
         options={{
           title: "",
+          tabBarIconStyle: { height: 28 },
           tabBarButton: guest ? () => <GuestTabButton label="Crear" icon="plus" create /> : undefined,
           tabBarIcon: () => (
             <View style={styles.createBtn}><LinearGradient pointerEvents="none" colors={v.outline} start={{x:0,y:.5}} end={{x:1,y:.5}} style={StyleSheet.absoluteFill}/>
@@ -194,7 +197,7 @@ function ClassicTabLayout() {
               {isIOS ? (
                 <SymbolView name="message" tintColor={color} size={24} />
               ) : (
-                <Feather name="message-circle" size={22} color={color} />
+                <Feather name="message-circle" size={21} color={color} />
               )}
               <UnreadBadge count={unreadCount} />
             </View>
@@ -214,7 +217,7 @@ function ClassicTabLayout() {
             isIOS ? (
               <SymbolView name="person" tintColor={color} size={24} />
             ) : (
-              <Feather name="user" size={22} color={color} />
+              <Feather name="user" size={21} color={color} />
             ),
         }}
       />
@@ -237,8 +240,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 56,
-    gap: 2,
+    minHeight: 49,
+    gap: 1,
   },
   guestLabel: { fontFamily: "Inter_500Medium", color: v.inactive, fontSize: 10, fontWeight: "normal" },
   createBtn: {

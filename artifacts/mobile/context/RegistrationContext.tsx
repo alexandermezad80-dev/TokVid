@@ -23,7 +23,7 @@ export function RegistrationProvider({ children }: { children: React.ReactNode }
   const [pending, setPending] = useState<RegistrationIntent | null>(null);
   const [completed, setCompleted] = useState<RegistrationIntent | null>(null);
   const [ready, setReady] = useState(false);
-  const [tabBarHeight, setTabBarHeight] = useState(56);
+  const [tabBarHeight, setTabBarHeight] = useState(50);
   const feedContext = useRef<{ videoId: string; position: number; wasPaused: boolean } | null>(null);
   const playback = useRef<{ videoId: string; read: () => { position: number; wasPaused: boolean } } | null>(null);
   const activeRequest = useRef<string | null>(null);

@@ -1,5 +1,6 @@
 import {palette} from '../constants/palette';
 import {
+  Inter_300Light,
   Inter_400Regular,
   Inter_500Medium,
   Inter_600SemiBold,
@@ -37,7 +38,7 @@ function PushNotificationSetup() {
 function RootLayoutNav() {
   const { loading } = useAuth();
   const pathname = usePathname();
-  const darkBottom = loading || ["/", "/profile", "/friends", "/create", "/publication", "/saved-feed", "/liked-feed", "/tag"].includes(pathname);
+  const darkBottom = loading || ["/", "/publication", "/saved-feed", "/liked-feed", "/tag"].includes(pathname);
   useSystemNavigation(darkBottom ? "#000000" : "#FFFFFF", !darkBottom);
   if (loading) {
     return (
@@ -67,6 +68,7 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   useFonts({
+    Inter_300Light,
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,

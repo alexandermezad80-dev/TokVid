@@ -264,7 +264,7 @@ export default function LiveChat({ roomId, userId, onClose }: LiveChatProps) {
         </View>
         {onClose && (
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Feather name="x" size={22} color="#fff" />
+            <Feather name="x" size={22} color="#0B0B0D" />
           </TouchableOpacity>
         )}
       </HeaderSurface>

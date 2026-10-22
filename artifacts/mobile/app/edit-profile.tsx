@@ -150,7 +150,7 @@ export default function EditProfileScreen() {
       {/* Header */}
       <ReferenceHeader variant="tools">
         <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn} disabled={saving}>
-          <Feather name="arrow-left" size={24} color="#fff" />
+          <Feather name="arrow-left" size={24} color="#0B0B0D" />
         </TouchableOpacity>
       </ReferenceHeader>
 

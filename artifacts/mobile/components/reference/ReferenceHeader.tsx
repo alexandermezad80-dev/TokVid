@@ -1,7 +1,6 @@
 import React,{useCallback,useState} from 'react';
 import {useFocusEffect} from 'expo-router';
 import {StyleSheet, Text, View, type StyleProp, type ViewStyle} from 'react-native';
-import {LinearGradient} from 'expo-linear-gradient';
 import {StatusBar} from 'expo-status-bar';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {referenceHeaders, referenceVisual as v, type ReferenceHeaderVariant} from '../../constants/referenceVisual';
@@ -16,16 +15,15 @@ export default function ReferenceHeader({title,left,right,children,compact=false
   // Reference coordinates are minimums; never place a control under a taller status bar.
   return <View style={{paddingTop:Math.max(metric.top,insets.top+8),backgroundColor:v.white,zIndex:2}}>
    {focused&&<StatusBar style="dark"/>}
-   <View style={[s.row,style,{marginHorizontal:metric.margin,height:metric.height,borderRadius:metric.radius,backgroundColor:v.steel}]}>
-    {children??<>{left}{title&&<Text numberOfLines={1} style={[s.title,compact&&{ fontFamily: "Inter_400Regular",fontSize:22}]}>{title}</Text>}{right}</>}
+   <View style={[s.row,style,{marginHorizontal:metric.margin,height:metric.height,borderRadius:metric.radius,backgroundColor:v.white}]}>
+    {children??<>{left}{title&&<Text numberOfLines={1} style={[s.title,black&&{color:"#FFFFFF"},compact&&{ fontFamily: "Inter_400Regular",fontSize:22}]}>{title}</Text>}{right}</>}
    </View>
   </View>;
  }
 
- return <View style={[s.shell,{paddingTop:insets.top,backgroundColor:black?'#0B0B0D':'#5F6A74'},style]}>
-  <StatusBar style="light"/>
-  {!black&&<LinearGradient colors={colors} start={{x:0,y:0}} end={{x:1,y:.36}} style={StyleSheet.absoluteFill}/>}
-  <View style={[s.row,{minHeight:contentHeight??(compact?38:52.5)}]}>{children??<>{left}{title&&<Text numberOfLines={1} style={[s.title,compact&&{ fontFamily: "Inter_400Regular",fontSize:22}]}>{title}</Text>}{right}</>}</View>
+ return <View style={[s.shell,{paddingTop:insets.top,backgroundColor:black?'#0B0B0D':v.white},style]}>
+  {focused&&<StatusBar style={black ? "light" : "dark"}/>}
+  <View style={[s.row,{minHeight:contentHeight??(compact?38:52.5)}]}>{children??<>{left}{title&&<Text numberOfLines={1} style={[s.title,black&&{color:"#FFFFFF"},compact&&{ fontFamily: "Inter_400Regular",fontSize:22}]}>{title}</Text>}{right}</>}</View>
  </View>;
 }
-const s=StyleSheet.create({shell:{borderBottomLeftRadius:20,borderBottomRightRadius:20,overflow:'hidden',zIndex:2},row:{flexDirection:'row',alignItems:'center',paddingHorizontal:8},title:{ fontFamily: "Inter_500Medium",flex:1,color:'#FFF',fontSize:18,fontWeight:"normal"}});
+const s=StyleSheet.create({shell:{borderBottomLeftRadius:20,borderBottomRightRadius:20,overflow:'hidden',zIndex:2},row:{flexDirection:'row',alignItems:'center',paddingHorizontal:8},title:{ fontFamily: "Inter_500Medium",flex:1,color:palette.headerText,fontSize:18,fontWeight:"normal"}});
