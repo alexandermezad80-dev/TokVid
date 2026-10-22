@@ -112,13 +112,36 @@ test('TOKVID feed keeps actions while rendering approved heart, save, share and 
   const tree=rt.render(()=>Actions(props)),buttons=nodes(tree).filter(n=>n.props?.accessibilityRole==='button');
   assert.deepEqual(buttons.map(n=>n.props.accessibilityLabel),['Perfil del creador','Seguir creador','Me gusta','Comentarios','Guardar','Compartir']);
   assert.ok(nodes(tree).some(n=>n.type==='Icon'&&n.props.name==='heart'&&n.props.color==='#FE0979'));
-  assert.ok(nodes(tree).some(n=>n.type==='Feather'&&n.props.name==='corner-up-right'));
+  assert.ok(nodes(tree).some(n=>n.type==='Path'&&n.props.fill==='#FFFFFF'&&n.props.d.includes('C2.7')));
   assert.ok(nodes(tree).some(n=>n.type==='SvgGradient'));
-  assert.deepEqual(nodes(tree).filter(n=>n.type==='Stop').map(n=>n.props.stopColor),['#3F6486','#6F9CC4']);
+  assert.deepEqual(nodes(tree).filter(n=>n.type==='Stop').map(n=>n.props.stopColor),['#39C6ED','#365BD8']);
   assert.equal(buttons[1].props.style.bottom,-10);
   assert.equal(nodes(tree).find(n=>n.type==='Gradient').props.colors[0],'#3F6486');
-  assert.equal(tree.props.style[1].paddingBottom,126);
+  assert.equal(tree.props.style[1].paddingBottom,136);
   assert.equal(tree.props.style[0].gap,6);
   buttons.filter(n=>n.props.accessibilityLabel!=='Seguir creador').forEach(b=>b.props.onPress());
   assert.deepEqual(events,['avatar','like','comment','save','share']);
+});
+
+test('bookmark outline keeps identical shape and dimensions across selected states',()=>{
+ const rt=runtime(),ignored=()=>{};
+ const Actions=component('components/VideoActions.tsx',{
+  react:{...rt.hooks,createElement:element},
+  'react-native':{...native,Animated:{Value:class{},View:'AnimatedView',timing:()=>({start(){}}),sequence:()=>({start(){}})}},
+  './reference/BrandAvatar':{__esModule:true,default:'BrandAvatar'},
+  '../hooks/useVideoSaveCount':{useVideoSaveCount:()=>({saves:0,shares:0})},
+  '../context/RegistrationContext':{useRegistration:()=>({tabBarHeight:74})},
+  '@expo/vector-icons':{Feather:'Feather',MaterialCommunityIcons:'Icon'},
+  'expo-linear-gradient':{LinearGradient:'Gradient'},
+  'expo-haptics':{impactAsync(){},ImpactFeedbackStyle:{Medium:'medium',Light:'light'}},
+  'react-native-svg':{__esModule:true,default:'Svg',Defs:'Defs',LinearGradient:'SvgGradient',Stop:'Stop',Path:'Path'},
+ });
+ const props={isGuest:false,isOwner:false,isFollowing:false,isLiked:false,isSaved:false,onLike:ignored,onComment:ignored,onShare:ignored,onSave:ignored,onFollow:ignored,creatorAvatar:'photo'};
+ const inactive=rt.render(()=>Actions(props)),inactiveSave=nodes(inactive).find(n=>n.type==='Path'&&n.props.stroke==='#FFFFFF');
+ props.isSaved=true;
+ const active=rt.render(()=>Actions(props)),activeSave=nodes(active).find(n=>n.type==='Path'&&n.props.stroke==='#FFFFFF');
+ assert.equal(inactiveSave.props.d,activeSave.props.d);
+ assert.equal(inactiveSave.props.fill,'none');
+ assert.equal(activeSave.props.fill,'url(#tokvidBookmarkBlue)');
+ assert.equal(activeSave.props.strokeWidth,1.65);
 });

@@ -99,7 +99,7 @@ export default function VideoActions({
   };
 
   return (
-    <View style={[styles.container,{paddingBottom:tabBarHeight+52}]}>
+    <View style={[styles.container,{paddingBottom:tabBarHeight+62}]}>
       <View style={[styles.action, styles.profileAction]}>
         <TouchableOpacity
           onPress={onAvatarPress}
@@ -145,24 +145,26 @@ export default function VideoActions({
 
       <TouchableOpacity onPress={isGuest ? onSave : handleSave} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Guardar">
         <Animated.View style={{ transform: [{ scale: saveScale }] }}>
-          {isSaved && !isGuest ? (
-            <Svg width={28} height={28} viewBox="0 0 24 24">
-              <Defs>
-                <SvgLinearGradient id="tokvidBookmarkBlue" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <Stop offset="0%" stopColor="#3F6486" />
-                  <Stop offset="100%" stopColor="#6F9CC4" />
-                </SvgLinearGradient>
-              </Defs>
-              <Path d="M6 3.5A2.5 2.5 0 0 1 8.5 1h7A2.5 2.5 0 0 1 18 3.5V21l-6-4.3L6 21V3.5Z" fill="url(#tokvidBookmarkBlue)" stroke="#DCEFF7" strokeWidth={0.35} strokeLinejoin="round"/>
-            </Svg>
-          ) : <Feather name="bookmark" size={28} color="#fff"/>}
+          <Svg width={28} height={28} viewBox="0 0 24 24">
+            <Defs>
+              <SvgLinearGradient id="tokvidBookmarkBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+                <Stop offset="0%" stopColor="#39C6ED" />
+                <Stop offset="100%" stopColor="#365BD8" />
+              </SvgLinearGradient>
+            </Defs>
+            <Path d="M6.3 2.3H17.7Q19.4 2.3 19.4 4V21L12 16.5L4.6 21V4Q4.6 2.3 6.3 2.3Z"
+              fill={isSaved && !isGuest ? "url(#tokvidBookmarkBlue)" : "none"}
+              stroke="#FFFFFF" strokeWidth={1.65} strokeLinejoin="round" strokeLinecap="round"/>
+          </Svg>
         </Animated.View>
         <Text style={styles.count}>{saves>=1000?`${(saves/1000).toFixed(1)}K`:saves}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={isGuest ? onShare : handleShare} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Compartir">
         <Animated.View style={{ transform: [{ scale: shareScale }] }}>
-          <Feather name="corner-up-right" size={28} color="#fff" />
+          <Svg width={28} height={28} viewBox="0 0 24 24">
+            <Path d="M2.2 21 C2.7 13.6 8.4 9.4 16.0 9.4 L16 5 L23 11.5 L16 17.3 L16 13.8 C9.4 13.8 5.5 16.2 2.2 21 Z" fill="#FFFFFF"/>
+          </Svg>
         </Animated.View>
         <Text style={styles.count}>{liveCounts.shares===null?(/^\d/.test(shares?.trim() ?? "") ? shares : "0"):fmt(liveCounts.shares)}</Text>
       </TouchableOpacity>
@@ -192,11 +194,13 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
-  profileAction: { marginBottom: 6,height:48 },
+  profileAction: { marginBottom: 20,height:48 },
   followPlus: {
-    width: 24,
-    height: 18,
-    borderRadius: 9,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderColor: "#E1F9FE",
+    borderWidth: 1.3,
     alignItems: "center",
     justifyContent: "center",
     marginTop: -2,
