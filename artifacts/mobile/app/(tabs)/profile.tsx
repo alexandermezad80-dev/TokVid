@@ -152,7 +152,7 @@ export default function ProfileScreen() {
           {!!connections.error&&<TouchableOpacity onPress={()=>void connections.refresh()}><Text style={{ fontFamily: "Inter_400Regular",color:"#D32F3F",fontSize:12}}>{connections.error}</Text></TouchableOpacity>}
         </View>
       </View>
-      <View style={[styles.tabBar,{width,elevation:filtersPinned?1:0,shadowOpacity:filtersPinned?0.05:0}]]}>{([
+      <View style={[styles.tabBar,{width,elevation:filtersPinned?1:0,shadowOpacity:filtersPinned?0.05:0}]}>{([
         {key:"videos",icon:"grid",label:"Videos"},{key:"stories",icon:"clock",label:"Historias"},{key:"gallery",icon:"image",label:"Galería"},{key:"liked",icon:"heart",label:"Me gusta"},{key:"saved",icon:"bookmark",label:"Guardados"},{key:"more",icon:"more-horizontal",label:"Más"},
       ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>item.key==="more"?router.push("/user-tools"):setTab(item.key)} style={[styles.tabItem,{width:width/6,flex:0},tab===item.key&&styles.tabItemActive]}><Feather name={item.icon} size={22} color={tab===item.key?v.ink:v.inactive}/></TouchableOpacity>)}</View>
       {tab==="stories"?<View style={styles.emptyState}><TouchableOpacity onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})}><Text style={styles.emptyTitle}>Ver mis historias</Text></TouchableOpacity><TouchableOpacity onPress={()=>router.push("/story-create")}><Text style={styles.bioMore}>Añadir historia</Text></TouchableOpacity></View>:
