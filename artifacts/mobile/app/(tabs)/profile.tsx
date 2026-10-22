@@ -1,4 +1,5 @@
 import ReferenceHeader from "../../components/reference/ReferenceHeader";
+import ProfilePullRefresh from "../../components/ProfilePullRefresh";
 import BrandOutline from "../../components/reference/BrandOutline";
 import {referenceVisual as v} from "../../constants/referenceVisual";
 import {LinearGradient} from "expo-linear-gradient";
@@ -21,7 +22,6 @@ import {
   Image,
   Platform,
   ScrollView,
-  RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -50,6 +50,7 @@ export default function ProfileScreen() {
   const [filtersPinned,setFiltersPinned]=useState(false);
   const [refreshing,setRefreshing]=useState(false);
   const refreshGuard=useRef(false);
+  const scrollOffsetRef=useRef(0);
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const { user, profile, signOut, refreshProfile } = useAuth();
@@ -122,10 +123,12 @@ export default function ProfileScreen() {
         <TouchableOpacity style={styles.menuBtn} onPress={()=>router.push({pathname:"/(tabs)/friends",params:{tab:"friends"}})} accessibilityLabel="Amigos"><Feather name="users" size={22} color="#0B0B0D"/></TouchableOpacity>
         <View style={{flex:1}}/><TouchableOpacity style={styles.menuBtn} onPress={()=>router.push("/edit-profile")} accessibilityLabel="Información de perfil"><Feather name="more-horizontal" size={24} color="#0B0B0D"/></TouchableOpacity>
       </ReferenceHeader>
-      <ScrollView style={{flex:1}} stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#4B7194"]} tintColor="#4B7194"/>}
+      <ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh}>
+  <ScrollView style={{flex:1}} stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false} overScrollMode="never"
+        
         scrollEventThrottle={16}
         onScroll={event=>{
+      scrollOffsetRef.current=Math.max(0,event.nativeEvent.contentOffset.y);
           const pinned=event.nativeEvent.contentOffset.y>=Math.max(1,profileSectionHeight-1);
           setFiltersPinned(current=>current===pinned?current:pinned);
         }}
@@ -152,9 +155,11 @@ export default function ProfileScreen() {
           {!!connections.error&&<TouchableOpacity onPress={()=>void connections.refresh()}><Text style={{ fontFamily: "Inter_400Regular",color:"#D32F3F",fontSize:12}}>{connections.error}</Text></TouchableOpacity>}
         </View>
       </View>
-      <View style={[styles.tabBar,{width,elevation:filtersPinned?1:0,shadowOpacity:filtersPinned?0.05:0}]}>{([
+      <View style={[styles.stickySlot,{width,elevation:filtersPinned?1:0,shadowOpacity:filtersPinned?0.05:0}]}>
+  <View style={styles.tabBar}>{([
         {key:"videos",icon:"grid",label:"Videos"},{key:"stories",icon:"clock",label:"Historias"},{key:"gallery",icon:"image",label:"Galería"},{key:"liked",icon:"heart",label:"Me gusta"},{key:"saved",icon:"bookmark",label:"Guardados"},{key:"more",icon:"more-horizontal",label:"Más"},
       ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>item.key==="more"?router.push("/user-tools"):setTab(item.key)} style={[styles.tabItem,{width:width/6,flex:0},tab===item.key&&styles.tabItemActive]}><Feather name={item.icon} size={22} color={tab===item.key?v.ink:v.inactive}/></TouchableOpacity>)}</View>
+  </View>
       {tab==="stories"?<View style={styles.emptyState}><TouchableOpacity onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})}><Text style={styles.emptyTitle}>Ver mis historias</Text></TouchableOpacity><TouchableOpacity onPress={()=>router.push("/story-create")}><Text style={styles.bioMore}>Añadir historia</Text></TouchableOpacity></View>:
       tab === "saved" ? (
         savedVideos.length === 0 ? (
@@ -218,6 +223,7 @@ export default function ProfileScreen() {
 
       <View style={{ height: Platform.OS === "web" ? 34 : insets.bottom + 80 }} />
       </ScrollView>
+      </ProfilePullRefresh>
 
     </View>
   );
@@ -289,14 +295,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
   },
-  tabBar: {
-    backgroundColor:v.white,
-    flexDirection: "row",
-    width: "100%",
-    zIndex: 1, elevation: 0,
-    shadowColor: "#000000", shadowOpacity: 0, shadowRadius: 2, shadowOffset: { width: 0, height: 1 },
-    height:39,
-  },
+  stickySlot:{width:"100%",height:39,backgroundColor:v.white,zIndex:1,elevation:0,shadowColor:"#000000",shadowOpacity:0,shadowRadius:2,shadowOffset:{width:0,height:1}},
+  tabBar:{backgroundColor:v.white,flexDirection:"row",width:"100%",height:39},
   tabItem: { flex: 1, alignItems: "center", justifyContent: "center" },
   tabItemActive: {},
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 2, paddingHorizontal: 0, paddingVertical: 2 },

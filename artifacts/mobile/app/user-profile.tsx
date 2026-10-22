@@ -1,5 +1,6 @@
 import ProfileTabBar from "../components/ProfileTabBar";
 import ReferenceHeader from "../components/reference/ReferenceHeader";
+import ProfilePullRefresh from "../components/ProfilePullRefresh";
 import BrandOutline from "../components/reference/BrandOutline";
 import {referenceVisual as v} from "../constants/referenceVisual";
 import {LinearGradient} from "expo-linear-gradient";
@@ -22,7 +23,6 @@ import {
   Image,
   Platform,
   ScrollView,
-  RefreshControl,
   useWindowDimensions,
   StyleSheet,
   Text,
@@ -121,6 +121,7 @@ export default function UserProfileScreen() {
   const [filtersPinned,setFiltersPinned]=useState(false);
   const [refreshing,setRefreshing]=useState(false);
   const refreshGuard=useRef(false);
+  const scrollOffsetRef=useRef(0);
 
   const openChat = async () => {
     if (!user || !userId || !profile) return;
@@ -178,10 +179,12 @@ export default function UserProfileScreen() {
   return <View onLayout={gridLayout.onLayout} style={styles.container}>
    <ReferenceHeader variant="profile"><TouchableOpacity style={styles.backBtn} onPress={()=>router.back()} accessibilityLabel="Volver"><Feather name="arrow-left" size={24} color="#0B0B0D"/></TouchableOpacity><TouchableOpacity style={styles.backBtn} onPress={()=>connections('friends')} accessibilityLabel="Amigos y seguidores"><Feather name="users" size={22} color="#0B0B0D"/></TouchableOpacity><View style={{flex:1}}/></ReferenceHeader>
    <View testID="visited-profile-body" style={{flex:1,minHeight:0}}>
-   {loading?<View style={[styles.center,{flex:1}]}><ActivityIndicator color="#2F9A9F"/></View>:!profile?<View style={[styles.center,{flex:1}]}><Text style={styles.gridStateTitle}>Usuario no encontrado</Text></View>:<ScrollView style={{flex:1}} stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#4B7194"]} tintColor="#4B7194"/>}
+   {loading?<View style={[styles.center,{flex:1}]}><ActivityIndicator color="#2F9A9F"/></View>:!profile?<View style={[styles.center,{flex:1}]}><Text style={styles.gridStateTitle}>Usuario no encontrado</Text></View>:<ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh}>
+  <ScrollView style={{flex:1}} stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false} overScrollMode="never"
+      
       scrollEventThrottle={16}
       onScroll={event=>{
+      scrollOffsetRef.current=Math.max(0,event.nativeEvent.contentOffset.y);
         const pinned=event.nativeEvent.contentOffset.y>=Math.max(1,profileSectionHeight-1);
         setFiltersPinned(current=>current===pinned?current:pinned);
       }}
@@ -197,15 +200,18 @@ export default function UserProfileScreen() {
       {!!profile.bio&&<><Text onPress={()=>setExpanded(true)} accessibilityRole="button" accessibilityState={{expanded}} accessibilityLabel="Biografía" numberOfLines={expanded?undefined:3} style={styles.bio}>{profile.bio}</Text>{expanded&&<TouchableOpacity onPress={()=>setExpanded(false)}><Text style={styles.more}>Ver menos</Text></TouchableOpacity>}</>}
      </View>
     </View>
-    <View style={[styles.tabBar,{width,elevation:filtersPinned?1:0,shadowOpacity:filtersPinned?0.05:0}]}>{shownTabs.map(t=><TouchableOpacity key={t} onPress={()=>setTab(t)} accessibilityLabel={t==='videos'?'Publicaciones':t==='liked'?'Me gusta':'Compartidos'} accessibilityState={{selected:tab===t}} style={[styles.tabItem,{width:width/shownTabs.length,flex:0},tab===t&&styles.tabItemActive]}><Feather name={t==='videos'?'grid':t==='liked'?'heart':'share-2'} size={22} color={tab===t?v.ink:v.inactive}/></TouchableOpacity>)}</View>
+    <View style={[styles.stickySlot,{width,elevation:filtersPinned?1:0,shadowOpacity:filtersPinned?0.05:0}]}>
+  <View style={styles.tabBar}>{shownTabs.map(t=><TouchableOpacity key={t} onPress={()=>setTab(t)} accessibilityLabel={t==='videos'?'Publicaciones':t==='liked'?'Me gusta':'Compartidos'} accessibilityState={{selected:tab===t}} style={[styles.tabItem,{width:width/shownTabs.length,flex:0},tab===t&&styles.tabItemActive]}><Feather name={t==='videos'?'grid':t==='liked'?'heart':'share-2'} size={22} color={tab===t?v.ink:v.inactive}/></TouchableOpacity>)}</View>
+  </View>
     {!!error&&<Text style={styles.gridStateText}>{error}</Text>}
     <View style={styles.grid}>{shown.map(v=><TouchableOpacity key={v.id} style={[styles.gridItem,gridLayout.tile]} onPress={()=>router.push({pathname:'/publication',params:{id:v.id}})}><PublicationThumbnail item={v}/></TouchableOpacity>)}</View>
     {isLoading?<ActivityIndicator style={{margin:24}} color="#2F9A9F"/>:!shown.length&&!error?<View style={styles.center}><Text style={styles.gridStateText}>Todavía no hay publicaciones en esta sección.</Text></View>:null}
     {(tab==='videos'?publications.hasMore:activityMore)&&<TouchableOpacity disabled={isLoading} style={{padding:20}} onPress={()=>tab==='videos'?void publications.loadMore():setActivityOffset(n=>n+60)}><Text style={[styles.gridStateText,{color:'#2F777B'}]}>Ver más</Text></TouchableOpacity>}
     <View style={{height:24}}/>
-   </ScrollView>}
+   </ScrollView>
+   </ProfilePullRefresh>}
    </View>
    <ProfileTabBar/>
   </View>;
 }
-const styles=StyleSheet.create({container:{flex:1,backgroundColor:'#FFF'},header:{backgroundColor:'#000',flexDirection:'row',alignItems:'center',paddingHorizontal:12},backBtn:{width:44,height:44,alignItems:'center',justifyContent:'center'},center:{minHeight:180,justifyContent:'center',alignItems:'center',padding:24},profileSection:{flexDirection:'row',paddingHorizontal:16,paddingTop:8,paddingBottom:8,gap:10},accountButton:{width:84,minHeight:29,borderRadius:7,backgroundColor:v.white,alignItems:'center',justifyContent:'center'},accountLabel:{ fontFamily: "Inter_400Regular",color:v.ink,fontSize:11},displayName:{ fontFamily: "Inter_500Medium",color:v.ink,fontSize:16,fontWeight:"normal"},stats:{flexDirection:'row',gap:4,marginTop:12,marginBottom:4},stat:{flex:1,alignItems:'center',gap:2},statValue:{ fontFamily: "Inter_500Medium",color:v.ink,fontSize:16,fontWeight:"normal"},statLabel:{ fontFamily: "Inter_400Regular",color:v.label,fontSize:10.5},bio:{ fontFamily: "Inter_400Regular",color:v.ink,fontSize:12,lineHeight:17,textAlign:'left',marginRight:24},more:{ fontFamily: "Inter_400Regular",color:v.ink,fontSize:12,textDecorationLine:'underline'},nameRow:{flexDirection:'row',alignItems:'center',gap:8,minWidth:0},followBtn:{flexDirection:'row',alignItems:'center',gap:4,flexShrink:0,backgroundColor:v.input,borderWidth:1,borderColor:v.border,borderRadius:16,paddingHorizontal:8,minHeight:26,justifyContent:'center'},followBtnText:{ fontFamily: "Inter_500Medium",color:v.darkGray,fontSize:12,fontWeight:"normal"},tabBar:{flexDirection:'row',width:'100%',backgroundColor:v.white,height:39,zIndex:1,elevation:0,shadowColor:'#000000',shadowOpacity:0,shadowRadius:2,shadowOffset:{width:0,height:1}},tabItem:{flex:1,alignItems:'center',justifyContent:'center'},tabItemActive:{},grid:{flexDirection:'row',flexWrap:'wrap',gap:6,paddingHorizontal:10,paddingVertical:10},gridItem:{aspectRatio:.75,borderRadius:8,overflow:'hidden'},gridStateTitle:{ fontFamily: "Inter_500Medium",fontSize:18,color:'#101010',fontWeight:"normal"},gridStateText:{ fontFamily: "Inter_400Regular",fontSize:14,color:'#737373',textAlign:'center',padding:16}});
+const styles=StyleSheet.create({container:{flex:1,backgroundColor:'#FFF'},header:{backgroundColor:'#000',flexDirection:'row',alignItems:'center',paddingHorizontal:12},backBtn:{width:44,height:44,alignItems:'center',justifyContent:'center'},center:{minHeight:180,justifyContent:'center',alignItems:'center',padding:24},profileSection:{flexDirection:'row',paddingHorizontal:16,paddingTop:8,paddingBottom:8,gap:10},accountButton:{width:84,minHeight:29,borderRadius:7,backgroundColor:v.white,alignItems:'center',justifyContent:'center'},accountLabel:{ fontFamily: "Inter_400Regular",color:v.ink,fontSize:11},displayName:{ fontFamily: "Inter_500Medium",color:v.ink,fontSize:16,fontWeight:"normal"},stats:{flexDirection:'row',gap:4,marginTop:12,marginBottom:4},stat:{flex:1,alignItems:'center',gap:2},statValue:{ fontFamily: "Inter_500Medium",color:v.ink,fontSize:16,fontWeight:"normal"},statLabel:{ fontFamily: "Inter_400Regular",color:v.label,fontSize:10.5},bio:{ fontFamily: "Inter_400Regular",color:v.ink,fontSize:12,lineHeight:17,textAlign:'left',marginRight:24},more:{ fontFamily: "Inter_400Regular",color:v.ink,fontSize:12,textDecorationLine:'underline'},nameRow:{flexDirection:'row',alignItems:'center',gap:8,minWidth:0},followBtn:{flexDirection:'row',alignItems:'center',gap:4,flexShrink:0,backgroundColor:v.input,borderWidth:1,borderColor:v.border,borderRadius:16,paddingHorizontal:8,minHeight:26,justifyContent:'center'},followBtnText:{ fontFamily: "Inter_500Medium",color:v.darkGray,fontSize:12,fontWeight:"normal"},stickySlot:{width:'100%',height:39,backgroundColor:v.white,zIndex:1,elevation:0,shadowColor:'#000000',shadowOpacity:0,shadowRadius:2,shadowOffset:{width:0,height:1}},tabBar:{flexDirection:'row',width:'100%',backgroundColor:v.white,height:39},tabItem:{flex:1,alignItems:'center',justifyContent:'center'},tabItemActive:{},grid:{flexDirection:'row',flexWrap:'wrap',gap:6,paddingHorizontal:10,paddingVertical:10},gridItem:{aspectRatio:.75,borderRadius:8,overflow:'hidden'},gridStateTitle:{ fontFamily: "Inter_500Medium",fontSize:18,color:'#101010',fontWeight:"normal"},gridStateText:{ fontFamily: "Inter_400Regular",fontSize:14,color:'#737373',textAlign:'center',padding:16}});

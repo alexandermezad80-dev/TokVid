@@ -124,7 +124,7 @@ test('own profile scrolls its existing details while keeping filters sticky and 
   sc.props.onScroll({nativeEvent:{contentOffset:{y:210}}});tree=r.render(Profile);
   const scPinned=nodes(tree).find(n=>n.type==='ScrollView');
   assert.equal(flat(scPinned.props.children.flat().filter(Boolean)[1].props.style).shadowOpacity,0.05);
-  assert.equal(scPinned.props.refreshControl.type,'RefreshControl');
+  assert.ok(nodes(tree).some(n=>n.type==='ProfilePullRefresh'));
   scPinned.props.onScroll({nativeEvent:{contentOffset:{y:0}}});tree=r.render(Profile);
   assert.equal(flat(nodes(tree).find(n=>n.type==='ScrollView').props.children.flat().filter(Boolean)[1].props.style).shadowOpacity,0);
   assert.ok(!nodes(scroll).some(n=>n.type==='ReferenceHeader'));
@@ -155,7 +155,7 @@ test('visited profile keeps its footer below a flexible body during loading, fai
     sc.props.onScroll({nativeEvent:{contentOffset:{y:180}}});
     const scPinned=nodes(r.render(r.load('app/user-profile.tsx').default)).find(n=>n.type==='ScrollView');
     assert.equal(flat(scPinned.props.children.flat().filter(Boolean)[1].props.style).shadowOpacity,0.05);
-    assert.equal(scPinned.props.refreshControl.type,'RefreshControl');
+    assert.ok(nodes(pinnedTree).some(n=>n.type==='ProfilePullRefresh'));
     all.find(n=>n.type==='TouchableOpacity'&&nodes(n).some(c=>c.type==='PublicationThumbnail')).props.onPress();assert.deepEqual(r.calls.at(-1),['push',{pathname:'/publication',params:{id:'video-one'}}]);
     all.find(n=>n.type==='TouchableOpacity'&&nodes(n).some(c=>c.type==='Text'&&[c.props.children].flat().includes('Mensajes'))).props.onPress();
     await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(r.calls.at(-1),['push','/chat?conversationId=conversation&otherUserId=other&otherUsername=Alexander&otherAvatar=photo']);
@@ -179,27 +179,27 @@ test('white shared headers retain dimensions, safe top and children without tran
 test('pull-to-refresh updates own real sources without changing tabs or navigation',async()=>{
   const r=runtime(),Profile=r.load('app/(tabs)/profile.tsx').default;
   let tree=r.render(Profile),scroll=nodes(tree).find(n=>n.type==='ScrollView');
-  assert.equal(scroll.props.refreshControl.props.refreshing,false);
-  await scroll.props.refreshControl.props.onRefresh();
+  assert.equal(nodes(tree).find(n=>n.type==='ProfilePullRefresh').props.refreshing,false);
+  await nodes(tree).find(n=>n.type==='ProfilePullRefresh').props.onRefresh();
   assert.ok(r.calls.some(c=>c[0]==='refresh-connections'));
   assert.ok(r.calls.some(c=>c[0]==='refresh-publications'));
   nodes(tree).find(n=>n.props.accessibilityLabel==='Guardados').props.onPress();
   tree=r.render(Profile);scroll=nodes(tree).find(n=>n.type==='ScrollView');
-  await scroll.props.refreshControl.props.onRefresh();
+  await nodes(tree).find(n=>n.type==='ProfilePullRefresh').props.onRefresh();
   assert.ok(r.calls.some(c=>c[0]==='refresh-saved'));
   nodes(tree).find(n=>n.props.accessibilityLabel==='Me gusta').props.onPress();
   tree=r.render(Profile);scroll=nodes(tree).find(n=>n.type==='ScrollView');
-  await scroll.props.refreshControl.props.onRefresh();
+  await nodes(tree).find(n=>n.type==='ProfilePullRefresh').props.onRefresh();
   assert.ok(r.calls.some(c=>c[0]==='refresh-liked'));
 });
 test('pull-to-refresh in visited profile preserves its sticky row and footer',async()=>{
   const r=runtime({visited:true}),Profile=r.load('app/user-profile.tsx').default;
   let tree=r.render(Profile),scroll=nodes(tree).find(n=>n.type==='ScrollView');
-  await scroll.props.refreshControl.props.onRefresh();
+  await nodes(tree).find(n=>n.type==='ProfilePullRefresh').props.onRefresh();
   tree=r.render(Profile);
   scroll=nodes(tree).find(n=>n.type==='ScrollView');
   assert.deepEqual(Array.from(scroll.props.stickyHeaderIndices),[1]);
   assert.equal(nodes(tree).filter(n=>n.type==='ProfileTabBar').length,1);
-  assert.equal(scroll.props.refreshControl.props.refreshing,false);
+  assert.equal(nodes(tree).find(n=>n.type==='ProfilePullRefresh').props.refreshing,false);
   assert.ok(r.calls.some(c=>c[0]==='refresh-publications'));
 });
