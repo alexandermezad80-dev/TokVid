@@ -56,7 +56,9 @@ function runtime({guest = false, route = '/', inset = 24, visited = false, loadi
       if(name.endsWith('/private-messages')) return {openPrivateConversation:async id=>{calls.push(['chat',id]);return 'conversation';}};
       if(name.endsWith('/usePushNotifications')) return {usePushNotifications(){}};
       if(name.includes('/components/')) return {__esModule:true,default:path.basename(name),[path.basename(name)]:path.basename(name)};
-      if(name.endsWith('/visibility') || name.endsWith('/supabase') || name.endsWith('/model')) return {};
+      if(name.endsWith('/visibility')) return {readProfileVisibility:async()=>({show_likes:false,show_shares:false}),readProfileActivity:async()=>({items:products,hasMore:false})};
+       if(name.endsWith('/supabase')) return {supabase:{from:()=>({select:()=>({eq:()=>({single:async()=>({data:{...profile,id:'other'},error:null})})})})}};
+       if(name.endsWith('/model')) return {};
       throw Error('Unmocked '+name);
     }});
     return exp;
@@ -172,4 +174,32 @@ test('white shared headers retain dimensions, safe top and children without tran
   const Surface=r.load('components/reference/HeaderSurface.tsx').default;
   const tree=r.render(Surface,{safeTop:true,style:{height:76,paddingTop:8},children:'Title'});
   assert.equal(flat(tree.props.style).paddingTop,32);assert.equal(flat(tree.props.style).height,76);assert.equal(flat(tree.props.style).backgroundColor,'#FFFFFF');
+});
+
+test('pull-to-refresh updates own real sources without changing tabs or navigation',async()=>{
+  const r=runtime(),Profile=r.load('app/(tabs)/profile.tsx').default;
+  let tree=r.render(Profile),scroll=nodes(tree).find(n=>n.type==='ScrollView');
+  assert.equal(scroll.props.refreshControl.props.refreshing,false);
+  await scroll.props.refreshControl.props.onRefresh();
+  assert.ok(r.calls.some(c=>c[0]==='refresh-connections'));
+  assert.ok(r.calls.some(c=>c[0]==='refresh-publications'));
+  nodes(tree).find(n=>n.props.accessibilityLabel==='Guardados').props.onPress();
+  tree=r.render(Profile);scroll=nodes(tree).find(n=>n.type==='ScrollView');
+  await scroll.props.refreshControl.props.onRefresh();
+  assert.ok(r.calls.some(c=>c[0]==='refresh-saved'));
+  nodes(tree).find(n=>n.props.accessibilityLabel==='Me gusta').props.onPress();
+  tree=r.render(Profile);scroll=nodes(tree).find(n=>n.type==='ScrollView');
+  await scroll.props.refreshControl.props.onRefresh();
+  assert.ok(r.calls.some(c=>c[0]==='refresh-liked'));
+});
+test('pull-to-refresh in visited profile preserves its sticky row and footer',async()=>{
+  const r=runtime({visited:true}),Profile=r.load('app/user-profile.tsx').default;
+  let tree=r.render(Profile),scroll=nodes(tree).find(n=>n.type==='ScrollView');
+  await scroll.props.refreshControl.props.onRefresh();
+  tree=r.render(Profile);
+  scroll=nodes(tree).find(n=>n.type==='ScrollView');
+  assert.deepEqual(Array.from(scroll.props.stickyHeaderIndices),[1]);
+  assert.equal(nodes(tree).filter(n=>n.type==='ProfileTabBar').length,1);
+  assert.equal(scroll.props.refreshControl.props.refreshing,false);
+  assert.ok(r.calls.some(c=>c[0]==='refresh-publications'));
 });

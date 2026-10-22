@@ -79,7 +79,8 @@ export default function ProfileScreen() {
       ];
       if(tab==="saved")tasks.push(refreshSaved());
       if(tab==="liked")tasks.push(refreshLikes());
-      await Promise.allSettled(tasks);
+      const results=await Promise.allSettled(tasks);
+      if(results.some(result=>result.status==='rejected'))Alert.alert('No se pudo actualizar el perfil','Comprueba tu conexión e inténtalo de nuevo.');
     }finally{refreshGuard.current=false;setRefreshing(false);}
   },[user?.id,refreshProfile,connections.refresh,publications.refresh,refreshSaved,refreshLikes,tab]);
   if (!user) return null;

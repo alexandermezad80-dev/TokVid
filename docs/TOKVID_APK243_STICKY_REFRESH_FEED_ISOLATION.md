@@ -10,4 +10,4 @@
 
 **Medición:** capturas reales 689×1536 px usadas solo como referencia visual. No se convierten directamente a dp; requiere validación física en Android (gestos/tres botones, pantalla pequeña, perfil vacío y con publicaciones).
 
-**Conservación y Git:** no tocar Auth, RPC, SQL, migraciones, LIVE, servicios, configuración, `main` ni los contratos de acciones. Preparar dos commits por separado, publicar ambos juntos en un solo push para reducir compilaciones. Verificar pruebas/TypeScript/Android antes de declarar éxito; `physical_device_verified=false`.
+**Conservación y Git:** no tocar Auth, RPC, SQL, migraciones, LIVE, servicios, configuración, `main` ni los contratos de acciones. Preparar commits separados de perfil y Feed más un commit de verificaciones, publicar todo junto en un solo push para reducir compilaciones. Verificar pruebas/TypeScript/Android antes de declarar éxito; `physical_device_verified=false`.

@@ -135,11 +135,12 @@ export default function UserProfileScreen() {
   const fetchProfile = useCallback(async (initial = true) => {
     if (!userId) return;
     if(initial)setLoading(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .select("id, username, avatar_url, bio, followers_count, following_count, likes_count")
       .eq("id", userId)
       .single();
+    if(error && !initial)throw error;
     if(data || initial)setProfile(data as PublicProfile | null);
     if(initial)setLoading(false);
   }, [userId]);
@@ -160,7 +161,8 @@ export default function UserProfileScreen() {
       if(tab!=='videos')tasks.push(readProfileActivity(userId,tab,0).then(page=>{
         setActivity(page.items);setActivityMore(page.hasMore);setActivityOffset(0);setActivityError('');
       }).catch(()=>setActivityError('No se pudieron cargar estas publicaciones.')));
-      await Promise.allSettled(tasks);
+      const results=await Promise.allSettled(tasks);
+      if(results.some(result=>result.status==='rejected'))Alert.alert('No se pudo actualizar el perfil','Comprueba tu conexión e inténtalo de nuevo.');
     }finally{refreshGuard.current=false;setRefreshing(false);}
   },[userId,fetchProfile,publications.refresh,tab]);
   const visit=useRef<{key:string;id:string}|null>(null);
