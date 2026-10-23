@@ -38,6 +38,7 @@ function isStoredDraft(value:unknown,userId:string):value is LocalPublicationDra
   if(d.thumbnailUri!==undefined&&(typeof d.thumbnailUri!=="string"||!d.thumbnailUri.startsWith(prefix)||d.thumbnailUri.includes("..")))return false;
   if(d.kind!=="video"&&d.kind!=="image")return false;
   if(!d.contentType||MIME_EXTENSIONS[d.contentType]!==d.extension)return false;
+  if((d.kind==="video")!==d.contentType.startsWith("video/"))return false;
   if(!Number.isFinite(d.size)||!d.size||d.size<=0)return false;
   if(typeof d.caption!=="string"||typeof d.createdAt!=="number"||typeof d.updatedAt!=="number")return false;
   if(d.uploadedUrl!==undefined||d.thumbnailUrl!==undefined)return false;
@@ -76,7 +77,8 @@ export function saveLocalPublicationDraft(draft:PublicationDraft,caption:string)
     checkedId(draft.userId,"cuenta");checkedId(draft.id,"borrador");
     if(typeof caption!=="string"||caption.length>300)throw new Error("Descripción inválida para el borrador.");
     if(draft.kind!=="video"&&draft.kind!=="image")throw new Error("Formato de borrador desconocido.");
-    if(MIME_EXTENSIONS[draft.contentType]!==draft.extension)throw new Error("Tipo de archivo inválido.");
+    if(MIME_EXTENSIONS[draft.contentType]!==draft.extension||(draft.kind==="video")!==draft.contentType.startsWith("video/"))
+      throw new Error("Tipo de archivo inválido.");
     if(typeof draft.uri!=="string"||!draft.uri.startsWith("file://"))throw new Error("El borrador necesita un archivo local.");
     if(!Number.isFinite(draft.size)||draft.size<=0)throw new Error("Tamaño de borrador inválido.");
     const rows=await readIndex(draft.userId);
