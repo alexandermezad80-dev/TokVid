@@ -99,7 +99,6 @@ export default function ProfileScreen() {
     Alert.alert("Eliminar borrador","¿Eliminar este proyecto sin publicar de tu teléfono? Esta acción no se puede deshacer.",[
       {text:"Cancelar",style:"cancel"},
       {text:"Eliminar",style:"destructive",onPress:()=>{
-        const owner=user.id;
         setRemovingDraftId(id);
         void drafts.remove(id).catch(e=>{
           Alert.alert("No se pudo eliminar",e instanceof Error?e.message:"Inténtalo de nuevo.");

@@ -43,3 +43,11 @@ test("C2 resumed comment-video editor limits picker and capture modes to video",
  assert.match(code,/mediaTypes: activeReplyId \? \["videos"\] : \["videos", "images"\]/);
  assert.match(code,/useEffect\(\(\)=>\{if\(activeReplyId\)setMode\("video"\);\},\[activeReplyId\]\)/);
 });
+
+test("C3 saves an optional local video cover and returns to the originating draft grid",()=>{
+ assert.match(code,/if\(draft\.kind==="video"&&!draft\.thumbnailUri&&Platform\.OS!=="web"\)/);
+ assert.match(code,/player\.generateThumbnailsAsync\(0,\{maxWidth:540\}\)/);
+ assert.match(code,/saveLocalPublicationDraft\(draft,caption\)/);
+ assert.match(code,/if\(leaveAfterSave\)\{reset\(\);leaveComposer\(\);\}/);
+ assert.match(code,/if\(onExit\)onExit\(\);else if\(initialDraftId\)router\.back\(\);else router\.replace\("\/\(tabs\)"\)/);
+});

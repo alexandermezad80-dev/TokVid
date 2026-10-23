@@ -16,3 +16,8 @@ Feed aprobado, cabecera, sticky, tab bar inferior, colores/medidas existentes, p
 
 ## Pruebas
 CI + TypeScript + Android config; validar Android real con una foto, video, respuesta a comentario, dos borradores, cambio de sesión, eliminación y publicación. La prueba física no queda reemplazada por el CI.
+
+## C3 refinamiento de portada y retorno
+- Al guardar un proyecto de video, se intenta generar la portada local mediante la misma API de miniaturas ya usada al publicar. Se almacena junto al borrador sin subir a Supabase. Si el dispositivo no puede generarla, el video sigue guardado y la grilla muestra un icono de video en vez de una portada ficticia.
+- Cuando se reabre un borrador desde la sexta sección y se sale guardándolo o descartando cambios, se usa la navegación atrás para regresar al perfil desde el que se abrió. El comportamiento de salida del compositor de respuesta a comentario conserva su callback `onExit`, y el compositor ordinario conserva la salida a pestañas.
+- Se elimina una variable innecesaria en la confirmación de eliminación del perfil. El diseño de las demás secciones permanece idéntico.

@@ -148,6 +148,17 @@ export function PublicationComposer({ replyCommentId, onExit, initialDraftId }: 
     busy.current=true;setSavingDraft(true);player.pause();setPlaying(false);setError(null);
     let saved=false;
     try{
+      if(draft.kind==="video"&&!draft.thumbnailUri&&Platform.OS!=="web"){
+        try{
+          const [thumbnail]=await player.generateThumbnailsAsync(0,{maxWidth:540});
+          const context=ImageManipulator.manipulate(thumbnail);
+          const image=await context.renderAsync();
+          try{draft.thumbnailUri=(await image.saveAsync({format:SaveFormat.JPEG,compress:0.8})).uri;}
+          finally{image.release();context.release();thumbnail.release();}
+        }catch{
+          // The original video is still saved; C3 displays a video icon if cover generation fails.
+        }
+      }
       const stored=await saveLocalPublicationDraft(draft,caption);
       if(mounted.current&&currentUserId.current===stored.userId){
         setDraft(stored);setLocallySaved(true);
@@ -160,7 +171,7 @@ export function PublicationComposer({ replyCommentId, onExit, initialDraftId }: 
       if(mounted.current)setSavingDraft(false);
     }
     if(!saved||!mounted.current||currentUserId.current!==draft.userId)return;
-    if(leaveAfterSave){reset();if(onExit)onExit();else router.replace("/(tabs)");}
+    if(leaveAfterSave){reset();leaveComposer();}
     else Alert.alert("Borrador guardado","Se guardó en este teléfono. Puedes continuar editándolo.");
   };
   const publish = async () => {
@@ -187,7 +198,7 @@ export function PublicationComposer({ replyCommentId, onExit, initialDraftId }: 
     } catch (e: any) { if (mounted.current) { setError(e?.message ?? "No pudimos publicar. Tu selección está lista para reintentar."); setPhase("edit"); } }
     finally { busy.current = false; }
   };
-  const leaveComposer=()=>{if(onExit)onExit();else router.replace("/(tabs)");};
+  const leaveComposer=()=>{if(onExit)onExit();else if(initialDraftId)router.back();else router.replace("/(tabs)");};
   const exit = () => {
     if (busy.current) return;
     if (draft && phase !== "success"){
