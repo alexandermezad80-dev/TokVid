@@ -132,7 +132,7 @@ test('own profile scrolls its existing details while keeping filters sticky and 
   sc.props.onScroll({nativeEvent:{contentOffset:{y:210}}});tree=r.render(Profile);
   const scPinned=nodes(tree).find(n=>n.type==='ScrollView');
   assert.equal(flat(scPinned.props.children.flat().filter(Boolean)[1].props.style).shadowOpacity,0.05);
-  assert.ok(nodes(tree).some(n=>n.type==='ProfilePullRefresh'));
+  assert.ok(nodes(tree).some(n=>n.type==='PullRefreshUnderHeader'));
   scPinned.props.onScroll({nativeEvent:{contentOffset:{y:0}}});tree=r.render(Profile);
   assert.equal(flat(nodes(tree).find(n=>n.type==='ScrollView').props.children.flat().filter(Boolean)[1].props.style).shadowOpacity,0);
   assert.ok(!nodes(scroll).some(n=>n.type==='ReferenceHeader'));
@@ -197,17 +197,17 @@ test('white shared headers retain dimensions, safe top and children without tran
 test('pull-to-refresh updates own real sources without changing tabs or navigation',async()=>{
   const r=runtime(),Profile=r.load('app/(tabs)/profile.tsx').default;
   let tree=r.render(Profile),scroll=nodes(tree).find(n=>n.type==='ScrollView');
-  assert.equal(nodes(tree).find(n=>n.type==='ProfilePullRefresh').props.refreshing,false);
-  await nodes(tree).find(n=>n.type==='ProfilePullRefresh').props.onRefresh();
+  assert.equal(nodes(tree).find(n=>n.type==='PullRefreshUnderHeader').props.refreshing,false);
+  await nodes(tree).find(n=>n.type==='PullRefreshUnderHeader').props.onRefresh();
   assert.ok(r.calls.some(c=>c[0]==='refresh-connections'));
   assert.ok(r.calls.some(c=>c[0]==='refresh-publications'));
   nodes(tree).find(n=>n.props.accessibilityLabel==='Guardados').props.onPress();
   tree=r.render(Profile);scroll=nodes(tree).find(n=>n.type==='ScrollView');
-  await nodes(tree).find(n=>n.type==='ProfilePullRefresh').props.onRefresh();
+  await nodes(tree).find(n=>n.type==='PullRefreshUnderHeader').props.onRefresh();
   assert.ok(r.calls.some(c=>c[0]==='refresh-saved'));
   nodes(tree).find(n=>n.props.accessibilityLabel==='Me gusta').props.onPress();
   tree=r.render(Profile);scroll=nodes(tree).find(n=>n.type==='ScrollView');
-  await nodes(tree).find(n=>n.type==='ProfilePullRefresh').props.onRefresh();
+  await nodes(tree).find(n=>n.type==='PullRefreshUnderHeader').props.onRefresh();
   assert.ok(r.calls.some(c=>c[0]==='refresh-liked'));
 });
 test('pull-to-refresh in visited profile preserves its sticky row and footer',async()=>{
