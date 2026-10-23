@@ -21,7 +21,8 @@ test("B4: populated and empty Inbox both share one vertical gesture without chan
  assert.equal((inbox.match(/<RefreshableInboxEmpty refreshing=\{refreshing\} onRefresh=\{handleRefresh\}>/g)||[]).length,5);
  assert.equal((inbox.match(/onScroll=\{e=>\{refreshScrollOffset\.current=Math\.max\(0,e\.nativeEvent\.contentOffset\.y\);\}\}/g)||[]).length,2);
  assert.ok(inbox.includes("onMoveShouldSetPanResponderCapture:(_event,gesture)=>"));
- assert.ok(inbox.includes("if(next!==currentTabRef.current){refreshScrollOffset.current=0;setTab(next);}"));
+ assert.ok(inbox.includes("if(next!==currentTabRef.current)setTab(next);"));
+ assert.ok(inbox.includes("useEffect(()=>{refreshScrollOffset.current=0;},[tab]);"));
  assert.ok(inbox.includes("refreshGuard.current=false;"));
 });
 test("B4: chat-only refresh calls existing chat.refresh, preserves keyboard, bubble and scroll",()=>{

@@ -157,17 +157,18 @@ export default function InboxScreen() {
       (gesture.numberActiveTouches??1)===1 && isInboxHorizontalGesture(gesture.dx,gesture.dy),
     onPanResponderRelease:(_event,gesture)=>{
       const next=nextInboxTab(currentTabRef.current,gesture.dx,gesture.dy);
-      if(next!==currentTabRef.current){refreshScrollOffset.current=0;setTab(next);}
+      if(next!==currentTabRef.current)setTab(next);
     },
     onPanResponderTerminationRequest:()=>true,
   })).current;
-  useEffect(()=>{if(params.tab==="messages"||params.tab==="activity"){refreshScrollOffset.current=0;setTab(params.tab);}},[params.tab]);
+  useEffect(()=>{if(params.tab==="messages"||params.tab==="activity")setTab(params.tab);},[params.tab]);
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const { notifications, unreadCount, loading: notifLoading, markRead, markAllRead, refresh } = useNotifications();
   const [refreshing, setRefreshing] = useState(false);
   const refreshGuard=useRef(false);
   const refreshScrollOffset=useRef(0);
+  useEffect(()=>{refreshScrollOffset.current=0;},[tab]);
   const { user } = useAuth();
   const [groupRevision,setGroupRevision]=useState(0),[clearBefore,setClearBefore]=useState<string|null>(null);
   const groups=useGroupInbox(user?.id,groupRevision);
@@ -208,7 +209,7 @@ export default function InboxScreen() {
 
       <View style={styles.tabs}>
         {(["activity", "messages"] as const).map((t) => (
-          <TouchableOpacity key={t} onPress={() => {refreshScrollOffset.current=0;setTab(t);}} style={styles.tabBtn}>
+          <TouchableOpacity key={t} onPress={() => setTab(t)} style={styles.tabBtn}>
             <View style={styles.tabLabelRow}>
               <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
                 {t === "activity" ? "Actividad" : "Mensajes"}
