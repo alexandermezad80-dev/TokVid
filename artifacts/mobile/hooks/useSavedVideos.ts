@@ -30,6 +30,13 @@ export async function resolveSavedVideos(ids: Set<string>): Promise<VideoItem[]>
   return [...realSaved, ...mockSaved];
 }
 
+/** Only confirmed accessible items may remain active in the Saved collection.
+ * An inaccessible/deleted video can remain as a historical server relation,
+ * but must never render as an active saved item or set the bookmark as active.
+ */
+export function visibleSavedIds(items:VideoItem[]):Set<string>{
+  return new Set(items.map(item=>item.id));
+}
 export function useSavedVideos() {
   const { completed } = useRegistration();
   const requestSequence = useRef(0);
@@ -60,7 +67,7 @@ export function useSavedVideos() {
       const ids = new Set<string>((data ?? []).map((r: { video_id: string }) => r.video_id));
       const resolved = await resolveSavedVideos(ids);
       if (request !== requestSequence.current) return;
-      setSavedIds(ids);
+      setSavedIds(visibleSavedIds(resolved));
       setSavedVideos(resolved);
       setError(null);
     } catch (failure) {
@@ -101,16 +108,23 @@ export function useSavedVideos() {
       setError(null);
       const resolved = await resolveSavedVideos(optimistic);
       if (request !== requestSequence.current) return;
+      if (!alreadySaved && !resolved.some(item => item.id === videoId)) {
+        throw new Error("SAVED_VIDEO_UNAVAILABLE");
+      }
       setSavedVideos(resolved);
       const { error: writeError } = alreadySaved
         ? await supabase.from("saved_videos").delete().eq("user_id", user.id).eq("video_id", videoId)
         : await supabase.from("saved_videos").insert({ user_id: user.id, video_id: videoId });
       if (writeError) throw writeError;
-    } catch {
+    } catch (failure) {
       if (request === null || request === requestSequence.current) {
         setSavedIds(originalIds);
         setSavedVideos(originalVideos);
-        setError("No se pudo guardar el favorito. Comprueba tu conexión e inténtalo de nuevo.");
+        if(failure instanceof Error && failure.message === "SAVED_VIDEO_UNAVAILABLE") {
+          setError("Este video ya no está disponible.");
+        } else {
+          setError("No se pudo guardar el favorito. Comprueba tu conexión e inténtalo de nuevo.");
+        }
       }
     } finally {
       mutationInFlight.current = false;

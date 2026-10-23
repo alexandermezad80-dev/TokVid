@@ -23,3 +23,7 @@
 - Prueba con 2 cuentas y video publicado/borrado real pendiente para APK final. Cualquier desenlace debe documentarse sin inventar respuesta del servidor.
 
 Entrega con `[prepare only]`, sin APK. Auditoría GitHub CI + diff obligatoria.
+
+
+## D4 — coherencia de icono Guardados (23 de octubre 2026)
+`useSavedVideos` había conservado `savedIds` para videos cuyos registros `saved_videos` persistían aunque `videos` no devolviera la publicación. El nuevo filtro de IDs confirmados mantiene el bookmark coherente con la miniatura, y evita guardar en backend un video que ya no se puede resolver. Una falla de consulta sigue conservando la lista previa y nunca borra filas históricas. Véase `docs/TOKVID_OWNER_DELETED_SAVED_D4.md`. Prueba física y eventual limpieza de referencias backend pendientes.
