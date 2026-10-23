@@ -8,6 +8,7 @@ import {useSafeAreaInsets} from "react-native-safe-area-context";
 import {KeyboardAvoidingView} from "react-native-keyboard-controller";
 import ReferenceHeader from "../components/reference/ReferenceHeader";
 import ChatWallpaper from "../lib/features/messages/components/ChatWallpaper";
+import PullRefreshUnderHeader from "../components/PullRefreshUnderHeader";
 import BubbleStylePicker from "../lib/features/messages/components/BubbleStylePicker";
 import {composerPlaceholder} from "../lib/features/messages/bubbleStyles";
 import {CHAT_WALLPAPERS,readChatWallpaper,chatPalette} from "../lib/features/messages/chatWallpapers";
@@ -49,6 +50,8 @@ export default function ChatScreen(){
  const root=useRef<View>(null),list=useRef<FlatList<PrivateMessage>>(null),input=useRef<TextInput>(null),rowRefs=useRef(new Map<string,View>());
  const layoutTail=useRef<string|null>(null);
  const atBottom=useRef(true),initialScroll=useRef(true),textRef=useRef(text),operation=useRef(false);textRef.current=text;
+ const pullScrollOffset=useRef(0),pullRefreshing=useRef(false);
+ const [isPullRefreshing,setIsPullRefreshing]=useState(false);
  const recorder=useAudioRecorder(RecordingPresets.HIGH_QUALITY),recording=useAudioRecorderState(recorder);
  const close=()=>{setAnchor(null);setTarget(null);setPage("options");};
  const showError=(e:unknown)=>Alert.alert("No se pudo completar",e instanceof Error?e.message:"Inténtalo de nuevo.");
@@ -63,6 +66,13 @@ export default function ChatScreen(){
  useEffect(()=>{if(!focused)return;void refreshTools().catch(()=>{});const timer=setInterval(()=>void refreshTools().catch(()=>{}),4000);return()=>{clearInterval(timer);++toolsGeneration.current;};},[refreshTools,focused]);
  useEffect(()=>{if(!focused||!user)return;const channel=createDatabaseChannel(`chat-tools:${conversationId}`).on("postgres_changes",{event:"INSERT",schema:"public",table:"message_reactions"},()=>void refreshTools().catch(()=>{})).on("postgres_changes",{event:"UPDATE",schema:"public",table:"message_reactions"},()=>void refreshTools().catch(()=>{})).subscribe();return()=>{void supabase.removeChannel(channel);};},[focused,conversationId,refreshTools,user?.id]);
  useEffect(()=>{if(target&&!chat.messages.some(m=>m.id===target))close();if(reply&&!chat.messages.some(m=>m.id===reply.id))setReply(null);},[chat.messages]);
+ const pullRefresh=async()=>{
+   if(pullRefreshing.current||!user||!conversationId)return;
+   pullRefreshing.current=true;setIsPullRefreshing(true);
+   try{await chat.refresh();await refreshTools();}
+   catch(e){showError(e);}
+   finally{pullRefreshing.current=false;setIsPullRefreshing(false);}
+ };
  const jump=(id:string)=>{const index=chat.messages.findIndex(m=>m.id===id);if(index>=0){atBottom.current=false;list.current?.scrollToIndex({index,animated:true,viewPosition:0.5});}else if(chat.hasOlder&&!chat.loading)void chat.loadOlder();};
  useEffect(()=>{if(params.messageId&&chat.messages.length)jump(params.messageId);},[params.messageId,chat.messages.length]);
  const open=(id:string)=>{const node=rowRefs.current.get(id);node?.measureInWindow((x,y,width,height)=>{setTarget(id);setPage("options");setAnchor({x,y:y-viewport.top,width,height});});};
@@ -108,7 +118,9 @@ export default function ChatScreen(){
   <View style={{flex:1}}><ChatWallpaper id={wallpaper}/>
    {!!chat.error&&<Pressable onPress={()=>void chat.refresh()} style={styles.notice}><Text style={styles.white}>{chat.error}</Text></Pressable>}
    {ownSelection&&<View style={styles.notice}><Text style={styles.white}>{ownSelection.count} mensajes tuyos seleccionados</Text><Pressable onPress={()=>setOwnSelection(null)} style={styles.icon} accessibilityLabel="Cancelar selección"><Feather name="x" color={colors.text} size={22}/></Pressable></View>}
-   {chat.loading&&!chat.messages.length?<View style={styles.empty}><ActivityIndicator color="#A0C5CB"/></View>:<FlatList ref={list} data={chat.messages} renderItem={renderMessage} keyExtractor={m=>m.id} style={{flex:1}} contentContainerStyle={[styles.messages,{paddingBottom:12}]} keyboardShouldPersistTaps="handled" onScrollBeginDrag={close} scrollEventThrottle={32} maintainVisibleContentPosition={{minIndexForVisible:0}} onScroll={e=>{const {contentOffset,contentSize,layoutMeasurement}=e.nativeEvent;atBottom.current=contentSize.height-contentOffset.y-layoutMeasurement.height<80;}} onContentSizeChange={()=>{const tail=chat.messages.at(-1)?.id??null;const newMessage=tail!==layoutTail.current;layoutTail.current=tail;if(!params.messageId&&(initialScroll.current||(newMessage&&atBottom.current))&&chat.messages.length){initialScroll.current=false;list.current?.scrollToEnd({animated:false});}}} onLayout={()=>{if(atBottom.current&&!params.messageId)requestAnimationFrame(()=>list.current?.scrollToEnd({animated:false}));}} onScrollToIndexFailed={info=>{list.current?.scrollToOffset({offset:info.averageItemLength*info.index,animated:false});}} ListHeaderComponent={chat.hasOlder?<Pressable onPress={()=>void chat.loadOlder()} style={styles.mediaOptions}><Text style={styles.meta}>Ver mensajes anteriores</Text></Pressable>:null} ListEmptyComponent={<View style={styles.empty}><Text style={styles.meta}>Comienza la conversación</Text></View>}/>}
+   <PullRefreshUnderHeader scrollOffsetRef={pullScrollOffset} onRefresh={pullRefresh} refreshing={isPullRefreshing} enabled={!keyboard&&!busy&&!recording.isRecording} color="#4B7194">
+   {chat.loading&&!chat.messages.length?<View style={styles.empty}><ActivityIndicator color="#A0C5CB"/></View>:<FlatList ref={list} data={chat.messages} renderItem={renderMessage} keyExtractor={m=>m.id} style={{flex:1}} contentContainerStyle={[styles.messages,{paddingBottom:12}]} keyboardShouldPersistTaps="handled" onScrollBeginDrag={close} scrollEventThrottle={32} maintainVisibleContentPosition={{minIndexForVisible:0}} onScroll={e=>{const {contentOffset,contentSize,layoutMeasurement}=e.nativeEvent;pullScrollOffset.current=Math.max(0,contentOffset.y);atBottom.current=contentSize.height-contentOffset.y-layoutMeasurement.height<80;}} onContentSizeChange={()=>{const tail=chat.messages.at(-1)?.id??null;const newMessage=tail!==layoutTail.current;layoutTail.current=tail;if(!params.messageId&&(initialScroll.current||(newMessage&&atBottom.current))&&chat.messages.length){initialScroll.current=false;list.current?.scrollToEnd({animated:false});}}} onLayout={()=>{if(atBottom.current&&!params.messageId)requestAnimationFrame(()=>list.current?.scrollToEnd({animated:false}));}} onScrollToIndexFailed={info=>{list.current?.scrollToOffset({offset:info.averageItemLength*info.index,animated:false});}} ListHeaderComponent={chat.hasOlder?<Pressable onPress={()=>void chat.loadOlder()} style={styles.mediaOptions}><Text style={styles.meta}>Ver mensajes anteriores</Text></Pressable>:null} ListEmptyComponent={<View style={styles.empty}><Text style={styles.meta}>Comienza la conversación</Text></View>}/>}
+   </PullRefreshUnderHeader>
    </View>
    <View>
    {reply&&<View style={styles.notice}><View style={{flex:1}}><Text style={styles.meta}>Respondiendo</Text><Text style={styles.white} numberOfLines={2}>{reply.text}</Text></View><Pressable style={styles.icon} onPress={()=>setReply(null)} accessibilityLabel="Cancelar respuesta"><Feather name="x" color={colors.text} size={20}/></Pressable></View>}

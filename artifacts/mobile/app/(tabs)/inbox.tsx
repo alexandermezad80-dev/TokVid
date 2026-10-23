@@ -1,6 +1,7 @@
 import {referenceVisual as v} from "../../constants/referenceVisual";
 import ReferenceHeader from "../../components/reference/ReferenceHeader";
 import RefreshableInboxEmpty from "../../components/RefreshableInboxEmpty";
+import PullRefreshUnderHeader from "../../components/PullRefreshUnderHeader";
 import ClearInboxDialog from "../../lib/features/messages/components/ClearInboxDialog";
 import {activityCounter,activityHasGallery} from "../../lib/features/messages/activity";
 import {useGroupInbox} from "../../hooks/useGroupInbox";
@@ -20,7 +21,6 @@ import {
   Pressable,
   Image,
   Platform,
-  RefreshControl,
   PanResponder,
   ScrollView,
   StyleSheet,
@@ -157,16 +157,17 @@ export default function InboxScreen() {
       (gesture.numberActiveTouches??1)===1 && isInboxHorizontalGesture(gesture.dx,gesture.dy),
     onPanResponderRelease:(_event,gesture)=>{
       const next=nextInboxTab(currentTabRef.current,gesture.dx,gesture.dy);
-      if(next!==currentTabRef.current)setTab(next);
+      if(next!==currentTabRef.current){refreshScrollOffset.current=0;setTab(next);}
     },
     onPanResponderTerminationRequest:()=>true,
   })).current;
-  useEffect(()=>{if(params.tab==="messages"||params.tab==="activity")setTab(params.tab);},[params.tab]);
+  useEffect(()=>{if(params.tab==="messages"||params.tab==="activity"){refreshScrollOffset.current=0;setTab(params.tab);}},[params.tab]);
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const { notifications, unreadCount, loading: notifLoading, markRead, markAllRead, refresh } = useNotifications();
   const [refreshing, setRefreshing] = useState(false);
   const refreshGuard=useRef(false);
+  const refreshScrollOffset=useRef(0);
   const { user } = useAuth();
   const [groupRevision,setGroupRevision]=useState(0),[clearBefore,setClearBefore]=useState<string|null>(null);
   const groups=useGroupInbox(user?.id,groupRevision);
@@ -207,7 +208,7 @@ export default function InboxScreen() {
 
       <View style={styles.tabs}>
         {(["activity", "messages"] as const).map((t) => (
-          <TouchableOpacity key={t} onPress={() => setTab(t)} style={styles.tabBtn}>
+          <TouchableOpacity key={t} onPress={() => {refreshScrollOffset.current=0;setTab(t);}} style={styles.tabBtn}>
             <View style={styles.tabLabelRow}>
               <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
                 {t === "activity" ? "Actividad" : "Mensajes"}
@@ -224,6 +225,7 @@ export default function InboxScreen() {
       </View>
 
       <View style={styles.swipeContent} {...inboxSwipeResponder.panHandlers}>
+      <PullRefreshUnderHeader scrollOffsetRef={refreshScrollOffset} onRefresh={handleRefresh} refreshing={refreshing} color="#FE2C55">
       {tab === "activity" ? (
         notifLoading && notifications.length === 0 ? (
           <RefreshableInboxEmpty refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.center}><ActivityIndicator color="#FE2C55" /></View></RefreshableInboxEmpty>
@@ -237,9 +239,8 @@ export default function InboxScreen() {
           <ScrollView
             style={styles.list}
             showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#FE2C55" colors={["#FE2C55"]} />
-            }
+            scrollEventThrottle={16}
+            onScroll={e=>{refreshScrollOffset.current=Math.max(0,e.nativeEvent.contentOffset.y);}}
           >
             {notifications.map((n) => (
               <NotifItem
@@ -269,9 +270,8 @@ export default function InboxScreen() {
           <ScrollView
             style={styles.list}
             showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#FE2C55" colors={["#FE2C55"]} />
-            }
+            scrollEventThrottle={16}
+            onScroll={e=>{refreshScrollOffset.current=Math.max(0,e.nativeEvent.contentOffset.y);}}
           >
             {groups.map(g=><TouchableOpacity key={g.id} style={styles.notif} onPress={()=>router.push({pathname:"/chat-group",params:{groupId:g.id}})}><View style={[styles.avatar,{backgroundColor:"#2C3D49",alignItems:"center",justifyContent:"center"}]}><Feather name="users" color="#D7E5EB" size={24}/></View><View style={styles.notifBody}><Text style={styles.notifUser}>{g.name}</Text><Text style={styles.notifText} numberOfLines={1}>{g.last_message}</Text></View>{g.unread_count>0&&<View style={styles.badge}><Text style={styles.badgeText}>{g.unread_count}</Text></View>}</TouchableOpacity>)}
             {convos.map((c) => <ConvoItem key={c.id} convo={c} onOptions={(convo,anchor)=>setMenu({convo,anchor})} />)}
@@ -279,6 +279,7 @@ export default function InboxScreen() {
           </ScrollView>
         )
       )}
+      </PullRefreshUnderHeader>
       </View>
       {menu&&<ConversationMenu anchor={menu.anchor} name={menu.convo.other_username} busy={removing} onClose={()=>setMenu(null)} onDelete={()=>{setRemoving(true);void hideConversation(menu.convo.id).then(async()=>{setMenu(null);await loadConvos();}).catch(e=>Alert.alert('No se pudo eliminar',e.message)).finally(()=>setRemoving(false));}} onDeleteAll={()=>{setRemoving(true);void supabase.rpc('inbox_clear_boundary').then(({data,error})=>{if(error||!data)Alert.alert('No se pudo preparar la selección','Inténtalo de nuevo.');else{setMenu(null);setClearBefore(data);}setRemoving(false);});}}/>}
       <ClearInboxDialog visible={clearBefore!==null} busy={removing} onCancel={()=>setClearBefore(null)} onConfirm={()=>{if(!clearBefore||removing)return;setRemoving(true);void supabase.rpc('clear_own_inbox',{p_before:clearBefore}).then(async({error})=>{if(error)Alert.alert('No se pudo eliminar','No se confirmó el borrado. Inténtalo de nuevo.');else{setClearBefore(null);setGroupRevision(n=>n+1);await Promise.all([loadConvos(),refresh()]);}setRemoving(false);});}}/>

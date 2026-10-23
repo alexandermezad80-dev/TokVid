@@ -1,14 +1,11 @@
 import React from "react";
-import {RefreshControl,ScrollView,StyleSheet} from "react-native";
-/** Pull-to-refresh for Inbox loading/empty/error panels, below the existing fixed tabs. */
-export default function RefreshableInboxEmpty({children,refreshing,onRefresh}:{
+import {StyleSheet,View} from "react-native";
+/** Preserve the approved centered empty/loading/error Inbox content.
+ * Parent PullRefreshUnderHeader now owns the single refresh gesture and indicator.
+ */
+export default function RefreshableInboxEmpty({children}:{
  children:React.ReactNode;refreshing:boolean;onRefresh:()=>void|Promise<void>;
 }){
- return <ScrollView
-  style={styles.fill}
-  contentContainerStyle={styles.fillContent}
-  showsVerticalScrollIndicator={false}
-  refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FE2C55" colors={["#FE2C55"]}/>}
- >{children}</ScrollView>;
+ return <View style={styles.fill}>{children}</View>;
 }
-const styles=StyleSheet.create({fill:{flex:1},fillContent:{flexGrow:1}});
+const styles=StyleSheet.create({fill:{flex:1}});

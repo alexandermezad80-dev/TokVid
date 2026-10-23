@@ -13,9 +13,9 @@ test("B2 captures horizontal gestures below the approved Inbox tabs",()=>{
 });
 test("Both Inbox sections have pull-to-refresh in empty/loading/error cases",()=>{
  assert.equal((inbox.match(/<RefreshableInboxEmpty refreshing=\{refreshing\} onRefresh=\{handleRefresh\}>/g)||[]).length,5);
- assert.ok(empty.includes("flexGrow:1"));
- assert.ok(empty.includes("<RefreshControl refreshing={refreshing} onRefresh={onRefresh}"));
- assert.equal((inbox.match(/<RefreshControl refreshing=\{refreshing\} onRefresh=\{handleRefresh\}/g)||[]).length,2);
+ assert.ok(empty.includes("fill:{flex:1}"));
+ assert.ok(inbox.includes('<PullRefreshUnderHeader scrollOffsetRef={refreshScrollOffset} onRefresh={handleRefresh} refreshing={refreshing} color="#FE2C55">'));
+ assert.equal((inbox.match(/<RefreshControl refreshing=\{refreshing\} onRefresh=\{handleRefresh\}/g)||[]).length,0);
  assert.ok(inbox.includes("refreshGuard.current=false;"));
  assert.ok(inbox.includes("setRefreshing(false);"));
 });
