@@ -1,5 +1,6 @@
 import {referenceVisual as v} from "../../constants/referenceVisual";
 import ReferenceHeader from "../../components/reference/ReferenceHeader";
+import RefreshableInboxEmpty from "../../components/RefreshableInboxEmpty";
 import ClearInboxDialog from "../../lib/features/messages/components/ClearInboxDialog";
 import {activityCounter,activityHasGallery} from "../../lib/features/messages/activity";
 import {useGroupInbox} from "../../hooks/useGroupInbox";
@@ -151,6 +152,9 @@ export default function InboxScreen() {
   const inboxSwipeResponder=useRef(PanResponder.create({
     onMoveShouldSetPanResponder:(_event,gesture)=>
       (gesture.numberActiveTouches??1)===1 && isInboxHorizontalGesture(gesture.dx,gesture.dy),
+    // Capture only single-finger horizontal drags; vertical scroll/refresh stay native.
+    onMoveShouldSetPanResponderCapture:(_event,gesture)=>
+      (gesture.numberActiveTouches??1)===1 && isInboxHorizontalGesture(gesture.dx,gesture.dy),
     onPanResponderRelease:(_event,gesture)=>{
       const next=nextInboxTab(currentTabRef.current,gesture.dx,gesture.dy);
       if(next!==currentTabRef.current)setTab(next);
@@ -162,6 +166,7 @@ export default function InboxScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const { notifications, unreadCount, loading: notifLoading, markRead, markAllRead, refresh } = useNotifications();
   const [refreshing, setRefreshing] = useState(false);
+  const refreshGuard=useRef(false);
   const { user } = useAuth();
   const [groupRevision,setGroupRevision]=useState(0),[clearBefore,setClearBefore]=useState<string|null>(null);
   const groups=useGroupInbox(user?.id,groupRevision);
@@ -174,9 +179,17 @@ export default function InboxScreen() {
   const {conversations:convos,loading:convosLoading,error:convosError,refresh:loadConvos}=usePrivateInbox(user?.id);
 
   const handleRefresh = async () => {
+    if(refreshGuard.current)return;
+    refreshGuard.current=true;
     setRefreshing(true);
-    await Promise.all([refresh(), tab === "messages" ? loadConvos() : Promise.resolve()]);
-    setRefreshing(false);
+    try{
+      await Promise.all([refresh(), tab === "messages" ? loadConvos() : Promise.resolve()]);
+    }catch{
+      Alert.alert("No se pudo actualizar Inbox","Revisa tu conexión e inténtalo de nuevo.");
+    }finally{
+      refreshGuard.current=false;
+      setRefreshing(false);
+    }
   };
 
   if (!user) return null;
@@ -213,13 +226,13 @@ export default function InboxScreen() {
       <View style={styles.swipeContent} {...inboxSwipeResponder.panHandlers}>
       {tab === "activity" ? (
         notifLoading && notifications.length === 0 ? (
-          <View style={styles.center}><ActivityIndicator color="#FE2C55" /></View>
+          <RefreshableInboxEmpty refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.center}><ActivityIndicator color="#FE2C55" /></View></RefreshableInboxEmpty>
         ) : notifications.length === 0 ? (
-          <View style={styles.emptyState}>
+          <RefreshableInboxEmpty refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.emptyState}>
             <View style={styles.emptyIcon}><Feather name="bell" size={36} color="#333" /></View>
             <Text style={styles.emptyTitle}>Sin notificaciones</Text>
             <Text style={styles.emptyText}>Cuando alguien interactúe con tu contenido, lo verás acá</Text>
-          </View>
+          </View></RefreshableInboxEmpty>
         ) : (
           <ScrollView
             style={styles.list}
@@ -243,15 +256,15 @@ export default function InboxScreen() {
         )
       ) : (
         convosLoading && convos.length === 0 ? (
-          <View style={styles.center}><ActivityIndicator color="#FE2C55" /></View>
+          <RefreshableInboxEmpty refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.center}><ActivityIndicator color="#FE2C55" /></View></RefreshableInboxEmpty>
         ) : convosError ? (
-          <View style={styles.emptyState}><Text style={styles.emptyText}>{convosError}</Text><TouchableOpacity onPress={()=>void loadConvos()} style={{padding:16}}><Text style={{color:"#A6D4DA"}}>Reintentar</Text></TouchableOpacity></View>
+          <RefreshableInboxEmpty refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.emptyState}><Text style={styles.emptyText}>{convosError}</Text><TouchableOpacity onPress={()=>void loadConvos()} style={{padding:16}}><Text style={{color:"#A6D4DA"}}>Reintentar</Text></TouchableOpacity></View></RefreshableInboxEmpty>
         ) : convos.length === 0 && groups.length === 0 ? (
-          <View style={styles.emptyState}>
+          <RefreshableInboxEmpty refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.emptyState}>
             <View style={styles.emptyIcon}><Feather name="message-square" size={36} color="#333" /></View>
             <Text style={styles.emptyTitle}>Sin mensajes</Text>
             <Text style={styles.emptyText}>Mandá un mensaje desde el perfil de cualquier usuario</Text>
-          </View>
+          </View></RefreshableInboxEmpty>
         ) : (
           <ScrollView
             style={styles.list}

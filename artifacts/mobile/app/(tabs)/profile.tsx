@@ -56,6 +56,8 @@ export default function ProfileScreen() {
   activeTabRef.current=tab;
   const tabSwipeResponder=useRef(PanResponder.create({
     onMoveShouldSetPanResponder:(_event,g)=>isOwnProfileHorizontalMove(g.dx,g.dy),
+    // Capture horizontal drags before a nested native ScrollView wins on Android.
+    onMoveShouldSetPanResponderCapture:(_event,g)=>isOwnProfileHorizontalMove(g.dx,g.dy),
     onPanResponderRelease:(_event,g)=>{
       const next=adjacentOwnProfileTab(activeTabRef.current,g.dx,g.dy);
       if(next!==activeTabRef.current)setTab(next);
