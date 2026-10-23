@@ -16,8 +16,8 @@
     "ios": {
       "supportsTablet": false,
       "infoPlist": {
-        "NSCameraUsageDescription": "Tokvid necesita acceso a la c\u00e1mara para videollamadas.",
-        "NSMicrophoneUsageDescription": "Tokvid necesita acceso al micr\u00f3fono para llamadas de voz y video."
+        "NSCameraUsageDescription": "Tokvid necesita acceso a la cámara para videollamadas.",
+        "NSMicrophoneUsageDescription": "Tokvid necesita acceso al micrófono para llamadas de voz y video."
       }
     },
     "android": {
@@ -50,8 +50,8 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Tokvid necesita acceso a la c\u00e1mara para videollamadas.",
-          "microphonePermission": "Tokvid necesita acceso al micr\u00f3fono para llamadas de voz y video."
+          "cameraPermission": "Tokvid necesita acceso a la cámara para videollamadas.",
+          "microphonePermission": "Tokvid necesita acceso al micrófono para llamadas de voz y video."
         }
       ],
       [
@@ -78,11 +78,14 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "TokVid necesita el micr\u00f3fono para grabar mensajes de voz."
+          "microphonePermission": "TokVid necesita el micrófono para grabar mensajes de voz."
         }
       ],
       [
         "./plugins/withChatTranslation"
+      ],
+      [
+        "./plugins/withTokvidVideoTrim"
       ],
       [
         "expo-splash-screen",

@@ -20,6 +20,7 @@ import { uploadPublicationFile } from "../../lib/features/publishing/nativeUploa
 import { deleteLocalPublicationDraft, openLocalPublicationDraft, saveLocalPublicationDraft } from "../../lib/features/publishing/localDrafts";
 
 import { readVideoReplyTarget, VideoReplyTarget } from "../../lib/features/comments/videoReply";
+import {beginVideoEdit,takeCompletedVideoEdit} from "../../lib/features/publishing/videoEditorSession";
 
 const tones = ["rgba(0,242,254,0.26)", "rgba(254,9,121,0.26)"] as const;
 type Phase = "pick" | "edit" | "uploading" | "success";
@@ -32,6 +33,7 @@ export function PublicationComposer({ replyCommentId, onExit, initialDraftId }: 
   const { user, profile, requireAuth } = useAuth();
   const [phase, setPhase] = useState<Phase>("pick");
   const [draft, setDraft] = useState<PublicationDraft | null>(null);
+  const editorDraft=useRef<PublicationDraft|null>(null);editorDraft.current=draft;
   const [loadingDraft,setLoadingDraft]=useState(!!initialDraftId);
   const [savingDraft,setSavingDraft]=useState(false);
   const [locallySaved,setLocallySaved]=useState(!!initialDraftId);
@@ -70,6 +72,18 @@ export function PublicationComposer({ replyCommentId, onExit, initialDraftId }: 
   const [playing, setPlaying] = useState(false);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; selection.current++; }; }, []);
   useFocusEffect(useCallback(() => { setFocused(true); return () => { setFocused(false); camera.current?.stopRecording(); }; }, []));
+  useFocusEffect(useCallback(()=>{
+    const done=takeCompletedVideoEdit(user?.id),previous=editorDraft.current;
+    if(!done||!previous||previous.id!==done.draftId||previous.userId!==user?.id)return;
+    try {
+      const media=validateMedia({uri:done.result.uri,type:"video",mimeType:"video/mp4",duration:done.result.durationMs},done.result.size);
+      const alreadyUploaded=!!previous.uploadedUrl;
+      setDraft({...previous,...media,id:alreadyUploaded?publicationId():previous.id,uri:done.result.uri,
+        thumbnailUri:undefined,uploadedUrl:undefined,thumbnailUrl:undefined});
+      if(alreadyUploaded)setLocallySaved(false);
+      setError(null);setPlaying(false);
+    }catch(e){setError(e instanceof Error?e.message:"No pudimos validar el archivo editado.");}
+  },[user?.id]));
   useEffect(() => { player.pause(); setPlaying(false); }, [draft?.id, focused, phase, player]);
   useEffect(() => { if (draft && user?.id !== draft.userId && !busy.current) { setDraft(null); setCaption(""); setPhase("pick"); } }, [user?.id, draft]);
   useEffect(()=>{
@@ -141,6 +155,11 @@ export function PublicationComposer({ replyCommentId, onExit, initialDraftId }: 
       }
     } catch { setError("No pudimos capturar el archivo. También puedes elegirlo en Galería."); }
     finally { selecting.current = false; setRecording(false); }
+  };
+  const openVideoEditor=()=>{
+    if(!draft||draft.kind!=="video"||!user||draft.userId!==user.id||busy.current||preparing)return;
+    player.pause();setPlaying(false);
+    router.push({pathname:"/video-editor",params:{session:beginVideoEdit(draft)}});
   };
   const saveUnpublishedDraft=async(leaveAfterSave:boolean)=>{
     if(!draft||busy.current||preparing||phase!=="edit")return;
@@ -234,6 +253,10 @@ export function PublicationComposer({ replyCommentId, onExit, initialDraftId }: 
       <View style={styles.captureRow}><Pressable onPress={() => void pick()} disabled={preparing || recording || !replyReady} accessibilityRole="button" accessibilityLabel={activeReplyId ? "Elegir video de galería" : "Elegir foto o video de galería"} style={styles.sideAction}><View style={styles.galleryIcon}><Feather name="image" size={26} color="#EAF5F5" /></View><Text style={[styles.small,secondaryFormColors]}>Galería</Text></Pressable><Pressable onPress={() => void capture()} disabled={!cameraPermission?.granted || preparing || !replyReady} accessibilityRole="button" accessibilityLabel={recording ? "Detener grabación" : mode === "video" ? "Grabar video" : "Tomar foto"}><LinearGradient colors={["#65BFC5", "#A96991"]} start={{x:0,y:0}} end={{x:1,y:1}} style={styles.shutterRing}><View style={styles.shutterInner}><View style={[styles.shutter, mode === "video" && styles.videoShutter, recording && styles.stopShutter]} /></View></LinearGradient></Pressable>{!activeReplyId && <Pressable onPress={() => router.push("/live-create")} disabled={recording || preparing} style={styles.sideAction} accessibilityRole="button" accessibilityLabel="Crear LIVE"><Feather name="radio" size={25} color="#B7B4C0" /><Text style={[styles.small,secondaryFormColors]}>LIVE</Text></Pressable>}</View>
     </> : phase === "success" ? <View style={styles.success}><LinearGradient colors={tones} style={styles.successIcon}><Feather name="check" size={38} color="#CAFFFF" /></LinearGradient><Text style={[styles.stageTitle,formColors]}>Ya está publicado</Text><Text style={[styles.stageText,{color:palette.secondary}]}>Tu {draft?.kind === "image" ? "foto" : "video"} está disponible en tu perfil y en el feed.</Text><Pressable style={[styles.primary,{backgroundColor:palette.button}]} onPress={() => { reset(); router.push("/(tabs)/profile"); }}><Text style={styles.white}>Ver en mi perfil</Text></Pressable><Pressable style={styles.secondary} onPress={() => { const id = draft!.id; reset(); router.push({ pathname: "/publication", params: { id } }); }}><Text style={[styles.white,formColors]}>Ver publicación</Text></Pressable><Pressable style={styles.secondary} onPress={()=>{reset();if(initialDraftId)router.replace("/(tabs)/create");}}><Text style={[styles.small,secondaryFormColors]}>Crear otra</Text></Pressable></View> : <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.editContent}>
       <View style={styles.preview}>{draft?.kind === "image" ? <Image source={{ uri: draft.uri }} style={StyleSheet.absoluteFill} resizeMode="contain" /> : <><VideoView player={player} style={StyleSheet.absoluteFill} contentFit="contain" nativeControls={false} surfaceType="textureView" /><Pressable accessibilityRole="button" accessibilityLabel={playing ? "Pausar vista previa" : "Reproducir vista previa"} style={styles.previewControl} onPress={() => { if (playing) player.pause(); else player.play(); setPlaying(!playing); }}><Feather name={playing ? "pause" : "play"} size={24} color="#fff" /></Pressable></>}</View>
+      {draft?.kind==="video"&&Platform.OS==="android"&&<Pressable disabled={phase==="uploading"||savingDraft} onPress={openVideoEditor}
+        accessibilityRole="button" accessibilityLabel="Abrir editor de video" style={styles.secondary}>
+        <Text style={[styles.small,secondaryFormColors]}>Editar video · Recortar</Text>
+      </Pressable>}
       <View style={[styles.captionBox,{backgroundColor:palette.input,borderColor:palette.border}]}><TextInput value={caption} onChangeText={setCaption} editable={phase !== "uploading"&&!savingDraft} placeholder="Añade una descripción…" placeholderTextColor="#92929F" style={[styles.caption,formColors]} maxLength={300} multiline accessibilityLabel="Descripción de la publicación" /><Text style={styles.counter}>{caption.length}/300</Text></View>
       <View style={styles.audience}><Feather name="globe" size={15} color="#9CD1D4" /><Text style={[styles.small,secondaryFormColors]}>Público · Perfil y feed</Text></View>
       {phase === "uploading" && <View accessibilityRole="progressbar" accessibilityValue={{ min:0, max:100, now:progress }}><View style={[styles.track,{backgroundColor:palette.border}]}><View style={[styles.fill, { width: `${progress}%` }]} /></View><Text style={[styles.progress,{color:palette.secondary}]}>{progress < 96 ? `Subiendo… ${progress}%` : "Confirmando publicación…"}</Text></View>}
