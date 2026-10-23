@@ -2,10 +2,10 @@ const test=require("node:test"),assert=require("node:assert/strict"),fs=require(
 const root=path.resolve(__dirname,"../../artifacts/mobile");
 const logic=fs.readFileSync(path.join(root,"lib/features/messages/inboxSwipe.ts"),"utf8");
 const inbox=fs.readFileSync(path.join(root,"app/(tabs)/inbox.tsx"),"utf8");
-const exports={};
-vm.runInNewContext(ts.transpileModule(logic,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports});
+const moduleExports={};
+vm.runInNewContext(ts.transpileModule(logic,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:moduleExports});
 test("B2 captures only dominant single-finger horizontal movement",()=>{
- const fn=exports.isInboxHorizontalGesture;
+ const fn=moduleExports.isInboxHorizontalGesture;
  for(const [x,y] of [[0,0],[9,0],[15,1],[80,80],[35,25],[10,70],[-90,100],[NaN,0],[Infinity,0]])assert.equal(fn(x,y),false);
  for(const [x,y] of [[16,0],[-16,0],[60,3],[-85,-4],[120,20]])assert.equal(fn(x,y),true);
 });
