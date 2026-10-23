@@ -1,6 +1,7 @@
 import HeaderSurface from '../components/reference/HeaderSurface';
 import {palette} from '../constants/palette';
 import { Feather } from "@expo/vector-icons";
+import TokvidProfileIcon from "../components/TokvidProfileIcon";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -146,11 +147,9 @@ export default function StoryCreateScreen() {
 
       <View style={styles.body}>
         <View style={styles.illustration}>
-          <Feather
-            name={asset?.mediaType === "video" ? "video" : "image"}
-            size={56}
-            color="#555"
-          />
+          {asset
+            ? <Feather name={asset.mediaType === "video" ? "video" : "image"} size={56} color="#555"/>
+            : <TokvidProfileIcon name="stories" size={56} color="#555"/>}
         </View>
 
         <Text style={styles.heading}>

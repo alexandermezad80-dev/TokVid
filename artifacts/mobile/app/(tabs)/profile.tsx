@@ -1,5 +1,7 @@
 import ReferenceHeader from "../../components/reference/ReferenceHeader";
 import ProfilePullRefresh from "../../components/ProfilePullRefresh";
+import TokvidProfileIcon from "../../components/TokvidProfileIcon";
+import { LinearGradient } from "expo-linear-gradient";
 import BrandOutline from "../../components/reference/BrandOutline";
 import {referenceVisual as v} from "../../constants/referenceVisual";
 import {LinearGradient} from "expo-linear-gradient";
@@ -41,7 +43,8 @@ function avatarUrl(user: any, profile: any): string {
 
 export default function ProfileScreen() {
   const {width}=useWindowDimensions();
-  const gridLayout={onLayout:()=>{},tile:{width:(width-4)/3,height:(width-4)/3*4/3}};
+  const tileWidth=Math.max(1,(Math.floor(width)-8)/3);
+  const gridLayout={onLayout:()=>{},tile:{width:tileWidth,height:tileWidth*4/3}};
   const [expanded,setExpanded]=useState(false),[menu,setMenu]=useState(false);
   const connections=useMyConnections();
   const [tab, setTab] = useState<"videos" | "stories" | "gallery" | "liked" | "saved">("videos");
@@ -136,10 +139,16 @@ export default function ProfileScreen() {
         contentContainerStyle={scrollViewportHeight > 0 && profileSectionHeight > 0 ? {minHeight: scrollViewportHeight + profileSectionHeight} : undefined}>
       <View style={styles.profileSection} onLayout={event => setProfileSectionHeight(event.nativeEvent.layout.height)}>
         <View style={{width:90,gap:8}}>
-          <TouchableOpacity style={styles.avatarWrap} onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})} accessibilityLabel="Ver mis historias">
-            <BrandAvatar uri={avatarUrl(user,profile)} size={90} radius={12} reference/>
-            <TouchableOpacity style={styles.editBadge} onPress={()=>router.push("/story-create")} accessibilityLabel="Añadir historia"><Feather name="plus" size={18} color="#FFF"/></TouchableOpacity>
-          </TouchableOpacity>
+          <View style={styles.avatarWrap}>
+            <TouchableOpacity onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})} accessibilityLabel="Ver mis historias">
+              <BrandAvatar uri={avatarUrl(user,profile)} size={90} radius={12} reference/>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.editBadge} onPress={()=>router.push("/story-create")} accessibilityLabel="Añadir historia">
+              <LinearGradient colors={[v.steelDark,v.steelLight]} start={{x:0,y:0.5}} end={{x:1,y:0.5}} style={styles.editBadgeFill}>
+                <Feather name="plus" size={14} color="#FFF"/>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
           <Pressable onPress={()=>router.push({pathname:"/user-tools",params:{section:"balance"}})} style={styles.accountButton}><BrandOutline radius={7}/><Text style={styles.accountLabel}>Saldo</Text></Pressable>
           <Pressable disabled accessibilityState={{disabled:true}} style={styles.accountButton}><BrandOutline radius={7}/><Text style={styles.accountLabel}>Suscripción</Text></Pressable>
         </View>
@@ -158,20 +167,24 @@ export default function ProfileScreen() {
       <View style={[styles.stickySlot,{width,elevation:filtersPinned?1:0,shadowOpacity:filtersPinned?0.05:0}]}>
   <View style={styles.tabBar}>{([
         {key:"videos",icon:"grid",label:"Videos"},{key:"stories",icon:"clock",label:"Historias"},{key:"gallery",icon:"image",label:"Galería"},{key:"liked",icon:"heart",label:"Me gusta"},{key:"saved",icon:"bookmark",label:"Guardados"},{key:"more",icon:"more-horizontal",label:"Más"},
-      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>item.key==="more"?router.push("/user-tools"):setTab(item.key)} style={[styles.tabItem,{width:width/6,flex:0},tab===item.key&&styles.tabItemActive]}><Feather name={item.icon} size={22} color={tab===item.key?v.ink:v.inactive}/></TouchableOpacity>)}</View>
+      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>item.key==="more"?router.push("/user-tools"):setTab(item.key)} style={[styles.tabItem,{width:width/6,flex:0},tab===item.key&&styles.tabItemActive]}>{item.key==="videos"||item.key==="stories"?<TokvidProfileIcon name={item.key} size={22} color={tab===item.key?v.ink:v.inactive}/>:<Feather name={item.icon} size={22} color={tab===item.key?v.ink:v.inactive}/>}</TouchableOpacity>)}</View>
+        {filtersPinned&&<>
+          <View pointerEvents="none" style={styles.stickyTopShade}/>
+          <View pointerEvents="none" style={styles.stickyBottomShade}/>
+        </>}
   </View>
-      {tab==="stories"?<View style={styles.emptyState}><TouchableOpacity onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})}><Text style={styles.emptyTitle}>Ver mis historias</Text></TouchableOpacity><TouchableOpacity onPress={()=>router.push("/story-create")}><Text style={styles.bioMore}>Añadir historia</Text></TouchableOpacity></View>:
+      {tab==="stories"?<View style={styles.emptyState}><TokvidProfileIcon name="stories" size={40} color="#75828D"/><TouchableOpacity onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})}><Text style={styles.emptyTitle}>Ver mis historias</Text></TouchableOpacity><TouchableOpacity onPress={()=>router.push("/story-create")}><Text style={styles.bioMore}>Añadir historia</Text></TouchableOpacity></View>:
       tab === "saved" ? (
         savedVideos.length === 0 ? (
           <View style={styles.emptyState}>
-            <Feather name="bookmark" size={40} color="#333" />
+            <Feather name="bookmark" size={40} color="#75828D" />
             <Text style={styles.emptyTitle}>Sin guardados</Text>
             <Text style={styles.emptyText}>
               Tocá el marcador en cualquier video para guardarlo acá
             </Text>
           </View>
         ) : (
-          <View style={styles.grid}>
+          <View style={[styles.grid,{width}]}>
             {savedVideos.map((v, idx) => (
               <TouchableOpacity
                 key={v.id}
@@ -189,14 +202,14 @@ export default function ProfileScreen() {
       ) : tab === "liked" ? (
         likedVideos.length === 0 ? (
           <View style={styles.emptyState}>
-            <Feather name="heart" size={40} color="#333" />
+            <Feather name="heart" size={40} color="#75828D" />
             <Text style={styles.emptyTitle}>Sin likes</Text>
             <Text style={styles.emptyText}>
               Los videos que te gusten aparecerán acá
             </Text>
           </View>
         ) : (
-          <View style={styles.grid}>
+          <View style={[styles.grid,{width}]}>
             {likedVideos.map((v, idx) => (
               <TouchableOpacity
                 key={v.id}
@@ -215,8 +228,14 @@ export default function ProfileScreen() {
         <View>
           {publications.loading && publications.items.length === 0 ? <ActivityIndicator color="#85D5DB" style={{ padding: 24 }} /> : null}
           {!!publications.error && <TouchableOpacity onPress={() => void publications.refresh()} style={styles.emptyState}><Text style={styles.emptyText}>{publications.error}</Text><Text style={{color:"#9CDEE1"}}>Reintentar</Text></TouchableOpacity>}
-          {!publications.loading && !publications.error && publications.items.length === 0 && <TouchableOpacity style={styles.emptyState} onPress={() => router.push("/(tabs)/create")}><Feather name="plus" size={24} color="#6B7580" /><Text style={[styles.emptyText,{ fontFamily: "Inter_400Regular",fontSize:14,lineHeight:20}]}>Comparte tu primera foto o video</Text></TouchableOpacity>}
-          <View style={styles.grid}>{publications.items.filter(item=>tab!=="gallery"||item.mediaType==="image").map(item => <TouchableOpacity key={item.id} style={[styles.gridItem,gridLayout.tile]} accessibilityRole="button" accessibilityLabel={`Abrir publicación: ${item.caption || "Sin descripción"}`} onPress={() => router.push({ pathname:"/publication", params:{id:item.id} })}><PublicationThumbnail item={item} /></TouchableOpacity>)}</View>
+          {!publications.loading && !publications.error && publications.items.length === 0 && <TouchableOpacity style={styles.emptyState} onPress={() => router.push("/(tabs)/create")}>
+            {tab==="gallery"?<Feather name="image" size={40} color="#75828D"/>:<TokvidProfileIcon name="videos" size={40} color="#75828D"/>}
+            <View style={styles.emptyAction}>
+              <Feather name="plus" size={22} color="#6B7580"/>
+              <Text style={[styles.emptyText,{fontFamily:"Inter_400Regular",fontSize:14,lineHeight:19}]}>{"Comparte tu primera\nfoto o video"}</Text>
+            </View>
+          </TouchableOpacity>}
+          <View style={[styles.grid,{width}]}>{publications.items.filter(item=>tab!=="gallery"||item.mediaType==="image").map(item => <TouchableOpacity key={item.id} style={[styles.gridItem,gridLayout.tile]} accessibilityRole="button" accessibilityLabel={`Abrir publicación: ${item.caption || "Sin descripción"}`} onPress={() => router.push({ pathname:"/publication", params:{id:item.id} })}><PublicationThumbnail item={item} /></TouchableOpacity>)}</View>
           {publications.hasMore && <TouchableOpacity onPress={() => void publications.loadMore()} disabled={publications.loading} style={{padding:20,alignItems:"center"}}><Text style={{color:"#A6E1E5"}}>{publications.loading ? "Cargando…" : "Ver más"}</Text></TouchableOpacity>}
         </View>
       )}
@@ -253,7 +272,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 10,
   },
-  avatarWrap: { position: "relative" },
+  avatarWrap: { position: "relative",width:104,height:104,marginBottom:-14,marginRight:-14 },
   avatar: {
     width: 88,
     height: 88,
@@ -263,18 +282,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#1C1C1E",
   },
   editBadge: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: 28,
-    height: 28,
-    borderRadius: 13,
-    backgroundColor: "#FE2C55",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: "#000",
+    position:"absolute",bottom:0,right:0,width:20,height:20,borderRadius:10,
+    borderWidth:1,borderColor:"#FFFFFF",overflow:"hidden",zIndex:2,
   },
+  editBadgeFill:{flex:1,width:"100%",alignItems:"center",justifyContent:"center"},
   displayName: { fontFamily: "Inter_500Medium", color: v.ink, fontSize: 16, fontWeight: "normal" },
   email: { fontFamily: "Inter_400Regular", color: "#555", fontSize: 13 },
   bio: { fontFamily: "Inter_400Regular", color: v.ink, fontSize: 12,lineHeight:17,textAlign:"left",marginRight:24 },
@@ -296,12 +307,13 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   stickySlot:{width:"100%",height:39,backgroundColor:v.white,zIndex:1,elevation:0,shadowColor:"#000000",shadowOpacity:0,shadowRadius:2,shadowOffset:{width:0,height:1}},
+  stickyTopShade:{position:"absolute",top:0,left:0,right:0,height:1,backgroundColor:"rgba(84,96,110,0.18)"},
+  stickyBottomShade:{position:"absolute",bottom:0,left:0,right:0,height:1,backgroundColor:"rgba(84,96,110,0.18)"},
   tabBar:{backgroundColor:v.white,flexDirection:"row",width:"100%",height:39},
   tabItem: { flex: 1, alignItems: "center", justifyContent: "center" },
   tabItemActive: {},
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 2, paddingHorizontal: 0, paddingVertical: 2 },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 2, paddingHorizontal: 0, paddingVertical: 2,alignSelf:"stretch" },
   gridItem: {
-    width: "32%",
     aspectRatio: 0.75, borderRadius: 0,
     backgroundColor: "#111",
     overflow: "hidden",
@@ -327,6 +339,7 @@ const styles = StyleSheet.create({
     bottom: 6,
     left: 6,
   },
+  emptyAction:{alignItems:"center",gap:5},
   emptyState: {
     alignItems: "center",
     paddingVertical: 60,
