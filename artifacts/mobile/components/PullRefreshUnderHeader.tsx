@@ -6,7 +6,7 @@ import {ActivityIndicator,Animated,PanResponder,StyleSheet,View} from "react-nat
  * in the newly exposed gap, rather than drawing on top of the first row.
  * Native scrolling, horizontal swipes and ordinary taps remain with children.
  */
-export default function PullRefreshUnderHeader({children,scrollOffsetRef,onRefresh,refreshing,enabled=true,color="#4B7194",indicatorTop=8}:{
+export default function PullRefreshUnderHeader({children,scrollOffsetRef,onRefresh,refreshing,enabled=true,color="#4B7194",indicatorTop=8,maxPull=104,triggerDistance=95}:{
  children:React.ReactNode;
  scrollOffsetRef:React.MutableRefObject<number>;
  onRefresh:()=>void|Promise<void>;
@@ -14,12 +14,16 @@ export default function PullRefreshUnderHeader({children,scrollOffsetRef,onRefre
  enabled?:boolean;
  color?:string;
  indicatorTop?:number;
+ maxPull?:number;
+ triggerDistance?:number;
 }){
  const translation=useRef(new Animated.Value(0)).current;
  const offset=useRef(scrollOffsetRef);offset.current=scrollOffsetRef;
  const callback=useRef(onRefresh);callback.current=onRefresh;
  const active=useRef(refreshing);active.current=refreshing;
  const permitted=useRef(enabled);permitted.current=enabled;
+ const maxDistance=useRef(maxPull);maxDistance.current=maxPull;
+ const trigger=useRef(triggerDistance);trigger.current=triggerDistance;
  const pulling=useRef(false);
  const pull=useRef(PanResponder.create({
    onMoveShouldSetPanResponderCapture:(_event,g)=>
@@ -27,12 +31,12 @@ export default function PullRefreshUnderHeader({children,scrollOffsetRef,onRefre
      (g.numberActiveTouches??1)===1 && g.dy>12 && g.dy>Math.abs(g.dx)*1.45,
    onPanResponderGrant:()=>{pulling.current=true;translation.stopAnimation();},
    onPanResponderMove:(_event,g)=>{
-     translation.setValue(Math.max(0,Math.min(104,g.dy*0.72)));
+     translation.setValue(Math.max(0,Math.min(maxDistance.current,g.dy*0.72)));
    },
    onPanResponderRelease:(_event,g)=>{
      pulling.current=false;
      Animated.timing(translation,{toValue:0,duration:220,useNativeDriver:true}).start();
-     if(g.dy>=95 && permitted.current && !active.current)void Promise.resolve(callback.current()).catch(()=>{});
+     if(g.dy>=trigger.current && permitted.current && !active.current)void Promise.resolve(callback.current()).catch(()=>{});
    },
    onPanResponderTerminate:()=>{
      pulling.current=false;

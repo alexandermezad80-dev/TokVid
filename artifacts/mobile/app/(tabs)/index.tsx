@@ -12,7 +12,6 @@ import {
   Dimensions,
   useWindowDimensions,
   FlatList,
-  RefreshControl,
   Share,
   StyleSheet,
   Text,
@@ -25,6 +24,7 @@ import CommentsSheet from "../../components/CommentsSheet";
 import Toast from "../../components/Toast";
 import VideoShareSheet from "../../components/VideoShareSheet";
 import VideoCard from "../../components/VideoCard";
+import PullRefreshUnderHeader from "../../components/PullRefreshUnderHeader";
 import { useAuth } from "../../context/AuthContext";
 import { useFollow } from "../../context/FollowContext";
 import { VideoItem, useVideoFeed } from "../../hooks/useVideoFeed";
@@ -49,6 +49,7 @@ export default function FeedScreen() {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastKey, setToastKey] = useState(0);
   const flatListRef = useRef<FlatList>(null);
+  const feedPullOffset=useRef(0);
 
   const { user, profile } = useAuth();
   const [isFocused, setIsFocused] = useState(false);
@@ -296,8 +297,14 @@ ${item.uri}`,
         </View>
       </View>}
 
+      <PullRefreshUnderHeader scrollOffsetRef={feedPullOffset} onRefresh={refreshFeed}
+        refreshing={isRefreshing} enabled={!commentVideo&&videos.length>0&&activeIndex===0}
+        color="#FE0979" indicatorTop={insets.top+58} maxPull={148} triggerDistance={148}>
       <FlatList
           ref={flatListRef}
+          style={{flex:1}}
+          scrollEventThrottle={16}
+          onScroll={e=>{feedPullOffset.current=Math.max(0,e.nativeEvent.contentOffset.y);}}
           data={videos.filter(v=>!hiddenVideos.has(v.id))}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
@@ -314,15 +321,6 @@ ${item.uri}`,
             offset: SCREEN_HEIGHT * index,
             index,
           })}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={refreshFeed}
-              tintColor="#FE0979"
-              title="Actualizando"
-              titleColor="#FE0979"
-            />
-          }
           onEndReached={() => {
             if (hasMore) loadMore();
           }}
@@ -339,6 +337,7 @@ ${item.uri}`,
           maxToRenderPerBatch={3}
           windowSize={3}
         />
+      </PullRefreshUnderHeader>
       </View>
       <VideoShareSheet video={shareVideo} onClose={()=>setShareVideo(null)} onShare={handleShare} onDelete={handleDelete} onHide={id=>{setHiddenVideos(prev=>new Set([...prev,id]));setActiveIndex(0);flatListRef.current?.scrollToOffset({offset:0,animated:false});}}/>
       <CommentsSheet

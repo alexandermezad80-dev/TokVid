@@ -15,7 +15,7 @@ const mobile=path.join(repo,"artifacts/mobile");
 const pinnedGitBlobs={
   ".github/workflows/android-apk.yml": "47a8f04f94230a8d1dbfe078330c3ff89483d024",
   ".github/workflows/check-chat-phase.yml": "77f10f678544f5fa77a4e74c54926af98820ce12",
-  "artifacts/mobile/app/(tabs)/index.tsx": "b3184969ec2bd86f5cb134150fae0341c3d6ebe7",
+  "artifacts/mobile/app/(tabs)/index.tsx": "57f06bed615f4b2153e3ef9b1433991f47ced166",
   "artifacts/mobile/app/(tabs)/_layout.tsx": "aa492afd76c9d849215fd5d34ef6912557961784",
   "artifacts/mobile/components/VideoCard.tsx": "1e4fc21642fc090bda291c9b71fc56a5301ffcc4",
   "artifacts/mobile/components/VideoActions.tsx": "52927affdd58afdb58f2babaeac86e2a2f5aff64",
