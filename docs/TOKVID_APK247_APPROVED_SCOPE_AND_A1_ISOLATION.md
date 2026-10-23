@@ -43,3 +43,11 @@
 - Mensaje vacío en dos líneas, con icono, + y pulsación de creación.
 - Historias conserva sus botones de galería/publicación; estado vacío con Momento.
 - CI en verde y verificación física posterior. Si algo falla: no declarar el bloque cerrado.
+
+## Bloque A2a — Ícono Relevo, sin cambio de lógica
+
+**Aprobación explícita:** cambiar solo la representación del tercer espacio y de su estado vacío para mostrar Relevo en vez de la ilustración de imagen. Conserva tamaño 22 dp en la barra, 40 dp en vacío, y colores `v.ink`/`v.inactive` del estado actual. El vector ya existía en A1: sin imágenes ni paquetes adicionales.
+
+**Auditoría verificable de rama `feature/feed-mini-video-avatar` (antes del cambio):** la tercera pestaña en `app/(tabs)/profile.tsx` todavía tiene clave `gallery`, etiqueta accesible `Galería` y filtra con `publications.items.filter(item=>tab!=="gallery"||item.mediaType==="image")`. Esas publicaciones proceden de `usePublishedMedia({userId:user?.id})`, no del historial `shared`. En cambio, `app/user-profile.tsx` sí usa `readProfileActivity(userId, "shared")` a través de la variable `tab`; `lib/features/profile/visibility.ts` consulta `profile_activity_ids`. El control `Mostrar mis compartidos` ya existe en `user-tools.tsx`. **Por tanto, la existencia de esta consulta y ajuste de privacidad no demuestra que el tercer espacio del perfil propio esté conectado al historial real de compartidos.** No ocultar ni falsificar esta diferencia.
+
+**Límite de A2a:** solo SVG/JSX de íconos de ese espacio. No cambiar identificador interno, título accesible, filtro, búsqueda, RPC, navegación, privacidad, datos, barra sticky, Feed, ni ninguna otra pestaña. La validación física de qué contenido se presenta permanece pendiente. **No marcar la funcionalidad de compartidos como completada sin confirmar.**

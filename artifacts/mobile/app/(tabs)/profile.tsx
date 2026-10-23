@@ -166,7 +166,7 @@ export default function ProfileScreen() {
       <View style={[styles.stickySlot,{width,elevation:filtersPinned?1:0,shadowOpacity:filtersPinned?0.05:0}]}>
   <View style={styles.tabBar}>{([
         {key:"videos",icon:"grid",label:"Videos"},{key:"stories",icon:"clock",label:"Historias"},{key:"gallery",icon:"image",label:"Galería"},{key:"liked",icon:"heart",label:"Me gusta"},{key:"saved",icon:"bookmark",label:"Guardados"},{key:"more",icon:"more-horizontal",label:"Más"},
-      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>item.key==="more"?router.push("/user-tools"):setTab(item.key)} style={[styles.tabItem,{width:width/6,flex:0},tab===item.key&&styles.tabItemActive]}>{item.key==="videos"||item.key==="stories"?<TokvidProfileIcon name={item.key} size={22} color={tab===item.key?v.ink:v.inactive}/>:<Feather name={item.icon} size={22} color={tab===item.key?v.ink:v.inactive}/>}</TouchableOpacity>)}</View>
+      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>item.key==="more"?router.push("/user-tools"):setTab(item.key)} style={[styles.tabItem,{width:width/6,flex:0},tab===item.key&&styles.tabItemActive]}>{item.key==="videos"||item.key==="stories"||item.key==="gallery"?<TokvidProfileIcon name={item.key==="gallery"?"shared":item.key} size={22} color={tab===item.key?v.ink:v.inactive}/>:<Feather name={item.icon} size={22} color={tab===item.key?v.ink:v.inactive}/>}</TouchableOpacity>)}</View>
         {filtersPinned&&<>
           <View pointerEvents="none" style={styles.stickyTopShade}/>
           <View pointerEvents="none" style={styles.stickyBottomShade}/>
@@ -228,7 +228,7 @@ export default function ProfileScreen() {
           {publications.loading && publications.items.length === 0 ? <ActivityIndicator color="#85D5DB" style={{ padding: 24 }} /> : null}
           {!!publications.error && <TouchableOpacity onPress={() => void publications.refresh()} style={styles.emptyState}><Text style={styles.emptyText}>{publications.error}</Text><Text style={{color:"#9CDEE1"}}>Reintentar</Text></TouchableOpacity>}
           {!publications.loading && !publications.error && publications.items.length === 0 && <TouchableOpacity style={styles.emptyState} onPress={() => router.push("/(tabs)/create")}>
-            {tab==="gallery"?<Feather name="image" size={40} color="#75828D"/>:<TokvidProfileIcon name="videos" size={40} color="#75828D"/>}
+            {tab==="gallery"?<TokvidProfileIcon name="shared" size={40} color="#75828D"/>:<TokvidProfileIcon name="videos" size={40} color="#75828D"/>}
             <View style={styles.emptyAction}>
               <Feather name="plus" size={22} color="#6B7580"/>
               <Text style={[styles.emptyText,{fontFamily:"Inter_400Regular",fontSize:14,lineHeight:19}]}>{"Comparte tu primera\nfoto o video"}</Text>

@@ -31,11 +31,19 @@ test("A1 uses local vector artwork; does not repurpose shared Gallery or user to
  assert.match(icons,/<Path d="M17 20 H28/);
  assert.match(profile,/\{key:"gallery",icon:"image",label:"Galería"\}/);
  assert.match(profile,/item\.key==="more"\?router\.push\("\/user-tools"\)/);
- assert.match(profile,/name=\{item\.key\} size=\{22\} color=\{tab===item\.key\?v\.ink:v\.inactive\}/);
+ assert.match(profile,/name=\{item\.key==="gallery"\?"shared":item\.key\} size=\{22\} color=\{tab===item\.key\?v\.ink:v\.inactive\}/);
 });
 test("A1 story illustration preserves image/video selection and existing gallery action",()=>{
  assert.match(story,/<TokvidProfileIcon name="stories" size=\{56\}/);
  assert.match(story,/asset\.mediaType === "video" \? "video" : "image"/);
  assert.match(story,/onPress=\{pickStory\}/);
  assert.match(profile,/Comparte tu primera\\nfoto o video/);
+});
+
+test("A2a Relevo draws only the third tab; legacy gallery state and filter stay unchanged",()=>{
+ assert.match(profile,/item\.key==="videos"\|\|item\.key==="stories"\|\|item\.key==="gallery"/);
+ assert.match(profile,/tab==="gallery"\?<TokvidProfileIcon name="shared" size=\{40\}/);
+ assert.match(profile,/\{key:"gallery",icon:"image",label:"Galería"\}/);
+ assert.match(profile,/items\.filter\(item=>tab!=="gallery"\|\|item\.mediaType==="image"\)/);
+ assert.match(profile,/item\.key==="more"\?router\.push\("\/user-tools"\)/);
 });
