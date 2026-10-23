@@ -1,3 +1,17 @@
+## Estado operativo — 23 de octubre de 2026: pausa del editor; prioridad pull-to-refresh y swipes B1/B2
+
+**Decisión más reciente del propietario:** suspender trabajos en edición de fotos/videos (el propietario prepara una propuesta visual) y atender primero los indicadores pull-to-refresh y gestos swipe previamente acordados. No rediseñar Crear ni Editor E2; el error físico `VideoPlayer.pause / shared object already released` continúa registrado y pendiente, no se presenta como corregido.
+
+**Corrección preparatoria comprobada solo en código/CI:** commit [`ebcfb071`](https://github.com/alexandermezad80-dev/TokVid/commit/ebcfb071ec1616080dd9171b9add2f1f288b0152) en la rama exclusiva `feature/feed-mini-video-avatar`. Se agregó captura horizontal dominante al body de seis secciones del Perfil (B1) y al body de Actividad↔Mensajes de Inbox (B2); se habilitó pull-to-refresh nativo en Inbox cuando no hay contenido o aparece un error/carga; `handleRefresh` ahora limpia `refreshing` incluso ante error. **Workflow [40026641019](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40026641019) success:** regresiones, TypeScript y prebuild. **Android APK: omitido** por `[prepare only]`. Sin prueba física de este parche.
+
+**Protección absoluta:** Feed, su `app/(tabs)/index.tsx`, tab bar, iconos, branding, flujos de publicación, editor E2, Auth, Supabase, migraciones y workflows intactos. No cambiar hashes de `scripts/tests/tokvid-apk261-isolation.test.cjs`.
+
+**Aún NO resuelto:** el componente `artifacts/mobile/components/ProfilePullRefresh.tsx` de APK261 está protegido por hash y NO fue alterado; su indicador no visible según el usuario requiere diagnóstico y una excepción explícita sobre este archivo antes de modificarlo. El Feed también tiene un `RefreshControl` existente en código protegido, pero su indicador no visible requiere investigación específica sin cambiar el diseño cerrado. Ni las vistas de Inbox cargadas ni los swipes han sido revalidados físicamente tras el parche. **No afirmar que todo el pull-to-refresh esté terminado** ni construir APK adicional antes de cerrar alcance, autorizaciones y auditoría.
+
+Registro técnico detallado: [`docs/continuity/TOKVID_B1_B2_PULL_REFRESH_PATCH.md`](../continuity/TOKVID_B1_B2_PULL_REFRESH_PATCH.md).
+
+---
+
 ## Registro vigente — 23 de octubre de 2026: verificación física de editor E2 y pull-to-refresh
 
 **Rama de trabajo exclusiva:** `feature/feed-mini-video-avatar`. **APK examinada en teléfono:** compilación `ff853d60af1fa16566cb6359a6d5fc340ca1bbf5` (Android API 35), workflow [Android APK 39977837934](https://github.com/alexandermezad80-dev/TokVid/actions/runs/39977837934), compilación **exitosa** y artefacto publicado. **CI aprobado ≠ comportamiento físico aprobado**. Esta nota registra los hallazgos y decisiones comunicados por el propietario el 23/10/2026; **no autoriza correcciones, rediseños ni una APK nueva**. Se añade encima del historial anterior sin modificar las especificaciones previas.
