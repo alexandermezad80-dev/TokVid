@@ -1,5 +1,6 @@
 import ReferenceHeader from "../../components/reference/ReferenceHeader";
-import ProfilePullRefresh from "../../components/ProfilePullRefresh";
+// B7: reuse the isolated downward refresh responder; keep the protected header, sticky and six tabs unchanged.
+import ProfilePullRefresh from "../../components/PullRefreshUnderHeader";
 import TokvidProfileIcon from "../../components/TokvidProfileIcon";
 import BrandOutline from "../../components/reference/BrandOutline";
 import {referenceVisual as v} from "../../constants/referenceVisual";
