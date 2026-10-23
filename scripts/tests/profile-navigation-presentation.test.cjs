@@ -97,6 +97,10 @@ test('visited-profile footer retains all five exit actions, Create gradients and
   for(const inset of [0,16,48]) {
     const r=runtime({inset}),tree=r.render(r.load('components/ProfileTabBar.tsx').default),all=nodes(tree);
     assert.equal(flat(tree.props.style).paddingBottom,inset);assert.ok(all.some(n=>flat(n.props.style).height===50));
+    const createVisual=all.find(n=>n.type==='View'&&flat(n.props.style).width===49&&flat(n.props.style).height===30);
+    assert.ok(createVisual,'Visitor Create visual exists');
+    assert.equal(flat(createVisual.props.style).transform[0].translateY,-5);
+    assert.equal(flat(createVisual.props.style).marginBottom,4);
     const buttons=all.filter(n=>n.type==='Pressable');assert.equal(buttons.length,5);
     buttons.forEach(b=>{assert.equal(flat(b.props.style).flex,1);b.props.onPress();});
     assert.deepEqual(r.calls.map(c=>c[1]),['/(tabs)','/(tabs)/friends','/(tabs)/create','/(tabs)/inbox','/(tabs)/profile']);
@@ -158,7 +162,8 @@ test('visited profile keeps its footer below a flexible body during loading, fai
     assert.deepEqual(Array.from(scroll.props.stickyHeaderIndices),[1]);assert.ok(!nodes(scroll).some(n=>n.type==='ReferenceHeader'));
     assert.equal(flat(scroll.props.children.flat().filter(Boolean)[1].props.style).height,39);
     assert.equal(flat(scroll.props.children.flat().filter(Boolean)[1].props.style).width,360);
-    assert.deepEqual(nodes(scroll.props.children.flat().filter(Boolean)[1]).filter(n=>n.type==='TouchableOpacity').map(n=>flat(n.props.style).width),[360]);
+    assert.deepEqual(nodes(scroll.props.children.flat().filter(Boolean)[1]).filter(n=>n.type==='TouchableOpacity').map(n=>flat(n.props.style).width),[120]);
+    assert.ok(nodes(scroll.props.children.flat().filter(Boolean)[1]).some(n=>n.type==='TokvidProfileIcon'&&n.props.name==='videos'));
     scroll.props.onLayout({nativeEvent:{layout:{height:580}}});
     scroll.props.children.flat().filter(Boolean)[0].props.onLayout({nativeEvent:{layout:{height:180}}});
     const rerendered=r.render(r.load('app/user-profile.tsx').default);

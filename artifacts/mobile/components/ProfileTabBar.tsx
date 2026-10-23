@@ -17,7 +17,7 @@ export default function ProfileTabBar() {
         ["Perfil", "user", "/(tabs)/profile"],
       ] as const).map(([label, icon, route]) => <Pressable key={label} accessibilityRole="button" accessibilityLabel={label}
         onPress={() => router.dismissTo(route)} style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 1 }}>
-        {label === "Crear" ? <View style={{ width: 49, height: 30, borderRadius: 9, padding: 1, overflow: "hidden", marginBottom: 4 }}>
+        {label === "Crear" ? <View style={{ width: 49, height: 30, borderRadius: 9, padding: 1, overflow: "hidden", marginBottom: 4, transform: [{translateY:-5}] }}>
           <LinearGradient colors={v.outline} start={{ x: 0, y: .5 }} end={{ x: 1, y: .5 }} style={StyleSheet.absoluteFill}/>
           <LinearGradient colors={v.createFill} start={{ x: 0, y: .5 }} end={{ x: 1, y: .5 }} style={{ flex: 1, borderRadius: 8, alignItems: "center", justifyContent: "center" }}>
             <Feather name="plus" size={24} color="#FFFFFF"/>

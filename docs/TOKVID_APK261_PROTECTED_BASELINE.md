@@ -27,3 +27,6 @@
 
 ## Archivos modificados en esta preparación
 Únicamente este documento y `scripts/tests/tokvid-apk261-isolation.test.cjs`. Ningún archivo de interfaz, comportamiento, workflow, Feed o base de datos se modifica en este commit.
+
+## Excepción autorizada por el propietario — visita en APK 261 (22 oct 2026)
+El propietario aportó dos capturas de perfiles ajenos y autorizó auditar/corregir **solo** la posición del botón Crear del pie independiente y los iconos visibles en la barra de perfil ajeno. Se permite reemplazar el hash únicamente de `ProfileTabBar.tsx` por `97a1a49c5d542a034f8566effb6f7dd965ea9c6a`: el botón Crear, de idénticos 49×30 dp, se desplaza **5 dp hacia arriba** sin alterar el pie de 50 dp, colores ni rutas. `user-profile.tsx` no es archivo de hash cerrado y solamente cambia la presentación de los iconos: Videos y Compartidos usan vectores TOKVID, mientras Me gusta conserva corazón, ancho fijo `width/3` (el icono Publicaciones ya no ocupa todo el ancho al ser el único visible). Los controles `show_likes` y `show_shares` siguen ocultando las pestañas privadas: no se crean controles sin permiso. Las grillas, encabezado, identidad, chat, estadísticas y Feed se conservan. Esto es una modificación pendiente de validación física; no atribuir resultado de APK 261 a código aún no instalado.

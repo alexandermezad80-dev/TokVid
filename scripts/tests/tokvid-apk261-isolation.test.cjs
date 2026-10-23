@@ -22,7 +22,7 @@ const pinnedGitBlobs={
   "artifacts/mobile/components/VideoInfo.tsx": "da9c00a872c8cb3790b07316ff5506116f532d3f",
   "artifacts/mobile/components/VideoShareSheet.tsx": "dd22324b26d03fda7e54a85d490233706f4fcc76",
   "artifacts/mobile/components/ProfilePullRefresh.tsx": "74b47601c2762a1ee0591f54506d05bd8a326fbd",
-  "artifacts/mobile/components/ProfileTabBar.tsx": "32e73cd0e8ccd4aeaf6a18e2e479b348c909fe9b",
+  "artifacts/mobile/components/ProfileTabBar.tsx": "97a1a49c5d542a034f8566effb6f7dd965ea9c6a",
   "artifacts/mobile/components/TokvidProfileIcon.tsx": "09e6ba4b3dccb74a2d2281eb22cdc6073f7b60d2",
   "artifacts/mobile/components/PublicationThumbnail.tsx": "721842d028d757dee830076dd2d4ba71592ec61b",
   "artifacts/mobile/components/reference/BrandAvatar.tsx": "5ba2665abed37a47ca6f82e9f772fe8402ee859a",

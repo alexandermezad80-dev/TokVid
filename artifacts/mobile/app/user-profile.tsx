@@ -1,4 +1,5 @@
 import ProfileTabBar from "../components/ProfileTabBar";
+import TokvidProfileIcon from "../components/TokvidProfileIcon";
 import ReferenceHeader from "../components/reference/ReferenceHeader";
 import ProfilePullRefresh from "../components/ProfilePullRefresh";
 import BrandOutline from "../components/reference/BrandOutline";
@@ -201,7 +202,7 @@ export default function UserProfileScreen() {
      </View>
     </View>
     <View style={[styles.stickySlot,{width,elevation:filtersPinned?1:0,shadowOpacity:filtersPinned?0.05:0}]}>
-  <View style={styles.tabBar}>{shownTabs.map(t=><TouchableOpacity key={t} onPress={()=>setTab(t)} accessibilityLabel={t==='videos'?'Publicaciones':t==='liked'?'Me gusta':'Compartidos'} accessibilityState={{selected:tab===t}} style={[styles.tabItem,{width:width/shownTabs.length,flex:0},tab===t&&styles.tabItemActive]}><Feather name={t==='videos'?'grid':t==='liked'?'heart':'share-2'} size={22} color={tab===t?v.ink:v.inactive}/></TouchableOpacity>)}</View>
+  <View style={styles.tabBar}>{shownTabs.map(t=><TouchableOpacity key={t} onPress={()=>setTab(t)} accessibilityLabel={t==='videos'?'Publicaciones':t==='liked'?'Me gusta':'Compartidos'} accessibilityState={{selected:tab===t}} style={[styles.tabItem,{width:width/3,flex:0},tab===t&&styles.tabItemActive]}>{t==="videos"||t==="shared"?<TokvidProfileIcon name={t} size={22} color={tab===t?v.ink:v.inactive}/>:<Feather name="heart" size={22} color={tab===t?v.ink:v.inactive}/>}</TouchableOpacity>)}</View>
   </View>
     {!!error&&<Text style={styles.gridStateText}>{error}</Text>}
     <View style={styles.grid}>{shown.map(v=><TouchableOpacity key={v.id} style={[styles.gridItem,gridLayout.tile]} onPress={()=>router.push({pathname:'/publication',params:{id:v.id}})}><PublicationThumbnail item={v}/></TouchableOpacity>)}</View>
