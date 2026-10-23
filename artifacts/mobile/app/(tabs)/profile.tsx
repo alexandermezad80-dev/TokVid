@@ -1,7 +1,6 @@
 import ReferenceHeader from "../../components/reference/ReferenceHeader";
 import ProfilePullRefresh from "../../components/ProfilePullRefresh";
 import TokvidProfileIcon from "../../components/TokvidProfileIcon";
-import { LinearGradient } from "expo-linear-gradient";
 import BrandOutline from "../../components/reference/BrandOutline";
 import {referenceVisual as v} from "../../constants/referenceVisual";
 import {LinearGradient} from "expo-linear-gradient";
