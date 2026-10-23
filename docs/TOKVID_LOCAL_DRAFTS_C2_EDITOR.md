@@ -22,3 +22,7 @@ El usuario aprobó Borradores locales privados, editor progresivo y respaldo rem
 - Los borradores son locales; la desinstalación o pérdida de almacenamiento puede eliminarlos. No hay sincronización con otro dispositivo.
 - Al usar datos de prueba automatizados se validará aparición de controles, guardias de cuenta/sesión, lectura de ID de recuperación, recuperación de descripción, persistencia local, y que Guardar no llame a los servicios públicos de publicación.
 - GitHub Actions prueba regresión/TypeScript/prebuild, pero no valida todavía UX/tacto/galería/grabación física Android.
+
+## C2 endurecimiento posterior al primer CI
+
+La primera ejecución del workflow pasó, pero una revisión funcional detectó que `Guardar borrador` sin salir y luego `Publicar` debía limpiar el proyecto local; ahora `locallySaved` sigue el estado de guardado y la limpieza se hace al confirmarse la publicación. Al cambiar archivo en una respuesta en video reabierta, se conserva y valida `activeReplyId` en lugar de perder el vínculo con el comentario. La selección nueva conserva el comportamiento existente de generar un identificador de publicación nuevo y no borra automáticamente el proyecto anterior. Requiere nueva validación de CI y posterior prueba física.

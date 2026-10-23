@@ -34,6 +34,7 @@ export function PublicationComposer({ replyCommentId, onExit, initialDraftId }: 
   const [draft, setDraft] = useState<PublicationDraft | null>(null);
   const [loadingDraft,setLoadingDraft]=useState(!!initialDraftId);
   const [savingDraft,setSavingDraft]=useState(false);
+  const [locallySaved,setLocallySaved]=useState(!!initialDraftId);
   const [replyTarget, setReplyTarget] = useState<VideoReplyTarget | null>(null);
   const [replyError, setReplyError] = useState("");
   const [replyRetry, setReplyRetry] = useState(0);
@@ -81,20 +82,20 @@ export function PublicationComposer({ replyCommentId, onExit, initialDraftId }: 
     void openLocalPublicationDraft(user.id,initialDraftId).then(saved=>{
       if(!active||currentUserId.current!==saved.userId)return;
       if(replyCommentId&&saved.replyCommentId!==replyCommentId)throw new Error("Este borrador pertenece a otra respuesta.");
-      setDraft(saved);setCaption(saved.caption);setPhase("edit");setError(null);
+      setDraft(saved);setCaption(saved.caption);setLocallySaved(true);setPhase("edit");setError(null);
     }).catch(e=>{
       if(active)setError(e instanceof Error?e.message:"No pudimos abrir el borrador.");
     }).finally(()=>{if(active)setLoadingDraft(false);});
     return ()=>{active=false;};
   },[initialDraftId,user?.id,replyCommentId]);
-  const reset = () => { if (busy.current || selecting.current) return; player.pause(); setDraft(null); setCaption(""); setError(null); setProgress(0); setPhase("pick"); };
+  const reset = () => { if (busy.current || selecting.current) return; player.pause(); setDraft(null); setCaption(""); setError(null); setProgress(0);setLocallySaved(false); setPhase("pick"); };
   const prepare = async (asset: PickedMedia, owner: string) => {
     const sequence = ++selection.current;
     setPreparing(true); setError(null);
     try {
       let uri = asset.uri;
       const kind = asset.type === "video" ? "video" : "image";
-      if (replyCommentId && kind !== "video") throw new Error("Elige un video para responder al comentario.");
+      if (activeReplyId && kind !== "video") throw new Error("Elige un video para responder al comentario.");
       if (kind === "image") {
         const context = ImageManipulator.manipulate(uri);
         if ((asset.width ?? 0) > 1920) context.resize({ width: 1920 });
@@ -106,7 +107,7 @@ export function PublicationComposer({ replyCommentId, onExit, initialDraftId }: 
       const size = info.exists && "size" in info ? info.size : 0;
       const details = validateMedia({ ...asset, uri, type: kind, ...(kind === "image" ? { mimeType: "image/jpeg" } : {}) }, size);
       if (!mounted.current || selection.current !== sequence || currentUserId.current !== owner) return;
-      setDraft({ id: publicationId(), userId: owner, uri, ...details, ...(replyCommentId ? { replyCommentId } : {}) }); setPhase("edit");
+      setDraft({ id: publicationId(), userId: owner, uri, ...details, ...(activeReplyId ? { replyCommentId:activeReplyId } : {}) });setLocallySaved(false); setPhase("edit");
     } catch (e: any) { if (mounted.current) setError(e?.message ?? "No pudimos abrir ese archivo."); }
     finally { if (mounted.current) setPreparing(false); }
   };
@@ -148,7 +149,7 @@ export function PublicationComposer({ replyCommentId, onExit, initialDraftId }: 
     try{
       const stored=await saveLocalPublicationDraft(draft,caption);
       if(mounted.current&&currentUserId.current===stored.userId){
-        setDraft(stored);
+        setDraft(stored);setLocallySaved(true);
         saved=true;
       }
     }catch(e){
@@ -177,7 +178,7 @@ export function PublicationComposer({ replyCommentId, onExit, initialDraftId }: 
       }
       const id = await publishDraft(supabase, draft, sentCaption, uploadPublicationFile, value => { if (mounted.current) setProgress(Math.round(value * 100)); });
       void saveVideoTags({ videoId: id, caption: sentCaption.trim(), authorId: draft.userId, authorName: profile?.username ?? "Usuario", authorAvatar: profile?.avatar_url ?? null }).catch(() => {});
-      if (initialDraftId) {
+      if (locallySaved) {
         try{await deleteLocalPublicationDraft(draft.userId,draft.id);}
         catch{if(mounted.current)Alert.alert("Publicación completada","El video se publicó, pero no pudimos limpiar su borrador local.");}
       }

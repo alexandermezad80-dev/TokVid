@@ -6,7 +6,7 @@ test("C2 maintains native publication and existing comment video reply entry",()
  assert.match(code,/const activeReplyId=replyCommentId\|\|draft\?\.replyCommentId/);
  assert.match(code,/readVideoReplyTarget\(supabase, activeReplyId\)/);
  assert.match(code,/const id = await publishDraft\(supabase, draft, sentCaption, uploadPublicationFile/);
- assert.match(code,/if\s*\(initialDraftId\)\s*\{\s*try\{await deleteLocalPublicationDraft\(draft\.userId,draft\.id\);/);
+ assert.match(code,/if\s*\(locallySaved\)\s*\{\s*try\{await deleteLocalPublicationDraft\(draft\.userId,draft\.id\);/);
 });
 test("C2 shows an explicit three-choice exit and independent save action",()=>{
  assert.match(code,/Alert\.alert\("Publicación sin terminar"/);
@@ -29,4 +29,12 @@ test("C2 restores project, its description and editor phase only for original ac
 test("C2 compiles TSX without diagnostics and doesn't import storage in the Feed",()=>{
  const out=ts.transpileModule(code,{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022},reportDiagnostics:true});
  assert.deepEqual(out.diagnostics?.filter(d=>d.category===ts.DiagnosticCategory.Error).map(d=>String(d.messageText)),[]);
+});
+
+test("C2 publishing a just-saved draft cleans it and replacing reply media retains comment context",()=>{
+ assert.match(code,/setDraft\(stored\);setLocallySaved\(true\)/);
+ assert.match(code,/if\(locallySaved\)\s*\{\s*try\{await deleteLocalPublicationDraft\(draft\.userId,draft\.id\);/);
+ assert.match(code,/if \(activeReplyId && kind !== "video"\)/);
+ assert.match(code,/\.\.\.\(activeReplyId \? \{ replyCommentId:activeReplyId \} : \{\}\)/);
+ assert.match(code,/setLocallySaved\(false\); setPhase\("edit"\)/);
 });
