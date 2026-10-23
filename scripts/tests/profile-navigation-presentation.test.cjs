@@ -8,10 +8,10 @@ const json = value => JSON.parse(JSON.stringify(value));
 
 function runtime({guest = false, route = '/', inset = 24, visited = false, loading = false, missing = false} = {}) {
   const profile = {id: 'me', username: 'Alexander', bio: 'Biografía', avatar_url: 'photo', likes_count: 2, followers_count: 3, following_count: 4};
-  const calls = [], states = [], products = [{id: 'video-one', caption: 'Video', mediaType: 'video'}];
-  let cursor = 0;
+  const calls = [], states = [], refs = [], products = [{id: 'video-one', caption: 'Video', mediaType: 'video'}];
+  let cursor = 0, refCursor = 0;
   const react = {
-    createElement: element, Fragment: 'Fragment', useRef: value => ({current:value}),
+    createElement: element, Fragment: 'Fragment', useRef(value){const i=refCursor++;if(!(i in refs))refs[i]={current:value};return refs[i];},
     useCallback: fn => fn, useMemo: fn => fn(), useEffect(){},
     useState(initial) { const i=cursor++; if (!(i in states)) states[i] = visited && i===0 ? (missing ? null : {...profile,id:'other'}) : visited && i===1 ? loading : initial;
       return [states[i], value => { states[i] = typeof value === 'function' ? value(states[i]) : value; }]; },
@@ -19,7 +19,7 @@ function runtime({guest = false, route = '/', inset = 24, visited = false, loadi
   const Tabs = 'Tabs', Stack = 'Stack';
   const modules = {
     react,
-    'react-native': {Platform:{OS:'android'}, StyleSheet:{create:s=>s,flatten:flat,absoluteFill:{position:'absolute'},hairlineWidth:0.5},
+    'react-native': {Platform:{OS:'android'}, PanResponder:{create:config=>({panHandlers:config})}, StyleSheet:{create:s=>s,flatten:flat,absoluteFill:{position:'absolute'},hairlineWidth:0.5},
       useWindowDimensions:()=>({width:360,height:800,fontScale:1.4}), Alert:{alert:(...args)=>calls.push(['alert',args])},
       ...Object.fromEntries(['View','Text','ScrollView','TouchableOpacity','Pressable','Image','ActivityIndicator','Modal','RefreshControl'].map(x=>[x,x]))},
     'expo-router': {Tabs, Stack, Redirect:'Redirect', usePathname:()=>route, useLocalSearchParams:()=>({userId:'other'}), useFocusEffect(){},
@@ -42,6 +42,7 @@ function runtime({guest = false, route = '/', inset = 24, visited = false, loadi
       if(name in modules) return modules[name];
       if(name.endsWith('/referenceVisual')) return load('constants/referenceVisual.ts');
       if(name.endsWith('/palette')) return load('constants/palette.ts');
+      if(name.endsWith('/ownProfileSwipe')) return load('lib/features/profile/ownProfileSwipe.ts');
       if(name.endsWith('/AuthContext')) return {useAuth:()=>({user:guest?null:{id:'me'},profile,loading:false,refreshProfile(){}})};
       if(name.endsWith('/FollowContext')) return {useFollow:()=>({followedIds:new Set(),loadingIds:new Set(),isFollowing:()=>false})};
       if(name.endsWith('/NotificationsContext')) return {useNotifications:()=>({unreadCount:7})};
@@ -65,7 +66,7 @@ function runtime({guest = false, route = '/', inset = 24, visited = false, loadi
     }});
     return exp;
   }
-  return {load,calls,render(Component,props={}){cursor=0;return Component(props);},set:(i,v)=>{states[i]=v;}};
+  return {load,calls,render(Component,props={}){cursor=0;refCursor=0;return Component(props);},set:(i,v)=>{states[i]=v;}};
 }
 
 test('every Android tab uses 50dp plus measured inset, with full-width labels and unchanged five routes',()=>{
@@ -213,4 +214,34 @@ test('pull-to-refresh in visited profile preserves its sticky row and footer',as
   assert.equal(nodes(tree).filter(n=>n.type==='ProfileTabBar').length,1);
   assert.equal(nodes(tree).find(n=>n.type==='ProfilePullRefresh').props.refreshing,false);
   assert.ok(r.calls.some(c=>c[0]==='refresh-publications'));
+});
+
+test('B1 owner-profile horizontal gestures change six tabs; vertical gestures and taps remain separate',()=>{
+ const r=runtime(),Profile=r.load('app/(tabs)/profile.tsx').default;
+ const sections=['Videos','Historias','Compartidos','Me gusta','Guardados','Borradores'];
+ for(let index=0;index<sections.length;index++){
+  let tree=r.render(Profile);
+  const selected=nodes(tree).filter(n=>n.props.accessibilityState?.selected===true);
+  assert.equal(selected.length,1);assert.equal(selected[0].props.accessibilityLabel,sections[index]);
+  assert.deepEqual(Array.from(nodes(tree).find(n=>n.type==='ScrollView').props.stickyHeaderIndices),[1]);
+  const gesture=nodes(tree).find(n=>typeof n.props.onMoveShouldSetPanResponder==='function');
+  assert.ok(gesture);
+  assert.equal(gesture.props.onMoveShouldSetPanResponder({}, {dx:-9,dy:0}),false);
+  assert.equal(gesture.props.onMoveShouldSetPanResponder({}, {dx:-55,dy:70}),false);
+  assert.equal(gesture.props.onMoveShouldSetPanResponder({}, {dx:-85,dy:3}),true);
+  gesture.props.onPanResponderRelease({}, {dx:-85,dy:3});
+ }
+ let tree=r.render(Profile);
+ assert.equal(nodes(tree).filter(n=>n.props.accessibilityState?.selected===true)[0].props.accessibilityLabel,'Borradores');
+ let gesture=nodes(tree).find(n=>typeof n.props.onMoveShouldSetPanResponder==='function');
+ gesture.props.onPanResponderRelease({}, {dx:-85,dy:3});
+ tree=r.render(Profile);
+ assert.equal(nodes(tree).filter(n=>n.props.accessibilityState?.selected===true)[0].props.accessibilityLabel,'Borradores');
+ gesture=nodes(tree).find(n=>typeof n.props.onMoveShouldSetPanResponder==='function');
+ gesture.props.onPanResponderRelease({}, {dx:85,dy:0});
+ tree=r.render(Profile);
+ assert.equal(nodes(tree).filter(n=>n.props.accessibilityState?.selected===true)[0].props.accessibilityLabel,'Guardados');
+ nodes(tree).find(n=>n.props.accessibilityLabel==='Compartidos').props.onPress();
+ tree=r.render(Profile);
+ assert.equal(nodes(tree).filter(n=>n.props.accessibilityState?.selected===true)[0].props.accessibilityLabel,'Compartidos');
 });

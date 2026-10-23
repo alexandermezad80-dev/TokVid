@@ -12,6 +12,7 @@ import PublicationThumbnail from "../../components/PublicationThumbnail";
 import { usePublishedMedia } from "../../hooks/usePublishedMedia";
 import { useMySharedVideos } from "../../hooks/useMySharedVideos";
 import { useLocalPublicationDrafts } from "../../hooks/useLocalPublicationDrafts";
+import { adjacentOwnProfileTab, isOwnProfileHorizontalMove, type OwnProfileTab } from "../../lib/features/profile/ownProfileSwipe";
 import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
@@ -20,6 +21,7 @@ import {
   Alert,
   Modal,
   Pressable,
+  PanResponder,
   useWindowDimensions,
   ActivityIndicator,
   Image,
@@ -48,7 +50,17 @@ export default function ProfileScreen() {
   const gridLayout={onLayout:()=>{},tile:{width:tileWidth,height:tileWidth*4/3}};
   const [expanded,setExpanded]=useState(false),[menu,setMenu]=useState(false);
   const connections=useMyConnections();
-  const [tab, setTab] = useState<"videos" | "stories" | "shared" | "liked" | "saved" | "drafts">("videos");
+  const [tab, setTab] = useState<OwnProfileTab>("videos");
+  const activeTabRef=useRef<OwnProfileTab>(tab);
+  activeTabRef.current=tab;
+  const tabSwipeResponder=useRef(PanResponder.create({
+    onMoveShouldSetPanResponder:(_event,g)=>isOwnProfileHorizontalMove(g.dx,g.dy),
+    onPanResponderRelease:(_event,g)=>{
+      const next=adjacentOwnProfileTab(activeTabRef.current,g.dx,g.dy);
+      if(next!==activeTabRef.current)setTab(next);
+    },
+    onPanResponderTerminationRequest:()=>true,
+  })).current;
   const [scrollViewportHeight, setScrollViewportHeight] = useState(0);
   const [profileSectionHeight, setProfileSectionHeight] = useState(0);
   const [filtersPinned,setFiltersPinned]=useState(false);
@@ -191,6 +203,7 @@ export default function ProfileScreen() {
           <View pointerEvents="none" style={styles.stickyBottomShade}/>
         </>}
   </View>
+      <View {...tabSwipeResponder.panHandlers}>
       {tab==="stories"?<View style={styles.emptyState}><TokvidProfileIcon name="stories" size={40} color="#75828D"/><TouchableOpacity onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})}><Text style={styles.emptyTitle}>Ver mis historias</Text></TouchableOpacity><TouchableOpacity onPress={()=>router.push("/story-create")}><Text style={styles.bioMore}>Añadir historia</Text></TouchableOpacity></View>:
       tab === "drafts" ? (
         <View>
@@ -313,6 +326,7 @@ export default function ProfileScreen() {
           {publications.hasMore && <TouchableOpacity onPress={() => void publications.loadMore()} disabled={publications.loading} style={{padding:20,alignItems:"center"}}><Text style={{color:"#A6E1E5"}}>{publications.loading ? "Cargando…" : "Ver más"}</Text></TouchableOpacity>}
         </View>
       )}
+      </View>
 
       <View style={{ height: Platform.OS === "web" ? 34 : insets.bottom + 80 }} />
       </ScrollView>
