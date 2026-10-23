@@ -149,7 +149,7 @@ test('own profile scrolls its existing details while keeping filters sticky and 
   assert.ok(dialog); assert.equal(dialog[1][2].find(x=>x.text==='Eliminar').style,'destructive');
   nodes(tree).find(n=>n.props.accessibilityLabel==='Guardados').props.onPress();tree=r.render(Profile);
   const saved=nodes(tree).find(n=>n.type==='TouchableOpacity'&&nodes(n).some(c=>c.type==='PublicationThumbnail'));
-  saved.props.onPress();assert.deepEqual(r.calls.at(-1),['push','/saved-feed?startIndex=0']);
+  saved.props.onPress();assert.deepEqual(r.calls.at(-1),['push','/saved-feed?startIndex=0&videoId=video-one']);
   nodes(tree).find(n=>n.props.accessibilityLabel==='Me gusta').props.onPress();tree=r.render(Profile);
   nodes(tree).find(n=>n.type==='TouchableOpacity'&&nodes(n).some(c=>c.type==='PublicationThumbnail')).props.onPress();assert.deepEqual(r.calls.at(-1),['push','/liked-feed?startIndex=0&videoId=video-one']);
 });

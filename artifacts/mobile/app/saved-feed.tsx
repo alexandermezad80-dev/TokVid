@@ -19,14 +19,17 @@ import VideoCard from "../components/VideoCard";
 import { useFollow } from "../context/FollowContext";
 import { VideoItem, formatCount, useVideoFeed } from "../hooks/useVideoFeed";
 import { useSavedVideos } from "../hooks/useSavedVideos";
+import { savedVideoStartIndex } from "../lib/features/profile/savedVideoSelection";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 export default function SavedFeedScreen() {
-  const params = useLocalSearchParams<{ startIndex?: string }>();
-  const startIndex = parseInt(params.startIndex ?? "0", 10);
+  const params = useLocalSearchParams<{ startIndex?: string; videoId?:string }>();
+  const parsedIndex=parseInt(params.startIndex??"0",10);
+  const startIndex=Number.isFinite(parsedIndex)&&parsedIndex>=0?parsedIndex:0;
+  const requestedId=typeof params.videoId==="string"?params.videoId:undefined;
 
-  const [activeIndex, setActiveIndex] = useState(startIndex);
+  const [activeIndex, setActiveIndex] = useState<number|null>(null);
   const [commentVideo, setCommentVideo] = useState<VideoItem | null>(null);
   const [shareOverrides, setShareOverrides] = useState<Record<string, number>>({});
   const insets = useSafeAreaInsets();
@@ -34,7 +37,9 @@ export default function SavedFeedScreen() {
 
   const { followedIds, toggleFollow } = useFollow();
   const { likedIds, toggleLike } = useVideoFeed(followedIds);
-  const { savedIds, savedVideos, toggleSave } = useSavedVideos();
+  const { savedIds, savedVideos, toggleSave, loading:savedLoading, error:savedError, refresh:refreshSaved } = useSavedVideos();
+  const selectedIndex=savedVideoStartIndex(savedVideos,requestedId,startIndex);
+  const visibleIndex=activeIndex??selectedIndex;
 
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -74,7 +79,7 @@ export default function SavedFeedScreen() {
       return (
         <VideoCard
           video={videoWithShares}
-          isActive={index === activeIndex}
+          isActive={index === visibleIndex}
           isLiked={likedIds.has(item.id)}
           isSaved={savedIds.has(item.id)}
           isOwner={false}
@@ -90,10 +95,28 @@ export default function SavedFeedScreen() {
         />
       );
     },
-    [activeIndex, likedIds, savedIds, shareOverrides, toggleLike, toggleFollow, toggleSave, handleShare]
+    [visibleIndex, likedIds, savedIds, shareOverrides, toggleLike, toggleFollow, toggleSave, handleShare]
   );
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
+
+  if(savedLoading){
+    return <View style={styles.empty}><Text style={styles.emptyText}>Cargando Guardados…</Text></View>;
+  }
+  // A network failure is not proof that a creator deleted the publication.
+  if(savedError){
+    return <View style={styles.empty}>
+      <TouchableOpacity accessibilityLabel="Volver" onPress={()=>router.back()} style={styles.backTouchable}><Feather name="arrow-left" size={24} color="#fff" /></TouchableOpacity>
+      <Text style={styles.emptyText}>No pudimos comprobar tus Guardados. Revisa la conexión.</Text>
+      <TouchableOpacity accessibilityLabel="Reintentar Guardados" onPress={()=>void refreshSaved().catch(()=>{})}><Text style={styles.emptyTitle}>Reintentar</Text></TouchableOpacity>
+    </View>;
+  }
+  if(requestedId&&selectedIndex<0){
+    return <View style={styles.empty}>
+      <TouchableOpacity accessibilityLabel="Volver" onPress={()=>router.back()} style={styles.backTouchable}><Feather name="arrow-left" size={24} color="#fff" /></TouchableOpacity>
+      <Text style={styles.emptyText}>Este video ya no está disponible en tus Guardados.</Text>
+    </View>;
+  }
 
   if (savedVideos.length === 0) {
     return (
@@ -135,7 +158,7 @@ export default function SavedFeedScreen() {
           offset: SCREEN_HEIGHT * index,
           index,
         })}
-        initialScrollIndex={Math.min(startIndex, savedVideos.length - 1)}
+        initialScrollIndex={Math.max(0,selectedIndex)}
       />
 
       <CommentsSheet

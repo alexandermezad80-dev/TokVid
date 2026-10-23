@@ -90,6 +90,11 @@ export default function ProfileScreen() {
       refreshProfile();
     }, [user?.id])
   );
+  // Returning from an unavailable publication must update Guardados before
+  // showing stale thumbnails. Refresh only this tab, never Feed or other UI.
+  useFocusEffect(useCallback(()=>{
+    if(tab==="saved"&&user?.id)void refreshSaved().catch(()=>{});
+  },[tab,user?.id,refreshSaved]));
 
   const onRefresh=useCallback(async()=>{
     if(!user || refreshGuard.current)return;
@@ -254,7 +259,7 @@ export default function ProfileScreen() {
               <TouchableOpacity
                 key={v.id}
                 style={[styles.gridItem,gridLayout.tile,styles.publishedTileSurface]}
-                onPress={() => router.push(`/saved-feed?startIndex=${idx}`)}
+                onPress={() => router.push(`/saved-feed?startIndex=${idx}&videoId=${encodeURIComponent(v.id)}`)}
               >
                 <PublicationThumbnail item={v} />
                 <View style={styles.savedBadge}>
