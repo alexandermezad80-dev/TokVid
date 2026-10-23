@@ -51,3 +51,13 @@
 **Auditoría verificable de rama `feature/feed-mini-video-avatar` (antes del cambio):** la tercera pestaña en `app/(tabs)/profile.tsx` todavía tiene clave `gallery`, etiqueta accesible `Galería` y filtra con `publications.items.filter(item=>tab!=="gallery"||item.mediaType==="image")`. Esas publicaciones proceden de `usePublishedMedia({userId:user?.id})`, no del historial `shared`. En cambio, `app/user-profile.tsx` sí usa `readProfileActivity(userId, "shared")` a través de la variable `tab`; `lib/features/profile/visibility.ts` consulta `profile_activity_ids`. El control `Mostrar mis compartidos` ya existe en `user-tools.tsx`. **Por tanto, la existencia de esta consulta y ajuste de privacidad no demuestra que el tercer espacio del perfil propio esté conectado al historial real de compartidos.** No ocultar ni falsificar esta diferencia.
 
 **Límite de A2a:** solo SVG/JSX de íconos de ese espacio. No cambiar identificador interno, título accesible, filtro, búsqueda, RPC, navegación, privacidad, datos, barra sticky, Feed, ni ninguna otra pestaña. La validación física de qué contenido se presenta permanece pendiente. **No marcar la funcionalidad de compartidos como completada sin confirmar.**
+
+## Bloque A2b — Compartidos: exclusivamente videos de otros creadores
+
+El propietario autorizó corregir el tercer espacio, antes llamado `gallery`, porque el filtro anterior mostraba fotografías propias. Ahora se usa `shared/Compartidos` con icono vectorial Relevo, sin alterar tamaño de celdas ni sticky. Se reutiliza la consulta existente `readProfileActivity(userId,"shared",offset)`, que ya aplica reglas de privacidad para lectores ajenos y RLS para publicaciones. No se modifican RPC ni migraciones.
+
+La grilla del dueño filtra solo `mediaType === "video"` y `creatorId !== userId`. El paginado recorre eventos de compartido de 60 en 60, sin ajustar el offset al número de videos visibles (evita saltos cuando hay fotos o videos inaccesibles). Incluye reintento, refresco, cargar más y estado vacío propios; ningún video/foto publicado por el dueño entra por error desde `usePublishedMedia`.
+
+Ajustes y privacidad conserva `Mostrar mis compartidos`; es una opción de visibilidad ante terceros, no bloquea el historial del propio usuario. Los tres puntos superiores, herramientas, Feed, galería del editor, historias, saved, liked, videos publicados y perfil visitado quedan intactos.
+
+**La prueba física no se ha realizado.** Verificar con una cuenta real que tenga video compartido, foto compartida y video propio; la sección debe incluir únicamente el video ajeno compartido.

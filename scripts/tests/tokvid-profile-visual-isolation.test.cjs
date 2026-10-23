@@ -24,14 +24,14 @@ test("A1 grid is 3 full-width tiles with measurable guard against Android roundi
  assert.match(profile,/onPress=\{\(\) => router\.push\(\x60\/saved-feed\?startIndex=/);
  assert.match(profile,/onPress=\{\(\) => router\.push\(\x60\/liked-feed\?startIndex=/);
 });
-test("A1 uses local vector artwork; does not repurpose shared Gallery or user tools yet",()=>{
+test("A2b approved vectors and protected user tools",()=>{
  assert.match(icons,/type ProfileIconName = "videos" \| "stories" \| "shared"/);
  assert.match(icons,/<Rect x=\{3\.5\}/);
  assert.match(icons,/<Circle cx=\{28\}/);
  assert.match(icons,/<Path d="M17 20 H28/);
- assert.match(profile,/\{key:"gallery",icon:"image",label:"Galería"\}/);
+ assert.match(profile,/\{key:"shared",icon:"share-2",label:"Compartidos"\}/);
  assert.match(profile,/item\.key==="more"\?router\.push\("\/user-tools"\)/);
- assert.match(profile,/name=\{item\.key==="gallery"\?"shared":item\.key\} size=\{22\} color=\{tab===item\.key\?v\.ink:v\.inactive\}/);
+ assert.match(profile,/name=\{item\.key\} size=\{22\} color=\{tab===item\.key\?v\.ink:v\.inactive\}/);
 });
 test("A1 story illustration preserves image/video selection and existing gallery action",()=>{
  assert.match(story,/<TokvidProfileIcon name="stories" size=\{56\}/);
@@ -40,10 +40,14 @@ test("A1 story illustration preserves image/video selection and existing gallery
  assert.match(profile,/Comparte tu primera\\nfoto o video/);
 });
 
-test("A2a Relevo draws only the third tab; legacy gallery state and filter stay unchanged",()=>{
- assert.match(profile,/item\.key==="videos"\|\|item\.key==="stories"\|\|item\.key==="gallery"/);
- assert.match(profile,/tab==="gallery"\?<TokvidProfileIcon name="shared" size=\{40\}/);
- assert.match(profile,/\{key:"gallery",icon:"image",label:"Galería"\}/);
- assert.match(profile,/items\.filter\(item=>tab!=="gallery"\|\|item\.mediaType==="image"\)/);
+test("A2b third tab loads shared items rather than own gallery",()=>{
+ assert.match(profile,/useMySharedVideos\(user\?\.id,tab==="shared"\)/);
+ assert.match(profile,/\{key:"shared",icon:"share-2",label:"Compartidos"\}/);
+ assert.match(profile,/tab === "shared" \?/);
+ assert.match(profile,/shared\.items\.map\(item=>/);
+ assert.match(profile,/shared\.hasMore/);
+ assert.match(profile,/onPress=\{\(\)=>void shared\.refresh\(\)\}/);
+ assert.match(profile,/onPress=\{\(\)=>void shared\.loadMore\(\)\}/);
+ assert.doesNotMatch(profile,/mediaType==="image"/);
  assert.match(profile,/item\.key==="more"\?router\.push\("\/user-tools"\)/);
 });

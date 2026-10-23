@@ -49,6 +49,7 @@ function runtime({guest = false, route = '/', inset = 24, visited = false, loadi
       if(name.endsWith('/useSystemNavigation')) return {useSystemNavigation:(...args)=>calls.push(['system',...args])};
       if(name.endsWith('/useMyConnections')) return {useMyConnections:()=>({loading:false,following:[],followers:[],refresh:async()=>{calls.push(['refresh-connections']);}})};
       if(name.endsWith('/usePublishedMedia')) return {usePublishedMedia:()=>({items:products,loading:false,refresh:async()=>{calls.push(['refresh-publications']);}})};
+      if(name.endsWith('/useMySharedVideos')) return {useMySharedVideos:()=>({items:products,loading:false,error:null,hasMore:false,refresh:async()=>{calls.push(['refresh-shared']);},loadMore:async()=>{calls.push(['more-shared']);}})};
       if(name.endsWith('/useSavedVideos')) return {useSavedVideos:()=>({savedVideos:products,refresh:async()=>{calls.push(['refresh-saved']);}})};
       if(name.endsWith('/useVideoFeed')) return {useVideoFeed:()=>({likedVideos:products,refreshLikes:async()=>{calls.push(['refresh-liked']);}})};
       if(name.endsWith('/usePublicationGrid')) return {usePublicationGrid:()=>({onLayout(){},tile:{width:100}})};
@@ -130,6 +131,9 @@ test('own profile scrolls its existing details while keeping filters sticky and 
   assert.ok(!nodes(scroll).some(n=>n.type==='ReferenceHeader'));
   assert.ok(nodes(children[0]).some(n=>n.type==='BrandAvatar'));
   nodes(tree).find(n=>n.props.accessibilityLabel==='Abrir publicación: Video').props.onPress();assert.deepEqual(r.calls.at(-1),['push',{pathname:'/publication',params:{id:'video-one'}}]);
+  nodes(tree).find(n=>n.props.accessibilityLabel==='Compartidos').props.onPress();tree=r.render(Profile);
+  const sharedThumb=nodes(tree).find(n=>n.props.accessibilityLabel==='Abrir video compartido: Video');
+  assert.ok(sharedThumb);sharedThumb.props.onPress();assert.deepEqual(r.calls.at(-1),['push',{pathname:'/publication',params:{id:'video-one'}}]);
   nodes(tree).find(n=>n.props.accessibilityLabel==='Guardados').props.onPress();tree=r.render(Profile);
   const saved=nodes(tree).find(n=>n.type==='TouchableOpacity'&&nodes(n).some(c=>c.type==='PublicationThumbnail'));
   saved.props.onPress();assert.deepEqual(r.calls.at(-1),['push','/saved-feed?startIndex=0']);

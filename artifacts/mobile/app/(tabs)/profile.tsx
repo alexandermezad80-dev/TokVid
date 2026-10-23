@@ -10,6 +10,7 @@ import {usePublicationGrid} from "../../hooks/usePublicationGrid";
 import {useMyConnections} from "../../hooks/useMyConnections";
 import PublicationThumbnail from "../../components/PublicationThumbnail";
 import { usePublishedMedia } from "../../hooks/usePublishedMedia";
+import { useMySharedVideos } from "../../hooks/useMySharedVideos";
 import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
@@ -46,7 +47,7 @@ export default function ProfileScreen() {
   const gridLayout={onLayout:()=>{},tile:{width:tileWidth,height:tileWidth*4/3}};
   const [expanded,setExpanded]=useState(false),[menu,setMenu]=useState(false);
   const connections=useMyConnections();
-  const [tab, setTab] = useState<"videos" | "stories" | "gallery" | "liked" | "saved">("videos");
+  const [tab, setTab] = useState<"videos" | "stories" | "shared" | "liked" | "saved">("videos");
   const [scrollViewportHeight, setScrollViewportHeight] = useState(0);
   const [profileSectionHeight, setProfileSectionHeight] = useState(0);
   const [filtersPinned,setFiltersPinned]=useState(false);
@@ -64,6 +65,7 @@ export default function ProfileScreen() {
   const { savedVideos, refresh: refreshSaved } = useSavedVideos();
   const { followedIds } = useFollow();
   const { likedVideos, refreshLikes } = useVideoFeed(followedIds);
+  const shared=useMySharedVideos(user?.id,tab==="shared");
 
   useFocusEffect(
     useCallback(() => {
@@ -82,10 +84,11 @@ export default function ProfileScreen() {
       ];
       if(tab==="saved")tasks.push(refreshSaved());
       if(tab==="liked")tasks.push(refreshLikes());
+      if(tab==="shared")tasks.push(shared.refresh());
       const results=await Promise.allSettled(tasks);
       if(results.some(result=>result.status==='rejected'))Alert.alert('No se pudo actualizar el perfil','Comprueba tu conexión e inténtalo de nuevo.');
     }finally{refreshGuard.current=false;setRefreshing(false);}
-  },[user?.id,refreshProfile,connections.refresh,publications.refresh,refreshSaved,refreshLikes,tab]);
+  },[user?.id,refreshProfile,connections.refresh,publications.refresh,refreshSaved,refreshLikes,shared.refresh,tab]);
   if (!user) return null;
 
   const handleSignOut = () => {
@@ -165,8 +168,8 @@ export default function ProfileScreen() {
       </View>
       <View style={[styles.stickySlot,{width,elevation:filtersPinned?1:0,shadowOpacity:filtersPinned?0.05:0}]}>
   <View style={styles.tabBar}>{([
-        {key:"videos",icon:"grid",label:"Videos"},{key:"stories",icon:"clock",label:"Historias"},{key:"gallery",icon:"image",label:"Galería"},{key:"liked",icon:"heart",label:"Me gusta"},{key:"saved",icon:"bookmark",label:"Guardados"},{key:"more",icon:"more-horizontal",label:"Más"},
-      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>item.key==="more"?router.push("/user-tools"):setTab(item.key)} style={[styles.tabItem,{width:width/6,flex:0},tab===item.key&&styles.tabItemActive]}>{item.key==="videos"||item.key==="stories"||item.key==="gallery"?<TokvidProfileIcon name={item.key==="gallery"?"shared":item.key} size={22} color={tab===item.key?v.ink:v.inactive}/>:<Feather name={item.icon} size={22} color={tab===item.key?v.ink:v.inactive}/>}</TouchableOpacity>)}</View>
+        {key:"videos",icon:"grid",label:"Videos"},{key:"stories",icon:"clock",label:"Historias"},{key:"shared",icon:"share-2",label:"Compartidos"},{key:"liked",icon:"heart",label:"Me gusta"},{key:"saved",icon:"bookmark",label:"Guardados"},{key:"more",icon:"more-horizontal",label:"Más"},
+      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>item.key==="more"?router.push("/user-tools"):setTab(item.key)} style={[styles.tabItem,{width:width/6,flex:0},tab===item.key&&styles.tabItemActive]}>{item.key==="videos"||item.key==="stories"||item.key==="shared"?<TokvidProfileIcon name={item.key} size={22} color={tab===item.key?v.ink:v.inactive}/>:<Feather name={item.icon} size={22} color={tab===item.key?v.ink:v.inactive}/>}</TouchableOpacity>)}</View>
         {filtersPinned&&<>
           <View pointerEvents="none" style={styles.stickyTopShade}/>
           <View pointerEvents="none" style={styles.stickyBottomShade}/>
@@ -198,6 +201,32 @@ export default function ProfileScreen() {
             ))}
           </View>
         )
+      ) : tab === "shared" ? (
+        <View>
+          {shared.loading && shared.items.length===0 ? <ActivityIndicator color="#85D5DB" style={{padding:24}}/> : null}
+          {!!shared.error && <TouchableOpacity style={styles.emptyState} onPress={()=>void shared.refresh()}>
+            <TokvidProfileIcon name="shared" size={40} color="#75828D"/>
+            <Text style={styles.emptyText}>{shared.error}</Text>
+            <Text style={{color:"#2F777B"}}>Reintentar</Text>
+          </TouchableOpacity>}
+          {!shared.loading && !shared.error && shared.items.length===0 && !shared.hasMore &&
+            <View style={styles.emptyState}>
+              <TokvidProfileIcon name="shared" size={40} color="#75828D"/>
+              <Text style={styles.emptyTitle}>Sin videos compartidos</Text>
+              <Text style={styles.emptyText}>Los videos de otros creadores que compartas aparecerán aquí</Text>
+            </View>}
+          <View style={[styles.grid,{width}]}>
+            {shared.items.map(item=><TouchableOpacity key={item.id} style={[styles.gridItem,gridLayout.tile]}
+              accessibilityRole="button" accessibilityLabel={`Abrir video compartido: ${item.caption || "Sin descripción"}`}
+              onPress={()=>router.push({pathname:"/publication",params:{id:item.id}})}>
+              <PublicationThumbnail item={item}/>
+            </TouchableOpacity>)}
+          </View>
+          {shared.hasMore && <TouchableOpacity style={{padding:20,alignItems:"center"}} disabled={shared.loading}
+            onPress={()=>void shared.loadMore()}><Text style={{color:"#2F777B"}}>
+            {shared.loading?"Cargando…":shared.items.length?"Ver más":"Buscar más videos"}
+          </Text></TouchableOpacity>}
+        </View>
       ) : tab === "liked" ? (
         likedVideos.length === 0 ? (
           <View style={styles.emptyState}>
@@ -228,13 +257,13 @@ export default function ProfileScreen() {
           {publications.loading && publications.items.length === 0 ? <ActivityIndicator color="#85D5DB" style={{ padding: 24 }} /> : null}
           {!!publications.error && <TouchableOpacity onPress={() => void publications.refresh()} style={styles.emptyState}><Text style={styles.emptyText}>{publications.error}</Text><Text style={{color:"#9CDEE1"}}>Reintentar</Text></TouchableOpacity>}
           {!publications.loading && !publications.error && publications.items.length === 0 && <TouchableOpacity style={styles.emptyState} onPress={() => router.push("/(tabs)/create")}>
-            {tab==="gallery"?<TokvidProfileIcon name="shared" size={40} color="#75828D"/>:<TokvidProfileIcon name="videos" size={40} color="#75828D"/>}
+            <TokvidProfileIcon name="videos" size={40} color="#75828D"/>
             <View style={styles.emptyAction}>
               <Feather name="plus" size={22} color="#6B7580"/>
               <Text style={[styles.emptyText,{fontFamily:"Inter_400Regular",fontSize:14,lineHeight:19}]}>{"Comparte tu primera\nfoto o video"}</Text>
             </View>
           </TouchableOpacity>}
-          <View style={[styles.grid,{width}]}>{publications.items.filter(item=>tab!=="gallery"||item.mediaType==="image").map(item => <TouchableOpacity key={item.id} style={[styles.gridItem,gridLayout.tile]} accessibilityRole="button" accessibilityLabel={`Abrir publicación: ${item.caption || "Sin descripción"}`} onPress={() => router.push({ pathname:"/publication", params:{id:item.id} })}><PublicationThumbnail item={item} /></TouchableOpacity>)}</View>
+          <View style={[styles.grid,{width}]}>{publications.items.map(item => <TouchableOpacity key={item.id} style={[styles.gridItem,gridLayout.tile]} accessibilityRole="button" accessibilityLabel={`Abrir publicación: ${item.caption || "Sin descripción"}`} onPress={() => router.push({ pathname:"/publication", params:{id:item.id} })}><PublicationThumbnail item={item} /></TouchableOpacity>)}</View>
           {publications.hasMore && <TouchableOpacity onPress={() => void publications.loadMore()} disabled={publications.loading} style={{padding:20,alignItems:"center"}}><Text style={{color:"#A6E1E5"}}>{publications.loading ? "Cargando…" : "Ver más"}</Text></TouchableOpacity>}
         </View>
       )}
