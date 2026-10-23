@@ -30,7 +30,7 @@ test("B4: chat-only refresh calls existing chat.refresh, preserves keyboard, bub
  assert.ok(chat.includes("<PullRefreshUnderHeader scrollOffsetRef={pullScrollOffset} onRefresh={pullRefresh} refreshing={isPullRefreshing}"));
  assert.ok(chat.includes("enabled={!keyboard&&!busy&&!recording.isRecording}"));
  assert.ok(chat.includes("pullScrollOffset.current=Math.max(0,contentOffset.y)"));
- for(const keep of ["maintainVisibleContentPosition={{minIndexForVisible:0}}","keyboardShouldPersistTaps=\"handled\"","onScrollBeginDrag={close}","setReply(null)","onPress={send}","onPress={()=>void pick(true)}","onPress={()=>void pick(false)}","<Bubble text={item.text}"])assert.ok(chat.includes(keep),keep);
+ for(const keep of ["maintainVisibleContentPosition={{minIndexForVisible:0}}","keyboardShouldPersistTaps=\"handled\"","onScrollBeginDrag={close}","setReply(null)","onPress={text.trim()||media?send:record}","onPress={()=>void pick(true)}","onPress={()=>void pick(false)}","<Bubble text={item.text}"])assert.ok(chat.includes(keep),keep);
 });
 test("B4: modified TSX transpiles",()=>{
  for(const c of [component,inbox,chat,empty]){const out=ts.transpileModule(c,{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022},reportDiagnostics:true});assert.deepEqual(out.diagnostics?.filter(x=>x.category===ts.DiagnosticCategory.Error).map(x=>String(x.messageText)),[]);}
