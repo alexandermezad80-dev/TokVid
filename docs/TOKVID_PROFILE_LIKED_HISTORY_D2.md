@@ -16,3 +16,6 @@ La consulta remota es verificable por código y pruebas de contrato; no se prueb
 **El problema de favorito demo revertido sigue pendiente de observar con una respuesta real de Supabase**: no inventar la causa de un rechazo. Conteos en vivo de seguidores y publicaciones necesitan prueba de dos cuentas; no se alteran desencadenadores/migraciones.
 
 Preparar con `[prepare only]`, CI de regresiones/TypeScript/configuración Android, **sin nueva APK**. Registro/Login, Feed y workflows Codex permanecen protegidos.
+
+## D2b — fallos de red diferenciados
+El reproductor no equipara una consulta fallida con una publicación eliminada. Ante error de RPC/lectura y ausencia del ID pedido, muestra mensaje de conexión y **Reintentar**, conservando el mismo ID; solo declara «ya no disponible» cuando se termina la búsqueda sin error. La grilla propia muestra el mismo estado de recuperación ante una colección vacía y consulta fallida. Estilos y acciones normales intactos.

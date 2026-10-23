@@ -32,6 +32,11 @@ test("D2 viewer resolves video by immutable ID, never blindly by a possibly stal
  assert.match(viewer,/initialScrollIndex=\{resolvedStart\}/);
  assert.match(viewer,/if\(resolvedStart===null\)/);
  assert.match(viewer,/if\(resolvedStart<0\)/);
+ assert.match(viewer,/if\(resolvedStart===-2\)/);
+ assert.match(viewer,/if\(likedHistory\.error&&found<0/);
+ assert.match(viewer,/onPress=\{\(\)=>\{setResolvedStart\(null\);void likedHistory\.refresh\(\);\}\}/);
+ assert.match(owner,/likedHistory\.error && likedVideos\.length===0/);
+ assert.match(owner,/onPress=\{\(\)=>void likedHistory\.refresh\(\)\}/);
 });
 test("D2 no Feed, avatar, thumbnail, saved, story, sticky or registration behavior changed",()=>{
  for(const token of ['tileWidth=Math.max(1,(Math.floor(width)-8)/3)','stickyHeaderIndices={[1]}','width:width/6,flex:0','if(tab==="saved")tasks.push(refreshSaved())','onPress={()=>setTab(item.key)}','onPress={()=>router.push("/story-create")}']){

@@ -48,11 +48,12 @@ export default function LikedFeedScreen() {
   useEffect(()=>{
     if(resolvedStart!==null||likedHistory.loading||likedLoading)return;
     const found=requestedId?likedVideos.findIndex(v=>v.id===requestedId):-1;
+    if(likedHistory.error&&found<0&&(!!requestedId||likedVideos.length===0)){setResolvedStart(-2);return;}
     if(requestedId&&found<0&&likedHistory.hasMore){void likedHistory.loadMore();return;}
     if(requestedId&&found<0){setResolvedStart(-1);return;}
     const index=requestedId?found:Math.min(startIndex,Math.max(0,likedVideos.length-1));
     setActiveIndex(index);setResolvedStart(index);
-  },[requestedId,likedVideos,likedLoading,likedHistory.loading,likedHistory.hasMore,likedHistory.loadMore,resolvedStart,startIndex]);
+  },[requestedId,likedVideos,likedLoading,likedHistory.loading,likedHistory.hasMore,likedHistory.error,likedHistory.loadMore,resolvedStart,startIndex]);
   const { savedIds, toggleSave } = useSavedVideos();
 
   const onViewableItemsChanged = useCallback(
@@ -116,6 +117,14 @@ export default function LikedFeedScreen() {
 
   if(resolvedStart===null){
     return <View style={styles.empty}><ActivityIndicator color="#D2F9FA" /><Text style={styles.emptyText}>Cargando Me gusta…</Text></View>;
+  }
+
+  if(resolvedStart===-2){
+    return <View style={styles.empty}>
+      <TouchableOpacity accessibilityLabel="Volver" onPress={()=>router.back()} style={styles.backTouchable}><Feather name="arrow-left" size={24} color="#fff" /></TouchableOpacity>
+      <Text style={styles.emptyText}>No pudimos cargar tus Me gusta. Comprueba la conexión.</Text>
+      <TouchableOpacity accessibilityLabel="Reintentar Me gusta" onPress={()=>{setResolvedStart(null);void likedHistory.refresh();}}><Text style={styles.emptyTitle}>Reintentar</Text></TouchableOpacity>
+    </View>;
   }
 
   if(resolvedStart<0){

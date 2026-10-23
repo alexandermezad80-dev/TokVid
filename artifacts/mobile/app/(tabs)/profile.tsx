@@ -293,6 +293,12 @@ export default function ProfileScreen() {
       ) : tab === "liked" ? (
         likedHistory.loading && likedVideos.length===0 ? (
           <View style={styles.emptyState}><ActivityIndicator color="#FE2C55" /></View>
+        ) : likedHistory.error && likedVideos.length===0 ? (
+          <TouchableOpacity style={styles.emptyState} onPress={()=>void likedHistory.refresh()}>
+            <Feather name="alert-circle" size={40} color="#75828D" />
+            <Text style={styles.emptyText}>{likedHistory.error}</Text>
+            <Text style={styles.bioMore}>Reintentar</Text>
+          </TouchableOpacity>
         ) : likedVideos.length === 0 ? (
           <View style={styles.emptyState}>
             <Feather name="heart" size={40} color="#75828D" />
