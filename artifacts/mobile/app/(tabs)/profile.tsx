@@ -249,7 +249,7 @@ export default function ProfileScreen() {
             {savedVideos.map((v, idx) => (
               <TouchableOpacity
                 key={v.id}
-                style={[styles.gridItem,gridLayout.tile]}
+                style={[styles.gridItem,gridLayout.tile,styles.publishedTileSurface]}
                 onPress={() => router.push(`/saved-feed?startIndex=${idx}`)}
               >
                 <PublicationThumbnail item={v} />
@@ -275,7 +275,7 @@ export default function ProfileScreen() {
               <Text style={styles.emptyText}>Los videos de otros creadores que compartas aparecerán aquí</Text>
             </View>}
           <View style={[styles.grid,{width}]}>
-            {shared.items.map(item=><TouchableOpacity key={item.id} style={[styles.gridItem,gridLayout.tile]}
+            {shared.items.map(item=><TouchableOpacity key={item.id} style={[styles.gridItem,gridLayout.tile,styles.publishedTileSurface]}
               accessibilityRole="button" accessibilityLabel={`Abrir video compartido: ${item.caption || "Sin descripción"}`}
               onPress={()=>router.push({pathname:"/publication",params:{id:item.id}})}>
               <PublicationThumbnail item={item}/>
@@ -300,7 +300,7 @@ export default function ProfileScreen() {
             {likedVideos.map((v, idx) => (
               <TouchableOpacity
                 key={v.id}
-                style={[styles.gridItem,gridLayout.tile]}
+                style={[styles.gridItem,gridLayout.tile,styles.publishedTileSurface]}
                 onPress={() => router.push(`/liked-feed?startIndex=${idx}`)}
               >
                 <PublicationThumbnail item={v} />
@@ -322,7 +322,7 @@ export default function ProfileScreen() {
               <Text style={[styles.emptyText,{fontFamily:"Inter_400Regular",fontSize:14,lineHeight:19}]}>{"Comparte tu primera\nfoto o video"}</Text>
             </View>
           </TouchableOpacity>}
-          <View style={[styles.grid,{width}]}>{publications.items.map(item => <TouchableOpacity key={item.id} style={[styles.gridItem,gridLayout.tile]} accessibilityRole="button" accessibilityLabel={`Abrir publicación: ${item.caption || "Sin descripción"}`} onPress={() => router.push({ pathname:"/publication", params:{id:item.id} })}><PublicationThumbnail item={item} /></TouchableOpacity>)}</View>
+          <View style={[styles.grid,{width}]}>{publications.items.map(item => <TouchableOpacity key={item.id} style={[styles.gridItem,gridLayout.tile,styles.publishedTileSurface]} accessibilityRole="button" accessibilityLabel={`Abrir publicación: ${item.caption || "Sin descripción"}`} onPress={() => router.push({ pathname:"/publication", params:{id:item.id} })}><PublicationThumbnail item={item} /></TouchableOpacity>)}</View>
           {publications.hasMore && <TouchableOpacity onPress={() => void publications.loadMore()} disabled={publications.loading} style={{padding:20,alignItems:"center"}}><Text style={{color:"#A6E1E5"}}>{publications.loading ? "Cargando…" : "Ver más"}</Text></TouchableOpacity>}
         </View>
       )}
@@ -404,6 +404,9 @@ const styles = StyleSheet.create({
   draftCover:{flex:1,alignItems:"center",justifyContent:"center"},
   draftKind:{position:"absolute",bottom:5,left:5,backgroundColor:"#00000099",padding:5,borderRadius:5},
   draftDelete:{position:"absolute",top:5,right:5,width:32,height:32,alignItems:"center",justifyContent:"center",backgroundColor:"#000000B3",borderRadius:16},
+  // The rounded thumbnail gradient has transparent corners; use the white profile canvas there.
+  // Keep the original dark tile fallback for private drafts and preserve every tile dimension.
+  publishedTileSurface:{backgroundColor:v.white},
   gridItem: {
     aspectRatio: 0.75, borderRadius: 0,
     backgroundColor: "#111",
