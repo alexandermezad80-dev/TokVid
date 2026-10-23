@@ -1,3 +1,13 @@
+## Cierre de auditoría preparatoria — 23 octubre 2026: pull-to-refresh y swipes B1–B7
+
+**Rama:** `feature/feed-mini-video-avatar`. **Código B4–B7 auditado:** [`ea46a2ef`](https://github.com/alexandermezad80-dev/TokVid/commit/ea46a2ef4b787da542a974ad14cbb5c130f80401). **Auditoría GitHub:** 8 commits desde `72096401`, 20 archivos afectados exclusivamente en mecanismo de refresco/swipe, sus tests y documentación; ninguna ruta de perfiles ajenos, iconos, branding, editor, Auth, workflows o migraciones. **Protecciones:** 18/18 hashes vigentes correctos (el del Feed refleja la única excepción B6 ya documentada; otros 17 permanecen). **Resultado CI final B7:** [40033137153](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40033137153) **success** — regresiones, TypeScript y prebuild Android.
+
+**B7 Perfil propio:** `profile.tsx` cambia exclusivamente la importación de refresco a `PullRefreshUnderHeader` manteniendo el nombre JSX local `ProfilePullRefresh`; colores por defecto azul acero y `onRefresh` existentes. Mantiene cabecera, 39 dp sticky, seis pestañas y grilla sin alteración. `components/ProfilePullRefresh.tsx` original **no cambió** y sigue siendo el componente de perfiles visitados. La primera ejecución CI falló por un mock antiguo dependiente del nombre; fueron corregidas solo 5 referencias de tests propios, sin cambiar pruebas de perfil ajeno; el CI final pasa.
+
+**Prueba física:** `physical_device_verified=false`. No afirmar que los indicadores, animaciones o swipes ya están comprobados en teléfono. Próximo paso del plan: una APK de validación conjunta vía workflow GitHub, sin retomar editor ni modificar el Feed visualmente. Ver [`docs/continuity/TOKVID_REFRESH_SWIPE_FINAL_AUDIT_B4_B7.md`](../continuity/TOKVID_REFRESH_SWIPE_FINAL_AUDIT_B4_B7.md).
+
+---
+
 ## Continuidad 23-10-2026 — B4/B5/B6: refresco aislado, swipes y protección de lo aprobado
 
 **Rama única:** `feature/feed-mini-video-avatar`. **Último cambio de código:** [`8dc11cdc`](https://github.com/alexandermezad80-dev/TokVid/commit/8dc11cdc7f71d5e459e2c393a6570cb4697c9f45). Decisión expresa del propietario: continuar **únicamente** pull-to-refresh y swipes, con iconos, medidas, posiciones, identidades, acciones, componentes ya aprobados y perfiles propios/ajenos intactos; **editor de fotos/videos EN PAUSA** hasta nueva propuesta visual.
