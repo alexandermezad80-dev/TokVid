@@ -35,7 +35,7 @@ test("D: real saved videos resolve from genuine Supabase rows",async()=>{
 });
 test("D: a failed saved publication lookup rejects rather than silently deleting the displayed list",async()=>{
  const read=resolver(()=>({data:null,error:{message:"network failure"}}));
- await assert.rejects(read(new Set(["real-uuid"])),/network failure/);
+ await assert.rejects(read(new Set(["real-uuid"])),err=>err?.message==="network failure");
 });
 test("D: profile refresh keeps server-backed counts and real sources with original sticky",()=>{
  for(const snippet of [
