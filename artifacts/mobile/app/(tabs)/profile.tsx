@@ -37,6 +37,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useFollow } from "../../context/FollowContext";
 import { useVideoFeed } from "../../hooks/useVideoFeed";
 import { useSavedVideos } from "../../hooks/useSavedVideos";
+import { mergeLikedProfileItems, useProfileLikedHistory } from "../../hooks/useProfileLikedHistory";
 
 
 function avatarUrl(user: any, profile: any): string {
@@ -77,7 +78,9 @@ export default function ProfileScreen() {
   const publications = usePublishedMedia({ userId: user?.id, enabled: !!user });
   const { savedVideos, refresh: refreshSaved } = useSavedVideos();
   const { followedIds } = useFollow();
-  const { likedVideos, refreshLikes } = useVideoFeed(followedIds);
+  const { likedVideos:feedLikedVideos, refreshLikes } = useVideoFeed(followedIds);
+  const likedHistory=useProfileLikedHistory(user?.id,tab==="liked");
+  const likedVideos=mergeLikedProfileItems(likedHistory.items,feedLikedVideos);
   const shared=useMySharedVideos(user?.id,tab==="shared");
   const drafts=useLocalPublicationDrafts(user?.id,tab==="drafts");
   const [removingDraftId,setRemovingDraftId]=useState<string|null>(null);
@@ -99,12 +102,13 @@ export default function ProfileScreen() {
       ];
       if(tab==="saved")tasks.push(refreshSaved());
       if(tab==="liked")tasks.push(refreshLikes());
+      if(tab==="liked")tasks.push(likedHistory.refresh());
       if(tab==="shared")tasks.push(shared.refresh());
       if(tab==="drafts")tasks.push(drafts.refresh());
       const results=await Promise.allSettled(tasks);
       if(results.some(result=>result.status==='rejected'))Alert.alert('No se pudo actualizar el perfil','Comprueba tu conexión e inténtalo de nuevo.');
     }finally{refreshGuard.current=false;setRefreshing(false);}
-  },[user?.id,refreshProfile,connections.refresh,publications.refresh,refreshSaved,refreshLikes,shared.refresh,drafts.refresh,tab]);
+  },[user?.id,refreshProfile,connections.refresh,publications.refresh,refreshSaved,refreshLikes,shared.refresh,drafts.refresh,likedHistory.refresh,tab]);
   if (!user) return null;
   const confirmRemoveDraft=(id:string)=>{
     if(removingDraftId)return;
@@ -287,7 +291,9 @@ export default function ProfileScreen() {
           </Text></TouchableOpacity>}
         </View>
       ) : tab === "liked" ? (
-        likedVideos.length === 0 ? (
+        likedHistory.loading && likedVideos.length===0 ? (
+          <View style={styles.emptyState}><ActivityIndicator color="#FE2C55" /></View>
+        ) : likedVideos.length === 0 ? (
           <View style={styles.emptyState}>
             <Feather name="heart" size={40} color="#75828D" />
             <Text style={styles.emptyTitle}>Sin likes</Text>
@@ -301,7 +307,7 @@ export default function ProfileScreen() {
               <TouchableOpacity
                 key={v.id}
                 style={[styles.gridItem,gridLayout.tile,styles.publishedTileSurface]}
-                onPress={() => router.push(`/liked-feed?startIndex=${idx}`)}
+                onPress={() => router.push(`/liked-feed?startIndex=${idx}&videoId=${encodeURIComponent(v.id)}`)}
               >
                 <PublicationThumbnail item={v} />
                 <View style={styles.viewsBadge}>
@@ -309,6 +315,7 @@ export default function ProfileScreen() {
                 </View>
               </TouchableOpacity>
             ))}
+            {likedHistory.hasMore && <TouchableOpacity style={{padding:20,alignItems:"center"}} disabled={likedHistory.loading} onPress={()=>void likedHistory.loadMore()}><Text style={{color:"#2F777B"}}>{likedHistory.loading?"Cargando…":"Ver más"}</Text></TouchableOpacity>}
           </View>
         )
       ) : (

@@ -51,6 +51,7 @@ function runtime({guest = false, route = '/', inset = 24, visited = false, loadi
       if(name.endsWith('/useMyConnections')) return {useMyConnections:()=>({loading:false,following:[],followers:[],refresh:async()=>{calls.push(['refresh-connections']);}})};
       if(name.endsWith('/usePublishedMedia')) return {usePublishedMedia:()=>({items:products,loading:false,refresh:async()=>{calls.push(['refresh-publications']);}})};
       if(name.endsWith('/useMySharedVideos')) return {useMySharedVideos:()=>({items:products,loading:false,error:null,hasMore:false,refresh:async()=>{calls.push(['refresh-shared']);},loadMore:async()=>{calls.push(['more-shared']);}})};
+      if(name.endsWith('/useProfileLikedHistory')) return {useProfileLikedHistory:()=>({items:[],loading:false,hasMore:false,refresh:async()=>{calls.push(['refresh-liked-history']);},loadMore:async()=>{calls.push(['more-liked-history']);}}),mergeLikedProfileItems:(real,legacy)=>[...real,...legacy.filter(v=>!v.isReal)]};
       if(name.endsWith('/useLocalPublicationDrafts')) return {useLocalPublicationDrafts:()=>({items:[{id:'draft-1',userId:'me',kind:'video',uri:'file:///draft.mp4',caption:'Un video propio'}],loading:false,error:null,refresh:async()=>{calls.push(['refresh-drafts']);},remove:async id=>{calls.push(['delete-draft',id]);}})};
       if(name.endsWith('/useSavedVideos')) return {useSavedVideos:()=>({savedVideos:products,refresh:async()=>{calls.push(['refresh-saved']);}})};
       if(name.endsWith('/useVideoFeed')) return {useVideoFeed:()=>({likedVideos:products,refreshLikes:async()=>{calls.push(['refresh-liked']);}})};
@@ -150,7 +151,7 @@ test('own profile scrolls its existing details while keeping filters sticky and 
   const saved=nodes(tree).find(n=>n.type==='TouchableOpacity'&&nodes(n).some(c=>c.type==='PublicationThumbnail'));
   saved.props.onPress();assert.deepEqual(r.calls.at(-1),['push','/saved-feed?startIndex=0']);
   nodes(tree).find(n=>n.props.accessibilityLabel==='Me gusta').props.onPress();tree=r.render(Profile);
-  nodes(tree).find(n=>n.type==='TouchableOpacity'&&nodes(n).some(c=>c.type==='PublicationThumbnail')).props.onPress();assert.deepEqual(r.calls.at(-1),['push','/liked-feed?startIndex=0']);
+  nodes(tree).find(n=>n.type==='TouchableOpacity'&&nodes(n).some(c=>c.type==='PublicationThumbnail')).props.onPress();assert.deepEqual(r.calls.at(-1),['push','/liked-feed?startIndex=0&videoId=video-one']);
 });
 
 test('visited profile keeps its footer below a flexible body during loading, failure and content',async()=>{

@@ -1,7 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   Platform,
@@ -19,12 +20,16 @@ import VideoCard from "../components/VideoCard";
 import { useFollow } from "../context/FollowContext";
 import { VideoItem, formatCount, useVideoFeed } from "../hooks/useVideoFeed";
 import { useSavedVideos } from "../hooks/useSavedVideos";
+import { useAuth } from "../context/AuthContext";
+import { useProfileLikedHistory, mergeLikedProfileItems } from "../hooks/useProfileLikedHistory";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 export default function LikedFeedScreen() {
-  const params = useLocalSearchParams<{ startIndex?: string }>();
-  const startIndex = parseInt(params.startIndex ?? "0", 10);
+  const params = useLocalSearchParams<{ startIndex?: string; videoId?: string }>();
+  const parsedIndex = parseInt(params.startIndex ?? "0", 10);
+  const startIndex = Number.isFinite(parsedIndex) && parsedIndex >= 0 ? parsedIndex : 0;
+  const requestedId=typeof params.videoId==="string"?params.videoId:undefined;
 
   const [activeIndex, setActiveIndex] = useState(startIndex);
   const [commentVideo, setCommentVideo] = useState<VideoItem | null>(null);
@@ -33,7 +38,21 @@ export default function LikedFeedScreen() {
   const flatListRef = useRef<FlatList>(null);
 
   const { followedIds, toggleFollow } = useFollow();
-  const { likedIds, likedVideos, toggleLike } = useVideoFeed(followedIds);
+  const { user } = useAuth();
+  const { likedIds, likedVideos:feedLikedVideos, likedLoading, toggleLike } = useVideoFeed(followedIds);
+  const likedHistory=useProfileLikedHistory(user?.id,!!user);
+  const likedVideos=mergeLikedProfileItems(likedHistory.items,feedLikedVideos);
+  // A requested ID must resolve before mounting FlatList. Index alone is unsafe
+  // after a fresh page fetch or another account unlikes/deletes the publication.
+  const [resolvedStart,setResolvedStart]=useState<number|null>(null);
+  useEffect(()=>{
+    if(resolvedStart!==null||likedHistory.loading||likedLoading)return;
+    const found=requestedId?likedVideos.findIndex(v=>v.id===requestedId):-1;
+    if(requestedId&&found<0&&likedHistory.hasMore){void likedHistory.loadMore();return;}
+    if(requestedId&&found<0){setResolvedStart(-1);return;}
+    const index=requestedId?found:Math.min(startIndex,Math.max(0,likedVideos.length-1));
+    setActiveIndex(index);setResolvedStart(index);
+  },[requestedId,likedVideos,likedLoading,likedHistory.loading,likedHistory.hasMore,likedHistory.loadMore,resolvedStart,startIndex]);
   const { savedIds, toggleSave } = useSavedVideos();
 
   const onViewableItemsChanged = useCallback(
@@ -95,6 +114,17 @@ export default function LikedFeedScreen() {
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
+  if(resolvedStart===null){
+    return <View style={styles.empty}><ActivityIndicator color="#D2F9FA" /><Text style={styles.emptyText}>Cargando Me gusta…</Text></View>;
+  }
+
+  if(resolvedStart<0){
+    return <View style={styles.empty}>
+      <TouchableOpacity accessibilityLabel="Volver" onPress={()=>router.back()} style={styles.backTouchable}><Feather name="arrow-left" size={24} color="#fff" /></TouchableOpacity>
+      <Text style={styles.emptyText}>Este video ya no está disponible en tus Me gusta.</Text>
+    </View>;
+  }
+
   if (likedVideos.length === 0) {
     return (
       <View style={styles.empty}>
@@ -135,7 +165,9 @@ export default function LikedFeedScreen() {
           offset: SCREEN_HEIGHT * index,
           index,
         })}
-        initialScrollIndex={Math.min(startIndex, likedVideos.length - 1)}
+        initialScrollIndex={resolvedStart}
+        onEndReached={()=>{if(likedHistory.hasMore&&!likedHistory.loading)void likedHistory.loadMore();}}
+        onEndReachedThreshold={0.5}
       />
 
       <CommentsSheet
