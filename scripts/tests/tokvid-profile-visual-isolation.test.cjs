@@ -20,7 +20,7 @@ test("A1 keeps scroll pin and six-slot layout; overlays only appear while pinned
 });
 test("A1 grid is 3 full-width tiles with measurable guard against Android rounding",()=>{
  assert.match(profile,/tileWidth=Math\.max\(1,\(Math\.floor\(width\)-8\)\/3\)/);
- assert.equal((profile.match(/<View style=\{\[styles\.grid,\{width\}\]\}>/g)||[]).length,3);
+ assert.equal((profile.match(/<View style=\{\[styles\.grid,\{width\}\]\}>/g)||[]).length,4);
  assert.match(profile,/onPress=\{\(\) => router\.push\(\x60\/saved-feed\?startIndex=/);
  assert.match(profile,/onPress=\{\(\) => router\.push\(\x60\/liked-feed\?startIndex=/);
 });
