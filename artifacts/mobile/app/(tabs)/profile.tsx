@@ -11,6 +11,7 @@ import {useMyConnections} from "../../hooks/useMyConnections";
 import PublicationThumbnail from "../../components/PublicationThumbnail";
 import { usePublishedMedia } from "../../hooks/usePublishedMedia";
 import { useMySharedVideos } from "../../hooks/useMySharedVideos";
+import { useLocalPublicationDrafts } from "../../hooks/useLocalPublicationDrafts";
 import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
@@ -47,7 +48,7 @@ export default function ProfileScreen() {
   const gridLayout={onLayout:()=>{},tile:{width:tileWidth,height:tileWidth*4/3}};
   const [expanded,setExpanded]=useState(false),[menu,setMenu]=useState(false);
   const connections=useMyConnections();
-  const [tab, setTab] = useState<"videos" | "stories" | "shared" | "liked" | "saved">("videos");
+  const [tab, setTab] = useState<"videos" | "stories" | "shared" | "liked" | "saved" | "drafts">("videos");
   const [scrollViewportHeight, setScrollViewportHeight] = useState(0);
   const [profileSectionHeight, setProfileSectionHeight] = useState(0);
   const [filtersPinned,setFiltersPinned]=useState(false);
@@ -66,6 +67,8 @@ export default function ProfileScreen() {
   const { followedIds } = useFollow();
   const { likedVideos, refreshLikes } = useVideoFeed(followedIds);
   const shared=useMySharedVideos(user?.id,tab==="shared");
+  const drafts=useLocalPublicationDrafts(user?.id,tab==="drafts");
+  const [removingDraftId,setRemovingDraftId]=useState<string|null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -85,11 +88,25 @@ export default function ProfileScreen() {
       if(tab==="saved")tasks.push(refreshSaved());
       if(tab==="liked")tasks.push(refreshLikes());
       if(tab==="shared")tasks.push(shared.refresh());
+      if(tab==="drafts")tasks.push(drafts.refresh());
       const results=await Promise.allSettled(tasks);
       if(results.some(result=>result.status==='rejected'))Alert.alert('No se pudo actualizar el perfil','Comprueba tu conexión e inténtalo de nuevo.');
     }finally{refreshGuard.current=false;setRefreshing(false);}
-  },[user?.id,refreshProfile,connections.refresh,publications.refresh,refreshSaved,refreshLikes,shared.refresh,tab]);
+  },[user?.id,refreshProfile,connections.refresh,publications.refresh,refreshSaved,refreshLikes,shared.refresh,drafts.refresh,tab]);
   if (!user) return null;
+  const confirmRemoveDraft=(id:string)=>{
+    if(removingDraftId)return;
+    Alert.alert("Eliminar borrador","¿Eliminar este proyecto sin publicar de tu teléfono? Esta acción no se puede deshacer.",[
+      {text:"Cancelar",style:"cancel"},
+      {text:"Eliminar",style:"destructive",onPress:()=>{
+        const owner=user.id;
+        setRemovingDraftId(id);
+        void drafts.remove(id).catch(e=>{
+          Alert.alert("No se pudo eliminar",e instanceof Error?e.message:"Inténtalo de nuevo.");
+        }).finally(()=>{setRemovingDraftId(current=>current===id?null:current);});
+      }},
+    ]);
+  };
 
   const handleSignOut = () => {
     Alert.alert("Cerrar sesión", "¿Seguro que querés salir?", [
@@ -168,15 +185,45 @@ export default function ProfileScreen() {
       </View>
       <View style={[styles.stickySlot,{width,elevation:filtersPinned?1:0,shadowOpacity:filtersPinned?0.05:0}]}>
   <View style={styles.tabBar}>{([
-        {key:"videos",icon:"grid",label:"Videos"},{key:"stories",icon:"clock",label:"Historias"},{key:"shared",icon:"share-2",label:"Compartidos"},{key:"liked",icon:"heart",label:"Me gusta"},{key:"saved",icon:"bookmark",label:"Guardados"},{key:"more",icon:"more-horizontal",label:"Más"},
-      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>item.key==="more"?router.push("/user-tools"):setTab(item.key)} style={[styles.tabItem,{width:width/6,flex:0},tab===item.key&&styles.tabItemActive]}>{item.key==="videos"||item.key==="stories"||item.key==="shared"?<TokvidProfileIcon name={item.key} size={22} color={tab===item.key?v.ink:v.inactive}/>:<Feather name={item.icon} size={22} color={tab===item.key?v.ink:v.inactive}/>}</TouchableOpacity>)}</View>
+        {key:"videos",icon:"grid",label:"Videos"},{key:"stories",icon:"clock",label:"Historias"},{key:"shared",icon:"share-2",label:"Compartidos"},{key:"liked",icon:"heart",label:"Me gusta"},{key:"saved",icon:"bookmark",label:"Guardados"},{key:"drafts",icon:"file-text",label:"Borradores"},
+      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>setTab(item.key)} style={[styles.tabItem,{width:width/6,flex:0},tab===item.key&&styles.tabItemActive]}>{item.key==="videos"||item.key==="stories"||item.key==="shared"||item.key==="drafts"?<TokvidProfileIcon name={item.key} size={22} color={tab===item.key?v.ink:v.inactive}/>:<Feather name={item.icon} size={22} color={tab===item.key?v.ink:v.inactive}/>}</TouchableOpacity>)}</View>
         {filtersPinned&&<>
           <View pointerEvents="none" style={styles.stickyTopShade}/>
           <View pointerEvents="none" style={styles.stickyBottomShade}/>
         </>}
   </View>
       {tab==="stories"?<View style={styles.emptyState}><TokvidProfileIcon name="stories" size={40} color="#75828D"/><TouchableOpacity onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})}><Text style={styles.emptyTitle}>Ver mis historias</Text></TouchableOpacity><TouchableOpacity onPress={()=>router.push("/story-create")}><Text style={styles.bioMore}>Añadir historia</Text></TouchableOpacity></View>:
-      tab === "saved" ? (
+      tab === "drafts" ? (
+        <View>
+          {drafts.loading && drafts.items.length===0 ? <ActivityIndicator color="#85D5DB" style={{padding:24}}/> : null}
+          {!!drafts.error && <TouchableOpacity style={styles.emptyState} onPress={()=>void drafts.refresh().catch(()=>{})}
+            accessibilityLabel="Reintentar cargar borradores">
+            <TokvidProfileIcon name="drafts" size={40} color="#75828D"/>
+            <Text style={styles.emptyText}>{drafts.error}</Text>
+            <Text style={{color:"#2F777B"}}>Reintentar</Text>
+          </TouchableOpacity>}
+          {!drafts.loading && !drafts.error && drafts.items.length===0 && <View style={styles.emptyState}>
+            <TokvidProfileIcon name="drafts" size={40} color="#75828D"/>
+            <Text style={styles.emptyTitle}>Sin borradores</Text>
+            <Text style={styles.emptyText}>Tus fotos y videos sin publicar aparecerán aquí. Solo tú puedes verlos en este teléfono.</Text>
+          </View>}
+          <View style={[styles.grid,{width}]}>
+            {drafts.items.map(item=><View key={item.id} style={[styles.gridItem,gridLayout.tile]}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Continuar borrador: ${item.caption||"Sin descripción"}`}
+                style={styles.draftCover} onPress={()=>router.push({pathname:"/(tabs)/create",params:{draftId:item.id}})}>
+                {item.thumbnailUri||item.kind==="image"
+                  ?<Image source={{uri:item.thumbnailUri??item.uri}} style={StyleSheet.absoluteFill} resizeMode="cover"/>
+                  :<Feather name="video" size={32} color="#B9C3C9"/>}
+                <View style={styles.draftKind}><Feather name={item.kind==="video"?"video":"image"} size={13} color="#FFF"/></View>
+              </TouchableOpacity>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Eliminar borrador: ${item.caption||"Sin descripción"}`}
+                disabled={removingDraftId!==null} onPress={()=>confirmRemoveDraft(item.id)} style={styles.draftDelete}>
+                <Feather name="trash-2" color="#FFF" size={17}/>
+              </TouchableOpacity>
+            </View>)}
+          </View>
+        </View>
+      ) : tab === "saved" ? (
         savedVideos.length === 0 ? (
           <View style={styles.emptyState}>
             <Feather name="bookmark" size={40} color="#75828D" />
@@ -341,6 +388,9 @@ const styles = StyleSheet.create({
   tabItem: { flex: 1, alignItems: "center", justifyContent: "center" },
   tabItemActive: {},
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 2, paddingHorizontal: 0, paddingVertical: 2,alignSelf:"stretch" },
+  draftCover:{flex:1,alignItems:"center",justifyContent:"center"},
+  draftKind:{position:"absolute",bottom:5,left:5,backgroundColor:"#00000099",padding:5,borderRadius:5},
+  draftDelete:{position:"absolute",top:5,right:5,width:32,height:32,alignItems:"center",justifyContent:"center",backgroundColor:"#000000B3",borderRadius:16},
   gridItem: {
     aspectRatio: 0.75, borderRadius: 0,
     backgroundColor: "#111",

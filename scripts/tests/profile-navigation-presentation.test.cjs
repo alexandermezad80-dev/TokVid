@@ -20,7 +20,7 @@ function runtime({guest = false, route = '/', inset = 24, visited = false, loadi
   const modules = {
     react,
     'react-native': {Platform:{OS:'android'}, StyleSheet:{create:s=>s,flatten:flat,absoluteFill:{position:'absolute'},hairlineWidth:0.5},
-      useWindowDimensions:()=>({width:360,height:800,fontScale:1.4}), Alert:{alert(){}},
+      useWindowDimensions:()=>({width:360,height:800,fontScale:1.4}), Alert:{alert:(...args)=>calls.push(['alert',args])},
       ...Object.fromEntries(['View','Text','ScrollView','TouchableOpacity','Pressable','Image','ActivityIndicator','Modal','RefreshControl'].map(x=>[x,x]))},
     'expo-router': {Tabs, Stack, Redirect:'Redirect', usePathname:()=>route, useLocalSearchParams:()=>({userId:'other'}), useFocusEffect(){},
       router:{push:value=>calls.push(['push',json(value)]),dismissTo:value=>calls.push(['dismiss',value]),back:()=>calls.push(['back'])}},
@@ -50,6 +50,7 @@ function runtime({guest = false, route = '/', inset = 24, visited = false, loadi
       if(name.endsWith('/useMyConnections')) return {useMyConnections:()=>({loading:false,following:[],followers:[],refresh:async()=>{calls.push(['refresh-connections']);}})};
       if(name.endsWith('/usePublishedMedia')) return {usePublishedMedia:()=>({items:products,loading:false,refresh:async()=>{calls.push(['refresh-publications']);}})};
       if(name.endsWith('/useMySharedVideos')) return {useMySharedVideos:()=>({items:products,loading:false,error:null,hasMore:false,refresh:async()=>{calls.push(['refresh-shared']);},loadMore:async()=>{calls.push(['more-shared']);}})};
+      if(name.endsWith('/useLocalPublicationDrafts')) return {useLocalPublicationDrafts:()=>({items:[{id:'draft-1',userId:'me',kind:'video',uri:'file:///draft.mp4',caption:'Un video propio'}],loading:false,error:null,refresh:async()=>{calls.push(['refresh-drafts']);},remove:async id=>{calls.push(['delete-draft',id]);}})};
       if(name.endsWith('/useSavedVideos')) return {useSavedVideos:()=>({savedVideos:products,refresh:async()=>{calls.push(['refresh-saved']);}})};
       if(name.endsWith('/useVideoFeed')) return {useVideoFeed:()=>({likedVideos:products,refreshLikes:async()=>{calls.push(['refresh-liked']);}})};
       if(name.endsWith('/usePublicationGrid')) return {usePublicationGrid:()=>({onLayout(){},tile:{width:100}})};
@@ -134,6 +135,12 @@ test('own profile scrolls its existing details while keeping filters sticky and 
   nodes(tree).find(n=>n.props.accessibilityLabel==='Compartidos').props.onPress();tree=r.render(Profile);
   const sharedThumb=nodes(tree).find(n=>n.props.accessibilityLabel==='Abrir video compartido: Video');
   assert.ok(sharedThumb);sharedThumb.props.onPress();assert.deepEqual(r.calls.at(-1),['push',{pathname:'/publication',params:{id:'video-one'}}]);
+  nodes(tree).find(n=>n.props.accessibilityLabel==='Borradores').props.onPress();tree=r.render(Profile);
+  nodes(tree).find(n=>n.props.accessibilityLabel==='Continuar borrador: Un video propio').props.onPress();
+  assert.deepEqual(r.calls.at(-1),['push',{pathname:'/(tabs)/create',params:{draftId:'draft-1'}}]);
+  nodes(tree).find(n=>n.props.accessibilityLabel==='Eliminar borrador: Un video propio').props.onPress();
+  const dialog=r.calls.find(c=>c[0]==='alert'&&c[1][0]==='Eliminar borrador');
+  assert.ok(dialog); assert.equal(dialog[1][2].find(x=>x.text==='Eliminar').style,'destructive');
   nodes(tree).find(n=>n.props.accessibilityLabel==='Guardados').props.onPress();tree=r.render(Profile);
   const saved=nodes(tree).find(n=>n.type==='TouchableOpacity'&&nodes(n).some(c=>c.type==='PublicationThumbnail'));
   saved.props.onPress();assert.deepEqual(r.calls.at(-1),['push','/saved-feed?startIndex=0']);

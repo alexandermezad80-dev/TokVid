@@ -20,17 +20,17 @@ test("A1 keeps scroll pin and six-slot layout; overlays only appear while pinned
 });
 test("A1 grid is 3 full-width tiles with measurable guard against Android rounding",()=>{
  assert.match(profile,/tileWidth=Math\.max\(1,\(Math\.floor\(width\)-8\)\/3\)/);
- assert.equal((profile.match(/<View style=\{\[styles\.grid,\{width\}\]\}>/g)||[]).length,4);
+ assert.equal((profile.match(/<View style=\{\[styles\.grid,\{width\}\]\}>/g)||[]).length,5);
  assert.match(profile,/onPress=\{\(\) => router\.push\(\x60\/saved-feed\?startIndex=/);
  assert.match(profile,/onPress=\{\(\) => router\.push\(\x60\/liked-feed\?startIndex=/);
 });
 test("A2b approved vectors and protected user tools",()=>{
- assert.match(icons,/type ProfileIconName = "videos" \| "stories" \| "shared"/);
+ assert.match(icons,/type ProfileIconName = "videos" \| "stories" \| "shared" \| "drafts"/);
  assert.match(icons,/<Rect x=\{3\.5\}/);
  assert.match(icons,/<Circle cx=\{28\}/);
  assert.match(icons,/<Path d="M17 20 H28/);
  assert.match(profile,/\{key:"shared",icon:"share-2",label:"Compartidos"\}/);
- assert.match(profile,/item\.key==="more"\?router\.push\("\/user-tools"\)/);
+ assert.match(profile,/\{key:"drafts",icon:"file-text",label:"Borradores"\}/);
  assert.match(profile,/name=\{item\.key\} size=\{22\} color=\{tab===item\.key\?v\.ink:v\.inactive\}/);
 });
 test("A1 story illustration preserves image/video selection and existing gallery action",()=>{
@@ -49,5 +49,5 @@ test("A2b third tab loads shared items rather than own gallery",()=>{
  assert.match(profile,/onPress=\{\(\)=>void shared\.refresh\(\)\}/);
  assert.match(profile,/onPress=\{\(\)=>void shared\.loadMore\(\)\}/);
  assert.doesNotMatch(profile,/mediaType==="image"/);
- assert.match(profile,/item\.key==="more"\?router\.push\("\/user-tools"\)/);
+ assert.match(profile,/\{key:"drafts",icon:"file-text",label:"Borradores"\}/);
 });
