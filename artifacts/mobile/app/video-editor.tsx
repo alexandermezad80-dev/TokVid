@@ -61,7 +61,7 @@ export default function VideoEditor(){
     <View style={styles.row}><Text style={styles.title}>{first?"Inicio":"Final"}</Text><Text>{time(first?start:end)}</Text></View>
     <Pressable accessibilityLabel={first?"Seleccionar inicio":"Seleccionar final"} onLayout={e=>setWidth(e.nativeEvent.layout.width)}
      onPress={e=>change(first,e.nativeEvent.locationX/width*duration)} style={styles.track}>
-      <View style={[styles.progress,{width:duration?String((first?start:end)*100/duration)+"%":"0%"}]}/>
+      <View style={[styles.progress,{width:duration?width*(first?start:end)/duration:0}]}/>
     </Pressable>
     <View style={styles.row}>
      <Pressable style={styles.step} onPress={()=>change(first,(first?start:end)-0.5)}><Feather name="minus" size={18} color={palette.text}/><Text>0.5 s</Text></Pressable>
