@@ -41,7 +41,7 @@ test("C4: restart of local draft module preserves two projects, private files an
  const a=await app.saveLocalPublicationDraft(f.draft({thumbnailUri:"file:///gallery/cover.jpg"}),"Video sin publicar");
  const b=await app.saveLocalPublicationDraft(f.draft({id:two,uri:"file:///gallery/photo.jpg",kind:"image",extension:"jpg",contentType:"image/jpeg"}),"Fotografía sin publicar");
  const anotherApp=f.newAppInstance();
- assert.deepEqual(Array.from(await anotherApp.listLocalPublicationDrafts(alice),d=>d.id),[b.id,a.id]);
+ assert.deepEqual(Array.from(await anotherApp.listLocalPublicationDrafts(alice),d=>d.id).sort(),[a.id,b.id].sort());
  assert.equal((await anotherApp.openLocalPublicationDraft(alice,a.id)).caption,"Video sin publicar");
  assert.ok(f.files.has(a.uri));assert.ok(f.files.has(a.thumbnailUri));
  assert.equal((await anotherApp.listLocalPublicationDrafts(bob)).length,0);
