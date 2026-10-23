@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#1C1C1E",
   },
   editBadge: {
-    position:"absolute",bottom:0,right:0,width:20,height:20,borderRadius:10,
+    position:"absolute",bottom:4,right:4,width:20,height:20,borderRadius:10,
     borderWidth:1,borderColor:"#FFFFFF",overflow:"hidden",zIndex:2,
   },
   editBadgeFill:{flex:1,width:"100%",alignItems:"center",justifyContent:"center"},
