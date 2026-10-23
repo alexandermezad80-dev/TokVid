@@ -20,6 +20,7 @@ import {
   Image,
   Platform,
   RefreshControl,
+  PanResponder,
   ScrollView,
   StyleSheet,
   Text,
@@ -30,6 +31,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
 import { type AppNotification, useNotifications } from "../../context/NotificationsContext";
 import { supabase } from "../../lib/supabase";
+import { nextInboxTab, isInboxHorizontalGesture, type InboxSection } from "../../lib/features/messages/inboxSwipe";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -143,6 +145,18 @@ export default function InboxScreen() {
   const [menu,setMenu]=useState<{convo:ConversationRow;anchor:{x:number;y:number;width:number;height:number}}|null>(null);
   const [removing,setRemoving]=useState(false);
   const [tab, setTab] = useState<"activity" | "messages">("activity");
+  // Capture horizontal gestures only in the body, never on the approved tab buttons.
+  const currentTabRef=useRef<InboxSection>(tab);
+  currentTabRef.current=tab;
+  const inboxSwipeResponder=useRef(PanResponder.create({
+    onMoveShouldSetPanResponder:(_event,gesture)=>
+      (gesture.numberActiveTouches??1)===1 && isInboxHorizontalGesture(gesture.dx,gesture.dy),
+    onPanResponderRelease:(_event,gesture)=>{
+      const next=nextInboxTab(currentTabRef.current,gesture.dx,gesture.dy);
+      if(next!==currentTabRef.current)setTab(next);
+    },
+    onPanResponderTerminationRequest:()=>true,
+  })).current;
   useEffect(()=>{if(params.tab==="messages"||params.tab==="activity")setTab(params.tab);},[params.tab]);
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
@@ -196,6 +210,7 @@ export default function InboxScreen() {
         ))}
       </View>
 
+      <View style={styles.swipeContent} {...inboxSwipeResponder.panHandlers}>
       {tab === "activity" ? (
         notifLoading && notifications.length === 0 ? (
           <View style={styles.center}><ActivityIndicator color="#FE2C55" /></View>
@@ -251,6 +266,7 @@ export default function InboxScreen() {
           </ScrollView>
         )
       )}
+      </View>
       {menu&&<ConversationMenu anchor={menu.anchor} name={menu.convo.other_username} busy={removing} onClose={()=>setMenu(null)} onDelete={()=>{setRemoving(true);void hideConversation(menu.convo.id).then(async()=>{setMenu(null);await loadConvos();}).catch(e=>Alert.alert('No se pudo eliminar',e.message)).finally(()=>setRemoving(false));}} onDeleteAll={()=>{setRemoving(true);void supabase.rpc('inbox_clear_boundary').then(({data,error})=>{if(error||!data)Alert.alert('No se pudo preparar la selección','Inténtalo de nuevo.');else{setMenu(null);setClearBefore(data);}setRemoving(false);});}}/>}
       <ClearInboxDialog visible={clearBefore!==null} busy={removing} onCancel={()=>setClearBefore(null)} onConfirm={()=>{if(!clearBefore||removing)return;setRemoving(true);void supabase.rpc('clear_own_inbox',{p_before:clearBefore}).then(async({error})=>{if(error)Alert.alert('No se pudo eliminar','No se confirmó el borrado. Inténtalo de nuevo.');else{setClearBefore(null);setGroupRevision(n=>n+1);await Promise.all([loadConvos(),refresh()]);}setRemoving(false);});}}/>
     </View>
@@ -289,6 +305,7 @@ const styles = StyleSheet.create({
   },
   badgeText: { fontFamily: "Inter_500Medium", color: "#fff", fontSize: 12, fontWeight: "normal" },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
+  swipeContent: { flex: 1 },
   list: { flex: 1 },
   notif: {
     flexDirection: "row", alignItems: "center",
