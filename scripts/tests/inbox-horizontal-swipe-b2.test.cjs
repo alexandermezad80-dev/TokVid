@@ -10,7 +10,7 @@ test("B2 captures only dominant single-finger horizontal movement",()=>{
  for(const [x,y] of [[16,0],[-16,0],[60,3],[-85,-4],[120,20]])assert.equal(fn(x,y),true);
 });
 test("B2 left swipe selects messages and right swipe activity, at most one section",()=>{
- const next=exports.nextInboxTab;
+ const next=moduleExports.nextInboxTab;
  for(const t of ["activity","messages"]){
    assert.equal(next(t,-90,2),"messages");
    assert.equal(next(t,90,2),"activity");
