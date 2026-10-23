@@ -31,7 +31,7 @@ export default function PublicationScreen() {
   const likes = useFeedVideoLikes(item ? [item.id] : []);
   const counts = useFeedCommentCounts(item ? [item.id] : []);
   const closeComments = useCallback(() => { setComments(false); setPreview(null); }, []);
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     let active = true; setItem(null); setLoading(true); setError(""); closeComments();
     void (async () => {
       try {
@@ -43,7 +43,7 @@ export default function PublicationScreen() {
       finally { if (active) setLoading(false); }
     })();
     return () => { active = false; };
-  }, [id, retry, closeComments]);
+  }, [id, retry, closeComments]));
   useEffect(()=>{if(item&&(commentId||openComments==="1"))setComments(true);},[item?.id,commentId,openComments]);
   const signedAction = (fn: () => void) => user ? fn() : requestRegistration();
   const remove = () => {

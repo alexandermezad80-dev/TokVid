@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
 import {
   Dimensions,
@@ -38,6 +38,8 @@ export default function SavedFeedScreen() {
   const { followedIds, toggleFollow } = useFollow();
   const { likedIds, toggleLike } = useVideoFeed(followedIds);
   const { savedIds, savedVideos, toggleSave, loading:savedLoading, error:savedError, refresh:refreshSaved } = useSavedVideos();
+  // Recheck confirmed availability on return, not only on the first mount.
+  useFocusEffect(useCallback(()=>{void refreshSaved().catch(()=>{});},[refreshSaved]));
   const selectedIndex=savedVideoStartIndex(savedVideos,requestedId,startIndex);
   const visibleIndex=activeIndex??selectedIndex;
 
