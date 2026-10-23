@@ -6,7 +6,7 @@ import * as ImagePicker from "expo-image-picker";
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import * as FileSystem from "expo-file-system/legacy";
 import { LinearGradient } from "expo-linear-gradient";
-import { router, useFocusEffect } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useVideoPlayer, VideoView } from "expo-video";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
@@ -17,28 +17,35 @@ import { saveVideoTags } from "../../lib/videoTags";
 import { PickedMedia, PublicationDraft, publicationId, validateMedia } from "../../lib/features/publishing/model";
 import { publishDraft } from "../../lib/features/publishing/service";
 import { uploadPublicationFile } from "../../lib/features/publishing/nativeUpload";
+import { deleteLocalPublicationDraft, openLocalPublicationDraft, saveLocalPublicationDraft } from "../../lib/features/publishing/localDrafts";
 
 import { readVideoReplyTarget, VideoReplyTarget } from "../../lib/features/comments/videoReply";
 
 const tones = ["rgba(0,242,254,0.26)", "rgba(254,9,121,0.26)"] as const;
 type Phase = "pick" | "edit" | "uploading" | "success";
-export default function CreateScreen() { return <PublicationComposer />; }
-export function PublicationComposer({ replyCommentId, onExit }: { replyCommentId?: string; onExit?: () => void }) {
+export default function CreateScreen() {
+  const {draftId}=useLocalSearchParams<{draftId?:string}>();
+  return <PublicationComposer initialDraftId={typeof draftId==="string"?draftId:undefined}/>;
+}
+export function PublicationComposer({ replyCommentId, onExit, initialDraftId }: { replyCommentId?: string; onExit?: () => void; initialDraftId?:string }) {
   const insets = useSafeAreaInsets();
   const { user, profile, requireAuth } = useAuth();
+  const [phase, setPhase] = useState<Phase>("pick");
+  const [draft, setDraft] = useState<PublicationDraft | null>(null);
+  const [loadingDraft,setLoadingDraft]=useState(!!initialDraftId);
+  const [savingDraft,setSavingDraft]=useState(false);
   const [replyTarget, setReplyTarget] = useState<VideoReplyTarget | null>(null);
   const [replyError, setReplyError] = useState("");
   const [replyRetry, setReplyRetry] = useState(0);
+  const activeReplyId=replyCommentId||draft?.replyCommentId;
   useEffect(() => {
     let active = true; setReplyTarget(null); setReplyError("");
-    if (replyCommentId) void readVideoReplyTarget(supabase, replyCommentId)
+    if (activeReplyId) void readVideoReplyTarget(supabase, activeReplyId)
       .then(row => { if (active) setReplyTarget(row); })
       .catch(e => { if (active) setReplyError(e?.message ?? "No se pudo cargar el comentario."); });
     return () => { active = false; };
-  }, [replyCommentId, replyRetry]);
-  const replyReady = !replyCommentId || !!replyTarget;
-  const [phase, setPhase] = useState<Phase>("pick");
-  const [draft, setDraft] = useState<PublicationDraft | null>(null);
+  }, [activeReplyId, replyRetry]);
+  const replyReady = !activeReplyId || !!replyTarget;
   const [caption, setCaption] = useState("");
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +70,23 @@ export function PublicationComposer({ replyCommentId, onExit }: { replyCommentId
   useFocusEffect(useCallback(() => { setFocused(true); return () => { setFocused(false); camera.current?.stopRecording(); }; }, []));
   useEffect(() => { player.pause(); setPlaying(false); }, [draft?.id, focused, phase, player]);
   useEffect(() => { if (draft && user?.id !== draft.userId && !busy.current) { setDraft(null); setCaption(""); setPhase("pick"); } }, [user?.id, draft]);
+  useEffect(()=>{
+    if(!initialDraftId)return;
+    let active=true;
+    setDraft(null);setCaption("");setPhase("pick");setLoadingDraft(true);setError(null);
+    if(!user?.id){
+      setLoadingDraft(false);setError("Inicia sesión con tu cuenta para recuperar este borrador.");
+      return ()=>{active=false;};
+    }
+    void openLocalPublicationDraft(user.id,initialDraftId).then(saved=>{
+      if(!active||currentUserId.current!==saved.userId)return;
+      if(replyCommentId&&saved.replyCommentId!==replyCommentId)throw new Error("Este borrador pertenece a otra respuesta.");
+      setDraft(saved);setCaption(saved.caption);setPhase("edit");setError(null);
+    }).catch(e=>{
+      if(active)setError(e instanceof Error?e.message:"No pudimos abrir el borrador.");
+    }).finally(()=>{if(active)setLoadingDraft(false);});
+    return ()=>{active=false;};
+  },[initialDraftId,user?.id,replyCommentId]);
   const reset = () => { if (busy.current || selecting.current) return; player.pause(); setDraft(null); setCaption(""); setError(null); setProgress(0); setPhase("pick"); };
   const prepare = async (asset: PickedMedia, owner: string) => {
     const sequence = ++selection.current;
@@ -116,6 +140,27 @@ export function PublicationComposer({ replyCommentId, onExit }: { replyCommentId
     } catch { setError("No pudimos capturar el archivo. También puedes elegirlo en Galería."); }
     finally { selecting.current = false; setRecording(false); }
   };
+  const saveUnpublishedDraft=async(leaveAfterSave:boolean)=>{
+    if(!draft||busy.current||preparing||phase!=="edit")return;
+    if(!user||user.id!==draft.userId){setError("Tu sesión cambió. Inicia sesión antes de guardar.");return;}
+    busy.current=true;setSavingDraft(true);player.pause();setPlaying(false);setError(null);
+    let saved=false;
+    try{
+      const stored=await saveLocalPublicationDraft(draft,caption);
+      if(mounted.current&&currentUserId.current===stored.userId){
+        setDraft(stored);
+        saved=true;
+      }
+    }catch(e){
+      if(mounted.current)setError(e instanceof Error?e.message:"No se pudo guardar el borrador.");
+    }finally{
+      busy.current=false;
+      if(mounted.current)setSavingDraft(false);
+    }
+    if(!saved||!mounted.current||currentUserId.current!==draft.userId)return;
+    if(leaveAfterSave){reset();if(onExit)onExit();else router.replace("/(tabs)");}
+    else Alert.alert("Borrador guardado","Se guardó en este teléfono. Puedes continuar editándolo.");
+  };
   const publish = async () => {
     if (!draft || busy.current || preparing || !replyReady) return;
     busy.current = true; setPhase("uploading"); setError(null); setProgress(0); player.pause();
@@ -132,26 +177,39 @@ export function PublicationComposer({ replyCommentId, onExit }: { replyCommentId
       }
       const id = await publishDraft(supabase, draft, sentCaption, uploadPublicationFile, value => { if (mounted.current) setProgress(Math.round(value * 100)); });
       void saveVideoTags({ videoId: id, caption: sentCaption.trim(), authorId: draft.userId, authorName: profile?.username ?? "Usuario", authorAvatar: profile?.avatar_url ?? null }).catch(() => {});
+      if (initialDraftId) {
+        try{await deleteLocalPublicationDraft(draft.userId,draft.id);}
+        catch{if(mounted.current)Alert.alert("Publicación completada","El video se publicó, pero no pudimos limpiar su borrador local.");}
+      }
       if (mounted.current) { setProgress(100); setPhase("success"); }
     } catch (e: any) { if (mounted.current) { setError(e?.message ?? "No pudimos publicar. Tu selección está lista para reintentar."); setPhase("edit"); } }
     finally { busy.current = false; }
   };
+  const leaveComposer=()=>{if(onExit)onExit();else router.replace("/(tabs)");};
   const exit = () => {
     if (busy.current) return;
-    if (draft && phase !== "success") Alert.alert("Descartar publicación", "Se descartarán la selección y la descripción.", [{ text: "Seguir editando", style: "cancel" }, { text: "Descartar", style: "destructive", onPress: () => { reset(); onExit?.(); } }]);
-    else { reset(); if (onExit) onExit(); else router.replace("/(tabs)"); }
+    if (draft && phase !== "success"){
+      Alert.alert("Publicación sin terminar","¿Quieres guardar el proyecto antes de salir?",[
+        {text:"Seguir editando",style:"cancel"},
+        {text:"Guardar borrador",onPress:()=>void saveUnpublishedDraft(true)},
+        {text:"Descartar",style:"destructive",onPress:()=>{reset();leaveComposer();}},
+      ]);
+    }else {reset();leaveComposer();}
   };
   const secondaryFormColors=phase === "pick" ? null : {color:palette.secondary};
   const formColors=phase === "pick" ? null : {color:palette.text};
   const errorView = error && <Text accessibilityRole="alert" style={[styles.error,phase!=="pick"&&{color:palette.destructive}]}>{error}</Text>;
   return <KeyboardAvoidingView style={[styles.screen,phase!=="pick"&&{backgroundColor:palette.background}, { paddingBottom: (replyCommentId ? 0 : 80) + insets.bottom }]} behavior={Platform.OS === "ios" ? "padding" : undefined}>
     <HeaderSurface safeTop style={[styles.header,{height:52+insets.top}]}><Pressable accessibilityRole="button" accessibilityLabel="Cerrar creación" onPress={exit} disabled={phase === "uploading" || recording} style={styles.iconButton}><Feather name="x" size={23} color="#0B0B0D" /></Pressable><Text style={styles.headerTitle}>{phase === "pick" ? (replyCommentId ? "Responder con video" : "Crear") : phase === "success" ? "Publicación lista" : "Tu publicación"}</Text><View style={styles.brandDot} /></HeaderSurface>
-    {!!replyCommentId && <View style={styles.replyContext}>
+    {!!activeReplyId && <View style={styles.replyContext}>
       {replyTarget ? <><Text style={styles.replyName}>Responder con video a @{replyTarget.username.replace(/^@/, "")}</Text><Text style={styles.replyText} numberOfLines={2}>{replyTarget.text}</Text></>
         : replyError ? <><Text accessibilityRole="alert" style={styles.replyText}>{replyError}</Text><Pressable onPress={() => setReplyRetry(n => n + 1)}><Text style={styles.replyName}>Reintentar</Text></Pressable></>
         : <ActivityIndicator color="#4682B4" />}
     </View>}
-    {phase === "pick" ? <>
+    {initialDraftId&&phase==="pick"?<View style={styles.success}>
+      {loadingDraft?<ActivityIndicator color="#85BFC5"/>:<Text accessibilityRole="alert" style={styles.error}>{error||"No se pudo recuperar el borrador."}</Text>}
+      {!loadingDraft&&<Pressable style={styles.secondary} onPress={()=>{if(onExit)onExit();else router.replace("/(tabs)/profile");}}><Text style={[styles.small,{color:palette.secondary}]}>Volver al perfil</Text></Pressable>}
+    </View>:phase === "pick" ? <>
       <View style={styles.stage}>
         {focused && cameraPermission?.granted && !preparing ? <CameraView ref={camera} style={StyleSheet.absoluteFill} facing={facing} mode={mode} flash={flash ? "on" : "off"} enableTorch={mode === "video" && flash} onCameraReady={() => setCameraReady(true)} onMountError={() => setError("No se pudo abrir la cámara. Puedes usar Galería.")} /> : <LinearGradient colors={["#10232A", "#18171F", "#241321"]} style={[StyleSheet.absoluteFill, styles.stageEmpty]}><Feather name="camera" size={44} color="#D0DEE0" /><Text style={styles.stageTitle}>Tu próximo momento</Text><Text style={styles.stageText}>Graba algo nuevo o elige una foto o video de tu galería.</Text><Pressable onPress={() => void requestCamera()} accessibilityRole="button" style={styles.activate}><Text style={styles.white}>Activar cámara</Text></Pressable></LinearGradient>}
         <View style={styles.stageTop}><LinearGradient colors={tones} start={{x:0,y:0}} end={{x:1,y:0}} style={styles.pill}><Text style={styles.white}>TOKVID</Text></LinearGradient><Text style={styles.limit}>{recording ? "● Grabando" : "Hasta 3 min"}</Text></View>
@@ -159,16 +217,21 @@ export function PublicationComposer({ replyCommentId, onExit }: { replyCommentId
         {preparing && <View style={styles.loading}><ActivityIndicator color="#8DDDE0" /><Text style={styles.white}>Preparando…</Text></View>}
       </View>
       {errorView}
-      <View style={styles.modes}>{(replyCommentId ? ["video"] as const : ["video", "picture"] as const).map(value => <Pressable key={value} disabled={recording || preparing} onPress={() => { if (mode !== value) { setCameraReady(false); setMode(value); } }} style={[styles.mode, mode === value && styles.activeMode]}><Text style={[styles.modeText, mode === value && styles.white]}>{value === "video" ? "VIDEO" : "FOTO"}</Text></Pressable>)}</View>
-      <View style={styles.captureRow}><Pressable onPress={() => void pick()} disabled={preparing || recording || !replyReady} accessibilityRole="button" accessibilityLabel={replyCommentId ? "Elegir video de galería" : "Elegir foto o video de galería"} style={styles.sideAction}><View style={styles.galleryIcon}><Feather name="image" size={26} color="#EAF5F5" /></View><Text style={[styles.small,secondaryFormColors]}>Galería</Text></Pressable><Pressable onPress={() => void capture()} disabled={!cameraPermission?.granted || preparing || !replyReady} accessibilityRole="button" accessibilityLabel={recording ? "Detener grabación" : mode === "video" ? "Grabar video" : "Tomar foto"}><LinearGradient colors={["#65BFC5", "#A96991"]} start={{x:0,y:0}} end={{x:1,y:1}} style={styles.shutterRing}><View style={styles.shutterInner}><View style={[styles.shutter, mode === "video" && styles.videoShutter, recording && styles.stopShutter]} /></View></LinearGradient></Pressable>{!replyCommentId && <Pressable onPress={() => router.push("/live-create")} disabled={recording || preparing} style={styles.sideAction} accessibilityRole="button" accessibilityLabel="Crear LIVE"><Feather name="radio" size={25} color="#B7B4C0" /><Text style={[styles.small,secondaryFormColors]}>LIVE</Text></Pressable>}</View>
-    </> : phase === "success" ? <View style={styles.success}><LinearGradient colors={tones} style={styles.successIcon}><Feather name="check" size={38} color="#CAFFFF" /></LinearGradient><Text style={[styles.stageTitle,formColors]}>Ya está publicado</Text><Text style={[styles.stageText,{color:palette.secondary}]}>Tu {draft?.kind === "image" ? "foto" : "video"} está disponible en tu perfil y en el feed.</Text><Pressable style={[styles.primary,{backgroundColor:palette.button}]} onPress={() => { reset(); router.push("/(tabs)/profile"); }}><Text style={styles.white}>Ver en mi perfil</Text></Pressable><Pressable style={styles.secondary} onPress={() => { const id = draft!.id; reset(); router.push({ pathname: "/publication", params: { id } }); }}><Text style={[styles.white,formColors]}>Ver publicación</Text></Pressable><Pressable style={styles.secondary} onPress={reset}><Text style={[styles.small,secondaryFormColors]}>Crear otra</Text></Pressable></View> : <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.editContent}>
+      <View style={styles.modes}>{(activeReplyId ? ["video"] as const : ["video", "picture"] as const).map(value => <Pressable key={value} disabled={recording || preparing} onPress={() => { if (mode !== value) { setCameraReady(false); setMode(value); } }} style={[styles.mode, mode === value && styles.activeMode]}><Text style={[styles.modeText, mode === value && styles.white]}>{value === "video" ? "VIDEO" : "FOTO"}</Text></Pressable>)}</View>
+      <View style={styles.captureRow}><Pressable onPress={() => void pick()} disabled={preparing || recording || !replyReady} accessibilityRole="button" accessibilityLabel={activeReplyId ? "Elegir video de galería" : "Elegir foto o video de galería"} style={styles.sideAction}><View style={styles.galleryIcon}><Feather name="image" size={26} color="#EAF5F5" /></View><Text style={[styles.small,secondaryFormColors]}>Galería</Text></Pressable><Pressable onPress={() => void capture()} disabled={!cameraPermission?.granted || preparing || !replyReady} accessibilityRole="button" accessibilityLabel={recording ? "Detener grabación" : mode === "video" ? "Grabar video" : "Tomar foto"}><LinearGradient colors={["#65BFC5", "#A96991"]} start={{x:0,y:0}} end={{x:1,y:1}} style={styles.shutterRing}><View style={styles.shutterInner}><View style={[styles.shutter, mode === "video" && styles.videoShutter, recording && styles.stopShutter]} /></View></LinearGradient></Pressable>{!activeReplyId && <Pressable onPress={() => router.push("/live-create")} disabled={recording || preparing} style={styles.sideAction} accessibilityRole="button" accessibilityLabel="Crear LIVE"><Feather name="radio" size={25} color="#B7B4C0" /><Text style={[styles.small,secondaryFormColors]}>LIVE</Text></Pressable>}</View>
+    </> : phase === "success" ? <View style={styles.success}><LinearGradient colors={tones} style={styles.successIcon}><Feather name="check" size={38} color="#CAFFFF" /></LinearGradient><Text style={[styles.stageTitle,formColors]}>Ya está publicado</Text><Text style={[styles.stageText,{color:palette.secondary}]}>Tu {draft?.kind === "image" ? "foto" : "video"} está disponible en tu perfil y en el feed.</Text><Pressable style={[styles.primary,{backgroundColor:palette.button}]} onPress={() => { reset(); router.push("/(tabs)/profile"); }}><Text style={styles.white}>Ver en mi perfil</Text></Pressable><Pressable style={styles.secondary} onPress={() => { const id = draft!.id; reset(); router.push({ pathname: "/publication", params: { id } }); }}><Text style={[styles.white,formColors]}>Ver publicación</Text></Pressable><Pressable style={styles.secondary} onPress={()=>{reset();if(initialDraftId)router.replace("/(tabs)/create");}}><Text style={[styles.small,secondaryFormColors]}>Crear otra</Text></Pressable></View> : <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.editContent}>
       <View style={styles.preview}>{draft?.kind === "image" ? <Image source={{ uri: draft.uri }} style={StyleSheet.absoluteFill} resizeMode="contain" /> : <><VideoView player={player} style={StyleSheet.absoluteFill} contentFit="contain" nativeControls={false} surfaceType="textureView" /><Pressable accessibilityRole="button" accessibilityLabel={playing ? "Pausar vista previa" : "Reproducir vista previa"} style={styles.previewControl} onPress={() => { if (playing) player.pause(); else player.play(); setPlaying(!playing); }}><Feather name={playing ? "pause" : "play"} size={24} color="#fff" /></Pressable></>}</View>
-      <View style={[styles.captionBox,{backgroundColor:palette.input,borderColor:palette.border}]}><TextInput value={caption} onChangeText={setCaption} editable={phase !== "uploading"} placeholder="Añade una descripción…" placeholderTextColor="#92929F" style={[styles.caption,formColors]} maxLength={300} multiline accessibilityLabel="Descripción de la publicación" /><Text style={styles.counter}>{caption.length}/300</Text></View>
+      <View style={[styles.captionBox,{backgroundColor:palette.input,borderColor:palette.border}]}><TextInput value={caption} onChangeText={setCaption} editable={phase !== "uploading"&&!savingDraft} placeholder="Añade una descripción…" placeholderTextColor="#92929F" style={[styles.caption,formColors]} maxLength={300} multiline accessibilityLabel="Descripción de la publicación" /><Text style={styles.counter}>{caption.length}/300</Text></View>
       <View style={styles.audience}><Feather name="globe" size={15} color="#9CD1D4" /><Text style={[styles.small,secondaryFormColors]}>Público · Perfil y feed</Text></View>
       {phase === "uploading" && <View accessibilityRole="progressbar" accessibilityValue={{ min:0, max:100, now:progress }}><View style={[styles.track,{backgroundColor:palette.border}]}><View style={[styles.fill, { width: `${progress}%` }]} /></View><Text style={[styles.progress,{color:palette.secondary}]}>{progress < 96 ? `Subiendo… ${progress}%` : "Confirmando publicación…"}</Text></View>}
       {errorView}
-      <Pressable disabled={phase === "uploading" || !replyReady} onPress={() => void publish()} accessibilityRole="button" accessibilityLabel="Publicar" style={styles.publish}><LinearGradient colors={[palette.button,palette.button]} start={{x:0,y:0}} end={{x:1,y:0}} style={styles.publishInner}>{phase === "uploading" ? <ActivityIndicator color="#fff" /> : <><Feather name="arrow-up" size={21} color="#fff" /><Text style={styles.white}>Publicar</Text></>}</LinearGradient></Pressable>
-      <Pressable disabled={phase === "uploading"} onPress={() => void pick()} style={styles.secondary}><Text style={[styles.small,secondaryFormColors]}>Cambiar archivo</Text></Pressable>
+      <Pressable disabled={phase === "uploading" || savingDraft || !replyReady} onPress={() => void publish()} accessibilityRole="button" accessibilityLabel="Publicar" style={styles.publish}><LinearGradient colors={[palette.button,palette.button]} start={{x:0,y:0}} end={{x:1,y:0}} style={styles.publishInner}>{phase === "uploading" ? <ActivityIndicator color="#fff" /> : <><Feather name="arrow-up" size={21} color="#fff" /><Text style={styles.white}>Publicar</Text></>}</LinearGradient></Pressable>
+      <Pressable disabled={phase === "uploading"||savingDraft} onPress={()=>void saveUnpublishedDraft(false)}
+        style={[styles.secondary,{flexDirection:"row",gap:8}]} accessibilityRole="button" accessibilityLabel="Guardar borrador">
+        {savingDraft?<ActivityIndicator color="#6B7580"/>:<Feather name="save" size={18} color={palette.secondary}/>}
+        <Text style={[styles.small,secondaryFormColors]}>{savingDraft?"Guardando…":"Guardar borrador"}</Text>
+      </Pressable>
+      <Pressable disabled={phase === "uploading"||savingDraft} onPress={() => void pick()} style={styles.secondary}><Text style={[styles.small,secondaryFormColors]}>Cambiar archivo</Text></Pressable>
     </ScrollView>}
   </KeyboardAvoidingView>;
 }
