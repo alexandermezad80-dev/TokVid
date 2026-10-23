@@ -22,7 +22,7 @@ test("C2 restores project, its description and editor phase only for original ac
  assert.match(code,/useLocalSearchParams<\{draftId\?:string\}>\(\)/);
  assert.match(code,/openLocalPublicationDraft\(user\.id,initialDraftId\)/);
  assert.match(code,/currentUserId\.current!==saved\.userId/);
- assert.match(code,/setDraft\(saved\);setCaption\(saved\.caption\);setPhase\("edit"\)/);
+ assert.match(code,/setDraft\(saved\);setCaption\(saved\.caption\);setLocallySaved\(true\);setPhase\("edit"\)/);
  assert.match(code,/if\(replyCommentId&&saved\.replyCommentId!==replyCommentId\)/);
  assert.match(code,/onPress=\{\(\)=>\{reset\(\);if\(initialDraftId\)router\.replace\("\/\(tabs\)\/create"\);\}\}/);
 });
@@ -33,8 +33,13 @@ test("C2 compiles TSX without diagnostics and doesn't import storage in the Feed
 
 test("C2 publishing a just-saved draft cleans it and replacing reply media retains comment context",()=>{
  assert.match(code,/setDraft\(stored\);setLocallySaved\(true\)/);
- assert.match(code,/if\(locallySaved\)\s*\{\s*try\{await deleteLocalPublicationDraft\(draft\.userId,draft\.id\);/);
+ assert.match(code,/if\s*\(locallySaved\)\s*\{\s*try\{await deleteLocalPublicationDraft\(draft\.userId,draft\.id\);/);
  assert.match(code,/if \(activeReplyId && kind !== "video"\)/);
  assert.match(code,/\.\.\.\(activeReplyId \? \{ replyCommentId:activeReplyId \} : \{\}\)/);
  assert.match(code,/setLocallySaved\(false\); setPhase\("edit"\)/);
+});
+
+test("C2 resumed comment-video editor limits picker and capture modes to video",()=>{
+ assert.match(code,/mediaTypes: activeReplyId \? \["videos"\] : \["videos", "images"\]/);
+ assert.match(code,/useEffect\(\(\)=>\{if\(activeReplyId\)setMode\("video"\);\},\[activeReplyId\]\)/);
 });

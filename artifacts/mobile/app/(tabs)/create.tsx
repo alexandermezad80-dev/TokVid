@@ -53,6 +53,7 @@ export function PublicationComposer({ replyCommentId, onExit, initialDraftId }: 
   const [preparing, setPreparing] = useState(false);
   const [focused, setFocused] = useState(false);
   const [mode, setMode] = useState<"video" | "picture">("video");
+  useEffect(()=>{if(activeReplyId)setMode("video");},[activeReplyId]);
   const [facing, setFacing] = useState<"front" | "back">("back");
   const [flash, setFlash] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -117,7 +118,7 @@ export function PublicationComposer({ replyCommentId, onExit, initialDraftId }: 
     try {
       const owner = user ?? await requireAuth(); if (!owner) return;
       setError(null);
-      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: replyCommentId ? ["videos"] : ["videos", "images"], allowsMultipleSelection: false, allowsEditing: false, quality: 1, videoMaxDuration: 180 });
+      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: activeReplyId ? ["videos"] : ["videos", "images"], allowsMultipleSelection: false, allowsEditing: false, quality: 1, videoMaxDuration: 180 });
       if (!result.canceled && result.assets[0]) await prepare(result.assets[0], owner.id);
     } catch { setError("No pudimos abrir tu galería. Revisa los permisos de TokVid."); }
     finally { selecting.current = false; }

@@ -26,3 +26,5 @@ El usuario aprobó Borradores locales privados, editor progresivo y respaldo rem
 ## C2 endurecimiento posterior al primer CI
 
 La primera ejecución del workflow pasó, pero una revisión funcional detectó que `Guardar borrador` sin salir y luego `Publicar` debía limpiar el proyecto local; ahora `locallySaved` sigue el estado de guardado y la limpieza se hace al confirmarse la publicación. Al cambiar archivo en una respuesta en video reabierta, se conserva y valida `activeReplyId` en lugar de perder el vínculo con el comentario. La selección nueva conserva el comportamiento existente de generar un identificador de publicación nuevo y no borra automáticamente el proyecto anterior. Requiere nueva validación de CI y posterior prueba física.
+
+C2 verificación adicional: el selector `ImagePicker` de un borrador de respuesta recuperado usa `activeReplyId` para aceptar solo videos; el modo de cámara vuelve a VIDEO cuando hay comentario de destino. No se toca la selección de fotos para publicaciones normales.
