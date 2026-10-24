@@ -12,7 +12,9 @@ test("B9 Android: use a native gesture trigger without a visible native spinner 
   assert.ok(empty.includes('refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}'));
   for(const surface of [profile,inbox,empty]){
     assert.ok(surface.includes('colors={["transparent"]} progressBackgroundColor="transparent"'),"Native progress icon remains transparent");
+    assert.ok(surface.includes("progressViewOffset={-1000}"),"Android native circle must remain outside the visible UI");
   }
+  assert.equal((inbox.match(/progressViewOffset=\{-1000\}/g)||[]).length,2,"Both Inbox lists hide their native circle");
   assert.ok(profile.includes('nativeRefreshFallback={Platform.OS==="android"}'));
   assert.ok(inbox.includes('nativeRefreshFallback={Platform.OS==="android"}'));
   assert.ok(pull.includes("!nativeFallback.current && permitted.current"));

@@ -1,3 +1,11 @@
+## B10 — 24 octubre 2026: video 303 confirma círculo nativo opaco delante del contenido
+
+**Evidencia física aportada por el propietario:** video `303.mp4`, Perfil propio: Android dibuja un indicador blanco con sombra sobre las estadísticas, además de un pequeño fragmento del círculo azul propio bajo la cabecera. El spinner nativo permanece aunque en B9 tenga `colors={["transparent"]}` y `progressBackgroundColor="transparent"`. No presentar B9 como diseño visual aprobado.
+
+**Corrección aislada y reversible B10:** mantener `RefreshControl` nativo únicamente como disparador en Perfil e Inbox (con y sin contenido), añadiendo `progressViewOffset={-1000}` a sus cuatro controles Android para sacar su círculo nativo fuera de la región visible. No cambiar los indicadores diseñados, cabeceras, datos, rutas, seis iconos, barra de 39 dp, swipe, Feed, chats, perfiles ajenos, Auth, branding, Supabase, migraciones ni workflows. No alterar el control de refresco del Feed protegido. La propiedad de React Native existe en Android, pero **su efectividad para ocultar el círculo y preservar el gesto aún requiere APK y verificación en teléfono**. El círculo azul propio debe verse completo durante la espera y quedar debajo de la cabecera: todavía no demostrado. CI y dispositivo se reportan por separado.
+
+---
+
 ## B9 — 24 octubre 2026: reparación Android del disparo pull-to-refresh (Perfil propio + Inbox; sin swipe ni Feed)
 
 **Autorización del propietario:** informa que al jalar hacia abajo no se dispara el refresco en las pantallas probadas. Da prioridad al refresco; el swipe queda para el final. **Solo este bloque:** Perfil propio e Inbox Actividad/Mensajes, incluso vacíos. **NO** se instala la barra/iconos del ZIP ni se toca el corazón: pendiente de comparación final, sin aprobación de geometría. **NO** se cambian Feed, chats privados/grupales, perfil ajeno, iconos, header, 39 dp de pestañas, swipe existente, Auth, Supabase, migraciones o workflows.

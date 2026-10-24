@@ -11,7 +11,7 @@ export default function RefreshableInboxEmpty({children,refreshing,onRefresh}:{
   return <ScrollView style={styles.fill} contentContainerStyle={styles.content}
     showsVerticalScrollIndicator={false}
     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}
-      colors={["transparent"]} progressBackgroundColor="transparent"/>}>
+      colors={["transparent"]} progressBackgroundColor="transparent" progressViewOffset={-1000}/>}>
     {children}
   </ScrollView>;
 }

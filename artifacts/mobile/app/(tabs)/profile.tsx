@@ -356,7 +356,7 @@ export default function ProfileScreen() {
       </ReferenceHeader>
       <ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh} holdWhileRefreshing maxPull={156} holdDistance={72} nativeRefreshFallback={Platform.OS==="android"}>
   <ScrollView style={{flex:1}} stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false} overScrollMode="never"
-        refreshControl={Platform.OS==="android"?<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["transparent"]} progressBackgroundColor="transparent" />:undefined}
+        refreshControl={Platform.OS==="android"?<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["transparent"]} progressBackgroundColor="transparent" progressViewOffset={-1000} />:undefined}
         
         scrollEventThrottle={16}
         onScroll={event=>{

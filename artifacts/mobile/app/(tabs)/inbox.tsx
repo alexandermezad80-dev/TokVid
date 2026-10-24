@@ -267,7 +267,7 @@ export default function InboxScreen() {
           <ScrollView
             style={styles.list}
             showsVerticalScrollIndicator={false}
-            refreshControl={Platform.OS==="android"?<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={["transparent"]} progressBackgroundColor="transparent" />:undefined}
+            refreshControl={Platform.OS==="android"?<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={["transparent"]} progressBackgroundColor="transparent" progressViewOffset={-1000} />:undefined}
             scrollEventThrottle={16}
             onScroll={e=>{refreshScrollOffset.current=Math.max(0,e.nativeEvent.contentOffset.y);}}
           >
@@ -299,7 +299,7 @@ export default function InboxScreen() {
           <ScrollView
             style={styles.list}
             showsVerticalScrollIndicator={false}
-            refreshControl={Platform.OS==="android"?<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={["transparent"]} progressBackgroundColor="transparent" />:undefined}
+            refreshControl={Platform.OS==="android"?<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={["transparent"]} progressBackgroundColor="transparent" progressViewOffset={-1000} />:undefined}
             scrollEventThrottle={16}
             onScroll={e=>{refreshScrollOffset.current=Math.max(0,e.nativeEvent.contentOffset.y);}}
           >
