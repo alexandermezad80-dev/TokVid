@@ -6,7 +6,11 @@ test("B4: pull indicator stays in a distinct gap below fixed Inbox header, not a
  const header=inbox.indexOf('<ReferenceHeader variant="inbox"'),tabs=inbox.indexOf('<View style={styles.tabs}>');
  const gestures=inbox.indexOf('<View style={styles.swipeContent} {...inboxSwipeResponder.panHandlers}>');
  const pull=inbox.indexOf('<PullRefreshUnderHeader scrollOffsetRef={refreshScrollOffset}');
- assert.ok(header>=0&&tabs>header&&gestures>tabs&&pull>gestures);
+ const pager=inbox.indexOf('<HorizontalSwipePages sections={inboxSections}');
+ // renderInboxPage is a callback defined before the screen JSX; its PullRefresh is mounted by that pager.
+ assert.ok(header>=0&&tabs>header&&gestures>tabs&&pager>gestures&&pull>=0);
+ assert.ok(inbox.includes('renderPage={renderInboxPage}'));
+ assert.ok(inbox.includes('enabled={section===tab}'));
  assert.match(component,/onMoveShouldSetPanResponderCapture/);
  assert.match(component,/g\.dy>12 && g\.dy>Math\.abs\(g\.dx\)\*1\.45/);
  assert.match(component,/offset\.current\.current<=1/);

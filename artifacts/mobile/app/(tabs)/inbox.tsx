@@ -157,7 +157,7 @@ export default function InboxScreen() {
   currentTabRef.current=tab;
   const inboxSections:readonly InboxSection[]=["activity","messages"];
   const inboxPagePosition=useRef(new Animated.Value(0)).current;
-  const inboxDragStart=useRef(0),inboxDragging=useRef(false),inboxWidth=useRef(width);
+  const inboxDragStart=useRef(0),inboxDragging=useRef(false),inboxSettling=useRef(false),inboxWidth=useRef(width);
   inboxWidth.current=width;
   const [inboxPreview,setInboxPreview]=useState<InboxSection>(tab);
   const inboxPreviewRef=useRef<InboxSection>(tab);
@@ -166,10 +166,11 @@ export default function InboxScreen() {
     if(inboxPreviewRef.current!==next){inboxPreviewRef.current=next;setInboxPreview(next);}
   };
   useEffect(()=>{
-    if(!inboxDragging.current){
+    if(!inboxDragging.current&&!inboxSettling.current){
       const idx=tab==="messages"?1:0;
+      // Original fixed tab taps remain immediate.
       inboxPagePosition.stopAnimation();
-      Animated.timing(inboxPagePosition,{toValue:idx,duration:200,useNativeDriver:true}).start();
+      inboxPagePosition.setValue(idx);
       moveInboxPreview(idx);
     }
   },[tab,inboxPagePosition]);
@@ -181,6 +182,7 @@ export default function InboxScreen() {
       (gesture.numberActiveTouches??1)===1 && isInboxHorizontalGesture(gesture.dx,gesture.dy),
     onPanResponderGrant:()=>{
       inboxDragging.current=true;
+      inboxSettling.current=false;
       inboxDragStart.current=currentTabRef.current==="messages"?1:0;
       inboxPagePosition.stopAnimation();
     },
@@ -193,16 +195,18 @@ export default function InboxScreen() {
       const start=inboxDragging.current?inboxDragStart.current:(currentTabRef.current==="messages"?1:0);
       const target=settleSwipePosition(start,g.dx,g.vx??0,inboxWidth.current,1);
       inboxDragging.current=false;
+      inboxSettling.current=true;
       moveInboxPreview(target);
       Animated.timing(inboxPagePosition,{
         toValue:target,duration:Math.abs(g.vx??0)>0.65?170:240,
         easing:Easing.out(Easing.cubic),useNativeDriver:true
-      }).start();
+      }).start(()=>{inboxSettling.current=false;});
       const next:InboxSection=target===1?"messages":"activity";
       if(next!==currentTabRef.current)setTab(next);
     },
     onPanResponderTerminate:()=>{
       inboxDragging.current=false;
+      inboxSettling.current=false;
       const index=currentTabRef.current==="messages"?1:0;
       moveInboxPreview(index);
       Animated.timing(inboxPagePosition,{toValue:index,duration:200,useNativeDriver:true}).start();

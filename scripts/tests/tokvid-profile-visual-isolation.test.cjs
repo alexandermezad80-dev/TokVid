@@ -43,7 +43,7 @@ test("A1 story illustration preserves image/video selection and existing gallery
 test("A2b third tab loads shared items rather than own gallery",()=>{
  assert.match(profile,/useMySharedVideos\(user\?\.id,tab==="shared"\)/);
  assert.match(profile,/\{key:"shared",icon:"share-2",label:"Compartidos"\}/);
- assert.match(profile,/tab === "shared" \?/);
+ assert.match(profile,/section === "shared" \?/);
  assert.match(profile,/shared\.items\.map\(item=>/);
  assert.match(profile,/shared\.hasMore/);
  assert.match(profile,/onPress=\{\(\)=>void shared\.refresh\(\)\}/);

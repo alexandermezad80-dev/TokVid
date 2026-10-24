@@ -61,7 +61,7 @@ export default function ProfileScreen() {
   const activeTabRef=useRef<OwnProfileTab>(tab);
   activeTabRef.current=tab;
   const pagePosition=useRef(new Animated.Value(0)).current;
-  const dragStart=useRef(0),dragging=useRef(false),widthRef=useRef(width);
+  const dragStart=useRef(0),dragging=useRef(false),settling=useRef(false),widthRef=useRef(width);
   widthRef.current=width;
   const [previewTab,setPreviewTab]=useState<OwnProfileTab>(tab);
   const previewTabRef=useRef<OwnProfileTab>(tab);
@@ -70,10 +70,11 @@ export default function ProfileScreen() {
     if(previewTabRef.current!==next){previewTabRef.current=next;setPreviewTab(next);}
   };
   useEffect(()=>{
-    if(!dragging.current){
+    if(!dragging.current&&!settling.current){
       const idx=OWN_PROFILE_TABS.indexOf(tab);
+      // Fixed tab taps retain the approved immediate behavior; swipe releases animate.
       pagePosition.stopAnimation();
-      Animated.timing(pagePosition,{toValue:idx,duration:200,useNativeDriver:true}).start();
+      pagePosition.setValue(idx);
       movePreview(idx);
     }
   },[tab,pagePosition]);
@@ -83,6 +84,7 @@ export default function ProfileScreen() {
     onMoveShouldSetPanResponderCapture:(_event,g)=>isOwnProfileHorizontalMove(g.dx,g.dy),
     onPanResponderGrant:()=>{
       dragging.current=true;
+      settling.current=false;
       dragStart.current=OWN_PROFILE_TABS.indexOf(activeTabRef.current);
       pagePosition.stopAnimation();
     },
@@ -95,16 +97,18 @@ export default function ProfileScreen() {
       const start=dragging.current?dragStart.current:OWN_PROFILE_TABS.indexOf(activeTabRef.current);
       const target=settleSwipePosition(start,g.dx,g.vx??0,widthRef.current,5);
       dragging.current=false;
+      settling.current=true;
       const next=OWN_PROFILE_TABS[target];
       movePreview(target);
       Animated.timing(pagePosition,{
         toValue:target,duration:Math.abs(g.vx??0)>0.65?170:240,
         easing:Easing.out(Easing.cubic),useNativeDriver:true
-      }).start();
+      }).start(()=>{settling.current=false;});
       if(next!==activeTabRef.current)setTab(next);
     },
     onPanResponderTerminate:()=>{
       dragging.current=false;
+      settling.current=false;
       const idx=OWN_PROFILE_TABS.indexOf(activeTabRef.current);
       movePreview(idx);
       Animated.timing(pagePosition,{toValue:idx,duration:200,useNativeDriver:true}).start();

@@ -45,6 +45,7 @@ function runtime({guest = false, route = '/', inset = 24, visited = false, loadi
       if(name.endsWith('/referenceVisual')) return load('constants/referenceVisual.ts');
       if(name.endsWith('/palette')) return load('constants/palette.ts');
       if(name.endsWith('/ownProfileSwipe')) return load('lib/features/profile/ownProfileSwipe.ts');
+      if(name.endsWith('/horizontalDrag')) return load('lib/features/gestures/horizontalDrag.ts');
       if(name.endsWith('/AuthContext')) return {useAuth:()=>({user:guest?null:{id:'me'},profile,loading:false,refreshProfile(){}})};
       if(name.endsWith('/FollowContext')) return {useFollow:()=>({followedIds:new Set(),loadingIds:new Set(),isFollowing:()=>false})};
       if(name.endsWith('/NotificationsContext')) return {useNotifications:()=>({unreadCount:7})};
