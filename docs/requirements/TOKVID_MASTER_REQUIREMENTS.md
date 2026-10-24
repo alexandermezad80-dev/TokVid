@@ -1,3 +1,17 @@
+## Cierre técnico B8 — Swipe reversible y pull azul elástico — 23 octubre 2026
+
+**Base física preservada:** `746851d5bfea371d7f7235e5b9022d4cd284b53f`; APK histórica exitosa [40033393756](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40033393756). **Código auditado B8:** [`6726558f`](https://github.com/alexandermezad80-dev/TokVid/commit/6726558f5dc4164a4edcb1740285c431bad14b87); rama `feature/feed-mini-video-avatar`.
+
+**Resultado:** B8 implementa swipe horizontal *controlado mientras el dedo está apoyado*, reversible en el mismo contacto, con posición fraccional y ajuste final por desplazamiento/velocidad. Perfil propio: solo se mueve el cuerpo inferior, cabecera y barra de seis iconos de 39dp invariables; barrita negra sigue progreso horizontal; iconos existentes cambian gris/negro según la posición próxima. Inbox: mueve Actividad/Mensajes sin cambiar cabecera, tabs, filas, acciones ni refresco preexistente. Perfil ajeno sin cambios.
+
+**Pull-to-refresh del Perfil propio:** mayor apertura elástica y espera bajo cabecera, **único `ActivityIndicator` azul circular original** `#4B7194`, que persiste durante `onRefresh` y se retrae al finalizar. **No** se crearon dos puntos ni se modificaron colores/indicadores de Feed, Inbox y chats.
+
+**Auditoría de aislamiento:** comparación GitHub desde APK base: **3 commits, 16 rutas**, solo `profile.tsx`, `inbox.tsx`, componentes/módulo de gesto, tests y docs. **18/18 hashes protegidos intactos**, ningún cambio a Feed, iconos, tab bar global, perfil ajeno, editor, Auth, Supabase, migraciones, dependencias ni workflows. Prueba dinámica añade arrastre reversible y selección de sección sin soltar. Fallo CI inicial [40043860633](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40043860633): siete contratos viejos/fixture de mock no adaptados; corregidos sin cambiar elementos aprobados. CI posterior [40044011312](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40044011312) success y **CI final** [40044201865](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40044201865) **success** en regresiones + TypeScript + configuración Android.
+
+**Estado de aceptación:** `ci_verified=true`; `physical_device_verified=false`. Aún es imprescindible una APK de validación y observar: dedo izquierda/derecha sin soltar, reversión a origen, soltado lento/rápido, límites de secciones, barrita/iconos, scroll vertical independiente, pull azul y su espera, y ausencia de cambios de iconos/cabecera en Perfil e Inbox. No afirmar aceptación física. Editor de fotos/videos **continúa pausado**.
+
+---
+
 ## B8 — 23 octubre 2026: swipe interactivo reversible + pull elástico, preservar círculo azul
 
 **Decisión del propietario:** desde la APK que considera correcta, modificar **solo** el gesto horizontal del Perfil propio e Inbox para que el contenido siga al dedo mientras se mantiene presionado, pueda cambiar de dirección sin despegarlo y al soltar ajuste su sección según desplazamiento/velocidad. En Perfil propio mantener fijos cabecera y barra de seis iconos; color seleccionado negro, resto gris, barrita móvil bajo iconos. **Perfil ajeno no lleva swipe horizontal.**

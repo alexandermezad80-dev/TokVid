@@ -26,3 +26,11 @@
 
 ## Afinación de B8 antes de prueba física
 La selección visual gris/negro de los iconos del Perfil propio usa la sección más cercana durante el arrastre (\`previewTab\`) sin cambiar el icono, tamaño, acción al tocar ni su estado accesible confirmado; la barrita usa el mismo progreso continuo animado. Prueba dinámica de PanResponder: arrastre izquierda/derecha/centro con el mismo dedo simulado y snap al soltar. CI pendiente de esta afinación.
+
+## Resultado comprobado en CI y alcance final
+
+Último código B8: [`6726558f`](https://github.com/alexandermezad80-dev/TokVid/commit/6726558f5dc4164a4edcb1740285c431bad14b87).
+- GitHub compare desde `746851d5`: **3 commits, 16 rutas**, exclusivamente dos pantallas de gestos, componentes de gesto, tests y docs. **18/18 archivos de integridad protegidos coinciden**; sin cambios a Feed, perfiles ajenos, iconos, diseño general, Auth, backend, editor, dependencias o workflows.
+- El primer CI B8 [40043860633](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40043860633) falló por 7 aserciones antiguas del responder/fixture y nombres, no por prueba física; se corrigieron estas expectativas preservando las comprobaciones de geometría, colores autorizados, botones, rutas y perfil ajeno.
+- CI [40044011312](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40044011312) superó regresiones + TS + prebuild. Afinación posterior del color de selección gris/negro basado en la sección bajo el dedo y test dinámico de PanResponder: CI [40044201865](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40044201865) **success** en las tres fases.
+- **Aceptación física pendiente**: el video del usuario constituye referencia del objetivo, no confirmación de la implementación. Una APK nueva debe mostrar control reversible con un solo contacto, barrita móvil, iconos seleccionados negro/gris, release con snap, scroll vertical inalterado y pull con solo círculo azul visible mientras carga. No aprobar hasta prueba en teléfono.
