@@ -1,3 +1,13 @@
+## B11 — 24 octubre 2026: comportamiento magnético y revelación bajo cabecera del pull del Perfil — requisito aprobado, implementación pendiente
+
+**Descripción expresa del propietario (después de video 303):** el círculo azul original está completo; el defecto es su **presentación**, no su imagen ni animación intrínseca. Debe aparecer y esconderse físicamente **por debajo del borde de la cabecera fija**, con oclusión por la cabecera, igual que el contenido del Perfil desaparece al hacer scroll, pero en sentido contrario. No sustituir esta oclusión con solo opacidad ni con círculo estático descubierto en un hueco blanco. Evitar la figura blanca opaca del `RefreshControl` Android frente al contenido.
+
+**Sensación exigida:** arrastre vertical **muy largo**, fluido, siguiendo el dedo de manera continua; resistencia elástica progresiva conforme se estira, sin corte abrupto. Al soltar, regreso **magnético** hacia el borde de la cabecera, con aceleración/spring suave, firme y sin vibraciones ni rebotes exagerados. El círculo azul sale progresivamente desde detrás de la cabecera; durante recarga real se mantiene a la vista y al terminar se oculta progresivamente bajo el mismo borde. Si el gesto es insuficiente, retorna sin refrescar. Respetar scroll nativo, toques y bloqueo de gestos vertical/horizontal.
+
+**Aislamiento y decisión vigente:** esta descripción agrega el criterio físico de aceptación al bloque pull-to-refresh del Perfil. **No está implementado ni validado físicamente por los commits B9/B10**: B10 solo intenta ocultar el progreso Android y su APK está pendiente de prueba. Antes de alterar su código, comprobar B10 en teléfono y aislar la captura vertical para garantizar gesto y elasticidad real en Android; el swipe sigue expresamente aplazado. No tocar Feed, color/tamaño del círculo, Perfil ajeno, Inbox si no se autoriza su efecto magnético, barra de seis iconos, branding, auth, backend, migraciones ni workflows. Parámetros físicos específicos aún sin aprobación: calibrar con evidencia física, no asumir valores definitivos.
+
+---
+
 ## B10 — 24 octubre 2026: video 303 confirma círculo nativo opaco delante del contenido
 
 **Evidencia física aportada por el propietario:** video `303.mp4`, Perfil propio: Android dibuja un indicador blanco con sombra sobre las estadísticas, además de un pequeño fragmento del círculo azul propio bajo la cabecera. El spinner nativo permanece aunque en B9 tenga `colors={["transparent"]}` y `progressBackgroundColor="transparent"`. No presentar B9 como diseño visual aprobado.
