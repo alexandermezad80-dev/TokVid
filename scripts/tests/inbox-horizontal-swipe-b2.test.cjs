@@ -47,10 +47,10 @@ test("B2 preserves approved notification, chat, refresh, layouts and tab touch a
    'height: 2, width: 97, backgroundColor: "#25F4EE"',
  ];
  for(const str of tokens)assert.ok(inbox.includes(str),"Protected Inbox behavior changed: "+str);
- // Explicit B4 exception: native Android RefreshControls overlapped first rows.
- // Parent-owned pull surface replaces them without altering tab taps or actions.
+ // B9: use a native Android gesture trigger, with an INVISIBLE native circle.
+ // The original TOKVID spinner remains separately under the fixed header.
  assert.equal((inbox.match(/<PullRefreshUnderHeader scrollOffsetRef=\{refreshScrollOffset\}/g)||[]).length,1);
- assert.equal((inbox.match(/<RefreshControl refreshing=\{refreshing\} onRefresh=\{handleRefresh\}/g)||[]).length,0);
+ assert.equal((inbox.match(/<RefreshControl refreshing=\{refreshing\} onRefresh=\{handleRefresh\}/g)||[]).length,2);
 });
 test("B2 Inbox TSX transpiles cleanly",()=>{
  const out=ts.transpileModule(inbox,{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022},reportDiagnostics:true});
