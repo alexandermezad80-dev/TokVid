@@ -18,8 +18,8 @@ test("B4: pull indicator stays in a distinct gap below fixed Inbox header, not a
  assert.match(component,/position:"absolute"/);
  assert.match(component,/Animated\.timing\(translation,\{toValue:0,duration:220,useNativeDriver:true\}\)/);
  assert.ok(component.includes("pointerEvents=\"none\""));
- assert.ok(!inbox.includes("<RefreshControl"),"No native refresh overlay may cover row");
- assert.ok(!empty.includes("<RefreshControl"));
+ assert.ok(inbox.includes('colors={["transparent"]} progressBackgroundColor="transparent"'),"Android refresh circle must not overlay a row");
+ assert.ok(empty.includes('colors={["transparent"]} progressBackgroundColor="transparent"'),"Empty inbox uses native trigger without overlapping spinner");
 });
 test("B4: populated and empty Inbox both share one vertical gesture without changing swipe",()=>{
  assert.equal((inbox.match(/<RefreshableInboxEmpty refreshing=\{refreshing\} onRefresh=\{handleRefresh\}>/g)||[]).length,5);

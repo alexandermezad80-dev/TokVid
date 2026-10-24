@@ -1,11 +1,18 @@
 import React from "react";
-import {StyleSheet,View} from "react-native";
-/** Preserve the approved centered empty/loading/error Inbox content.
- * Parent PullRefreshUnderHeader now owns the single refresh gesture and indicator.
+import {Platform,RefreshControl,ScrollView,StyleSheet,View} from "react-native";
+/** Same centered empty/error/loading Inbox surfaces. Android must have a real
+ * scrollable native refresh target even when there are no rows to drag.
+ * The native spinner is invisible; PullRefreshUnderHeader owns the visible circle.
  */
-export default function RefreshableInboxEmpty({children}:{
- children:React.ReactNode;refreshing:boolean;onRefresh:()=>void|Promise<void>;
+export default function RefreshableInboxEmpty({children,refreshing,onRefresh}:{
+  children:React.ReactNode;refreshing:boolean;onRefresh:()=>void|Promise<void>;
 }){
- return <View style={styles.fill}>{children}</View>;
+  if(Platform.OS!=="android")return <View style={styles.fill}>{children}</View>;
+  return <ScrollView style={styles.fill} contentContainerStyle={styles.content}
+    showsVerticalScrollIndicator={false}
+    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}
+      colors={["transparent"]} progressBackgroundColor="transparent"/>}>
+    {children}
+  </ScrollView>;
 }
-const styles=StyleSheet.create({fill:{flex:1}});
+const styles=StyleSheet.create({fill:{flex:1},content:{flexGrow:1}});

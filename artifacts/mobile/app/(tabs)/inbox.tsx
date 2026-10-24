@@ -21,6 +21,7 @@ import {
   ActivityIndicator,
   Alert,
   Pressable,
+  RefreshControl,
   Image,
   Platform,
   PanResponder,
@@ -238,6 +239,8 @@ export default function InboxScreen() {
     setRefreshing(true);
     try{
       await Promise.all([refresh(), tab === "messages" ? loadConvos() : Promise.resolve()]);
+      // Group rows are loaded by useGroupInbox(revision), not loadConvos().
+      if(tab==="messages")setGroupRevision(current=>current+1);
     }catch{
       Alert.alert("No se pudo actualizar Inbox","Revisa tu conexión e inténtalo de nuevo.");
     }finally{
@@ -250,7 +253,7 @@ export default function InboxScreen() {
 
   const renderInboxPage=(section:InboxSection)=>(
     <>
-      <PullRefreshUnderHeader scrollOffsetRef={refreshScrollOffset} onRefresh={handleRefresh} refreshing={refreshing} enabled={section===tab} color="#FE2C55">
+      <PullRefreshUnderHeader scrollOffsetRef={refreshScrollOffset} onRefresh={handleRefresh} refreshing={refreshing} enabled={section===tab} color="#FE2C55" holdWhileRefreshing holdDistance={64} nativeRefreshFallback={Platform.OS==="android"}>
       {section === "activity" ? (
         notifLoading && notifications.length === 0 ? (
           <RefreshableInboxEmpty refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.center}><ActivityIndicator color="#FE2C55" /></View></RefreshableInboxEmpty>
@@ -264,6 +267,7 @@ export default function InboxScreen() {
           <ScrollView
             style={styles.list}
             showsVerticalScrollIndicator={false}
+            refreshControl={Platform.OS==="android"?<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={["transparent"]} progressBackgroundColor="transparent" />:undefined}
             scrollEventThrottle={16}
             onScroll={e=>{refreshScrollOffset.current=Math.max(0,e.nativeEvent.contentOffset.y);}}
           >
@@ -295,6 +299,7 @@ export default function InboxScreen() {
           <ScrollView
             style={styles.list}
             showsVerticalScrollIndicator={false}
+            refreshControl={Platform.OS==="android"?<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={["transparent"]} progressBackgroundColor="transparent" />:undefined}
             scrollEventThrottle={16}
             onScroll={e=>{refreshScrollOffset.current=Math.max(0,e.nativeEvent.contentOffset.y);}}
           >

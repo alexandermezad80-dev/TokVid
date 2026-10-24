@@ -4,11 +4,12 @@ const profile=read("app/(tabs)/profile.tsx"),shared=read("components/PullRefresh
 test("B7: the own profile routes refresh through the shared under-header responder, without changing protected geometry or callbacks",()=>{
  assert.match(profile,/import ProfilePullRefresh from "\.\.\/\.\.\/components\/PullRefreshUnderHeader"/);
  assert.match(profile,/<ReferenceHeader variant="profile">/);
- assert.match(profile,/<ProfilePullRefresh scrollOffsetRef=\{scrollOffsetRef\} refreshing=\{refreshing\} onRefresh=\{onRefresh\} holdWhileRefreshing maxPull=\{156\} holdDistance=\{72\}>/);
+ assert.match(profile,/<ProfilePullRefresh scrollOffsetRef=\{scrollOffsetRef\} refreshing=\{refreshing\} onRefresh=\{onRefresh\} holdWhileRefreshing maxPull=\{156\} holdDistance=\{72\} nativeRefreshFallback=\{Platform\.OS==="android"\}>/);
  assert.match(profile,/stickyHeaderIndices=\{\[1\]\}/);
  assert.match(profile,/scrollOffsetRef\.current=Math\.max\(0,event\.nativeEvent\.contentOffset\.y\)/);
  for(const k of ["width:width/6,flex:0","stickySlot:{width:\"100%\",height:39","onPress={()=>setTab(item.key)}","onMoveShouldSetPanResponderCapture:(_event,g)=>isOwnProfileHorizontalMove(g.dx,g.dy)","styles.grid","<BrandAvatar","<TokvidProfileIcon","<ReferenceHeader"])assert.ok(profile.includes(k),k);
- assert.ok(!profile.includes("RefreshControl"),"Do not overlay Android spinner over profile content");
+ assert.ok(profile.includes('colors={["transparent"]} progressBackgroundColor="transparent"'),"Android native trigger must not paint over the avatar");
+ assert.ok(profile.includes('refreshControl={Platform.OS==="android"?<RefreshControl'),"Android native gesture fallback");
 });
 function makeGesture(offset=0){
  let handler,updateCount=0;

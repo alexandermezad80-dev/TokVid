@@ -6,7 +6,7 @@ import {ActivityIndicator,Animated,PanResponder,StyleSheet,View} from "react-nat
  * in the newly exposed gap, rather than drawing on top of the first row.
  * Native scrolling, horizontal swipes and ordinary taps remain with children.
  */
-export default function PullRefreshUnderHeader({children,scrollOffsetRef,onRefresh,refreshing,enabled=true,color="#4B7194",indicatorTop=8,maxPull=104,triggerDistance=95,holdWhileRefreshing=false,holdDistance=60}:{
+export default function PullRefreshUnderHeader({children,scrollOffsetRef,onRefresh,refreshing,enabled=true,color="#4B7194",indicatorTop=8,maxPull=104,triggerDistance=95,holdWhileRefreshing=false,holdDistance=60,nativeRefreshFallback=false}:{
  children:React.ReactNode;
  scrollOffsetRef:React.MutableRefObject<number>;
  onRefresh:()=>void|Promise<void>;
@@ -18,12 +18,15 @@ export default function PullRefreshUnderHeader({children,scrollOffsetRef,onRefre
  triggerDistance?:number;
  holdWhileRefreshing?:boolean;
  holdDistance?:number;
+ /** Android native RefreshControl triggers; keep its spinner invisible and show the approved gap indicator. */
+ nativeRefreshFallback?:boolean;
 }){
  const translation=useRef(new Animated.Value(0)).current;
  const offset=useRef(scrollOffsetRef);offset.current=scrollOffsetRef;
  const callback=useRef(onRefresh);callback.current=onRefresh;
  const active=useRef(refreshing);active.current=refreshing;
  const permitted=useRef(enabled);permitted.current=enabled;
+ const nativeFallback=useRef(nativeRefreshFallback);nativeFallback.current=nativeRefreshFallback;
  const maxDistance=useRef(maxPull);maxDistance.current=maxPull;
  const trigger=useRef(triggerDistance);trigger.current=triggerDistance;
  const pulling=useRef(false);
@@ -31,7 +34,7 @@ export default function PullRefreshUnderHeader({children,scrollOffsetRef,onRefre
  const holdPx=useRef(holdDistance);holdPx.current=holdDistance;
  const pull=useRef(PanResponder.create({
    onMoveShouldSetPanResponderCapture:(_event,g)=>
-     permitted.current && !active.current && offset.current.current<=1 &&
+     !nativeFallback.current && permitted.current && !active.current && offset.current.current<=1 &&
      (g.numberActiveTouches??1)===1 && g.dy>12 && g.dy>Math.abs(g.dx)*1.45,
    onPanResponderGrant:()=>{pulling.current=true;translation.stopAnimation();},
    onPanResponderMove:(_event,g)=>{
@@ -57,6 +60,13 @@ export default function PullRefreshUnderHeader({children,scrollOffsetRef,onRefre
    },
    onPanResponderTerminationRequest:()=>false,
  })).current;
+ useEffect(()=>{
+   if(!nativeRefreshFallback)return;
+   // The native trigger is reliable on Android. Show only TOKVID’s original circle
+   // in the gap while data refreshes; never the native circle over a row/avatar.
+   if(refreshing)Animated.spring(translation,{toValue:holdDistance,useNativeDriver:true}).start();
+   else Animated.timing(translation,{toValue:0,duration:220,useNativeDriver:true}).start();
+ },[nativeRefreshFallback,refreshing,holdDistance,translation]);
  useEffect(()=>()=>{translation.stopAnimation();},[translation]);
  return <View style={styles.root} {...pull.panHandlers}>
    <Animated.View pointerEvents="none" style={[styles.indicator,{top:indicatorTop,opacity:translation.interpolate({

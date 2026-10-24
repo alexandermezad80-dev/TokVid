@@ -1,3 +1,13 @@
+## B9 — 24 octubre 2026: reparación Android del disparo pull-to-refresh (Perfil propio + Inbox; sin swipe ni Feed)
+
+**Autorización del propietario:** informa que al jalar hacia abajo no se dispara el refresco en las pantallas probadas. Da prioridad al refresco; el swipe queda para el final. **Solo este bloque:** Perfil propio e Inbox Actividad/Mensajes, incluso vacíos. **NO** se instala la barra/iconos del ZIP ni se toca el corazón: pendiente de comparación final, sin aprobación de geometría. **NO** se cambian Feed, chats privados/grupales, perfil ajeno, iconos, header, 39 dp de pestañas, swipe existente, Auth, Supabase, migraciones o workflows.
+
+**Hallazgo técnico:** los dos módulos usaban solo `PanResponder` en un contenedor externo; en Android el scroll nativo puede reclamar la vertical antes de alcanzar su umbral. Pruebas JS anteriores simulaban `PanResponder` pero no el arbitraje de Android. **Parche acotado:** en Android, los `ScrollView` de Perfil e Inbox reciben un `RefreshControl` nativo para reconocer el refresco, con spinner nativo **transparente** (evita volver a superponer círculo sobre avatar/filas); el `PullRefreshUnderHeader` conserva el círculo TOKVID bajo cabecera y revela la separación durante la espera. Los estados vacíos de Inbox tienen ahora `ScrollView` nativo refrescable. La recarga de Mensajes invalida además los grupos de Inbox. En otras plataformas se conserva `PanResponder` actual. El cambio **NO asegura** por sí solo el desplazamiento elástico completo durante el gesto nativo; ese comportamiento requiere verificación física específica antes de declararlo finalizado.
+
+**Estado:** preparado para CI; requiere APK de validación en teléfono Android y comprobar gesto corto/largo con/sin filas, activación de `onRefresh`, círculo azul de Perfil y color original de Inbox, ausencia de spinner nativo encima de filas, contenido bajo cabecera, espera hasta fin de la carga y regreso, scroll arriba/abajo, taps, swipe sin cambios. No afirmar `physical_device_verified=true` desde CI. Bloque Feed intacto y cerrado. Documentar cualquier falla física antes de nuevos cambios.
+
+---
+
 ## Cierre técnico B8 — Swipe reversible y pull azul elástico — 23 octubre 2026
 
 **Base física preservada:** `746851d5bfea371d7f7235e5b9022d4cd284b53f`; APK histórica exitosa [40033393756](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40033393756). **Código auditado B8:** [`6726558f`](https://github.com/alexandermezad80-dev/TokVid/commit/6726558f5dc4164a4edcb1740285c431bad14b87); rama `feature/feed-mini-video-avatar`.

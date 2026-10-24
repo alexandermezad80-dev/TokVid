@@ -25,6 +25,7 @@ import {
   Alert,
   Modal,
   Pressable,
+  RefreshControl,
   PanResponder,
   Animated,
   Easing,
@@ -353,8 +354,9 @@ export default function ProfileScreen() {
         <TouchableOpacity style={styles.menuBtn} onPress={()=>router.push({pathname:"/(tabs)/friends",params:{tab:"friends"}})} accessibilityLabel="Amigos"><Feather name="users" size={22} color="#0B0B0D"/></TouchableOpacity>
         <View style={{flex:1}}/><TouchableOpacity style={styles.menuBtn} onPress={()=>router.push("/edit-profile")} accessibilityLabel="Información de perfil"><Feather name="more-horizontal" size={24} color="#0B0B0D"/></TouchableOpacity>
       </ReferenceHeader>
-      <ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh} holdWhileRefreshing maxPull={156} holdDistance={72}>
+      <ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh} holdWhileRefreshing maxPull={156} holdDistance={72} nativeRefreshFallback={Platform.OS==="android"}>
   <ScrollView style={{flex:1}} stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false} overScrollMode="never"
+        refreshControl={Platform.OS==="android"?<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["transparent"]} progressBackgroundColor="transparent" />:undefined}
         
         scrollEventThrottle={16}
         onScroll={event=>{
