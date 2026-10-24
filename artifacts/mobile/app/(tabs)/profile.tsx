@@ -1,6 +1,9 @@
 import ReferenceHeader from "../../components/reference/ReferenceHeader";
 // B7: reuse the isolated downward refresh responder; keep the protected header, sticky and six tabs unchanged.
 import ProfilePullRefresh from "../../components/PullRefreshUnderHeader";
+import HorizontalSwipePages from "../../components/HorizontalSwipePages";
+import SwipePositionUnderline from "../../components/SwipePositionUnderline";
+import {clampSwipePosition,settleSwipePosition} from "../../lib/features/gestures/horizontalDrag";
 import TokvidProfileIcon from "../../components/TokvidProfileIcon";
 import BrandOutline from "../../components/reference/BrandOutline";
 import {referenceVisual as v} from "../../constants/referenceVisual";
@@ -13,7 +16,7 @@ import PublicationThumbnail from "../../components/PublicationThumbnail";
 import { usePublishedMedia } from "../../hooks/usePublishedMedia";
 import { useMySharedVideos } from "../../hooks/useMySharedVideos";
 import { useLocalPublicationDrafts } from "../../hooks/useLocalPublicationDrafts";
-import { adjacentOwnProfileTab, isOwnProfileHorizontalMove, type OwnProfileTab } from "../../lib/features/profile/ownProfileSwipe";
+import {OWN_PROFILE_TABS,isOwnProfileHorizontalMove,type OwnProfileTab} from "../../lib/features/profile/ownProfileSwipe";
 import { requestRegistration } from "../../lib/features/auth/services/registrationBridge";
 import { Feather } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
@@ -23,6 +26,8 @@ import {
   Modal,
   Pressable,
   PanResponder,
+  Animated,
+  Easing,
   useWindowDimensions,
   ActivityIndicator,
   Image,
@@ -55,15 +60,56 @@ export default function ProfileScreen() {
   const [tab, setTab] = useState<OwnProfileTab>("videos");
   const activeTabRef=useRef<OwnProfileTab>(tab);
   activeTabRef.current=tab;
+  const pagePosition=useRef(new Animated.Value(0)).current;
+  const dragStart=useRef(0),dragging=useRef(false),widthRef=useRef(width);
+  widthRef.current=width;
+  const [previewTab,setPreviewTab]=useState<OwnProfileTab>(tab);
+  const previewTabRef=useRef<OwnProfileTab>(tab);
+  const movePreview=(idx:number)=>{
+    const next=OWN_PROFILE_TABS[Math.max(0,Math.min(5,Math.round(idx)))];
+    if(previewTabRef.current!==next){previewTabRef.current=next;setPreviewTab(next);}
+  };
+  useEffect(()=>{
+    if(!dragging.current){
+      const idx=OWN_PROFILE_TABS.indexOf(tab);
+      pagePosition.stopAnimation();
+      Animated.timing(pagePosition,{toValue:idx,duration:200,useNativeDriver:true}).start();
+      movePreview(idx);
+    }
+  },[tab,pagePosition]);
   const tabSwipeResponder=useRef(PanResponder.create({
     onMoveShouldSetPanResponder:(_event,g)=>isOwnProfileHorizontalMove(g.dx,g.dy),
     // Capture horizontal drags before a nested native ScrollView wins on Android.
     onMoveShouldSetPanResponderCapture:(_event,g)=>isOwnProfileHorizontalMove(g.dx,g.dy),
+    onPanResponderGrant:()=>{
+      dragging.current=true;
+      dragStart.current=OWN_PROFILE_TABS.indexOf(activeTabRef.current);
+      pagePosition.stopAnimation();
+    },
+    onPanResponderMove:(_event,g)=>{
+      const next=clampSwipePosition(dragStart.current,g.dx,widthRef.current,5);
+      pagePosition.setValue(next);
+      movePreview(next);
+    },
     onPanResponderRelease:(_event,g)=>{
-      const next=adjacentOwnProfileTab(activeTabRef.current,g.dx,g.dy);
+      const start=dragging.current?dragStart.current:OWN_PROFILE_TABS.indexOf(activeTabRef.current);
+      const target=settleSwipePosition(start,g.dx,g.vx??0,widthRef.current,5);
+      dragging.current=false;
+      const next=OWN_PROFILE_TABS[target];
+      movePreview(target);
+      Animated.timing(pagePosition,{
+        toValue:target,duration:Math.abs(g.vx??0)>0.65?170:240,
+        easing:Easing.out(Easing.cubic),useNativeDriver:true
+      }).start();
       if(next!==activeTabRef.current)setTab(next);
     },
-    onPanResponderTerminationRequest:()=>true,
+    onPanResponderTerminate:()=>{
+      dragging.current=false;
+      const idx=OWN_PROFILE_TABS.indexOf(activeTabRef.current);
+      movePreview(idx);
+      Animated.timing(pagePosition,{toValue:idx,duration:200,useNativeDriver:true}).start();
+    },
+    onPanResponderTerminationRequest:()=>false,
   })).current;
   const [scrollViewportHeight, setScrollViewportHeight] = useState(0);
   const [profileSectionHeight, setProfileSectionHeight] = useState(0);
@@ -161,63 +207,9 @@ export default function ProfileScreen() {
     n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` :
     n >= 1_000 ? `${(n / 1_000).toFixed(1)}K` : String(n);
 
-  return (
-    <View style={styles.container}>
-      <ReferenceHeader variant="profile">
-        <TouchableOpacity style={styles.menuBtn} onPress={()=>router.push("/user-tools")} accessibilityLabel="Herramientas de usuario"><Feather name="menu" size={24} color="#0B0B0D"/></TouchableOpacity>
-        <TouchableOpacity style={styles.menuBtn} onPress={()=>router.push({pathname:"/(tabs)/friends",params:{tab:"friends"}})} accessibilityLabel="Amigos"><Feather name="users" size={22} color="#0B0B0D"/></TouchableOpacity>
-        <View style={{flex:1}}/><TouchableOpacity style={styles.menuBtn} onPress={()=>router.push("/edit-profile")} accessibilityLabel="Información de perfil"><Feather name="more-horizontal" size={24} color="#0B0B0D"/></TouchableOpacity>
-      </ReferenceHeader>
-      <ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh}>
-  <ScrollView style={{flex:1}} stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false} overScrollMode="never"
-        
-        scrollEventThrottle={16}
-        onScroll={event=>{
-      scrollOffsetRef.current=Math.max(0,event.nativeEvent.contentOffset.y);
-          const pinned=event.nativeEvent.contentOffset.y>=Math.max(1,profileSectionHeight-1);
-          setFiltersPinned(current=>current===pinned?current:pinned);
-        }}
-        onLayout={event => setScrollViewportHeight(event.nativeEvent.layout.height)}
-        contentContainerStyle={scrollViewportHeight > 0 && profileSectionHeight > 0 ? {minHeight: scrollViewportHeight + profileSectionHeight} : undefined}>
-      <View style={styles.profileSection} onLayout={event => setProfileSectionHeight(event.nativeEvent.layout.height)}>
-        <View style={{width:90,gap:8}}>
-          <View style={styles.avatarWrap}>
-            <TouchableOpacity onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})} accessibilityLabel="Ver mis historias">
-              <BrandAvatar uri={avatarUrl(user,profile)} size={90} radius={12} reference/>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.editBadge} onPress={()=>router.push("/story-create")} accessibilityLabel="Añadir historia">
-              <LinearGradient colors={[v.steelDark,v.steelLight]} start={{x:0,y:0.5}} end={{x:1,y:0.5}} style={styles.editBadgeFill}>
-                <Feather name="plus" size={14} color="#FFF"/>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-          <Pressable onPress={()=>router.push({pathname:"/user-tools",params:{section:"balance"}})} style={styles.accountButton}><BrandOutline radius={7}/><Text style={styles.accountLabel}>Saldo</Text></Pressable>
-          <Pressable disabled accessibilityState={{disabled:true}} style={styles.accountButton}><BrandOutline radius={7}/><Text style={styles.accountLabel}>Suscripción</Text></Pressable>
-        </View>
-        <View style={{flex:1,minWidth:0,gap:8}}>
-          <Text maxFontSizeMultiplier={1.2} numberOfLines={1} style={styles.displayName}>{handle}</Text>
-          <View style={styles.stats}>{[
-            {value:fmtCount(likes),label:"Me gusta",target:"liked"},
-            {value:connections.loading?"…":fmtCount(connections.following.length),label:"Siguiendo",target:"following"},
-            {value:connections.loading?"…":fmtCount(connections.followers.length),label:"Seguidores",target:"followers"},
-          ].map(stat=><TouchableOpacity key={stat.target} style={styles.stat} onPress={()=>stat.target==="liked"?setTab("liked"):router.push({pathname:"/(tabs)/friends",params:{tab:stat.target}})}><Text maxFontSizeMultiplier={1.2} style={styles.statValue}>{stat.value}</Text><Text maxFontSizeMultiplier={1.2} numberOfLines={1} style={styles.statLabel}>{stat.label}</Text></TouchableOpacity>)}</View>
-          <Text onPress={()=>setExpanded(true)} accessibilityRole="button" accessibilityState={{expanded}} accessibilityLabel="Biografía" maxFontSizeMultiplier={1.2} style={styles.bio} numberOfLines={expanded?undefined:3}>{bio}</Text>
-          {!!bio&&expanded&&<TouchableOpacity onPress={()=>setExpanded(false)}><Text style={styles.bioMore}>Ver menos</Text></TouchableOpacity>}
-          {!!connections.error&&<TouchableOpacity onPress={()=>void connections.refresh()}><Text style={{ fontFamily: "Inter_400Regular",color:"#D32F3F",fontSize:12}}>{connections.error}</Text></TouchableOpacity>}
-        </View>
-      </View>
-      <View style={[styles.stickySlot,{width,elevation:filtersPinned?1:0,shadowOpacity:filtersPinned?0.05:0}]}>
-  <View style={styles.tabBar}>{([
-        {key:"videos",icon:"grid",label:"Videos"},{key:"stories",icon:"clock",label:"Historias"},{key:"shared",icon:"share-2",label:"Compartidos"},{key:"liked",icon:"heart",label:"Me gusta"},{key:"saved",icon:"bookmark",label:"Guardados"},{key:"drafts",icon:"file-text",label:"Borradores"},
-      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>setTab(item.key)} style={[styles.tabItem,{width:width/6,flex:0},tab===item.key&&styles.tabItemActive]}>{item.key==="videos"||item.key==="stories"||item.key==="shared"||item.key==="drafts"?<TokvidProfileIcon name={item.key} size={22} color={tab===item.key?v.ink:v.inactive}/>:<Feather name={item.icon} size={22} color={tab===item.key?v.ink:v.inactive}/>}</TouchableOpacity>)}</View>
-        {filtersPinned&&<>
-          <View pointerEvents="none" style={styles.stickyTopShade}/>
-          <View pointerEvents="none" style={styles.stickyBottomShade}/>
-        </>}
-  </View>
-      <View {...tabSwipeResponder.panHandlers}>
-      {tab==="stories"?<View style={styles.emptyState}><TokvidProfileIcon name="stories" size={40} color="#75828D"/><TouchableOpacity onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})}><Text style={styles.emptyTitle}>Ver mis historias</Text></TouchableOpacity><TouchableOpacity onPress={()=>router.push("/story-create")}><Text style={styles.bioMore}>Añadir historia</Text></TouchableOpacity></View>:
-      tab === "drafts" ? (
+  const renderSection=(section:OwnProfileTab)=>(
+    <>      {section==="stories"?<View style={styles.emptyState}><TokvidProfileIcon name="stories" size={40} color="#75828D"/><TouchableOpacity onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})}><Text style={styles.emptyTitle}>Ver mis historias</Text></TouchableOpacity><TouchableOpacity onPress={()=>router.push("/story-create")}><Text style={styles.bioMore}>Añadir historia</Text></TouchableOpacity></View>:
+      section === "drafts" ? (
         <View>
           {drafts.loading && drafts.items.length===0 ? <ActivityIndicator color="#85D5DB" style={{padding:24}}/> : null}
           {!!drafts.error && <TouchableOpacity style={styles.emptyState} onPress={()=>void drafts.refresh().catch(()=>{})}
@@ -247,7 +239,7 @@ export default function ProfileScreen() {
             </View>)}
           </View>
         </View>
-      ) : tab === "saved" ? (
+      ) : section === "saved" ? (
         savedVideos.length === 0 ? (
           <View style={styles.emptyState}>
             <Feather name="bookmark" size={40} color="#75828D" />
@@ -272,7 +264,7 @@ export default function ProfileScreen() {
             ))}
           </View>
         )
-      ) : tab === "shared" ? (
+      ) : section === "shared" ? (
         <View>
           {shared.loading && shared.items.length===0 ? <ActivityIndicator color="#85D5DB" style={{padding:24}}/> : null}
           {!!shared.error && <TouchableOpacity style={styles.emptyState} onPress={()=>void shared.refresh()}>
@@ -298,7 +290,7 @@ export default function ProfileScreen() {
             {shared.loading?"Cargando…":shared.items.length?"Ver más":"Buscar más videos"}
           </Text></TouchableOpacity>}
         </View>
-      ) : tab === "liked" ? (
+      ) : section === "liked" ? (
         likedHistory.loading && likedVideos.length===0 ? (
           <View style={styles.emptyState}><ActivityIndicator color="#FE2C55" /></View>
         ) : likedHistory.error && likedVideos.length===0 ? (
@@ -347,6 +339,67 @@ export default function ProfileScreen() {
           {publications.hasMore && <TouchableOpacity onPress={() => void publications.loadMore()} disabled={publications.loading} style={{padding:20,alignItems:"center"}}><Text style={{color:"#A6E1E5"}}>{publications.loading ? "Cargando…" : "Ver más"}</Text></TouchableOpacity>}
         </View>
       )}
+    </>
+  );
+
+  return (
+    <View style={styles.container}>
+      <ReferenceHeader variant="profile">
+        <TouchableOpacity style={styles.menuBtn} onPress={()=>router.push("/user-tools")} accessibilityLabel="Herramientas de usuario"><Feather name="menu" size={24} color="#0B0B0D"/></TouchableOpacity>
+        <TouchableOpacity style={styles.menuBtn} onPress={()=>router.push({pathname:"/(tabs)/friends",params:{tab:"friends"}})} accessibilityLabel="Amigos"><Feather name="users" size={22} color="#0B0B0D"/></TouchableOpacity>
+        <View style={{flex:1}}/><TouchableOpacity style={styles.menuBtn} onPress={()=>router.push("/edit-profile")} accessibilityLabel="Información de perfil"><Feather name="more-horizontal" size={24} color="#0B0B0D"/></TouchableOpacity>
+      </ReferenceHeader>
+      <ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh} holdWhileRefreshing maxPull={156} holdDistance={72}>
+  <ScrollView style={{flex:1}} stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false} overScrollMode="never"
+        
+        scrollEventThrottle={16}
+        onScroll={event=>{
+      scrollOffsetRef.current=Math.max(0,event.nativeEvent.contentOffset.y);
+          const pinned=event.nativeEvent.contentOffset.y>=Math.max(1,profileSectionHeight-1);
+          setFiltersPinned(current=>current===pinned?current:pinned);
+        }}
+        onLayout={event => setScrollViewportHeight(event.nativeEvent.layout.height)}
+        contentContainerStyle={scrollViewportHeight > 0 && profileSectionHeight > 0 ? {minHeight: scrollViewportHeight + profileSectionHeight} : undefined}>
+      <View style={styles.profileSection} onLayout={event => setProfileSectionHeight(event.nativeEvent.layout.height)}>
+        <View style={{width:90,gap:8}}>
+          <View style={styles.avatarWrap}>
+            <TouchableOpacity onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})} accessibilityLabel="Ver mis historias">
+              <BrandAvatar uri={avatarUrl(user,profile)} size={90} radius={12} reference/>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.editBadge} onPress={()=>router.push("/story-create")} accessibilityLabel="Añadir historia">
+              <LinearGradient colors={[v.steelDark,v.steelLight]} start={{x:0,y:0.5}} end={{x:1,y:0.5}} style={styles.editBadgeFill}>
+                <Feather name="plus" size={14} color="#FFF"/>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+          <Pressable onPress={()=>router.push({pathname:"/user-tools",params:{section:"balance"}})} style={styles.accountButton}><BrandOutline radius={7}/><Text style={styles.accountLabel}>Saldo</Text></Pressable>
+          <Pressable disabled accessibilityState={{disabled:true}} style={styles.accountButton}><BrandOutline radius={7}/><Text style={styles.accountLabel}>Suscripción</Text></Pressable>
+        </View>
+        <View style={{flex:1,minWidth:0,gap:8}}>
+          <Text maxFontSizeMultiplier={1.2} numberOfLines={1} style={styles.displayName}>{handle}</Text>
+          <View style={styles.stats}>{[
+            {value:fmtCount(likes),label:"Me gusta",target:"liked"},
+            {value:connections.loading?"…":fmtCount(connections.following.length),label:"Siguiendo",target:"following"},
+            {value:connections.loading?"…":fmtCount(connections.followers.length),label:"Seguidores",target:"followers"},
+          ].map(stat=><TouchableOpacity key={stat.target} style={styles.stat} onPress={()=>stat.target==="liked"?setTab("liked"):router.push({pathname:"/(tabs)/friends",params:{tab:stat.target}})}><Text maxFontSizeMultiplier={1.2} style={styles.statValue}>{stat.value}</Text><Text maxFontSizeMultiplier={1.2} numberOfLines={1} style={styles.statLabel}>{stat.label}</Text></TouchableOpacity>)}</View>
+          <Text onPress={()=>setExpanded(true)} accessibilityRole="button" accessibilityState={{expanded}} accessibilityLabel="Biografía" maxFontSizeMultiplier={1.2} style={styles.bio} numberOfLines={expanded?undefined:3}>{bio}</Text>
+          {!!bio&&expanded&&<TouchableOpacity onPress={()=>setExpanded(false)}><Text style={styles.bioMore}>Ver menos</Text></TouchableOpacity>}
+          {!!connections.error&&<TouchableOpacity onPress={()=>void connections.refresh()}><Text style={{ fontFamily: "Inter_400Regular",color:"#D32F3F",fontSize:12}}>{connections.error}</Text></TouchableOpacity>}
+        </View>
+      </View>
+      <View style={[styles.stickySlot,{width,elevation:filtersPinned?1:0,shadowOpacity:filtersPinned?0.05:0}]}>
+  <View style={styles.tabBar}>{([
+        {key:"videos",icon:"grid",label:"Videos"},{key:"stories",icon:"clock",label:"Historias"},{key:"shared",icon:"share-2",label:"Compartidos"},{key:"liked",icon:"heart",label:"Me gusta"},{key:"saved",icon:"bookmark",label:"Guardados"},{key:"drafts",icon:"file-text",label:"Borradores"},
+      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>setTab(item.key)} style={[styles.tabItem,{width:width/6,flex:0},tab===item.key&&styles.tabItemActive]}>{item.key==="videos"||item.key==="stories"||item.key==="shared"||item.key==="drafts"?<TokvidProfileIcon name={item.key} size={22} color={tab===item.key?v.ink:v.inactive}/>:<Feather name={item.icon} size={22} color={tab===item.key?v.ink:v.inactive}/>}</TouchableOpacity>)}<SwipePositionUnderline position={pagePosition} tabWidth={width/6}/></View>
+        {filtersPinned&&<>
+          <View pointerEvents="none" style={styles.stickyTopShade}/>
+          <View pointerEvents="none" style={styles.stickyBottomShade}/>
+        </>}
+  </View>
+      <View {...tabSwipeResponder.panHandlers}>
+        <HorizontalSwipePages sections={OWN_PROFILE_TABS} active={tab} center={previewTab}
+          position={pagePosition} width={width} renderPage={renderSection}/>
+      
       </View>
 
       <View style={{ height: Platform.OS === "web" ? 34 : insets.bottom + 80 }} />

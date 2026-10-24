@@ -26,7 +26,7 @@ test("B2 swipe responder lives below original tab bar and excludes floating dial
  assert.ok(tabs>0&&body>tabs&&menu>body);
  assert.match(inbox,/const currentTabRef=useRef<InboxSection>\(tab\)/);
  assert.match(inbox,/numberActiveTouches\?\?1\)===1 && isInboxHorizontalGesture\(gesture\.dx,gesture\.dy\)/);
- assert.match(inbox,/const next=nextInboxTab\(currentTabRef\.current,gesture\.dx,gesture\.dy\)/);
+ assert.match(inbox,/const target=settleSwipePosition\(inboxDragStart\.current,g\.dx,g\.vx\?\?0,inboxWidth\.current,1\)/);
  assert.match(inbox,/if\(next!==currentTabRef\.current\)setTab\(next\)/);
  assert.match(inbox,/swipeContent: \{ flex: 1 \}/);
  assert.equal((inbox.match(/<View style=\{styles\.swipeContent\}/g)||[]).length,1);

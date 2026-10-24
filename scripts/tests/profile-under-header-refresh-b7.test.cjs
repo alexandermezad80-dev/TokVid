@@ -4,7 +4,7 @@ const profile=read("app/(tabs)/profile.tsx"),shared=read("components/PullRefresh
 test("B7: the own profile routes refresh through the shared under-header responder, without changing protected geometry or callbacks",()=>{
  assert.match(profile,/import ProfilePullRefresh from "\.\.\/\.\.\/components\/PullRefreshUnderHeader"/);
  assert.match(profile,/<ReferenceHeader variant="profile">/);
- assert.match(profile,/<ProfilePullRefresh scrollOffsetRef=\{scrollOffsetRef\} refreshing=\{refreshing\} onRefresh=\{onRefresh\}>/);
+ assert.match(profile,/<ProfilePullRefresh scrollOffsetRef=\{scrollOffsetRef\} refreshing=\{refreshing\} onRefresh=\{onRefresh\} holdWhileRefreshing maxPull=\{156\} holdDistance=\{72\}>/);
  assert.match(profile,/stickyHeaderIndices=\{\[1\]\}/);
  assert.match(profile,/scrollOffsetRef\.current=Math\.max\(0,event\.nativeEvent\.contentOffset\.y\)/);
  for(const k of ["width:width/6,flex:0","stickySlot:{width:\"100%\",height:39","onPress={()=>setTab(item.key)}","onMoveShouldSetPanResponderCapture:(_event,g)=>isOwnProfileHorizontalMove(g.dx,g.dy)","styles.grid","<BrandAvatar","<TokvidProfileIcon","<ReferenceHeader"])assert.ok(profile.includes(k),k);

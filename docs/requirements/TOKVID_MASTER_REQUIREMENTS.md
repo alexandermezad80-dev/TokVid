@@ -1,3 +1,13 @@
+## B8 — 23 octubre 2026: swipe interactivo reversible + pull elástico, preservar círculo azul
+
+**Decisión del propietario:** desde la APK que considera correcta, modificar **solo** el gesto horizontal del Perfil propio e Inbox para que el contenido siga al dedo mientras se mantiene presionado, pueda cambiar de dirección sin despegarlo y al soltar ajuste su sección según desplazamiento/velocidad. En Perfil propio mantener fijos cabecera y barra de seis iconos; color seleccionado negro, resto gris, barrita móvil bajo iconos. **Perfil ajeno no lleva swipe horizontal.**
+
+El pull vertical del Perfil debe acompañar el dedo, dejar un espacio bajo la cabecera y volver suavemente, conservando el **círculo azul original**, sin copiar los dos puntos de la referencia. Se prolonga el indicador azul mientras el refresco real sigue procesando. **No tocar** Feed, iconos, branding, perfiles ajenos, navegación aprobada, reproductor, editor pausado, Auth, Supabase ni workflows.
+
+Base inmutable: `746851d5bfea371d7f7235e5b9022d4cd284b53f`, APK GitHub [40033393756](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40033393756) finalizó **success**. Los cambios B8 se limitan a capa de gestos/presentación de contenido paginado, sus tests y documentación, según `docs/continuity/TOKVID_INTERACTIVE_SWIPE_PULL_B8.md`. **No declarar aprobación física sin nueva APK y prueba en teléfono.** CI pendiente hasta push.
+
+---
+
 ## Cierre de auditoría preparatoria — 23 octubre 2026: pull-to-refresh y swipes B1–B7
 
 **Rama:** `feature/feed-mini-video-avatar`. **Código B4–B7 auditado:** [`ea46a2ef`](https://github.com/alexandermezad80-dev/TokVid/commit/ea46a2ef4b787da542a974ad14cbb5c130f80401). **Auditoría GitHub:** 8 commits desde `72096401`, 20 archivos afectados exclusivamente en mecanismo de refresco/swipe, sus tests y documentación; ninguna ruta de perfiles ajenos, iconos, branding, editor, Auth, workflows o migraciones. **Protecciones:** 18/18 hashes vigentes correctos (el del Feed refleja la única excepción B6 ya documentada; otros 17 permanecen). **Resultado CI final B7:** [40033137153](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40033137153) **success** — regresiones, TypeScript y prebuild Android.

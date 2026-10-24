@@ -2,6 +2,8 @@ import {referenceVisual as v} from "../../constants/referenceVisual";
 import ReferenceHeader from "../../components/reference/ReferenceHeader";
 import RefreshableInboxEmpty from "../../components/RefreshableInboxEmpty";
 import PullRefreshUnderHeader from "../../components/PullRefreshUnderHeader";
+import HorizontalSwipePages from "../../components/HorizontalSwipePages";
+import {clampSwipePosition,settleSwipePosition} from "../../lib/features/gestures/horizontalDrag";
 import ClearInboxDialog from "../../lib/features/messages/components/ClearInboxDialog";
 import {activityCounter,activityHasGallery} from "../../lib/features/messages/activity";
 import {useGroupInbox} from "../../hooks/useGroupInbox";
@@ -22,6 +24,9 @@ import {
   Image,
   Platform,
   PanResponder,
+  Animated,
+  Easing,
+  useWindowDimensions,
   ScrollView,
   StyleSheet,
   Text,
@@ -32,7 +37,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
 import { type AppNotification, useNotifications } from "../../context/NotificationsContext";
 import { supabase } from "../../lib/supabase";
-import { nextInboxTab, isInboxHorizontalGesture, type InboxSection } from "../../lib/features/messages/inboxSwipe";
+import {isInboxHorizontalGesture, type InboxSection} from "../../lib/features/messages/inboxSwipe";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -143,23 +148,66 @@ function ConvoItem({ convo, onOptions }: { convo: ConversationRow; onOptions:(co
 
 export default function InboxScreen() {
   const params=useLocalSearchParams<{tab?:string}>();
+  const {width}=useWindowDimensions();
   const [menu,setMenu]=useState<{convo:ConversationRow;anchor:{x:number;y:number;width:number;height:number}}|null>(null);
   const [removing,setRemoving]=useState(false);
   const [tab, setTab] = useState<"activity" | "messages">("activity");
   // Capture horizontal gestures only in the body, never on the approved tab buttons.
   const currentTabRef=useRef<InboxSection>(tab);
   currentTabRef.current=tab;
+  const inboxSections:readonly InboxSection[]=["activity","messages"];
+  const inboxPagePosition=useRef(new Animated.Value(0)).current;
+  const inboxDragStart=useRef(0),inboxDragging=useRef(false),inboxWidth=useRef(width);
+  inboxWidth.current=width;
+  const [inboxPreview,setInboxPreview]=useState<InboxSection>(tab);
+  const inboxPreviewRef=useRef<InboxSection>(tab);
+  const moveInboxPreview=(idx:number)=>{
+    const next:InboxSection=idx>=0.5?"messages":"activity";
+    if(inboxPreviewRef.current!==next){inboxPreviewRef.current=next;setInboxPreview(next);}
+  };
+  useEffect(()=>{
+    if(!inboxDragging.current){
+      const idx=tab==="messages"?1:0;
+      inboxPagePosition.stopAnimation();
+      Animated.timing(inboxPagePosition,{toValue:idx,duration:200,useNativeDriver:true}).start();
+      moveInboxPreview(idx);
+    }
+  },[tab,inboxPagePosition]);
   const inboxSwipeResponder=useRef(PanResponder.create({
     onMoveShouldSetPanResponder:(_event,gesture)=>
       (gesture.numberActiveTouches??1)===1 && isInboxHorizontalGesture(gesture.dx,gesture.dy),
     // Capture only single-finger horizontal drags; vertical scroll/refresh stay native.
     onMoveShouldSetPanResponderCapture:(_event,gesture)=>
       (gesture.numberActiveTouches??1)===1 && isInboxHorizontalGesture(gesture.dx,gesture.dy),
-    onPanResponderRelease:(_event,gesture)=>{
-      const next=nextInboxTab(currentTabRef.current,gesture.dx,gesture.dy);
+    onPanResponderGrant:()=>{
+      inboxDragging.current=true;
+      inboxDragStart.current=currentTabRef.current==="messages"?1:0;
+      inboxPagePosition.stopAnimation();
+    },
+    onPanResponderMove:(_event,g)=>{
+      const next=clampSwipePosition(inboxDragStart.current,g.dx,inboxWidth.current,1);
+      inboxPagePosition.setValue(next);
+      moveInboxPreview(next);
+    },
+    onPanResponderRelease:(_event,g)=>{
+      const start=inboxDragging.current?inboxDragStart.current:(currentTabRef.current==="messages"?1:0);
+      const target=settleSwipePosition(start,g.dx,g.vx??0,inboxWidth.current,1);
+      inboxDragging.current=false;
+      moveInboxPreview(target);
+      Animated.timing(inboxPagePosition,{
+        toValue:target,duration:Math.abs(g.vx??0)>0.65?170:240,
+        easing:Easing.out(Easing.cubic),useNativeDriver:true
+      }).start();
+      const next:InboxSection=target===1?"messages":"activity";
       if(next!==currentTabRef.current)setTab(next);
     },
-    onPanResponderTerminationRequest:()=>true,
+    onPanResponderTerminate:()=>{
+      inboxDragging.current=false;
+      const index=currentTabRef.current==="messages"?1:0;
+      moveInboxPreview(index);
+      Animated.timing(inboxPagePosition,{toValue:index,duration:200,useNativeDriver:true}).start();
+    },
+    onPanResponderTerminationRequest:()=>false,
   })).current;
   useEffect(()=>{if(params.tab==="messages"||params.tab==="activity")setTab(params.tab);},[params.tab]);
   const insets = useSafeAreaInsets();
@@ -196,38 +244,10 @@ export default function InboxScreen() {
 
   if (!user) return null;
 
-  return (
-    <View style={styles.container}>
-      <ReferenceHeader variant="inbox" compact style={{paddingHorizontal:7}}>
-        <Text style={styles.pageTitle}>Inbox</Text>
-        {tab === "activity" && unreadCount > 0 && (
-          <TouchableOpacity style={styles.markAllBtn} onPress={markAllRead}>
-            <Text style={styles.markAllText}>Marcar todo leído</Text>
-          </TouchableOpacity>
-        )}
-      </ReferenceHeader>
-
-      <View style={styles.tabs}>
-        {(["activity", "messages"] as const).map((t) => (
-          <TouchableOpacity key={t} onPress={() => setTab(t)} style={styles.tabBtn}>
-            <View style={styles.tabLabelRow}>
-              <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
-                {t === "activity" ? "Actividad" : "Mensajes"}
-              </Text>
-              {t === "activity" && unreadCount > 0 && (
-                <View style={[styles.badge,{minWidth:17,minHeight:17,paddingHorizontal:4}]}>
-                  <Text style={[styles.badgeText,{ fontFamily: "Inter_400Regular",fontSize:11}]}>{unreadCount > 99 ? "99+" : unreadCount}</Text>
-                </View>
-              )}
-            </View>
-            {tab === t && <View style={styles.tabIndicator} />}
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <View style={styles.swipeContent} {...inboxSwipeResponder.panHandlers}>
-      <PullRefreshUnderHeader scrollOffsetRef={refreshScrollOffset} onRefresh={handleRefresh} refreshing={refreshing} color="#FE2C55">
-      {tab === "activity" ? (
+  const renderInboxPage=(section:InboxSection)=>(
+    <>
+      <PullRefreshUnderHeader scrollOffsetRef={refreshScrollOffset} onRefresh={handleRefresh} refreshing={refreshing} enabled={section===tab} color="#FE2C55">
+      {section === "activity" ? (
         notifLoading && notifications.length === 0 ? (
           <RefreshableInboxEmpty refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.center}><ActivityIndicator color="#FE2C55" /></View></RefreshableInboxEmpty>
         ) : notifications.length === 0 ? (
@@ -281,6 +301,42 @@ export default function InboxScreen() {
         )
       )}
       </PullRefreshUnderHeader>
+    </>
+  );
+
+  return (
+    <View style={styles.container}>
+      <ReferenceHeader variant="inbox" compact style={{paddingHorizontal:7}}>
+        <Text style={styles.pageTitle}>Inbox</Text>
+        {tab === "activity" && unreadCount > 0 && (
+          <TouchableOpacity style={styles.markAllBtn} onPress={markAllRead}>
+            <Text style={styles.markAllText}>Marcar todo leído</Text>
+          </TouchableOpacity>
+        )}
+      </ReferenceHeader>
+
+      <View style={styles.tabs}>
+        {(["activity", "messages"] as const).map((t) => (
+          <TouchableOpacity key={t} onPress={() => setTab(t)} style={styles.tabBtn}>
+            <View style={styles.tabLabelRow}>
+              <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
+                {t === "activity" ? "Actividad" : "Mensajes"}
+              </Text>
+              {t === "activity" && unreadCount > 0 && (
+                <View style={[styles.badge,{minWidth:17,minHeight:17,paddingHorizontal:4}]}>
+                  <Text style={[styles.badgeText,{ fontFamily: "Inter_400Regular",fontSize:11}]}>{unreadCount > 99 ? "99+" : unreadCount}</Text>
+                </View>
+              )}
+            </View>
+            {tab === t && <View style={styles.tabIndicator} />}
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <View style={styles.swipeContent} {...inboxSwipeResponder.panHandlers}>
+        <HorizontalSwipePages sections={inboxSections} active={tab} center={inboxPreview}
+          position={inboxPagePosition} width={width} fill renderPage={renderInboxPage}/>
+
       </View>
       {menu&&<ConversationMenu anchor={menu.anchor} name={menu.convo.other_username} busy={removing} onClose={()=>setMenu(null)} onDelete={()=>{setRemoving(true);void hideConversation(menu.convo.id).then(async()=>{setMenu(null);await loadConvos();}).catch(e=>Alert.alert('No se pudo eliminar',e.message)).finally(()=>setRemoving(false));}} onDeleteAll={()=>{setRemoving(true);void supabase.rpc('inbox_clear_boundary').then(({data,error})=>{if(error||!data)Alert.alert('No se pudo preparar la selección','Inténtalo de nuevo.');else{setMenu(null);setClearBefore(data);}setRemoving(false);});}}/>}
       <ClearInboxDialog visible={clearBefore!==null} busy={removing} onCancel={()=>setClearBefore(null)} onConfirm={()=>{if(!clearBefore||removing)return;setRemoving(true);void supabase.rpc('clear_own_inbox',{p_before:clearBefore}).then(async({error})=>{if(error)Alert.alert('No se pudo eliminar','No se confirmó el borrado. Inténtalo de nuevo.');else{setClearBefore(null);setGroupRevision(n=>n+1);await Promise.all([loadConvos(),refresh()]);}setRemoving(false);});}}/>

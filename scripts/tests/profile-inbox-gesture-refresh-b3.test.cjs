@@ -9,12 +9,13 @@ test("B1 captures only horizontal profile swipes before nested native ScrollView
 test("B2 captures horizontal gestures below the approved Inbox tabs",()=>{
  assert.ok(inbox.indexOf("<View style={styles.tabs}>")<inbox.indexOf('<View style={styles.swipeContent} {...inboxSwipeResponder.panHandlers}>'));
  assert.ok(inbox.includes("onMoveShouldSetPanResponderCapture:(_event,gesture)=>"));
+ assert.ok(inbox.includes("onPanResponderMove:(_event,g)=>"));
  assert.ok(inbox.includes("(gesture.numberActiveTouches??1)===1 && isInboxHorizontalGesture(gesture.dx,gesture.dy)"));
 });
 test("Both Inbox sections have pull-to-refresh in empty/loading/error cases",()=>{
  assert.equal((inbox.match(/<RefreshableInboxEmpty refreshing=\{refreshing\} onRefresh=\{handleRefresh\}>/g)||[]).length,5);
  assert.ok(empty.includes("fill:{flex:1}"));
- assert.ok(inbox.includes('<PullRefreshUnderHeader scrollOffsetRef={refreshScrollOffset} onRefresh={handleRefresh} refreshing={refreshing} color="#FE2C55">'));
+ assert.ok(inbox.includes('<PullRefreshUnderHeader scrollOffsetRef={refreshScrollOffset} onRefresh={handleRefresh} refreshing={refreshing} enabled={section===tab} color="#FE2C55">'));
  assert.equal((inbox.match(/<RefreshControl refreshing=\{refreshing\} onRefresh=\{handleRefresh\}/g)||[]).length,0);
  assert.ok(inbox.includes("refreshGuard.current=false;"));
  assert.ok(inbox.includes("setRefreshing(false);"));

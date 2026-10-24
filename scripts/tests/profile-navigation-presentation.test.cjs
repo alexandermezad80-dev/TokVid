@@ -2,7 +2,7 @@ const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('node:fs'), path = require('node:path'), vm = require('node:vm'), ts = require('typescript');
 const root = path.resolve(__dirname, '../../artifacts/mobile');
 const element = (type, props, ...children) => ({type, props: {...props, ...(children.length ? {children} : {})}});
-const nodes = value => !value || typeof value !== 'object' ? [] : Array.isArray(value) ? value.flatMap(nodes) : [value, ...nodes(value.props?.children)];
+const nodes = value => !value || typeof value !== 'object' ? [] : Array.isArray(value) ? value.flatMap(nodes) : [value, ...nodes(value.props?.children), ...(value.type==='HorizontalSwipePages'&&typeof value.props.renderPage==='function'?nodes(value.props.renderPage(value.props.active)):[])];
 const flat = value => Array.isArray(value) ? Object.assign({}, ...value.map(flat)) : value || {};
 const json = value => JSON.parse(JSON.stringify(value));
 
@@ -21,6 +21,8 @@ function runtime({guest = false, route = '/', inset = 24, visited = false, loadi
     react,
     'react-native': {Platform:{OS:'android'}, PanResponder:{create:config=>({panHandlers:config})}, StyleSheet:{create:s=>s,flatten:flat,absoluteFill:{position:'absolute'},hairlineWidth:0.5},
       useWindowDimensions:()=>({width:360,height:800,fontScale:1.4}), Alert:{alert:(...args)=>calls.push(['alert',args])},
+      Animated:{Value:class {stopAnimation(){} setValue(v){this.value=v;}},timing:()=>({start(){}})},
+      Easing:{out:x=>x,cubic:x=>x},
       ...Object.fromEntries(['View','Text','ScrollView','TouchableOpacity','Pressable','Image','ActivityIndicator','Modal','RefreshControl'].map(x=>[x,x]))},
     'expo-router': {Tabs, Stack, Redirect:'Redirect', usePathname:()=>route, useLocalSearchParams:()=>({userId:'other'}), useFocusEffect(){},
       router:{push:value=>calls.push(['push',json(value)]),dismissTo:value=>calls.push(['dismiss',value]),back:()=>calls.push(['back'])}},
@@ -132,7 +134,7 @@ test('own profile scrolls its existing details while keeping filters sticky and 
   sc.props.onScroll({nativeEvent:{contentOffset:{y:210}}});tree=r.render(Profile);
   const scPinned=nodes(tree).find(n=>n.type==='ScrollView');
   assert.equal(flat(scPinned.props.children.flat().filter(Boolean)[1].props.style).shadowOpacity,0.05);
-  assert.ok(nodes(tree).some(n=>n.type==='PullRefreshUnderHeader'));
+  assert.ok(nodes(tree).some(n=>n.type==='PullRefreshUnderHeader'));assert.ok(nodes(tree).some(n=>n.type==='SwipePositionUnderline'));
   scPinned.props.onScroll({nativeEvent:{contentOffset:{y:0}}});tree=r.render(Profile);
   assert.equal(flat(nodes(tree).find(n=>n.type==='ScrollView').props.children.flat().filter(Boolean)[1].props.style).shadowOpacity,0);
   assert.ok(!nodes(scroll).some(n=>n.type==='ReferenceHeader'));
