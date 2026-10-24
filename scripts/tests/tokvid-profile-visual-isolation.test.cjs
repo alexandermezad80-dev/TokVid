@@ -31,7 +31,7 @@ test("A2b approved vectors and protected user tools",()=>{
  assert.match(icons,/<Path d="M17 20 H28/);
  assert.match(profile,/\{key:"shared",icon:"share-2",label:"Compartidos"\}/);
  assert.match(profile,/\{key:"drafts",icon:"file-text",label:"Borradores"\}/);
- assert.match(profile,/name=\{item\.key\} size=\{22\} color=\{tab===item\.key\?v\.ink:v\.inactive\}/);
+ assert.match(profile,/name=\{item\.key\} size=\{22\} color=\{previewTab===item\.key\?v\.ink:v\.inactive\}/);
 });
 test("A1 story illustration preserves image/video selection and existing gallery action",()=>{
  assert.match(story,/<TokvidProfileIcon name="stories" size=\{56\}/);

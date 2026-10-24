@@ -254,3 +254,30 @@ test('B1 owner-profile horizontal gestures change six tabs; vertical gestures an
  tree=r.render(Profile);
  assert.equal(nodes(tree).filter(n=>n.props.accessibilityState?.selected===true)[0].props.accessibilityLabel,'Compartidos');
 });
+
+test('B8 actual owner gesture follows the finger in both directions before release without moving approved tabs',()=>{
+ const r=runtime(),Profile=r.load('app/(tabs)/profile.tsx').default;
+ let tree=r.render(Profile);
+ nodes(tree).find(n=>n.props.accessibilityLabel==='Compartidos').props.onPress();
+ tree=r.render(Profile);
+ const pan=nodes(tree).find(n=>typeof n.props.onPanResponderMove==='function');
+ const pager=nodes(tree).find(n=>n.type==='HorizontalSwipePages');
+ assert.ok(pan&&pager);
+ const props=pan.props;
+ assert.equal(pager.props.active,'shared');
+ assert.equal(props.onMoveShouldSetPanResponder({}, {dx:-35,dy:2}),true);
+ assert.equal(props.onMoveShouldSetPanResponder({}, {dx:2,dy:55}),false);
+ props.onPanResponderGrant();
+ props.onPanResponderMove({}, {dx:-90,dy:1});
+ assert.equal(pager.props.position.value,2.25);
+ props.onPanResponderMove({}, {dx:90,dy:1});
+ assert.equal(pager.props.position.value,1.75);
+ props.onPanResponderMove({}, {dx:0,dy:1});
+ assert.equal(pager.props.position.value,2);
+ assert.equal(nodes(tree).find(n=>n.props.accessibilityState?.selected===true).props.accessibilityLabel,'Compartidos');
+ props.onPanResponderMove({}, {dx:-100,dy:1});
+ props.onPanResponderRelease({}, {dx:-100,dy:1,vx:-0.2});
+ tree=r.render(Profile);
+ assert.equal(nodes(tree).find(n=>n.props.accessibilityState?.selected===true).props.accessibilityLabel,'Me gusta');
+ assert.ok(nodes(tree).some(n=>n.type==='SwipePositionUnderline'));
+});

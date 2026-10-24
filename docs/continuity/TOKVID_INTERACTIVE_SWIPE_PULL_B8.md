@@ -23,3 +23,6 @@
 - Pruebas nuevas B8 cubren posición continua, reversión, velocidad, límites, separación vertical/horizontal, indicador circular azul retenido, pestañas/rutas y sintaxis.
 - Pruebas previas que asumían cambio inmediato al `onPanResponderRelease` se ajustan **solo** para el nuevo gesto. No cambiar tests de contratos visuales ni ocultar fallos.
 - Compilar y validar con CI primero, después **una APK de prueba** por workflow sin editar workflows. No declarar aceptado en teléfono sin prueba física del usuario.
+
+## Afinación de B8 antes de prueba física
+La selección visual gris/negro de los iconos del Perfil propio usa la sección más cercana durante el arrastre (\`previewTab\`) sin cambiar el icono, tamaño, acción al tocar ni su estado accesible confirmado; la barrita usa el mismo progreso continuo animado. Prueba dinámica de PanResponder: arrastre izquierda/derecha/centro con el mismo dedo simulado y snap al soltar. CI pendiente de esta afinación.
