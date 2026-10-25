@@ -1,3 +1,11 @@
+## Confirmación del propietario — 25 octubre 2026
+
+Tras instalar/revisar APK308, el propietario confirma: «Ya lo vi esta bien el refresco de perfil». **El refresco del Perfil propio de APK308 queda aprobado por el usuario y debe conservarse.** Esta confirmación sustituye el estado anterior de aprobación física pendiente para ese comportamiento; no reabrir su recorrido/retorno ni recalibrarlo por iniciativa del agente. No equivale a probar físicamente cada caso de error, todos los dispositivos o toda la app; el emulador y la matriz completa no se dan por verificados.
+
+Consulta posterior: si el cambio solo está en Perfil propio, qué falta en perfiles visitados y si el Feed refresca manual o automáticamente. Auditoría de lectura del código de APK308: `OwnProfileMagneticRefresh` solo se conecta a Perfil propio; Perfil visitado conserva `ProfilePullRefresh` anterior y su callback real de recarga; Feed conserva `PullRefreshUnderHeader` anterior, ejecuta `refreshFeed` al obtener foco (entrar/volver), permite pull manual desde el primer video con comentarios cerrados y carga más páginas al avanzar. Hay función de recarga previa en ambas áreas; lo que no se ha extendido es el nuevo comportamiento magnético aprobado. La conexión manual en el código no prueba su arbitraje nativo en el teléfono. La pregunta no cambia código ni autoriza por sí sola una edición del Feed protegido.
+
+Esta actualización es únicamente documental: mismo código `e3abefbbe4bbbb4254690c138d5f84ee63a42686`, misma APK308, 337 pruebas CI ya aprobadas, sin nueva APK ni merge. Siguiente paso de producto: concretar por separado la extensión al Perfil visitado y cualquier cambio al Feed, conservando el refresco propio aprobado.
+
 # B11 — refresco magnético aislado del Perfil propio
 
 Fecha: 25 de octubre de 2026. Rama: `feature/feed-mini-video-avatar`.
