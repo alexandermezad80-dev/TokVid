@@ -37,7 +37,7 @@ test("B8 own profile drags only below original tab strip, all 6 views reuse orig
    "width:width/6,flex:0",
    "stickyHeaderIndices={[1]}",
    "onPress={()=>setTab(item.key)}",
-   "holdWhileRefreshing maxPull={156} holdDistance={72} nativeRefreshFallback={Platform.OS===\"android\"}",
+   "components/OwnProfileMagneticRefresh",
  ])assert.ok(profile.includes(s),s);
  assert.ok(profile.indexOf("styles.tabBar")<profile.indexOf("<HorizontalSwipePages"));
  assert.ok(!profile.includes("interests"));

@@ -6,16 +6,17 @@ const inbox=read("app/(tabs)/inbox.tsx");
 const empty=read("components/RefreshableInboxEmpty.tsx");
 const pull=read("components/PullRefreshUnderHeader.tsx");
 
-test("B9 Android: use a native gesture trigger without a visible native spinner over profile or Inbox rows",()=>{
-  assert.ok(profile.includes('refreshControl={Platform.OS==="android"?<RefreshControl refreshing={refreshing} onRefresh={onRefresh}'));
+test("B9 Android: Inbox retains B9 native trigger; B11 owner has no competing RefreshControl",()=>{
+  assert.ok(profile.includes('components/OwnProfileMagneticRefresh'));
+  assert.ok(!profile.includes('refreshControl='));
   assert.ok(inbox.includes('refreshControl={Platform.OS==="android"?<RefreshControl refreshing={refreshing} onRefresh={handleRefresh}'));
   assert.ok(empty.includes('refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}'));
-  for(const surface of [profile,inbox,empty]){
+  for(const surface of [inbox,empty]){
     assert.ok(surface.includes('colors={["transparent"]} progressBackgroundColor="transparent"'),"Native progress icon remains transparent");
     assert.ok(surface.includes("progressViewOffset={-1000}"),"Android native circle must remain outside the visible UI");
   }
   assert.equal((inbox.match(/progressViewOffset=\{-1000\}/g)||[]).length,2,"Both Inbox lists hide their native circle");
-  assert.ok(profile.includes('nativeRefreshFallback={Platform.OS==="android"}'));
+  assert.ok(!profile.includes('nativeRefreshFallback='));
   assert.ok(inbox.includes('nativeRefreshFallback={Platform.OS==="android"}'));
   assert.ok(pull.includes("!nativeFallback.current && permitted.current"));
   assert.ok(pull.includes("if(refreshing)Animated.spring(translation,{toValue:holdDistance,useNativeDriver:true}).start()"));

@@ -1,6 +1,6 @@
 import ReferenceHeader from "../../components/reference/ReferenceHeader";
-// B7: reuse the isolated downward refresh responder; keep the protected header, sticky and six tabs unchanged.
-import ProfilePullRefresh from "../../components/PullRefreshUnderHeader";
+// B11: owner-only native pull; fixed header, sticky filters and horizontal swipe stay intact.
+import ProfilePullRefresh from "../../components/OwnProfileMagneticRefresh";
 import HorizontalSwipePages from "../../components/HorizontalSwipePages";
 import SwipePositionUnderline from "../../components/SwipePositionUnderline";
 import {clampSwipePosition,settleSwipePosition} from "../../lib/features/gestures/horizontalDrag";
@@ -25,7 +25,6 @@ import {
   Alert,
   Modal,
   Pressable,
-  RefreshControl,
   PanResponder,
   Animated,
   Easing,
@@ -33,7 +32,6 @@ import {
   ActivityIndicator,
   Image,
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -354,10 +352,8 @@ export default function ProfileScreen() {
         <TouchableOpacity style={styles.menuBtn} onPress={()=>router.push({pathname:"/(tabs)/friends",params:{tab:"friends"}})} accessibilityLabel="Amigos"><Feather name="users" size={22} color="#0B0B0D"/></TouchableOpacity>
         <View style={{flex:1}}/><TouchableOpacity style={styles.menuBtn} onPress={()=>router.push("/edit-profile")} accessibilityLabel="Información de perfil"><Feather name="more-horizontal" size={24} color="#0B0B0D"/></TouchableOpacity>
       </ReferenceHeader>
-      <ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh} holdWhileRefreshing maxPull={156} holdDistance={72} nativeRefreshFallback={Platform.OS==="android"}>
-  <ScrollView style={{flex:1}} stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false} overScrollMode="never"
-        refreshControl={Platform.OS==="android"?<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["transparent"]} progressBackgroundColor="transparent" progressViewOffset={-1000} />:undefined}
-        
+      <ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh}
+        style={{flex:1}} stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false} overScrollMode="never"
         scrollEventThrottle={16}
         onScroll={event=>{
       scrollOffsetRef.current=Math.max(0,event.nativeEvent.contentOffset.y);
@@ -409,7 +405,6 @@ export default function ProfileScreen() {
       </View>
 
       <View style={{ height: Platform.OS === "web" ? 34 : insets.bottom + 80 }} />
-      </ScrollView>
       </ProfilePullRefresh>
 
     </View>

@@ -96,9 +96,9 @@ test("APK261 Inbox isolation: preserve existing tab taps, marks, vertical refres
   ],"Inbox");
 });
 
-test("Isolation remains tests/docs only; feature code is the same as before the baseline checkpoint",()=>{
+test("B11 changes only the own-profile refresh connection while preserving the horizontal responder",()=>{
   const source=readMobile("app/(tabs)/profile.tsx");
-  assert.ok(source.includes('<ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh} holdWhileRefreshing maxPull={156} holdDistance={72} nativeRefreshFallback={Platform.OS==="android"}>'));
+  assert.ok(source.includes('<ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh}'));
   assert.ok(source.includes("<View {...tabSwipeResponder.panHandlers}>"));
   assert.ok(source.includes("onMoveShouldSetPanResponder:(_event,g)=>isOwnProfileHorizontalMove(g.dx,g.dy)"));
   assert.ok(!source.includes("setTab('more')"));

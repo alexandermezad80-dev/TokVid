@@ -1,15 +1,15 @@
 const {test}=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs"),path=require("node:path"),vm=require("node:vm"),ts=require("typescript");
 const root=path.resolve(__dirname,"../../artifacts/mobile"),read=p=>fs.readFileSync(path.join(root,p),"utf8");
 const profile=read("app/(tabs)/profile.tsx"),shared=read("components/PullRefreshUnderHeader.tsx");
-test("B7: the own profile routes refresh through the shared under-header responder, without changing protected geometry or callbacks",()=>{
- assert.match(profile,/import ProfilePullRefresh from "\.\.\/\.\.\/components\/PullRefreshUnderHeader"/);
+test("B11 replaces only the own-profile pull connection, preserving B7 geometry and callbacks",()=>{
+ assert.match(profile,/import ProfilePullRefresh from "\.\.\/\.\.\/components\/OwnProfileMagneticRefresh"/);
  assert.match(profile,/<ReferenceHeader variant="profile">/);
- assert.match(profile,/<ProfilePullRefresh scrollOffsetRef=\{scrollOffsetRef\} refreshing=\{refreshing\} onRefresh=\{onRefresh\} holdWhileRefreshing maxPull=\{156\} holdDistance=\{72\} nativeRefreshFallback=\{Platform\.OS==="android"\}>/);
+ assert.ok(profile.includes('<ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh}'));
  assert.match(profile,/stickyHeaderIndices=\{\[1\]\}/);
  assert.match(profile,/scrollOffsetRef\.current=Math\.max\(0,event\.nativeEvent\.contentOffset\.y\)/);
  for(const k of ["width:width/6,flex:0","stickySlot:{width:\"100%\",height:39","onPress={()=>setTab(item.key)}","onMoveShouldSetPanResponderCapture:(_event,g)=>isOwnProfileHorizontalMove(g.dx,g.dy)","styles.grid","<BrandAvatar","<TokvidProfileIcon","<ReferenceHeader"])assert.ok(profile.includes(k),k);
- assert.ok(profile.includes('colors={["transparent"]} progressBackgroundColor="transparent"'),"Android native trigger must not paint over the avatar");
- assert.ok(profile.includes('refreshControl={Platform.OS==="android"?<RefreshControl'),"Android native gesture fallback");
+ assert.ok(!profile.includes('refreshControl='), "owner B11 has no native RefreshControl");
+ assert.ok(!profile.includes('nativeRefreshFallback='), "owner uses its dedicated native gesture");
 });
 function makeGesture(offset=0){
  let handler,updateCount=0;

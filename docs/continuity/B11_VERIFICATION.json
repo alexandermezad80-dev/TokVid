@@ -1,0 +1,25 @@
+{
+  "phase": "B11",
+  "branch": "feature/feed-mini-video-avatar",
+  "base_commit": "526d56499051a26a97ed8529aa03ad808376ada3",
+  "status": "implemented_pending_ci",
+  "local_tests": {
+    "passed": 325,
+    "failed": 0,
+    "excluded": [
+      "feed-realtime.test.cjs (11 tests; dependency absent locally)"
+    ],
+    "transpilation": "local external Babel adapter, not real TypeScript typecheck"
+  },
+  "ci_verified": false,
+  "native_emulator_verified": false,
+  "physical_device_verified": false,
+  "protected_hashes_unchanged": 18,
+  "reference_image_observed": "1000181785.jpg",
+  "reference_video_accessible": false,
+  "reference_video": "212screen-20261024-072119.mp4",
+  "tuning": "provisional, pending physical comparison",
+  "commit": null,
+  "run": null,
+  "apk": null
+}

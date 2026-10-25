@@ -1,3 +1,7 @@
+## B11 — implementación candidata del refresco propio, 25 octubre 2026
+
+La reconstrucción fue autorizada después de la auditoría de issue#11. Se sustituye solo el mecanismo del Perfil propio en Android; círculo azul y contenido viajan juntos bajo la cabecera fija. Los demás componentes y los 18 hashes protegidos quedan intactos. Parámetros provisionales, 325 pruebas locales/mocks aprobadas; CI real/APK y validación nativa/física pendientes. La captura1000181785.jpg confirma recorrido largo; el nuevo video212screen-20261024-072119.mp4 no está accesible en disco. No atribuirle mediciones. [Implementación, auditoría, límites y reversión](../TOKVID_PROFILE_MAGNETIC_REFRESH_B11.md). Este estado prevalece sobre la implementación pendiente histórica B11 inferior y sustituye el disparador B10 solo en Perfil propio; no afirma prueba física de B10.
+
 ## B11 — 24 octubre 2026: comportamiento magnético y revelación bajo cabecera del pull del Perfil — requisito aprobado, implementación pendiente
 
 **Descripción expresa del propietario (después de video 303):** el círculo azul original está completo; el defecto es su **presentación**, no su imagen ni animación intrínseca. Debe aparecer y esconderse físicamente **por debajo del borde de la cabecera fija**, con oclusión por la cabecera, igual que el contenido del Perfil desaparece al hacer scroll, pero en sentido contrario. No sustituir esta oclusión con solo opacidad ni con círculo estático descubierto en un hueco blanco. Evitar la figura blanca opaca del `RefreshControl` Android frente al contenido.

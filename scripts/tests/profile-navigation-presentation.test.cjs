@@ -121,7 +121,7 @@ test('Android strip matches each tab, with media playback remaining black',()=>{
 
 test('own profile scrolls its existing details while keeping filters sticky and thumbnail actions intact',()=>{
   const r=runtime(),Profile=r.load('app/(tabs)/profile.tsx').default;let tree=r.render(Profile);
-  const scroll=nodes(tree).find(n=>n.type==='ScrollView');assert.deepEqual(Array.from(scroll.props.stickyHeaderIndices),[1]);
+  const scroll=nodes(tree).find(n=>n.type==='OwnProfileMagneticRefresh');assert.deepEqual(Array.from(scroll.props.stickyHeaderIndices),[1]);
   const children=scroll.props.children.flat().filter(Boolean),bar=children[1];assert.equal(flat(bar.props.style).height,39);
   assert.equal(flat(bar.props.style).backgroundColor,'#FFFFFF');assert.equal(flat(bar.props.style).borderTopWidth,undefined);
   assert.equal(flat(bar.props.style).width,360);
@@ -130,14 +130,14 @@ test('own profile scrolls its existing details while keeping filters sticky and 
   scroll.props.onLayout({nativeEvent:{layout:{height:600}}});
   children[0].props.onLayout({nativeEvent:{layout:{height:210}}});
   tree=r.render(Profile);
-  assert.equal(nodes(tree).find(n=>n.type==='ScrollView').props.contentContainerStyle.minHeight,810);
-  const sc=nodes(tree).find(n=>n.type==='ScrollView');
+  assert.equal(nodes(tree).find(n=>n.type==='OwnProfileMagneticRefresh').props.contentContainerStyle.minHeight,810);
+  const sc=nodes(tree).find(n=>n.type==='OwnProfileMagneticRefresh');
   sc.props.onScroll({nativeEvent:{contentOffset:{y:210}}});tree=r.render(Profile);
-  const scPinned=nodes(tree).find(n=>n.type==='ScrollView');
+  const scPinned=nodes(tree).find(n=>n.type==='OwnProfileMagneticRefresh');
   assert.equal(flat(scPinned.props.children.flat().filter(Boolean)[1].props.style).shadowOpacity,0.05);
-  assert.ok(nodes(tree).some(n=>n.type==='PullRefreshUnderHeader'));assert.ok(nodes(tree).some(n=>n.type==='SwipePositionUnderline'));
+  assert.ok(nodes(tree).some(n=>n.type==='OwnProfileMagneticRefresh'));assert.ok(nodes(tree).some(n=>n.type==='SwipePositionUnderline'));
   scPinned.props.onScroll({nativeEvent:{contentOffset:{y:0}}});tree=r.render(Profile);
-  assert.equal(flat(nodes(tree).find(n=>n.type==='ScrollView').props.children.flat().filter(Boolean)[1].props.style).shadowOpacity,0);
+  assert.equal(flat(nodes(tree).find(n=>n.type==='OwnProfileMagneticRefresh').props.children.flat().filter(Boolean)[1].props.style).shadowOpacity,0);
   assert.ok(!nodes(scroll).some(n=>n.type==='ReferenceHeader'));
   assert.ok(nodes(children[0]).some(n=>n.type==='BrandAvatar'));
   nodes(tree).find(n=>n.props.accessibilityLabel==='Abrir publicación: Video').props.onPress();assert.deepEqual(r.calls.at(-1),['push',{pathname:'/publication',params:{id:'video-one'}}]);
@@ -199,18 +199,18 @@ test('white shared headers retain dimensions, safe top and children without tran
 
 test('pull-to-refresh updates own real sources without changing tabs or navigation',async()=>{
   const r=runtime(),Profile=r.load('app/(tabs)/profile.tsx').default;
-  let tree=r.render(Profile),scroll=nodes(tree).find(n=>n.type==='ScrollView');
-  assert.equal(nodes(tree).find(n=>n.type==='PullRefreshUnderHeader').props.refreshing,false);
-  await nodes(tree).find(n=>n.type==='PullRefreshUnderHeader').props.onRefresh();
+  let tree=r.render(Profile),scroll=nodes(tree).find(n=>n.type==='OwnProfileMagneticRefresh');
+  assert.equal(nodes(tree).find(n=>n.type==='OwnProfileMagneticRefresh').props.refreshing,false);
+  await nodes(tree).find(n=>n.type==='OwnProfileMagneticRefresh').props.onRefresh();
   assert.ok(r.calls.some(c=>c[0]==='refresh-connections'));
   assert.ok(r.calls.some(c=>c[0]==='refresh-publications'));
   nodes(tree).find(n=>n.props.accessibilityLabel==='Guardados').props.onPress();
-  tree=r.render(Profile);scroll=nodes(tree).find(n=>n.type==='ScrollView');
-  await nodes(tree).find(n=>n.type==='PullRefreshUnderHeader').props.onRefresh();
+  tree=r.render(Profile);scroll=nodes(tree).find(n=>n.type==='OwnProfileMagneticRefresh');
+  await nodes(tree).find(n=>n.type==='OwnProfileMagneticRefresh').props.onRefresh();
   assert.ok(r.calls.some(c=>c[0]==='refresh-saved'));
   nodes(tree).find(n=>n.props.accessibilityLabel==='Me gusta').props.onPress();
-  tree=r.render(Profile);scroll=nodes(tree).find(n=>n.type==='ScrollView');
-  await nodes(tree).find(n=>n.type==='PullRefreshUnderHeader').props.onRefresh();
+  tree=r.render(Profile);scroll=nodes(tree).find(n=>n.type==='OwnProfileMagneticRefresh');
+  await nodes(tree).find(n=>n.type==='OwnProfileMagneticRefresh').props.onRefresh();
   assert.ok(r.calls.some(c=>c[0]==='refresh-liked'));
 });
 test('pull-to-refresh in visited profile preserves its sticky row and footer',async()=>{
@@ -232,7 +232,7 @@ test('B1 owner-profile horizontal gestures change six tabs; vertical gestures an
   let tree=r.render(Profile);
   const selected=nodes(tree).filter(n=>n.props.accessibilityState?.selected===true);
   assert.equal(selected.length,1);assert.equal(selected[0].props.accessibilityLabel,sections[index]);
-  assert.deepEqual(Array.from(nodes(tree).find(n=>n.type==='ScrollView').props.stickyHeaderIndices),[1]);
+  assert.deepEqual(Array.from(nodes(tree).find(n=>n.type==='OwnProfileMagneticRefresh').props.stickyHeaderIndices),[1]);
   const gesture=nodes(tree).find(n=>typeof n.props.onMoveShouldSetPanResponder==='function');
   assert.ok(gesture);
   assert.equal(gesture.props.onMoveShouldSetPanResponder({}, {dx:-9,dy:0}),false);
