@@ -44,7 +44,7 @@ function harness(onRefresh = async () => {}, initial = {}) {
   const modules = {
     react, 'react-native': {Platform: {OS: 'android'}, ActivityIndicator: 'Spinner', View: 'View', ScrollView: 'ScrollView', StyleSheet: {create: s => s}},
     'react-native-reanimated': reanimated,
-    'react-native-gesture-handler': {GestureDetector: 'Detector', Gesture: {Native: () => new Builder('native'), Pan: () => new Builder('pan'), Simultaneous: (...items) => ({items})}},
+    'react-native-gesture-handler': {GestureDetector: 'Detector', Gesture: {Native: () => new Builder('native'), Pan: () => new Builder('pan'), Exclusive: (...items) => ({mode: 'exclusive', items})}},
     './PullRefreshUnderHeader': {__esModule: true, default: 'LegacyPull'},
     '../lib/features/profile/ownProfilePull': math,
   };
@@ -110,6 +110,17 @@ test('B11 short, cancelled and horizontal pulls never request data', () => {
   h.start(); h.move(0, 20); h.move(0, 60); h.release(); assert.equal(h.offset, 0); assert.equal(calls, 0); h.settle();
   h.start(); h.move(0, 20); h.move(0, 300); h.release(false); assert.equal(h.offset, 0); assert.equal(calls, 0); h.settle();
   const before = h.manager.activations; h.start(); h.move(60, 5); h.release(); assert.equal(h.manager.activations, before); assert.equal(calls, 0);
+});
+test('B11 direction decides which native controller owns the gesture; taps never trigger refresh', () => {
+  let calls = 0; const h = harness(() => {calls++;});
+  const gesture = nodes(h.tree).find(n => n.type === 'Detector').props.gesture;
+  assert.equal(gesture.mode, 'exclusive');
+  assert.deepEqual(gesture.items.map(g => g.kind), ['pan', 'native']);
+  h.start(); h.release(); assert.equal(h.manager.activations, 0); assert.equal(calls, 0);
+  h.start(); h.move(0, -40); h.release(); assert.equal(h.manager.activations, 0); assert.equal(calls, 0);
+  h.start(); h.move(0, 20); h.move(0, 400); const down = h.offset;
+  h.move(0, 300); assert.ok(h.offset < down && h.offset > 0); assert.equal(h.props.scrollOffsetRef.current, 0);
+  h.release(false); assert.equal(calls, 0);
 });
 test('B11 one long pull calls the existing callback once and holds until its actual promise resolves', async () => {
   let calls = 0; const pending = deferred(), h = harness(() => {calls++; return pending.promise;});

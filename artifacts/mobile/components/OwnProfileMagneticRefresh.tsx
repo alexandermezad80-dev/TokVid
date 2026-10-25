@@ -125,9 +125,11 @@ function AndroidProfilePull({scrollOffsetRef, refreshing, onRefresh, children, o
         eligible.value = false;
         if (phase.value === PULLING) returnHome();
       });
-    // Native scroll keeps ordinary drags/taps. Only the owner pull is recognized
-    // here; horizontal intent fails early for the unchanged JS swipe responder.
-    return Gesture.Simultaneous(nativeScroll, pull);
+    // At the top, decide direction before native scroll activates. Once pulling,
+    // cancel native scrolling so reversing the finger cannot scroll under the
+    // moving indicator. All other directions fail early and keep native scroll
+    // and the existing JS horizontal responder available.
+    return Gesture.Exclusive(pull, nativeScroll);
   }, [busy, eligible, origin, phase, raw, refreshOnce, returnHome, scrollY, shift, startX, startY, viewport]);
 
   const moving = useAnimatedStyle(() => ({transform: [{translateY: shift.value}]}));
