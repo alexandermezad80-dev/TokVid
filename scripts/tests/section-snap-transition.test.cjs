@@ -30,6 +30,7 @@ test('late native stop cannot revive a cancelled gesture or a disposed screen',(
 test('fast flicks move at most one section and both endpoints stay bounded',()=>{
  for(let start=0;start<6;start++)for(const dx of [-800,-20,20,800])for(const vx of [-20,0,20]){
  const m=motion();m.model.select(start);m.model.grant();m.model.move(dx);assert.ok(Math.abs(m.value-start)<=1);m.model.release(dx,vx);m.finish();assert.ok(m.value>=0&&m.value<=5);assert.ok(Math.abs(m.value-start)<=1);}
+ for(const origin of [.001,.999,1.001,2.999,4.999])for(const dx of [-100,100]){const m=motion();m.setValue(origin);m.model.grant();m.model.move(dx);m.model.release(dx,0);m.finish();assert.ok(Number.isInteger(m.value),'fractional native stop must select a real page: '+m.value);}
 });
 const el=(type,props,key)=>({type,props,key}),flat=s=>Array.isArray(s)?Object.assign({},...s.map(flat)):s||{};
 function pager(){

@@ -24,7 +24,7 @@ export function createSectionSnap(driver: Driver) {
     const target = neighbors(Math.abs(velocity) > 0.65
       ? Math.round(origin) + (velocity < 0 ? 1 : -1)
       : Math.abs(origin - Math.round(origin)) < 0.01
-        ? settleSwipePosition(origin, dx, velocity, driver.width(), driver.last())
+        ? settleSwipePosition(Math.round(origin), dx, velocity, driver.width(), driver.last())
         : Math.round(clampSwipePosition(origin, dx, driver.width(), driver.last()) - velocity * 0.22));
     const ticket = ++generation;
     driver.animate(target, Math.abs(velocity) > 0.65 ? 170 : 240, finished => {
