@@ -1,5 +1,9 @@
 # TOKVID — iconos del Perfil e indicador sincronizado
 
+## Entrega APK311 — 26 octubre 2026
+
+Código `90ca07cc03b682e45239211fd6d23b8ed850f3a8`, misma rama `feature/feed-mini-video-avatar`. [Descargar APK311](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40409170065/artifacts/12692853462): extraer el ZIP e instalar `app-release.apk`. [Compilación](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40409170065); [mapa de fuentes correspondiente](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40409170065/artifacts/12693168168). SHA256 APK: `0998c11c42e02d58cf53609909fd092f8cb88ceef9597c49654ee182683bdbf5`. **359 pruebas CI aprobadas, 0 fallos; TypeScript real, configuración nativa y Android correctos.** `BUILD SUCCESSFUL in 18m 35s`. El swipe, los toques y el refresco aprobados conservan su código. 18 archivos protegidos intactos. Sin merge a main. La nueva rayita/iconos/nombres requieren comprobación física; no confundir la aprobación de APK310 con la de esta corrección.
+
 ## Autorización y base — 26 octubre 2026
 
 El usuario confirma que APK310 funciona bien, salvo la rayita del Perfil: al seleccionar manualmente un icono, el contenido cambia pero el indicador se queda debajo de Videos. Video `swipe screen-20261026-145608.mp4`, segundos 13–19. Aclara: «el swipe si trabaja lo de tocar los iconos también pero el indicador queda botado» y autoriza aplicar los iconos pendientes y la rayita. Conservar el swipe y los toques aprobados. Esta confirmación sustituye la aprobación pendiente de esos comportamientos en el registro310; no equivale a una prueba completa de toda la app.
@@ -18,7 +22,7 @@ Aplicación: únicamente `app/(tabs)/profile.tsx`, `components/SwipePositionUnde
 
 ## Validación
 
-Pruebas: geometrías SVG exactas en ambos colores; nombres medidos/transitorios, repetición y desmontaje; misma conexión animada tras swipe y selecciones manuales, cambios de ancho y posición, estilo Inbox; hashes del controlador/paginador/Inbox 310 y 18 archivos protegidos. Se adaptan únicamente contratos de texto que esperaban el callback anterior sin etiqueta; se mantienen escenarios funcionales. **348 pruebas locales aprobadas, 0 fallos**; TypeScript real/CI y APK nueva pendientes. Once pruebas de FeedRealtime requieren dependencias completas de CI; no se omiten allí. AdaptadorBabel externo local, no confundir con TypeScript semántico. No hay teléfono/emulador conectado.
+Pruebas: geometrías SVG exactas en ambos colores; nombres medidos/transitorios, repetición y desmontaje; misma conexión animada tras swipe y selecciones manuales, cambios de ancho y posición, estilo Inbox; hashes del controlador/paginador/Inbox 310 y 18 archivos protegidos. Se adaptan únicamente contratos de texto que esperaban el callback anterior sin etiqueta; se mantienen escenarios funcionales. **348 pruebas locales aprobadas, 0 fallos**; La suite completa de CI y TypeScript real pasaron; APK311 compilada, véase el cierre superior. Once pruebas de FeedRealtime requieren dependencias completas de CI; no se omiten allí. AdaptadorBabel externo local, no confundir con TypeScript semántico. No hay teléfono/emulador conectado.
 
 Prueba física pendiente: volver a Videos tras varios swipes, tocar Compartidos/Me gusta/Guardados/Borradores/Historias y comprobar la rayita bajo cada icono; alternar swipe/toque, repetir y tocar durante el snap. Confirmar nombres al fijarse la barra y que miniaturas/scroll/refresco conservan su funcionamiento, tanto con gestos como con tres botones Android.
 

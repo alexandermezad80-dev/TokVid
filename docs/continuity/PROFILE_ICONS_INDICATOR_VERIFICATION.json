@@ -8,11 +8,23 @@
   "approved_swipe_and_taps_preserved": true,
   "approved_profile_refresh_preserved": true,
   "apk310_physical_feedback": "approved swipe and taps; indicator manual selection defect confirmed",
-  "ci_verified": false,
+  "ci_verified": true,
   "physical_device_verified": false,
   "emulator_verified": false,
-  "new_apk": null,
+  "new_apk": {
+    "number": 311,
+    "run_id": 40409170065,
+    "url": "https://github.com/alexandermezad80-dev/TokVid/actions/runs/40409170065/artifacts/12692853462",
+    "sha256": "0998c11c42e02d58cf53609909fd092f8cb88ceef9597c49654ee182683bdbf5",
+    "source_map_url": "https://github.com/alexandermezad80-dev/TokVid/actions/runs/40409170065/artifacts/12693168168"
+  },
   "local_tests_passed": 348,
   "local_tests_failed": 0,
-  "protected_file_hashes_unchanged": 18
+  "protected_file_hashes_unchanged": 18,
+  "code_commit": "90ca07cc03b682e45239211fd6d23b8ed850f3a8",
+  "tree": "7d86ea99668dca92a0e2d206bed949999738bc7a",
+  "ci_tests_passed": 359,
+  "ci_tests_failed": 0,
+  "typecheck_passed": true,
+  "native_configuration_passed": true
 }
