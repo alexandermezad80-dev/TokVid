@@ -3,7 +3,8 @@ import ReferenceHeader from "../../components/reference/ReferenceHeader";
 import RefreshableInboxEmpty from "../../components/RefreshableInboxEmpty";
 import PullRefreshUnderHeader from "../../components/PullRefreshUnderHeader";
 import HorizontalSwipePages from "../../components/HorizontalSwipePages";
-import {clampSwipePosition,settleSwipePosition} from "../../lib/features/gestures/horizontalDrag";
+import {useSectionSwipe} from "../../hooks/useSectionSwipe";
+import SwipePositionUnderline from "../../components/SwipePositionUnderline";
 import ClearInboxDialog from "../../lib/features/messages/components/ClearInboxDialog";
 import {activityCounter,activityHasGallery} from "../../lib/features/messages/activity";
 import {useGroupInbox} from "../../hooks/useGroupInbox";
@@ -24,9 +25,6 @@ import {
   RefreshControl,
   Image,
   Platform,
-  PanResponder,
-  Animated,
-  Easing,
   useWindowDimensions,
   ScrollView,
   StyleSheet,
@@ -153,67 +151,9 @@ export default function InboxScreen() {
   const [menu,setMenu]=useState<{convo:ConversationRow;anchor:{x:number;y:number;width:number;height:number}}|null>(null);
   const [removing,setRemoving]=useState(false);
   const [tab, setTab] = useState<"activity" | "messages">("activity");
-  // Capture horizontal gestures only in the body, never on the approved tab buttons.
-  const currentTabRef=useRef<InboxSection>(tab);
-  currentTabRef.current=tab;
   const inboxSections:readonly InboxSection[]=["activity","messages"];
-  const inboxPagePosition=useRef(new Animated.Value(0)).current;
-  const inboxDragStart=useRef(0),inboxDragging=useRef(false),inboxSettling=useRef(false),inboxWidth=useRef(width);
-  inboxWidth.current=width;
-  const [inboxPreview,setInboxPreview]=useState<InboxSection>(tab);
-  const inboxPreviewRef=useRef<InboxSection>(tab);
-  const moveInboxPreview=(idx:number)=>{
-    const next:InboxSection=idx>=0.5?"messages":"activity";
-    if(inboxPreviewRef.current!==next){inboxPreviewRef.current=next;setInboxPreview(next);}
-  };
-  useEffect(()=>{
-    if(!inboxDragging.current&&!inboxSettling.current){
-      const idx=tab==="messages"?1:0;
-      // Original fixed tab taps remain immediate.
-      inboxPagePosition.stopAnimation();
-      inboxPagePosition.setValue(idx);
-      moveInboxPreview(idx);
-    }
-  },[tab,inboxPagePosition]);
-  const inboxSwipeResponder=useRef(PanResponder.create({
-    onMoveShouldSetPanResponder:(_event,gesture)=>
-      (gesture.numberActiveTouches??1)===1 && isInboxHorizontalGesture(gesture.dx,gesture.dy),
-    // Capture only single-finger horizontal drags; vertical scroll/refresh stay native.
-    onMoveShouldSetPanResponderCapture:(_event,gesture)=>
-      (gesture.numberActiveTouches??1)===1 && isInboxHorizontalGesture(gesture.dx,gesture.dy),
-    onPanResponderGrant:()=>{
-      inboxDragging.current=true;
-      inboxSettling.current=false;
-      inboxDragStart.current=currentTabRef.current==="messages"?1:0;
-      inboxPagePosition.stopAnimation();
-    },
-    onPanResponderMove:(_event,g)=>{
-      const next=clampSwipePosition(inboxDragStart.current,g.dx,inboxWidth.current,1);
-      inboxPagePosition.setValue(next);
-      moveInboxPreview(next);
-    },
-    onPanResponderRelease:(_event,g)=>{
-      const start=inboxDragging.current?inboxDragStart.current:(currentTabRef.current==="messages"?1:0);
-      const target=settleSwipePosition(start,g.dx,g.vx??0,inboxWidth.current,1);
-      inboxDragging.current=false;
-      inboxSettling.current=true;
-      moveInboxPreview(target);
-      Animated.timing(inboxPagePosition,{
-        toValue:target,duration:Math.abs(g.vx??0)>0.65?170:240,
-        easing:Easing.out(Easing.cubic),useNativeDriver:true
-      }).start(()=>{inboxSettling.current=false;});
-      const next:InboxSection=target===1?"messages":"activity";
-      if(next!==currentTabRef.current)setTab(next);
-    },
-    onPanResponderTerminate:()=>{
-      inboxDragging.current=false;
-      inboxSettling.current=false;
-      const index=currentTabRef.current==="messages"?1:0;
-      moveInboxPreview(index);
-      Animated.timing(inboxPagePosition,{toValue:index,duration:200,useNativeDriver:true}).start();
-    },
-    onPanResponderTerminationRequest:()=>false,
-  })).current;
+  const {position:inboxPagePosition,preview:inboxPreview,moving:inboxMoving,responder:inboxSwipeResponder,select:selectTab} =
+    useSectionSwipe(inboxSections,tab,width,setTab,isInboxHorizontalGesture);
   useEffect(()=>{if(params.tab==="messages"||params.tab==="activity")setTab(params.tab);},[params.tab]);
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
@@ -326,9 +266,9 @@ export default function InboxScreen() {
 
       <View style={styles.tabs}>
         {(["activity", "messages"] as const).map((t) => (
-          <TouchableOpacity key={t} onPress={() => setTab(t)} style={styles.tabBtn}>
+          <TouchableOpacity key={t} onPress={() => selectTab(t)} style={styles.tabBtn}>
             <View style={styles.tabLabelRow}>
-              <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
+              <Text style={[styles.tabText, inboxPreview === t && styles.tabTextActive]}>
                 {t === "activity" ? "Actividad" : "Mensajes"}
               </Text>
               {t === "activity" && unreadCount > 0 && (
@@ -337,14 +277,14 @@ export default function InboxScreen() {
                 </View>
               )}
             </View>
-            {tab === t && <View style={styles.tabIndicator} />}
           </TouchableOpacity>
         ))}
+        <SwipePositionUnderline position={inboxPagePosition} tabWidth={width/2} markerWidth={97} color="#25F4EE"/>
       </View>
 
       <View style={styles.swipeContent} {...inboxSwipeResponder.panHandlers}>
-        <HorizontalSwipePages sections={inboxSections} active={tab} center={inboxPreview}
-          position={inboxPagePosition} width={width} fill renderPage={renderInboxPage}/>
+        <HorizontalSwipePages key={user.id} sections={inboxSections} active={tab} center={inboxPreview}
+          position={inboxPagePosition} width={width} moving={inboxMoving} fill renderPage={renderInboxPage}/>
 
       </View>
       {menu&&<ConversationMenu anchor={menu.anchor} name={menu.convo.other_username} busy={removing} onClose={()=>setMenu(null)} onDelete={()=>{setRemoving(true);void hideConversation(menu.convo.id).then(async()=>{setMenu(null);await loadConvos();}).catch(e=>Alert.alert('No se pudo eliminar',e.message)).finally(()=>setRemoving(false));}} onDeleteAll={()=>{setRemoving(true);void supabase.rpc('inbox_clear_boundary').then(({data,error})=>{if(error||!data)Alert.alert('No se pudo preparar la selección','Inténtalo de nuevo.');else{setMenu(null);setClearBefore(data);}setRemoving(false);});}}/>}

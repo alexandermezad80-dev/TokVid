@@ -25,28 +25,28 @@ test("B8 snap uses both drag distance and speed, never leaves the six pages",()=
 });
 test("B8 own profile drags only below original tab strip, all 6 views reuse original section content",()=>{
  for(const s of [
-   "const tabSwipeResponder=useRef(PanResponder.create({",
-   "onMoveShouldSetPanResponderCapture:(_event,g)=>isOwnProfileHorizontalMove(g.dx,g.dy)",
-   "onPanResponderMove:(_event,g)=>",
-   "pagePosition.setValue(next);",
-   "movePreview(next);",
-   "settleSwipePosition(start,g.dx,g.vx??0,widthRef.current,5)",
-   '<HorizontalSwipePages sections={OWN_PROFILE_TABS} active={tab} center={previewTab}',
+   "useSectionSwipe(OWN_PROFILE_TABS,tab,width,setTab,isOwnProfileHorizontalMove)",
+   "responder:tabSwipeResponder",
+   "moving:swipeMoving",
+   "moving={swipeMoving}",
+   "minHeight={Math.max(0,scrollViewportHeight-39-",
+   "position:pagePosition",
+   '<HorizontalSwipePages key={user.id} sections={OWN_PROFILE_TABS} active={tab} center={previewTab}',
    "renderPage={renderSection}",
    "SwipePositionUnderline position={pagePosition} tabWidth={width/6}",
    "width:width/6,flex:0",
    "stickyHeaderIndices={[1]}",
-   "onPress={()=>setTab(item.key)}",
+   "onPress={()=>selectTab(item.key)}",
    "components/OwnProfileMagneticRefresh",
  ])assert.ok(profile.includes(s),s);
  assert.ok(profile.indexOf("styles.tabBar")<profile.indexOf("<HorizontalSwipePages"));
  assert.ok(!profile.includes("interests"));
 });
 test("B8 Inbox: fixed approved tabs and notification buttons, reversible drag only in body",()=>{
- for(const s of ["onMoveShouldSetPanResponderCapture:(_event,gesture)=>",
-   "onPanResponderMove:(_event,g)=>","inboxPagePosition.setValue(next);",
-   "settleSwipePosition(start,g.dx,g.vx??0,inboxWidth.current,1)",
-   "onPress={() => setTab(t)}",
+ for(const s of ["useSectionSwipe(inboxSections,tab,width,setTab,isInboxHorizontalGesture)",
+   "responder:inboxSwipeResponder","moving={inboxMoving}",
+   "position:inboxPagePosition",
+   "onPress={() => selectTab(t)}",
    "styles.swipeContent} {...inboxSwipeResponder.panHandlers}",
    "renderPage={renderInboxPage}","enabled={section===tab}",
    'onPress={markAllRead}','markRead(n.id)','onPress={goToChat}',

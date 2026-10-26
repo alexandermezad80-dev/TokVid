@@ -24,10 +24,11 @@ test("B2 swipe responder lives below original tab bar and excludes floating dial
  const body=inbox.indexOf('<View style={styles.swipeContent} {...inboxSwipeResponder.panHandlers}>');
  const menu=inbox.indexOf('{menu&&<ConversationMenu');
  assert.ok(tabs>0&&body>tabs&&menu>body);
- assert.match(inbox,/const currentTabRef=useRef<InboxSection>\(tab\)/);
- assert.match(inbox,/numberActiveTouches\?\?1\)===1 && isInboxHorizontalGesture\(gesture\.dx,gesture\.dy\)/);
- assert.match(inbox,/const target=settleSwipePosition\(start,g\.dx,g\.vx\?\?0,inboxWidth\.current,1\)/);
- assert.match(inbox,/if\(next!==currentTabRef\.current\)setTab\(next\)/);
+ assert.ok(inbox.includes("useSectionSwipe(inboxSections,tab,width,setTab,isInboxHorizontalGesture)"));
+ const swipe=fs.readFileSync(path.join(root,"hooks/useSectionSwipe.ts"),"utf8");
+ assert.ok(swipe.includes("onMoveShouldSetPanResponderCapture:"));
+ assert.ok(swipe.includes("(g.numberActiveTouches ?? 1) === 1 && current.current.accepts(g.dx, g.dy)"));
+ assert.ok(swipe.includes("current.current.onSelect(current.current.sections[index])"));
  assert.match(inbox,/swipeContent: \{ flex: 1 \}/);
  assert.equal((inbox.match(/<View style=\{styles\.swipeContent\}/g)||[]).length,1);
 });
@@ -35,7 +36,7 @@ test("B2 preserves approved notification, chat, refresh, layouts and tab touch a
  const tokens=[
    'const [tab, setTab] = useState<"activity" | "messages">("activity")',
    'if(params.tab==="messages"||params.tab==="activity")setTab(params.tab)',
-   'onPress={() => setTab(t)}',
+   'onPress={() => selectTab(t)}',
    't === "activity" ? "Actividad" : "Mensajes"',
    'onPress={markAllRead}','markRead(n.id)','openActivity(n)',
    'onRefresh={handleRefresh}','tab === "messages" ? loadConvos() : Promise.resolve()',

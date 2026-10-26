@@ -3,7 +3,7 @@ import ReferenceHeader from "../../components/reference/ReferenceHeader";
 import ProfilePullRefresh from "../../components/OwnProfileMagneticRefresh";
 import HorizontalSwipePages from "../../components/HorizontalSwipePages";
 import SwipePositionUnderline from "../../components/SwipePositionUnderline";
-import {clampSwipePosition,settleSwipePosition} from "../../lib/features/gestures/horizontalDrag";
+import {useSectionSwipe} from "../../hooks/useSectionSwipe";
 import TokvidProfileIcon from "../../components/TokvidProfileIcon";
 import BrandOutline from "../../components/reference/BrandOutline";
 import {referenceVisual as v} from "../../constants/referenceVisual";
@@ -25,9 +25,6 @@ import {
   Alert,
   Modal,
   Pressable,
-  PanResponder,
-  Animated,
-  Easing,
   useWindowDimensions,
   ActivityIndicator,
   Image,
@@ -57,63 +54,8 @@ export default function ProfileScreen() {
   const [expanded,setExpanded]=useState(false),[menu,setMenu]=useState(false);
   const connections=useMyConnections();
   const [tab, setTab] = useState<OwnProfileTab>("videos");
-  const activeTabRef=useRef<OwnProfileTab>(tab);
-  activeTabRef.current=tab;
-  const pagePosition=useRef(new Animated.Value(0)).current;
-  const dragStart=useRef(0),dragging=useRef(false),settling=useRef(false),widthRef=useRef(width);
-  widthRef.current=width;
-  const [previewTab,setPreviewTab]=useState<OwnProfileTab>(tab);
-  const previewTabRef=useRef<OwnProfileTab>(tab);
-  const movePreview=(idx:number)=>{
-    const next=OWN_PROFILE_TABS[Math.max(0,Math.min(5,Math.round(idx)))];
-    if(previewTabRef.current!==next){previewTabRef.current=next;setPreviewTab(next);}
-  };
-  useEffect(()=>{
-    if(!dragging.current&&!settling.current){
-      const idx=OWN_PROFILE_TABS.indexOf(tab);
-      // Fixed tab taps retain the approved immediate behavior; swipe releases animate.
-      pagePosition.stopAnimation();
-      pagePosition.setValue(idx);
-      movePreview(idx);
-    }
-  },[tab,pagePosition]);
-  const tabSwipeResponder=useRef(PanResponder.create({
-    onMoveShouldSetPanResponder:(_event,g)=>isOwnProfileHorizontalMove(g.dx,g.dy),
-    // Capture horizontal drags before a nested native ScrollView wins on Android.
-    onMoveShouldSetPanResponderCapture:(_event,g)=>isOwnProfileHorizontalMove(g.dx,g.dy),
-    onPanResponderGrant:()=>{
-      dragging.current=true;
-      settling.current=false;
-      dragStart.current=OWN_PROFILE_TABS.indexOf(activeTabRef.current);
-      pagePosition.stopAnimation();
-    },
-    onPanResponderMove:(_event,g)=>{
-      const next=clampSwipePosition(dragStart.current,g.dx,widthRef.current,5);
-      pagePosition.setValue(next);
-      movePreview(next);
-    },
-    onPanResponderRelease:(_event,g)=>{
-      const start=dragging.current?dragStart.current:OWN_PROFILE_TABS.indexOf(activeTabRef.current);
-      const target=settleSwipePosition(start,g.dx,g.vx??0,widthRef.current,5);
-      dragging.current=false;
-      settling.current=true;
-      const next=OWN_PROFILE_TABS[target];
-      movePreview(target);
-      Animated.timing(pagePosition,{
-        toValue:target,duration:Math.abs(g.vx??0)>0.65?170:240,
-        easing:Easing.out(Easing.cubic),useNativeDriver:true
-      }).start(()=>{settling.current=false;});
-      if(next!==activeTabRef.current)setTab(next);
-    },
-    onPanResponderTerminate:()=>{
-      dragging.current=false;
-      settling.current=false;
-      const idx=OWN_PROFILE_TABS.indexOf(activeTabRef.current);
-      movePreview(idx);
-      Animated.timing(pagePosition,{toValue:idx,duration:200,useNativeDriver:true}).start();
-    },
-    onPanResponderTerminationRequest:()=>false,
-  })).current;
+  const {position:pagePosition,preview:previewTab,moving:swipeMoving,responder:tabSwipeResponder,select:selectTab} =
+    useSectionSwipe(OWN_PROFILE_TABS,tab,width,setTab,isOwnProfileHorizontalMove);
   const [scrollViewportHeight, setScrollViewportHeight] = useState(0);
   const [profileSectionHeight, setProfileSectionHeight] = useState(0);
   const [filtersPinned,setFiltersPinned]=useState(false);
@@ -383,7 +325,7 @@ export default function ProfileScreen() {
             {value:fmtCount(likes),label:"Me gusta",target:"liked"},
             {value:connections.loading?"…":fmtCount(connections.following.length),label:"Siguiendo",target:"following"},
             {value:connections.loading?"…":fmtCount(connections.followers.length),label:"Seguidores",target:"followers"},
-          ].map(stat=><TouchableOpacity key={stat.target} style={styles.stat} onPress={()=>stat.target==="liked"?setTab("liked"):router.push({pathname:"/(tabs)/friends",params:{tab:stat.target}})}><Text maxFontSizeMultiplier={1.2} style={styles.statValue}>{stat.value}</Text><Text maxFontSizeMultiplier={1.2} numberOfLines={1} style={styles.statLabel}>{stat.label}</Text></TouchableOpacity>)}</View>
+          ].map(stat=><TouchableOpacity key={stat.target} style={styles.stat} onPress={()=>stat.target==="liked"?selectTab("liked"):router.push({pathname:"/(tabs)/friends",params:{tab:stat.target}})}><Text maxFontSizeMultiplier={1.2} style={styles.statValue}>{stat.value}</Text><Text maxFontSizeMultiplier={1.2} numberOfLines={1} style={styles.statLabel}>{stat.label}</Text></TouchableOpacity>)}</View>
           <Text onPress={()=>setExpanded(true)} accessibilityRole="button" accessibilityState={{expanded}} accessibilityLabel="Biografía" maxFontSizeMultiplier={1.2} style={styles.bio} numberOfLines={expanded?undefined:3}>{bio}</Text>
           {!!bio&&expanded&&<TouchableOpacity onPress={()=>setExpanded(false)}><Text style={styles.bioMore}>Ver menos</Text></TouchableOpacity>}
           {!!connections.error&&<TouchableOpacity onPress={()=>void connections.refresh()}><Text style={{ fontFamily: "Inter_400Regular",color:"#D32F3F",fontSize:12}}>{connections.error}</Text></TouchableOpacity>}
@@ -392,19 +334,18 @@ export default function ProfileScreen() {
       <View style={[styles.stickySlot,{width,elevation:filtersPinned?1:0,shadowOpacity:filtersPinned?0.05:0}]}>
   <View style={styles.tabBar}>{([
         {key:"videos",icon:"grid",label:"Videos"},{key:"stories",icon:"clock",label:"Historias"},{key:"shared",icon:"share-2",label:"Compartidos"},{key:"liked",icon:"heart",label:"Me gusta"},{key:"saved",icon:"bookmark",label:"Guardados"},{key:"drafts",icon:"file-text",label:"Borradores"},
-      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>setTab(item.key)} style={[styles.tabItem,{width:width/6,flex:0},tab===item.key&&styles.tabItemActive]}>{item.key==="videos"||item.key==="stories"||item.key==="shared"||item.key==="drafts"?<TokvidProfileIcon name={item.key} size={22} color={previewTab===item.key?v.ink:v.inactive}/>:<Feather name={item.icon} size={22} color={previewTab===item.key?v.ink:v.inactive}/>}</TouchableOpacity>)}<SwipePositionUnderline position={pagePosition} tabWidth={width/6}/></View>
+      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>selectTab(item.key)} style={[styles.tabItem,{width:width/6,flex:0},tab===item.key&&styles.tabItemActive]}>{item.key==="videos"||item.key==="stories"||item.key==="shared"||item.key==="drafts"?<TokvidProfileIcon name={item.key} size={22} color={previewTab===item.key?v.ink:v.inactive}/>:<Feather name={item.icon} size={22} color={previewTab===item.key?v.ink:v.inactive}/>}</TouchableOpacity>)}<SwipePositionUnderline position={pagePosition} tabWidth={width/6}/></View>
         {filtersPinned&&<>
           <View pointerEvents="none" style={styles.stickyTopShade}/>
           <View pointerEvents="none" style={styles.stickyBottomShade}/>
         </>}
   </View>
       <View {...tabSwipeResponder.panHandlers}>
-        <HorizontalSwipePages sections={OWN_PROFILE_TABS} active={tab} center={previewTab}
-          position={pagePosition} width={width} renderPage={renderSection}/>
-      
+        <HorizontalSwipePages key={user.id} sections={OWN_PROFILE_TABS} active={tab} center={previewTab}
+          position={pagePosition} width={width} moving={swipeMoving}
+          minHeight={Math.max(0,scrollViewportHeight-39-(Platform.OS === "web" ? 34 : insets.bottom+80))} renderPage={renderSection}/>
+        <View style={{ height: Platform.OS === "web" ? 34 : insets.bottom + 80 }} />
       </View>
-
-      <View style={{ height: Platform.OS === "web" ? 34 : insets.bottom + 80 }} />
       </ProfilePullRefresh>
 
     </View>

@@ -64,7 +64,7 @@ test("APK261 own profile: preserve sticky, six slots, grid geometry, upper route
     'onPress={()=>router.push("/story-create")}',
     '{key:"shared",icon:"share-2",label:"Compartidos"}',
     '{key:"drafts",icon:"file-text",label:"Borradores"}',
-    'onPress={()=>setTab(item.key)}',
+    'onPress={()=>selectTab(item.key)}',
   ],"owner profile");
   const slotNames=['Videos','Historias','Compartidos','Me gusta','Guardados','Borradores'];
   for(const name of slotNames)assert.ok(source.includes('label:"'+name+'"'),"Missing approved section "+name);
@@ -75,7 +75,7 @@ test("APK261 Inbox isolation: preserve existing tab taps, marks, vertical refres
   requireTokens(source,[
     'const [tab, setTab] = useState<"activity" | "messages">("activity")',
     'if(params.tab==="messages"||params.tab==="activity")setTab(params.tab)',
-    'onPress={() => setTab(t)}',
+    'onPress={() => selectTab(t)}',
     't === "activity" ? "Actividad" : "Mensajes"',
     'onPress={markAllRead}',
     'markRead(n.id)',
@@ -100,6 +100,6 @@ test("B11 changes only the own-profile refresh connection while preserving the h
   const source=readMobile("app/(tabs)/profile.tsx");
   assert.ok(source.includes('<ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh}'));
   assert.ok(source.includes("<View {...tabSwipeResponder.panHandlers}>"));
-  assert.ok(source.includes("onMoveShouldSetPanResponder:(_event,g)=>isOwnProfileHorizontalMove(g.dx,g.dy)"));
+  assert.ok(source.includes("useSectionSwipe(OWN_PROFILE_TABS,tab,width,setTab,isOwnProfileHorizontalMove)"));
   assert.ok(!source.includes("setTab('more')"));
 });

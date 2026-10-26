@@ -39,7 +39,7 @@ test("D2 viewer resolves video by immutable ID, never blindly by a possibly stal
  assert.match(owner,/onPress=\{\(\)=>void likedHistory\.refresh\(\)\}/);
 });
 test("D2 no Feed, avatar, thumbnail, saved, story, sticky or registration behavior changed",()=>{
- for(const token of ['tileWidth=Math.max(1,(Math.floor(width)-8)/3)','stickyHeaderIndices={[1]}','width:width/6,flex:0','if(tab==="saved")tasks.push(refreshSaved())','onPress={()=>setTab(item.key)}','onPress={()=>router.push("/story-create")}']){
+ for(const token of ['tileWidth=Math.max(1,(Math.floor(width)-8)/3)','stickyHeaderIndices={[1]}','width:width/6,flex:0','if(tab==="saved")tasks.push(refreshSaved())','onPress={()=>selectTab(item.key)}','onPress={()=>router.push("/story-create")}']){
   assert.ok(owner.includes(token),"Protected owner token changed: "+token);
  }
  assert.match(viewer,/onSave=\{\(\) => toggleSave\(item.id\)\}/);

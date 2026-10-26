@@ -9,10 +9,11 @@ const json = value => JSON.parse(JSON.stringify(value));
 function runtime({guest = false, route = '/', inset = 24, visited = false, loading = false, missing = false} = {}) {
   const profile = {id: 'me', username: 'Alexander', bio: 'Biografía', avatar_url: 'photo', likes_count: 2, followers_count: 3, following_count: 4};
   const calls = [], states = [], refs = [], products = [{id: 'video-one', caption: 'Video', mediaType: 'video'}];
-  let cursor = 0, refCursor = 0;
+  let cursor = 0, refCursor = 0, layouts = [];
   const react = {
     createElement: element, Fragment: 'Fragment', useRef(value){const i=refCursor++;if(!(i in refs))refs[i]={current:value};return refs[i];},
     useCallback: fn => fn, useMemo: fn => fn(), useEffect(){},
+    useLayoutEffect(fn,deps){const slot=react.useRef(null);if(!slot.current||deps.some((v,i)=>v!==slot.current[i])){slot.current=deps;layouts.push(fn);}},
     useState(initial) { const i=cursor++; if (!(i in states)) states[i] = visited && i===0 ? (missing ? null : {...profile,id:'other'}) : visited && i===1 ? loading : initial;
       return [states[i], value => { states[i] = typeof value === 'function' ? value(states[i]) : value; }]; },
   };
@@ -21,7 +22,7 @@ function runtime({guest = false, route = '/', inset = 24, visited = false, loadi
     react,
     'react-native': {Platform:{OS:'android'}, PanResponder:{create:config=>({panHandlers:config})}, StyleSheet:{create:s=>s,flatten:flat,absoluteFill:{position:'absolute'},hairlineWidth:0.5},
       useWindowDimensions:()=>({width:360,height:800,fontScale:1.4}), Alert:{alert:(...args)=>calls.push(['alert',args])},
-      Animated:{Value:class {stopAnimation(){} setValue(v){this.value=v;}},timing:()=>({start(){}})},
+      Animated:{Value:class {constructor(v){this.value=v;} stopAnimation(cb){cb?.(this.value);} setValue(v){this.value=v;}},timing:(v,o)=>({start(done){v.setValue(o.toValue);done?.({finished:true});}})},
       Easing:{out:x=>x,cubic:x=>x},
       ...Object.fromEntries(['View','Text','ScrollView','TouchableOpacity','Pressable','Image','ActivityIndicator','Modal','RefreshControl'].map(x=>[x,x]))},
     'expo-router': {Tabs, Stack, Redirect:'Redirect', usePathname:()=>route, useLocalSearchParams:()=>({userId:'other'}), useFocusEffect(){},
@@ -45,6 +46,8 @@ function runtime({guest = false, route = '/', inset = 24, visited = false, loadi
       if(name.endsWith('/referenceVisual')) return load('constants/referenceVisual.ts');
       if(name.endsWith('/palette')) return load('constants/palette.ts');
       if(name.endsWith('/ownProfileSwipe')) return load('lib/features/profile/ownProfileSwipe.ts');
+      if(name.endsWith('/useSectionSwipe')) return load('hooks/useSectionSwipe.ts');
+      if(name.endsWith('/sectionSnap')) return load('lib/features/gestures/sectionSnap.ts');
       if(name.endsWith('/horizontalDrag')) return load('lib/features/gestures/horizontalDrag.ts');
       if(name.endsWith('/AuthContext')) return {useAuth:()=>({user:guest?null:{id:'me'},profile,loading:false,refreshProfile(){}})};
       if(name.endsWith('/FollowContext')) return {useFollow:()=>({followedIds:new Set(),loadingIds:new Set(),isFollowing:()=>false})};
@@ -70,7 +73,7 @@ function runtime({guest = false, route = '/', inset = 24, visited = false, loadi
     }});
     return exp;
   }
-  return {load,calls,render(Component,props={}){cursor=0;refCursor=0;return Component(props);},set:(i,v)=>{states[i]=v;}};
+  return {load,calls,render(Component,props={}){cursor=0;refCursor=0;const tree=Component(props);layouts.splice(0).forEach(fn=>fn());return tree;},set:(i,v)=>{states[i]=v;}};
 }
 
 test('every Android tab uses 50dp plus measured inset, with full-width labels and unchanged five routes',()=>{
@@ -238,16 +241,16 @@ test('B1 owner-profile horizontal gestures change six tabs; vertical gestures an
   assert.equal(gesture.props.onMoveShouldSetPanResponder({}, {dx:-9,dy:0}),false);
   assert.equal(gesture.props.onMoveShouldSetPanResponder({}, {dx:-55,dy:70}),false);
   assert.equal(gesture.props.onMoveShouldSetPanResponder({}, {dx:-85,dy:3}),true);
-  gesture.props.onPanResponderRelease({}, {dx:-85,dy:3});
+  gesture.props.onPanResponderGrant();gesture.props.onPanResponderRelease({}, {dx:-85,dy:3});
  }
  let tree=r.render(Profile);
  assert.equal(nodes(tree).filter(n=>n.props.accessibilityState?.selected===true)[0].props.accessibilityLabel,'Borradores');
  let gesture=nodes(tree).find(n=>typeof n.props.onMoveShouldSetPanResponder==='function');
- gesture.props.onPanResponderRelease({}, {dx:-85,dy:3});
+ gesture.props.onPanResponderGrant();gesture.props.onPanResponderRelease({}, {dx:-85,dy:3});
  tree=r.render(Profile);
  assert.equal(nodes(tree).filter(n=>n.props.accessibilityState?.selected===true)[0].props.accessibilityLabel,'Borradores');
  gesture=nodes(tree).find(n=>typeof n.props.onMoveShouldSetPanResponder==='function');
- gesture.props.onPanResponderRelease({}, {dx:85,dy:0});
+ gesture.props.onPanResponderGrant();gesture.props.onPanResponderRelease({}, {dx:85,dy:0});
  tree=r.render(Profile);
  assert.equal(nodes(tree).filter(n=>n.props.accessibilityState?.selected===true)[0].props.accessibilityLabel,'Guardados');
  nodes(tree).find(n=>n.props.accessibilityLabel==='Compartidos').props.onPress();

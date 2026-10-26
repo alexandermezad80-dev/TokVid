@@ -1,0 +1,54 @@
+{
+  "date_utc": "2026-10-26",
+  "scope": "own_profile_and_inbox_horizontal_swipe_only_with_profile_22dp_marker",
+  "branch": "feature/feed-mini-video-avatar",
+  "base_commit": "c58ed57fb6e3a32449a4b08892ec36e7d44c697a",
+  "base_tree": "b60a45f9a98055982612c96eb2157d73dd360764",
+  "code_commit": null,
+  "run_id": null,
+  "apk_url": null,
+  "apk_sha256": null,
+  "local_tests": {
+    "passed": 339,
+    "failed": 0,
+    "new_tests": 13,
+    "unavailable_tests": 11,
+    "unavailable_file": "feed-realtime.test.cjs",
+    "typescript_real": false,
+    "transpiler": "external Babel adapter; never committed"
+  },
+  "ci_verified": false,
+  "physical_device_verified": false,
+  "emulator_verified": false,
+  "protected_hashes_unchanged": 18,
+  "approved_apk308_owner_pull_preserved": true,
+  "screen_styles_byte_identical": true,
+  "section_content_and_refresh_callback_byte_identical": true,
+  "profile_marker": {
+    "width_dp": 22,
+    "height_dp": 2,
+    "color": "#5B6670",
+    "centered": true
+  },
+  "inbox_marker": {
+    "width_dp": 97,
+    "height_dp": 2,
+    "color": "#25F4EE",
+    "appearance_preserved": true
+  },
+  "changed_app_files": [
+    "artifacts/mobile/app/(tabs)/inbox.tsx",
+    "artifacts/mobile/app/(tabs)/profile.tsx",
+    "artifacts/mobile/components/HorizontalSwipePages.tsx",
+    "artifacts/mobile/components/SwipePositionUnderline.tsx",
+    "artifacts/mobile/hooks/useSectionSwipe.ts",
+    "artifacts/mobile/lib/features/gestures/sectionSnap.ts"
+  ],
+  "pending_excluded": [
+    "six section icons and subtle names",
+    "automatic Feed refresh without duplicates",
+    "visited profile magnetic refresh"
+  ],
+  "source_video": "swipe 20261025-213414.mp4",
+  "source_video_seconds": 17.945067
+}

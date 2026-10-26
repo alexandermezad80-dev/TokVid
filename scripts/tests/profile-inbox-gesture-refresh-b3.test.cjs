@@ -1,16 +1,17 @@
 const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs"),path=require("node:path"),ts=require("typescript");
 const root=path.resolve(__dirname,"../../artifacts/mobile"),read=s=>fs.readFileSync(path.join(root,s),"utf8");
+const swipe=read("hooks/useSectionSwipe.ts");
 const profile=read("app/(tabs)/profile.tsx"),inbox=read("app/(tabs)/inbox.tsx"),empty=read("components/RefreshableInboxEmpty.tsx");
 test("B1 captures only horizontal profile swipes before nested native ScrollView",()=>{
- assert.ok(profile.includes("onMoveShouldSetPanResponder:(_event,g)=>isOwnProfileHorizontalMove(g.dx,g.dy)"));
- assert.ok(profile.includes("onMoveShouldSetPanResponderCapture:(_event,g)=>isOwnProfileHorizontalMove(g.dx,g.dy)"));
+ assert.ok(profile.includes("useSectionSwipe(OWN_PROFILE_TABS,tab,width,setTab,isOwnProfileHorizontalMove)"));
+ assert.ok(swipe.includes("onMoveShouldSetPanResponderCapture:"));
  assert.ok(profile.includes("stickyHeaderIndices={[1]}"));
 });
 test("B2 captures horizontal gestures below the approved Inbox tabs",()=>{
  assert.ok(inbox.indexOf("<View style={styles.tabs}>")<inbox.indexOf('<View style={styles.swipeContent} {...inboxSwipeResponder.panHandlers}>'));
- assert.ok(inbox.includes("onMoveShouldSetPanResponderCapture:(_event,gesture)=>"));
- assert.ok(inbox.includes("onPanResponderMove:(_event,g)=>"));
- assert.ok(inbox.includes("(gesture.numberActiveTouches??1)===1 && isInboxHorizontalGesture(gesture.dx,gesture.dy)"));
+ assert.ok(inbox.includes("useSectionSwipe(inboxSections,tab,width,setTab,isInboxHorizontalGesture)"));
+ assert.ok(swipe.includes("onPanResponderMove:"));
+ assert.ok(swipe.includes("(g.numberActiveTouches ?? 1) === 1 && current.current.accepts(g.dx, g.dy)"));
 });
 test("Both Inbox sections have pull-to-refresh in empty/loading/error cases",()=>{
  assert.equal((inbox.match(/<RefreshableInboxEmpty refreshing=\{refreshing\} onRefresh=\{handleRefresh\}>/g)||[]).length,5);

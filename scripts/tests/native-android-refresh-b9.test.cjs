@@ -36,7 +36,7 @@ test("B9 preserve six-tab geometry, swipe and pinned header; none of the code ch
   assert.ok(profile.includes('tabBar:{backgroundColor:v.white,flexDirection:"row",width:"100%",height:39}'));
   assert.ok(profile.includes('stickyHeaderIndices={[1]}'));
   assert.ok(inbox.includes('styles.swipeContent} {...inboxSwipeResponder.panHandlers}'));
-  assert.ok(inbox.includes('onPress={() => setTab(t)}'));
+  assert.ok(inbox.includes('onPress={() => selectTab(t)}'));
   assert.ok(!profile.includes("ProfileTabBar"));
   for(const code of [profile,inbox,empty,pull]){
     const out=ts.transpileModule(code,{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022},reportDiagnostics:true});
