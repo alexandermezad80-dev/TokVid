@@ -1,5 +1,11 @@
 # TOKVID — corrección aislada de swipe y snapping, 26 octubre 2026
 
+## Entrega APK310 — 26 octubre 2026
+
+Código `7d785ac29cd3cae441b95cd3d3b22d7b04f63728`, árbol `77e4f4e0dfba39e03a8d6d3af7ae62c6769dc4e4`, rama `feature/feed-mini-video-avatar`. [Descargar APK310](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40366879684/artifacts/12673095843): extraer el ZIP e instalar `app-release.apk`. [Compilación](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40366879684); [mapa de fuentes de esta misma APK](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40366879684/artifacts/12671658563). SHA256 APK: `5f81b66241b3081da622a85213bbb450fca4c957a9071141bcab3734805f8a77`. **350 pruebas CI aprobadas, 0 fallos; TypeScript real, prebuild y Android correctos.** `BUILD SUCCESSFUL in 24m 45s`. Se conserva el código aprobado de refresco de APK308 y los 18 hashes protegidos. Sin cambios de iconos/tipografía, Feed, barra inferior, dependencias, backend ni merge a main. APK309 no se entrega: sustituida por310 al corregir el caso de posición nativa casi entera; sus callbacks ya seleccionan índices válidos.
+
+`ci_verified=true`, `physical_device_verified=false`, `emulator_verified=false`. La aprobación física del swipe está pendiente; no atribuirla a la compilación. Conservar APK308 como referencia de su refresco aprobado. [Manifiesto](continuity/SECTION_SWIPE_SNAP_VERIFICATION.json).
+
 ## Autorización vigente
 
 Tras revisar el video correcto `swipe 20261025-213414.mp4` y elegir swipe con snapping, el usuario ordena: «Bueno, continúa tu trabajo. Eso es lo único que vamos a hacer, vamos a ver cómo queda. Vamos a irnos poquito a poquito. No toques lo que ya está hecho». Se interpreta como autorización para implementar, validar y entregar esta corrección acotada. **No incluir los ajustes locales previos de los seis iconos/nombres ni Feed automático**: permanecen pendientes. No cambiar tipografía, iconografía, posiciones, tamaños o funciones ajenas.
@@ -30,7 +36,7 @@ Los 18 hashes protegidos siguen intactos. `OwnProfileMagneticRefresh.tsx` = `58d
 
 **339 pruebas locales aprobadas, 0 fallos**, incluidas 13 nuevas sobre snapping/interrupciones, selección tardía, toque de pestaña actual, callbacks nativos demorados, límite de una sección, bordes, identidad/altura de páginas, vistas previas, indicador, gestos verticales/multitáctiles, desmontaje y StrictMode. Se adaptaron comprobaciones de integración de las pruebas anteriores sin retirar escenarios funcionales ni modificar sus hashes protegidos.
 
-Límite local: adaptador Babel externo para TSX, no TypeScript real; once pruebas de `feed-realtime.test.cjs` requieren dependencias reales disponibles en CI. CI completo previsto: 350 pruebas, TypeScript real, prebuild y compilación Android. Pendientes al publicar este registro. No hay teléfono/emulador conectado: la fluidez, arbitraje nativo entre scroll/swipe/refresco y todas las alturas deben comprobarse en APK. No declarar aprobación física por pasar pruebas JS o compilar.
+Límite local: adaptador Babel externo para TSX, no TypeScript real; once pruebas de `feed-realtime.test.cjs` requieren dependencias reales disponibles en CI. CI completo final: 350 pruebas aprobadas, TypeScript real, prebuild y compilación Android correctos; APK310 entregada en el bloque superior. No hay teléfono/emulador conectado: la fluidez, arbitraje nativo entre scroll/swipe/refresco y todas las alturas deben comprobarse en APK. No declarar aprobación física por pasar pruebas JS o compilar.
 
 ## Matriz para revisar la APK
 

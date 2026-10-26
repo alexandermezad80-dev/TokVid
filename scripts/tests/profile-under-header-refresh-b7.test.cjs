@@ -7,7 +7,7 @@ test("B11 replaces only the own-profile pull connection, preserving B7 geometry 
  assert.ok(profile.includes('<ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh}'));
  assert.match(profile,/stickyHeaderIndices=\{\[1\]\}/);
  assert.match(profile,/scrollOffsetRef\.current=Math\.max\(0,event\.nativeEvent\.contentOffset\.y\)/);
- for(const k of ["width:width/6,flex:0","stickySlot:{width:\"100%\",height:39","onPress={()=>selectTab(item.key)}","useSectionSwipe(OWN_PROFILE_TABS,tab,width,setTab,isOwnProfileHorizontalMove)","styles.grid","<BrandAvatar","<TokvidProfileIcon","<ReferenceHeader"])assert.ok(profile.includes(k),k);
+ for(const k of ["width:width/6,flex:0","stickySlot:{width:\"100%\",height:39","onPress={()=>{selectTab(item.key);tabHint.current?.show(item.label,OWN_PROFILE_TABS.indexOf(item.key));}}","useSectionSwipe(OWN_PROFILE_TABS,tab,width,setTab,isOwnProfileHorizontalMove)","styles.grid","<BrandAvatar","<TokvidProfileIcon","<ReferenceHeader"])assert.ok(profile.includes(k),k);
  assert.ok(!profile.includes('refreshControl='), "owner B11 has no native RefreshControl");
  assert.ok(!profile.includes('nativeRefreshFallback='), "owner uses its dedicated native gesture");
 });

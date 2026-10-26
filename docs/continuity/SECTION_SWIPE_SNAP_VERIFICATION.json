@@ -4,10 +4,10 @@
   "branch": "feature/feed-mini-video-avatar",
   "base_commit": "c58ed57fb6e3a32449a4b08892ec36e7d44c697a",
   "base_tree": "b60a45f9a98055982612c96eb2157d73dd360764",
-  "code_commit": null,
-  "run_id": null,
-  "apk_url": null,
-  "apk_sha256": null,
+  "code_commit": "7d785ac29cd3cae441b95cd3d3b22d7b04f63728",
+  "run_id": 40366879684,
+  "apk_url": "https://github.com/alexandermezad80-dev/TokVid/actions/runs/40366879684/artifacts/12673095843",
+  "apk_sha256": "5f81b66241b3081da622a85213bbb450fca4c957a9071141bcab3734805f8a77",
   "local_tests": {
     "passed": 339,
     "failed": 0,
@@ -17,7 +17,7 @@
     "typescript_real": false,
     "transpiler": "external Babel adapter; never committed"
   },
-  "ci_verified": false,
+  "ci_verified": true,
   "physical_device_verified": false,
   "emulator_verified": false,
   "protected_hashes_unchanged": 18,
@@ -50,5 +50,23 @@
     "visited profile magnetic refresh"
   ],
   "source_video": "swipe 20261025-213414.mp4",
-  "source_video_seconds": 17.945067
+  "source_video_seconds": 17.945067,
+  "code_tree": "77e4f4e0dfba39e03a8d6d3af7ae62c6769dc4e4",
+  "run_number": 310,
+  "run_url": "https://github.com/alexandermezad80-dev/TokVid/actions/runs/40366879684",
+  "source_map_url": "https://github.com/alexandermezad80-dev/TokVid/actions/runs/40366879684/artifacts/12671658563",
+  "ci_tests": {
+    "passed": 350,
+    "failed": 0
+  },
+  "typescript_real_passed": true,
+  "prebuild_passed": true,
+  "android_build_passed": true,
+  "android_build_result": "BUILD SUCCESSFUL in 24m 45s",
+  "status": "apk_delivered_pending_physical_review",
+  "superseded_apk309": {
+    "commit": "99d89ccb5f9c921daef92f4ff2427d366b468e8b",
+    "run_id": 40340593835,
+    "reason": "near-integer native-stop selection fixed before delivery"
+  }
 }

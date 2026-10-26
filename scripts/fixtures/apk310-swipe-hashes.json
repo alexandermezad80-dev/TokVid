@@ -1,0 +1,7 @@
+{
+  "hooks/useSectionSwipe.ts": "6935d89bfb4ac182559103ba84d056ae7d03d3bc",
+  "lib/features/gestures/sectionSnap.ts": "dbe00abbd3f71c5626aff73c6ad29a68bf7f00fb",
+  "lib/features/gestures/horizontalDrag.ts": "c01d8ff3d9ed36090ae5ebdcb6f22dd1bae1d740",
+  "components/HorizontalSwipePages.tsx": "4bdc2fb2d1875c0e9f553117ccde4f8c5eb952b2",
+  "app/(tabs)/inbox.tsx": "f7584120437f4f75775ca533c40087b1c96a439a"
+}

@@ -1,0 +1,18 @@
+{
+  "base_commit": "7d785ac29cd3cae441b95cd3d3b22d7b04f63728",
+  "branch": "feature/feed-mini-video-avatar",
+  "scope": [
+    "profile_section_icons_and_subtle_names",
+    "stable_position_indicator_binding"
+  ],
+  "approved_swipe_and_taps_preserved": true,
+  "approved_profile_refresh_preserved": true,
+  "apk310_physical_feedback": "approved swipe and taps; indicator manual selection defect confirmed",
+  "ci_verified": false,
+  "physical_device_verified": false,
+  "emulator_verified": false,
+  "new_apk": null,
+  "local_tests_passed": 348,
+  "local_tests_failed": 0,
+  "protected_file_hashes_unchanged": 18
+}

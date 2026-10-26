@@ -36,7 +36,7 @@ test("B8 own profile drags only below original tab strip, all 6 views reuse orig
    "SwipePositionUnderline position={pagePosition} tabWidth={width/6}",
    "width:width/6,flex:0",
    "stickyHeaderIndices={[1]}",
-   "onPress={()=>selectTab(item.key)}",
+   "onPress={()=>{selectTab(item.key);tabHint.current?.show(item.label,OWN_PROFILE_TABS.indexOf(item.key));}}",
    "components/OwnProfileMagneticRefresh",
  ])assert.ok(profile.includes(s),s);
  assert.ok(profile.indexOf("styles.tabBar")<profile.indexOf("<HorizontalSwipePages"));

@@ -34,7 +34,7 @@ test('fast flicks move at most one section and both endpoints stay bounded',()=>
 });
 const el=(type,props,key)=>({type,props,key}),flat=s=>Array.isArray(s)?Object.assign({},...s.map(flat)):s||{};
 function pager(){
- const slots=[];let cursor=0,effects=[];const react={useRef(x){const i=cursor++;if(!slots[i])slots[i]={current:x};return slots[i]},useState(x){const i=cursor++;if(!slots[i])slots[i]={value:x};return[slots[i].value,n=>slots[i].value=typeof n==='function'?n(slots[i].value):n]},useLayoutEffect:fn=>effects.push(fn)};
+ const slots=[];let cursor=0,effects=[];const react={useMemo:fn=>fn(),useRef(x){const i=cursor++;if(!slots[i])slots[i]={current:x};return slots[i]},useState(x){const i=cursor++;if(!slots[i])slots[i]={value:x};return[slots[i].value,n=>slots[i].value=typeof n==='function'?n(slots[i].value):n]},useLayoutEffect:fn=>effects.push(fn)};
  const native={View:'View',Animated:{View:'AnimatedView',multiply:(a,b)=>a*b},StyleSheet:{create:x=>x}};
  const modules={react,'react-native':native,'react/jsx-runtime':{jsx:el,jsxs:el,Fragment:'Fragment'}};
  const p=load('components/HorizontalSwipePages.tsx',modules,'\nexports.PageContent=PageContent;');

@@ -5,6 +5,8 @@ import HorizontalSwipePages from "../../components/HorizontalSwipePages";
 import SwipePositionUnderline from "../../components/SwipePositionUnderline";
 import {useSectionSwipe} from "../../hooks/useSectionSwipe";
 import TokvidProfileIcon from "../../components/TokvidProfileIcon";
+import ProfileSectionIcon from "../../components/ProfileSectionIcon";
+import ProfileTabHint, {type ProfileTabHintHandle} from "../../components/ProfileTabHint";
 import BrandOutline from "../../components/reference/BrandOutline";
 import {referenceVisual as v} from "../../constants/referenceVisual";
 import {LinearGradient} from "expo-linear-gradient";
@@ -108,6 +110,7 @@ export default function ProfileScreen() {
       if(results.some(result=>result.status==='rejected'))Alert.alert('No se pudo actualizar el perfil','Comprueba tu conexión e inténtalo de nuevo.');
     }finally{refreshGuard.current=false;setRefreshing(false);}
   },[user?.id,refreshProfile,connections.refresh,publications.refresh,refreshSaved,refreshLikes,shared.refresh,drafts.refresh,likedHistory.refresh,tab]);
+  const tabHint=useRef<ProfileTabHintHandle>(null);
   if (!user) return null;
   const confirmRemoveDraft=(id:string)=>{
     if(removingDraftId)return;
@@ -334,11 +337,12 @@ export default function ProfileScreen() {
       <View style={[styles.stickySlot,{width,elevation:filtersPinned?1:0,shadowOpacity:filtersPinned?0.05:0}]}>
   <View style={styles.tabBar}>{([
         {key:"videos",icon:"grid",label:"Videos"},{key:"stories",icon:"clock",label:"Historias"},{key:"shared",icon:"share-2",label:"Compartidos"},{key:"liked",icon:"heart",label:"Me gusta"},{key:"saved",icon:"bookmark",label:"Guardados"},{key:"drafts",icon:"file-text",label:"Borradores"},
-      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>selectTab(item.key)} style={[styles.tabItem,{width:width/6,flex:0},tab===item.key&&styles.tabItemActive]}>{item.key==="videos"||item.key==="stories"||item.key==="shared"||item.key==="drafts"?<TokvidProfileIcon name={item.key} size={22} color={previewTab===item.key?v.ink:v.inactive}/>:<Feather name={item.icon} size={22} color={previewTab===item.key?v.ink:v.inactive}/>}</TouchableOpacity>)}<SwipePositionUnderline position={pagePosition} tabWidth={width/6}/></View>
+      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>{selectTab(item.key);tabHint.current?.show(item.label,OWN_PROFILE_TABS.indexOf(item.key));}} style={[styles.tabItem,{width:width/6,flex:0},tab===item.key&&styles.tabItemActive]}><ProfileSectionIcon name={item.key} size={22} color={previewTab===item.key?v.ink:v.inactive}/></TouchableOpacity>)}<SwipePositionUnderline position={pagePosition} tabWidth={width/6}/></View>
         {filtersPinned&&<>
           <View pointerEvents="none" style={styles.stickyTopShade}/>
           <View pointerEvents="none" style={styles.stickyBottomShade}/>
         </>}
+        <ProfileTabHint ref={tabHint} width={width}/>
   </View>
       <View {...tabSwipeResponder.panHandlers}>
         <HorizontalSwipePages key={user.id} sections={OWN_PROFILE_TABS} active={tab} center={previewTab}

@@ -64,7 +64,7 @@ test("APK261 own profile: preserve sticky, six slots, grid geometry, upper route
     'onPress={()=>router.push("/story-create")}',
     '{key:"shared",icon:"share-2",label:"Compartidos"}',
     '{key:"drafts",icon:"file-text",label:"Borradores"}',
-    'onPress={()=>selectTab(item.key)}',
+    'onPress={()=>{selectTab(item.key);tabHint.current?.show(item.label,OWN_PROFILE_TABS.indexOf(item.key));}}',
   ],"owner profile");
   const slotNames=['Videos','Historias','Compartidos','Me gusta','Guardados','Borradores'];
   for(const name of slotNames)assert.ok(source.includes('label:"'+name+'"'),"Missing approved section "+name);
