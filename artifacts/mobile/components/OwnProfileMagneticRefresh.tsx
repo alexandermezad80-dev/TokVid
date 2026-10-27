@@ -34,7 +34,7 @@ function AndroidProfilePull({scrollOffsetRef, refreshing, onRefresh, children, o
   const scrollY = useSharedValue(scrollOffsetRef.current), viewport = useSharedValue(0);
   const startX = useSharedValue(0), startY = useSharedValue(0), origin = useSharedValue(0), raw = useSharedValue(0);
   const eligible = useSharedValue(false);
-  const scrollRef = useAnimatedRef<ScrollView>();
+  const scrollRef = useAnimatedRef<React.ElementRef<typeof Animated.ScrollView>>();
   const headerHeight = useSharedValue(headerSnapHeight), horizontalBusy = useSharedValue(horizontalMoving);
   const dragStart = useSharedValue(0), scrollDragging = useSharedValue(false);
   const mounted = useRef(true), inFlight = useRef(false), callback = useRef(onRefresh);
