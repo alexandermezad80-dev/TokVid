@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useRef, useState} from 'react';
+import React, {useLayoutEffect, useMemo, useRef, useState} from 'react';
 import {Animated, StyleSheet, View} from 'react-native';
 
 /** Preserve the last active presentation while it slides out. Data hooks still
@@ -17,6 +17,7 @@ export default function HorizontalSwipePages<T extends string>({sections, active
   renderPage: (page: T) => React.ReactNode; fill?: boolean; moving?: boolean; minHeight?: number;
 }) {
   const [measured, setMeasured] = useState<Record<string, {width: number; height: number}>>({});
+  const translateX = useMemo(() => Animated.multiply(position, -width), [position, width]);
   const activeIndex = sections.indexOf(active), centerIndex = sections.indexOf(center);
   const height = Math.max(minHeight, ...sections.map((section, index) => {
     const relevant = section === active || (moving && (Math.abs(index - activeIndex) <= 1 || Math.abs(index - centerIndex) <= 1));
@@ -24,7 +25,7 @@ export default function HorizontalSwipePages<T extends string>({sections, active
   }));
   return <View style={[styles.clip, {width}, fill ? styles.fill : {height}]}>
     <Animated.View style={[styles.track, {width: width * sections.length,
-      transform: [{translateX: Animated.multiply(position, -width)}]}]}>
+      transform: [{translateX}]}]}>
       {sections.map((section, index) => <View key={section}
         pointerEvents={!moving && section === active ? 'auto' : 'none'}
         accessibilityElementsHidden={section !== active} importantForAccessibility={section === active ? 'auto' : 'no-hide-descendants'}

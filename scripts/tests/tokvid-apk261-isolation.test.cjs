@@ -64,7 +64,7 @@ test("APK261 own profile: preserve sticky, six slots, grid geometry, upper route
     'onPress={()=>router.push("/story-create")}',
     '{key:"shared",icon:"share-2",label:"Compartidos"}',
     '{key:"drafts",icon:"file-text",label:"Borradores"}',
-    'onPress={()=>{selectTab(item.key);tabHint.current?.show(item.label,OWN_PROFILE_TABS.indexOf(item.key));}}',
+    'onPress={()=>selectTab(item.key)}',
   ],"owner profile");
   const slotNames=['Videos','Historias','Compartidos','Me gusta','Guardados','Borradores'];
   for(const name of slotNames)assert.ok(source.includes('label:"'+name+'"'),"Missing approved section "+name);
@@ -100,6 +100,6 @@ test("B11 changes only the own-profile refresh connection while preserving the h
   const source=readMobile("app/(tabs)/profile.tsx");
   assert.ok(source.includes('<ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh}'));
   assert.ok(source.includes("<View {...tabSwipeResponder.panHandlers}>"));
-  assert.ok(source.includes("useSectionSwipe(OWN_PROFILE_TABS,tab,width,setTab,isOwnProfileHorizontalMove)"));
+  assert.ok(source.includes("useSectionSwipe(OWN_PROFILE_TABS,tab,width,selectWithHint,isOwnProfileHorizontalMove)"));
   assert.ok(!source.includes("setTab('more')"));
 });

@@ -66,8 +66,8 @@ test('profile indicator is 22dp, matches lower-bar grey, and stays centered at e
  const s=flat(Indicator({position,tabWidth:width/6}).props.style);assert.equal(s.width,22);assert.equal(s.height,2);assert.equal(s.backgroundColor,v.referenceVisual.label);assert.ok(Math.abs(s.left+s.transform[0].translateX+11-(position+.5)*width/6)<1e-6);}
  const inbox=flat(Indicator({position:.5,tabWidth:180,markerWidth:97,color:'#25F4EE'}).props.style);assert.equal(inbox.width,97);assert.equal(inbox.backgroundColor,'#25F4EE');assert.equal(inbox.height,2);
 });
-test('approved pull files and data hooks are unchanged; pager is below the strip and includes blank footer',()=>{
- for(const [f,sha] of [['components/OwnProfileMagneticRefresh.tsx','58d5b80d8153223cd904fc8c637a8b90c5663b2e'],['lib/features/profile/ownProfilePull.ts','e1320754a3ffcb9c0694c3a7e1f78d271cab8f24']]){const b=fs.readFileSync(path.join(root,f));assert.equal(crypto.createHash('sha1').update(Buffer.concat([Buffer.from('blob '+b.length+'\0'),b])).digest('hex'),sha)}
+test('authorized pull revision is pinned; pager remains below the strip and includes blank footer',()=>{
+ for(const [f,sha] of [['components/OwnProfileMagneticRefresh.tsx',require('../fixtures/profile-gesture-refinement-hashes.json').files['components/OwnProfileMagneticRefresh.tsx']],['lib/features/profile/ownProfilePull.ts',require('../fixtures/profile-gesture-refinement-hashes.json').files['lib/features/profile/ownProfilePull.ts']]]){const b=fs.readFileSync(path.join(root,f));assert.equal(crypto.createHash('sha1').update(Buffer.concat([Buffer.from('blob '+b.length+'\0'),b])).digest('hex'),sha)}
  const profile=fs.readFileSync(path.join(root,'app/(tabs)/profile.tsx'),'utf8');const start=profile.indexOf('<View {...tabSwipeResponder.panHandlers}>'),end=profile.indexOf('</ProfilePullRefresh>',start);const region=profile.slice(start,end);
  assert.ok(region.includes('scrollViewportHeight-39-'));assert.ok(region.indexOf('insets.bottom + 80')<region.lastIndexOf('</View>'));assert.ok(profile.indexOf('styles.tabBar')<start);assert.ok(profile.includes('key={user.id} sections={OWN_PROFILE_TABS}'));
 });

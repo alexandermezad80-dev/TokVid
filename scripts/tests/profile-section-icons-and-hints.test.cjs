@@ -98,13 +98,13 @@ test('leaving the profile cancels delayed work and an unfinished fade', () => {
     assert.equal(h.timers.size, 0); assert.equal(h.updates, updates);
   }
 });
-test('approved magnetic refresh remains byte-identical while the strip keeps its indicator and old palette', () => {
+test('owner-requested refresh revision is pinned while the approved strip and palette remain intact', () => {
   for (const [file, expected] of [
-    ['components/OwnProfileMagneticRefresh.tsx', '58d5b80d8153223cd904fc8c637a8b90c5663b2e'],
-    ['lib/features/profile/ownProfilePull.ts', 'e1320754a3ffcb9c0694c3a7e1f78d271cab8f24'],
+    ['components/OwnProfileMagneticRefresh.tsx', require('../fixtures/profile-gesture-refinement-hashes.json').files['components/OwnProfileMagneticRefresh.tsx']],
+    ['lib/features/profile/ownProfilePull.ts', require('../fixtures/profile-gesture-refinement-hashes.json').files['lib/features/profile/ownProfilePull.ts']],
   ]) {const b = fs.readFileSync(path.join(root, file)); assert.equal(crypto.createHash('sha1').update(Buffer.concat([Buffer.from('blob ' + b.length + '\0'), b])).digest('hex'), expected);}
   const source = fs.readFileSync(path.join(root, 'app/(tabs)/profile.tsx'), 'utf8');
   assert.ok(source.includes('<ProfileSectionIcon name={item.key} size={22} color={previewTab===item.key?v.ink:v.inactive}/>'));
-  assert.ok(source.includes('<SwipePositionUnderline position={pagePosition} tabWidth={width/6}/>'));
+  assert.ok(source.includes('<SwipePositionUnderline position={pagePosition} tabWidth={width/6} selectedIndex={OWN_PROFILE_TABS.indexOf(tab)} moving={swipeMoving}/>'));
   assert.ok(source.includes('height:39')); assert.ok(source.includes('width:width/6,flex:0'));
 });

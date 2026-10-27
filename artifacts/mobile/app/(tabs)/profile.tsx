@@ -49,6 +49,8 @@ function avatarUrl(user: any, profile: any): string {
   return user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? "";
 }
 
+const profileSectionNames: Record<OwnProfileTab,string> = {videos:"Videos",stories:"Historias",shared:"Compartidos",liked:"Me gusta",saved:"Guardados",drafts:"Borradores"};
+
 export default function ProfileScreen() {
   const {width}=useWindowDimensions();
   const tileWidth=Math.max(1,(Math.floor(width)-8)/3);
@@ -56,8 +58,13 @@ export default function ProfileScreen() {
   const [expanded,setExpanded]=useState(false),[menu,setMenu]=useState(false);
   const connections=useMyConnections();
   const [tab, setTab] = useState<OwnProfileTab>("videos");
+  const tabHint=useRef<ProfileTabHintHandle>(null);
+  const selectWithHint=useCallback((next: OwnProfileTab)=>{
+    setTab(next);
+    tabHint.current?.show(profileSectionNames[next],OWN_PROFILE_TABS.indexOf(next));
+  },[]);
   const {position:pagePosition,preview:previewTab,moving:swipeMoving,responder:tabSwipeResponder,select:selectTab} =
-    useSectionSwipe(OWN_PROFILE_TABS,tab,width,setTab,isOwnProfileHorizontalMove);
+    useSectionSwipe(OWN_PROFILE_TABS,tab,width,selectWithHint,isOwnProfileHorizontalMove);
   const [scrollViewportHeight, setScrollViewportHeight] = useState(0);
   const [profileSectionHeight, setProfileSectionHeight] = useState(0);
   const [filtersPinned,setFiltersPinned]=useState(false);
@@ -110,7 +117,6 @@ export default function ProfileScreen() {
       if(results.some(result=>result.status==='rejected'))Alert.alert('No se pudo actualizar el perfil','Comprueba tu conexión e inténtalo de nuevo.');
     }finally{refreshGuard.current=false;setRefreshing(false);}
   },[user?.id,refreshProfile,connections.refresh,publications.refresh,refreshSaved,refreshLikes,shared.refresh,drafts.refresh,likedHistory.refresh,tab]);
-  const tabHint=useRef<ProfileTabHintHandle>(null);
   if (!user) return null;
   const confirmRemoveDraft=(id:string)=>{
     if(removingDraftId)return;
@@ -299,7 +305,8 @@ export default function ProfileScreen() {
       </ReferenceHeader>
       <ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh}
         style={{flex:1}} stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false} overScrollMode="never"
-        scrollEventThrottle={16}
+        scrollEventThrottle={16} decelerationRate="fast" scrollEnabled={!swipeMoving}
+        headerSnapHeight={profileSectionHeight} horizontalMoving={swipeMoving}
         onScroll={event=>{
       scrollOffsetRef.current=Math.max(0,event.nativeEvent.contentOffset.y);
           const pinned=event.nativeEvent.contentOffset.y>=Math.max(1,profileSectionHeight-1);
@@ -337,7 +344,7 @@ export default function ProfileScreen() {
       <View style={[styles.stickySlot,{width,elevation:filtersPinned?1:0,shadowOpacity:filtersPinned?0.05:0}]}>
   <View style={styles.tabBar}>{([
         {key:"videos",icon:"grid",label:"Videos"},{key:"stories",icon:"clock",label:"Historias"},{key:"shared",icon:"share-2",label:"Compartidos"},{key:"liked",icon:"heart",label:"Me gusta"},{key:"saved",icon:"bookmark",label:"Guardados"},{key:"drafts",icon:"file-text",label:"Borradores"},
-      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>{selectTab(item.key);tabHint.current?.show(item.label,OWN_PROFILE_TABS.indexOf(item.key));}} style={[styles.tabItem,{width:width/6,flex:0},tab===item.key&&styles.tabItemActive]}><ProfileSectionIcon name={item.key} size={22} color={previewTab===item.key?v.ink:v.inactive}/></TouchableOpacity>)}<SwipePositionUnderline position={pagePosition} tabWidth={width/6}/></View>
+      ] as const).map(item=><TouchableOpacity key={item.key} accessibilityLabel={item.label} accessibilityState={{selected:tab===item.key}} onPress={()=>selectTab(item.key)} style={[styles.tabItem,{width:width/6,flex:0},tab===item.key&&styles.tabItemActive]}><ProfileSectionIcon name={item.key} size={22} color={previewTab===item.key?v.ink:v.inactive}/></TouchableOpacity>)}<SwipePositionUnderline position={pagePosition} tabWidth={width/6} selectedIndex={OWN_PROFILE_TABS.indexOf(tab)} moving={swipeMoving}/></View>
         {filtersPinned&&<>
           <View pointerEvents="none" style={styles.stickyTopShade}/>
           <View pointerEvents="none" style={styles.stickyBottomShade}/>

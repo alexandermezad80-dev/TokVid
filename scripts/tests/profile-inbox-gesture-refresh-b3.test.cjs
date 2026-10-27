@@ -3,7 +3,7 @@ const root=path.resolve(__dirname,"../../artifacts/mobile"),read=s=>fs.readFileS
 const swipe=read("hooks/useSectionSwipe.ts");
 const profile=read("app/(tabs)/profile.tsx"),inbox=read("app/(tabs)/inbox.tsx"),empty=read("components/RefreshableInboxEmpty.tsx");
 test("B1 captures only horizontal profile swipes before nested native ScrollView",()=>{
- assert.ok(profile.includes("useSectionSwipe(OWN_PROFILE_TABS,tab,width,setTab,isOwnProfileHorizontalMove)"));
+ assert.ok(profile.includes("useSectionSwipe(OWN_PROFILE_TABS,tab,width,selectWithHint,isOwnProfileHorizontalMove)"));
  assert.ok(swipe.includes("onMoveShouldSetPanResponderCapture:"));
  assert.ok(profile.includes("stickyHeaderIndices={[1]}"));
 });

@@ -284,3 +284,22 @@ test('B8 actual owner gesture follows the finger in both directions before relea
  assert.equal(nodes(tree).find(n=>n.props.accessibilityState?.selected===true).props.accessibilityLabel,'Me gusta');
  assert.ok(nodes(tree).some(n=>n.type==='SwipePositionUnderline'));
 });
+
+
+test('section names appear for both manual selection and a completed swipe, with the marker tied to the selected tab at rest', () => {
+  const r=runtime(), Profile=r.load('app/(tabs)/profile.tsx').default;
+  let tree=r.render(Profile); const hints=[];
+  nodes(tree).find(n=>n.type==='ProfileTabHint').props.ref.current={show:(label,index)=>hints.push([label,index])};
+  nodes(tree).find(n=>n.props.accessibilityLabel==='Guardados').props.onPress(); tree=r.render(Profile);
+  assert.deepEqual(hints.at(-1),['Guardados',4]);
+  let indicator=nodes(tree).find(n=>n.type==='SwipePositionUnderline');
+  assert.equal(indicator.props.selectedIndex,4); assert.equal(indicator.props.moving,false);
+  const pan=nodes(tree).find(n=>n.props.onPanResponderGrant);
+  pan.props.onPanResponderGrant(); pan.props.onPanResponderMove({}, {dx:120,dy:0});
+  tree=r.render(Profile); assert.equal(nodes(tree).find(n=>n.type==='OwnProfileMagneticRefresh').props.scrollEnabled,false);
+  pan.props.onPanResponderRelease({}, {dx:120,vx:0}); tree=r.render(Profile);
+  assert.deepEqual(hints.at(-1),['Me gusta',3]);
+  indicator=nodes(tree).find(n=>n.type==='SwipePositionUnderline');
+  assert.equal(indicator.props.selectedIndex,3); assert.equal(indicator.props.moving,false);
+  assert.equal(nodes(tree).find(n=>n.type==='OwnProfileMagneticRefresh').props.scrollEnabled,true);
+});

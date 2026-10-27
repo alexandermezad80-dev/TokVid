@@ -5,7 +5,7 @@ const profile=fs.readFileSync(path.join(root,"app/(tabs)/profile.tsx"),"utf8");
 const icon=fs.readFileSync(path.join(root,"components/TokvidProfileIcon.tsx"),"utf8");
 test("C3 only own private drafts in sixth slot; protected navigations and sticky unchanged",()=>{
  assert.match(profile,/\{key:"drafts",icon:"file-text",label:"Borradores"\}/);
- assert.match(profile,/onPress=\{\(\)=>\{selectTab\(item\.key\);tabHint\.current\?\.show\(item\.label,OWN_PROFILE_TABS\.indexOf\(item\.key\)\);\}\}/);
+ assert.match(profile,/onPress=\{\(\)=>selectTab\(item\.key\)\}/);
  assert.match(profile,/useLocalPublicationDrafts\(user\?\.id,tab==="drafts"\)/);
  assert.match(profile,/stickyHeaderIndices=\{\[1\]\}/);
  assert.match(profile,/width:width\/6,flex:0/);

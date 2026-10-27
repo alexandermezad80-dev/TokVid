@@ -27,7 +27,7 @@ function runtime() {
     creates++; return {position, width, read: () => position.value * width};
   }};
   const Indicator = load('components/SwipePositionUnderline.tsx', {react,
-    'react-native': {Animated, StyleSheet: {create: x => x}},
+    'react-native': {Animated, View:'View', StyleSheet: {create: x => x}},
     '../constants/referenceVisual': {referenceVisual: {label: '#5B6670'}},
   }).default;
   return {render(props) {cursor = 0; return flat(Indicator(props).props.style);}, get creates() {return creates;}};
@@ -64,11 +64,28 @@ test('marker recalculates for a new width or position owner, retaining 22dp and 
   assert.equal(inbox.left + inbox.transform[0].translateX.read() + 97 / 2, 270);
 });
 
-test('approved swipe controller, pager and Inbox integration remain byte-identical to APK310', () => {
+test('approved swipe controller and Inbox remain unchanged; authorized pager graph stabilization is pinned', () => {
   const crypto = require('node:crypto');
-  const expected = require('../fixtures/apk310-swipe-hashes.json');
+  const expected = {...require('../fixtures/apk310-swipe-hashes.json'),
+    'components/HorizontalSwipePages.tsx': require('../fixtures/profile-gesture-refinement-hashes.json').files['components/HorizontalSwipePages.tsx']};
   for (const [file, sha] of Object.entries(expected)) {
     const b = fs.readFileSync(path.join(root, file));
     assert.equal(crypto.createHash('sha1').update(Buffer.concat([Buffer.from('blob ' + b.length + '\0'), b])).digest('hex'), sha, file);
   }
+});
+
+
+test('manual profile selection positions the resting indicator even when native position is stale', () => {
+  const r=runtime(), position={value:0};
+  for(const selectedIndex of [2,3,4,5,1,0]) {
+    const s=r.render({position,tabWidth:60,selectedIndex,moving:false});
+    assert.equal(s.transform[0].translateX,selectedIndex*60);
+    position.value=5-selectedIndex; // A late native value cannot override a manual selection.
+    assert.equal(r.render({position,tabWidth:60,selectedIndex,moving:false}).transform[0].translateX,selectedIndex*60);
+  }
+  position.value=2.4;
+  const moving=r.render({position,tabWidth:60,selectedIndex:2,moving:true});
+  assert.equal(moving.transform[0].translateX.read(),144);
+  const landed=r.render({position,tabWidth:60,selectedIndex:3,moving:false});
+  assert.equal(landed.transform[0].translateX,180);
 });

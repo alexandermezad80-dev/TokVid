@@ -17,10 +17,12 @@ function load(file, modules = {}, extra = '') {
   return exports;
 }
 const math = load('lib/features/profile/ownProfilePull.ts');
+const snapMath = load('lib/features/profile/profileHeaderSnap.ts');
 const tuning = math.OWN_PROFILE_PULL;
 function harness(onRefresh = async () => {}, initial = {}) {
   const slots = [], effects = [], animations = [], gestures = [], scheduled = [];
-  let cursor = 0, tree;
+  let cursor = 0, tree, currentTranslation = 0;
+  const scrollCalls = [];
   const same = (a, b) => a && b && a.length === b.length && a.every((v, i) => Object.is(v, b[i]));
   const memo = (fn, deps) => {const i = cursor++; if (!slots[i] || !same(slots[i].deps, deps)) slots[i] = {deps, value: fn()}; return slots[i].value;};
   const react = {useRef: value => memo(() => ({current: value}), []), useMemo: memo,
@@ -30,13 +32,14 @@ function harness(onRefresh = async () => {}, initial = {}) {
   class Builder {
     constructor(kind) {this.kind = kind; this.handlers = {}; this.options = {}; gestures.push(this);}
   }
-  for (const key of ['manualActivation', 'maxPointers', 'shouldCancelWhenOutside', 'disallowInterruption']) Builder.prototype[key] = function (v) {this.options[key] = v; return this;};
-  for (const key of ['onTouchesDown', 'onTouchesMove', 'onUpdate', 'onEnd', 'onFinalize']) Builder.prototype[key] = function (v) {this.handlers[key] = v; return this;};
+  for (const key of ['manualActivation', 'maxPointers', 'averageTouches', 'shouldCancelWhenOutside', 'disallowInterruption']) Builder.prototype[key] = function (v) {this.options[key] = v; return this;};
+  for (const key of ['onTouchesDown', 'onTouchesMove', 'onStart', 'onUpdate', 'onEnd', 'onFinalize']) Builder.prototype[key] = function (v) {this.handlers[key] = v; return this;};
   const reanimated = {
     __esModule: true, default: {View: 'AnimatedView', ScrollView: 'AnimatedScrollView'},
     useSharedValue: value => memo(() => {let current = value; return {get value() {return current;}, set value(next) {if (next?.spring) {this.animation = next; animations.push(next); current = next.target;} else current = next;}};}, []),
     useAnimatedStyle: fn => ({get transform() {return fn().transform;}}),
-    useAnimatedScrollHandler: fn => fn,
+    useAnimatedScrollHandler: handlers => Object.assign(event => handlers.onScroll(event), {handlers}),
+    useAnimatedRef: () => memo(() => ({current: null}), []), scrollTo: (ref, x, y, animated) => scrollCalls.push({x, y, animated}),
     withSpring: (target, config, completion) => ({spring: true, target, config, completion}),
     cancelAnimation: value => {value.animation?.completion?.(false); value.animation = null;},
     runOnJS: fn => (...args) => {const result = fn(...args); if (result?.then) scheduled.push(result); return result;},
@@ -47,21 +50,23 @@ function harness(onRefresh = async () => {}, initial = {}) {
     'react-native-gesture-handler': {GestureDetector: 'Detector', Gesture: {Native: () => new Builder('native'), Pan: () => new Builder('pan'), Exclusive: (...items) => ({mode: 'exclusive', items})}},
     './PullRefreshUnderHeader': {__esModule: true, default: 'LegacyPull'},
     '../lib/features/profile/ownProfilePull': math,
+    '../lib/features/profile/profileHeaderSnap': snapMath,
   };
   const component = load('components/OwnProfileMagneticRefresh.tsx', modules, '\nexport {AndroidProfilePull};');
   let props = {scrollOffsetRef: {current: 0}, refreshing: false, onRefresh, children: ['details', 'sticky', 'grid'], stickyHeaderIndices: [1], scrollEventThrottle: 16, ...initial};
   const render = patch => {props = {...props, ...patch}; cursor = 0; tree = component.AndroidProfilePull(props); effects.splice(0).forEach(fn => fn()); return tree;};
   render(); tree.props.onLayout({nativeEvent: {layout: {height: 700}}});
   const pan = () => gestures.filter(g => g.kind === 'pan').at(-1).handlers;
-  const manager = {activations: 0, failures: 0, activate() {this.activations++;}, fail() {this.failures++;}};
+  const manager = {activations: 0, failures: 0, activate() {this.activations++; pan().onStart({translationY:currentTranslation});}, fail() {this.failures++;}};
   const touch = (x, y, count = 1) => ({allTouches: [{absoluteX: x, absoluteY: y}], numberOfTouches: count});
   return {
-    get tree() {return tree;}, get props() {return props;}, gestures, animations, render, manager, pan, touch,
+    get tree() {return tree;}, get props() {return props;}, gestures, animations, render, manager, pan, touch, scrollCalls,
     get offset() {return flat(nodes(tree).find(n => n.props.testID === 'own-profile-pull-moving').props.style).transform[0].translateY;},
     start() {pan().onTouchesDown(touch(100, 100), manager);},
-    move(dx, dy) {pan().onTouchesMove(touch(100 + dx, 100 + dy), manager); pan().onUpdate({absoluteY: 100 + dy});},
+    move(dx, dy) {currentTranslation = dy; pan().onTouchesMove(touch(100 + dx, 100 + dy), manager); pan().onUpdate({absoluteY: 100 + dy, translationY: dy});},
     release(success = true) {pan().onEnd({}, success); pan().onFinalize();},
     scroll(y) {nodes(tree).find(n => n.type === 'AnimatedScrollView').props.onScroll({contentOffset: {x: 0, y}});},
+    boundary(kind, y) {nodes(tree).find(n => n.type === 'AnimatedScrollView').props.onScroll.handlers[kind]({contentOffset: {x:0, y}});},
     settle() {animations.at(-1)?.completion?.(true);},
     async flush() {await Promise.all(scheduled);},
     unmount() {slots.forEach(s => s?.cleanup?.());},
@@ -79,17 +84,18 @@ test('B11 long pull grows continuously beyond the old 156dp cap with decreasing 
       assert.ok(nextGain <= gain + 1e-9);
       previous = offset; gain = nextGain;
     }
-    assert.ok(math.profilePullOffset(height, height) > height * 0.8);
+    assert.ok(math.profilePullOffset(height, height) > height * 0.5);
   }
-  assert.ok(math.profilePullOffset(600, 700) > 500);
+  assert.ok(math.profilePullOffset(600, 700) > 300);
   assert.equal(math.profilePullOffset(Number.MAX_VALUE, 700), 700);
   for (const d of [NaN, Infinity, -1]) assert.equal(math.profilePullOffset(d, 700), 0);
 });
-test('B11 resumed pull preserves its position; horizontal, upward, multitouch and scrolled gestures yield', () => {
+test('B11 resumed pull preserves its position; horizontal, upward, excess pointers and scrolled gestures yield', () => {
   for (const distance of [1, 50, 200, 600, 1500]) assert.ok(Math.abs(math.profilePullDistance(math.profilePullOffset(distance, 700), 700) - distance) < 1e-7);
   assert.equal(math.profilePullIntent(1, 30, 0, 1), 'pull');
+  assert.equal(math.profilePullIntent(1, 30, 0, 2), 'pull');
   assert.equal(math.profilePullIntent(2, 3, 0, 1), 'wait');
-  for (const args of [[70, 5, 0, 1], [0, -50, 0, 1], [0, 50, 15, 1], [0, 50, 0, 2], [NaN, 50, 0, 1]]) assert.equal(math.profilePullIntent(...args), 'yield');
+  for (const args of [[70, 5, 0, 1], [0, -50, 0, 1], [0, 50, 15, 1], [0, 50, 0, 3], [NaN, 50, 0, 1]]) assert.equal(math.profilePullIntent(...args), 'yield');
 });
 test('B11 physical clipping moves the original blue circle and content in one layer with a constant gap', () => {
   const h = harness(), all = nodes(h.tree), moving = all.find(n => n.props.testID === 'own-profile-pull-moving');
@@ -102,7 +108,7 @@ test('B11 physical clipping moves the original blue circle and content in one la
   const scroll = nodes(moving).find(n => n.type === 'AnimatedScrollView');
   assert.equal(scroll.props.refreshControl, undefined);
   assert.deepEqual(scroll.props.stickyHeaderIndices, [1]); assert.deepEqual(scroll.props.children, ['details', 'sticky', 'grid']);
-  h.start(); h.move(0, 20); h.move(0, 620); assert.ok(h.offset > 500);
+  h.start(); h.move(0, 20); h.move(0, 620); assert.ok(h.offset > 300);
   assert.equal(flat(indicator.props.style).top + flat(indicator.props.style).height, -tuning.indicatorGap);
 });
 test('B11 short, cancelled and horizontal pulls never request data', () => {
@@ -146,4 +152,58 @@ test('B11 leaves the non-Android legacy refresher and scroll props intact', () =
   const h = harness(), tree = h.legacy();
   assert.equal(tree.type, 'LegacyPull'); assert.equal(tree.props.maxPull, 156); assert.equal(tree.props.holdDistance, 72); assert.equal(tree.props.holdWhileRefreshing, true);
   assert.equal(tree.props.children.type, 'ScrollView'); assert.deepEqual(tree.props.children.props.stickyHeaderIndices, [1]);
+});
+
+
+test('firmer pull uses less travel for the same finger distance and keeps a non-overshooting return', () => {
+  for (const d of [30, 60, 100, 200]) assert.ok(math.profilePullOffset(d, 700) <= d * 0.6);
+  assert.ok(math.profilePullOffset(tuning.triggerDistance, 700) > tuning.holdDistance);
+  assert.equal(tuning.spring.overshootClamping, true);
+  assert.ok(tuning.spring.stiffness > 320);
+});
+
+test('adding and removing a second pointer preserves pull position despite absolute pointer jumps', async () => {
+  let calls=0; const h=harness(()=>{calls++;});
+  h.start(); h.move(0,20); h.move(0,120); const before=h.offset, failures=h.manager.failures;
+  const config=h.gestures.find(g=>g.kind==='pan').options;
+  assert.equal(config.maxPointers,2); assert.equal(config.averageTouches,true);
+  h.pan().onTouchesDown(h.touch(300,800,2),h.manager);
+  h.pan().onUpdate({absoluteY:800,translationY:120,numberOfPointers:2});
+  assert.equal(h.offset,before); assert.equal(h.manager.failures,failures); assert.equal(calls,0);
+  h.pan().onUpdate({absoluteY:900,translationY:220,numberOfPointers:2}); assert.ok(h.offset>before);
+  const two=h.offset;
+  h.pan().onUpdate({absoluteY:100,translationY:220,numberOfPointers:1}); assert.equal(h.offset,two); assert.equal(calls,0);
+  h.pan().onUpdate({absoluteY:200,translationY:320,numberOfPointers:1}); h.release();
+  assert.equal(calls,1); await h.flush(); assert.equal(h.offset,0);
+});
+
+test('header snap waits for vertical release, collapses after a deliberate rise and returns fully on descent', () => {
+  const h=harness(async()=>{}, {headerSnapHeight:180});
+  h.boundary('onBeginDrag',0); h.scroll(90); assert.equal(h.scrollCalls.length,0);
+  h.boundary('onEndDrag',90); assert.deepEqual(h.scrollCalls.at(-1),{x:0,y:180,animated:true});
+  h.boundary('onBeginDrag',180); h.scroll(140); assert.equal(h.scrollCalls.length,1);
+  h.boundary('onEndDrag',140); assert.deepEqual(h.scrollCalls.at(-1),{x:0,y:0,animated:true});
+  h.boundary('onBeginDrag',0); h.boundary('onEndDrag',25); assert.equal(h.scrollCalls.at(-1).y,0);
+  const count=h.scrollCalls.length;
+  h.boundary('onBeginDrag',350); h.boundary('onEndDrag',250); h.boundary('onMomentumEnd',220);
+  assert.equal(h.scrollCalls.length,count,'grid scrolling past the header is unrestricted');
+});
+
+test('header snap never reacts to horizontal motion, an ongoing vertical touch, or refresh', () => {
+  const h=harness(async()=>{}, {headerSnapHeight:180,horizontalMoving:true});
+  h.boundary('onBeginDrag',0); h.boundary('onEndDrag',90); assert.equal(h.scrollCalls.length,0);
+  h.render({horizontalMoving:false}); h.boundary('onBeginDrag',0); h.boundary('onMomentumEnd',90); assert.equal(h.scrollCalls.length,0);
+  h.render({refreshing:true}); h.boundary('onEndDrag',90); assert.equal(h.scrollCalls.length,0);
+});
+
+test('header snap handles measured heights and never traps normal grid scrolling', () => {
+  assert.equal(snapMath.profileHeaderSnap(0,71,180),0);
+  assert.equal(snapMath.profileHeaderSnap(0,72,180),180);
+  for(const height of [80,180,300]) {
+    assert.equal(snapMath.profileHeaderSnap(0,height/2,height),height);
+    assert.equal(snapMath.profileHeaderSnap(height,height-20,height),0);
+    assert.equal(snapMath.profileHeaderSnap(height+100,height+40,height),null);
+    assert.equal(snapMath.profileHeaderSnap(height/2,height/2+2,height),null);
+  }
+  for(const height of [0,NaN,Infinity]) assert.equal(snapMath.profileHeaderSnap(0,80,height),null);
 });

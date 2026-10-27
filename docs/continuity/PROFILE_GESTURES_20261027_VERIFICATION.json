@@ -1,0 +1,18 @@
+{
+  "base_commit": "2b3c2ba7c3f0b8036310cd46b2836fdf87efb1f0",
+  "branch": "feature/feed-mini-video-avatar",
+  "scope": "own profile indicator, swipe labels/stability, firmer two-pointer pull and header snap",
+  "local_tests_passed": 355,
+  "local_tests_failed": 0,
+  "ci_verified": false,
+  "physical_device_verified": false,
+  "emulator_verified": false,
+  "protected_hashes_preserved": 18,
+  "latest_feedback": "APK311 icon artwork and manual names approved; manual indicator defect remains; new gesture tuning requested",
+  "excluded": [
+    "thumbnail indicator relocation (notes only)",
+    "automatic Feed refresh",
+    "visited-profile pull",
+    "other UI"
+  ]
+}
