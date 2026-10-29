@@ -15,7 +15,7 @@ test("APK261 visitor: original identity/header/chat/follow/stats/privacy and sti
    "<FollowButton userId={profile.id}/>",
    "record_profile_visit",
    "<ProfileTabBar/>",
-   "<ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh}>",
+   "<ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh} key={userId}",
    "onPress={()=>router.back()}",
    "onPress={()=>connections('followers')}",
    "onPress={()=>connections('following')}",

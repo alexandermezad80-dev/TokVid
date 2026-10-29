@@ -164,7 +164,7 @@ test('visited profile keeps its footer below a flexible body during loading, fai
   for(const state of [{loading:true},{missing:true},{}]) {
     const r=runtime({visited:true,...state}),tree=r.render(r.load('app/user-profile.tsx').default),all=nodes(tree);
     const body=all.find(n=>n.props.testID==='visited-profile-body');assert.equal(flat(body.props.style).flex,1);
-    assert.ok(all.some(n=>n.type==='ProfileTabBar'));const scroll=all.find(n=>n.type==='ScrollView');
+    assert.ok(all.some(n=>n.type==='ProfileTabBar'));const scroll=all.find(n=>n.type==='VisitedProfileRefresh');
     if(state.loading||state.missing){assert.equal(scroll,undefined);continue;}
     assert.deepEqual(Array.from(scroll.props.stickyHeaderIndices),[1]);assert.ok(!nodes(scroll).some(n=>n.type==='ReferenceHeader'));
     assert.equal(flat(scroll.props.children.flat().filter(Boolean)[1].props.style).height,39);
@@ -174,12 +174,12 @@ test('visited profile keeps its footer below a flexible body during loading, fai
     scroll.props.onLayout({nativeEvent:{layout:{height:580}}});
     scroll.props.children.flat().filter(Boolean)[0].props.onLayout({nativeEvent:{layout:{height:180}}});
     const rerendered=r.render(r.load('app/user-profile.tsx').default);
-    assert.equal(nodes(rerendered).find(n=>n.type==='ScrollView').props.contentContainerStyle.minHeight,760);
-    const sc=nodes(rerendered).find(n=>n.type==='ScrollView');
+    assert.equal(nodes(rerendered).find(n=>n.type==='VisitedProfileRefresh').props.contentContainerStyle.minHeight,760);
+    const sc=nodes(rerendered).find(n=>n.type==='VisitedProfileRefresh');
     sc.props.onScroll({nativeEvent:{contentOffset:{y:180}}});
-    const scPinned=nodes(r.render(r.load('app/user-profile.tsx').default)).find(n=>n.type==='ScrollView');
+    const scPinned=nodes(r.render(r.load('app/user-profile.tsx').default)).find(n=>n.type==='VisitedProfileRefresh');
     assert.equal(flat(scPinned.props.children.flat().filter(Boolean)[1].props.style).shadowOpacity,0.05);
-    assert.ok(nodes(r.render(r.load('app/user-profile.tsx').default)).some(n=>n.type==='ProfilePullRefresh'));
+    assert.ok(nodes(r.render(r.load('app/user-profile.tsx').default)).some(n=>n.type==='VisitedProfileRefresh'));
     all.find(n=>n.type==='TouchableOpacity'&&nodes(n).some(c=>c.type==='PublicationThumbnail')).props.onPress();assert.deepEqual(r.calls.at(-1),['push',{pathname:'/publication',params:{id:'video-one'}}]);
     all.find(n=>n.type==='TouchableOpacity'&&nodes(n).some(c=>c.type==='Text'&&[c.props.children].flat().includes('Mensajes'))).props.onPress();
     await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(r.calls.at(-1),['push','/chat?conversationId=conversation&otherUserId=other&otherUsername=Alexander&otherAvatar=photo']);
@@ -218,13 +218,13 @@ test('pull-to-refresh updates own real sources without changing tabs or navigati
 });
 test('pull-to-refresh in visited profile preserves its sticky row and footer',async()=>{
   const r=runtime({visited:true}),Profile=r.load('app/user-profile.tsx').default;
-  let tree=r.render(Profile),scroll=nodes(tree).find(n=>n.type==='ScrollView');
-  await nodes(tree).find(n=>n.type==='ProfilePullRefresh').props.onRefresh();
+  let tree=r.render(Profile),scroll=nodes(tree).find(n=>n.type==='VisitedProfileRefresh');
+  await nodes(tree).find(n=>n.type==='VisitedProfileRefresh').props.onRefresh();
   tree=r.render(Profile);
-  scroll=nodes(tree).find(n=>n.type==='ScrollView');
+  scroll=nodes(tree).find(n=>n.type==='VisitedProfileRefresh');
   assert.deepEqual(Array.from(scroll.props.stickyHeaderIndices),[1]);
   assert.equal(nodes(tree).filter(n=>n.type==='ProfileTabBar').length,1);
-  assert.equal(nodes(tree).find(n=>n.type==='ProfilePullRefresh').props.refreshing,false);
+  assert.equal(nodes(tree).find(n=>n.type==='VisitedProfileRefresh').props.refreshing,false);
   assert.ok(r.calls.some(c=>c[0]==='refresh-publications'));
 });
 

@@ -1,7 +1,7 @@
 import ProfileTabBar from "../components/ProfileTabBar";
 import TokvidProfileIcon from "../components/TokvidProfileIcon";
 import ReferenceHeader from "../components/reference/ReferenceHeader";
-import ProfilePullRefresh from "../components/ProfilePullRefresh";
+import ProfilePullRefresh from "../components/VisitedProfileRefresh";
 import BrandOutline from "../components/reference/BrandOutline";
 import {referenceVisual as v} from "../constants/referenceVisual";
 import {LinearGradient} from "expo-linear-gradient";
@@ -23,7 +23,6 @@ import {
   Alert,
   Image,
   Platform,
-  ScrollView,
   useWindowDimensions,
   StyleSheet,
   Text,
@@ -180,8 +179,8 @@ export default function UserProfileScreen() {
   return <View onLayout={gridLayout.onLayout} style={styles.container}>
    <ReferenceHeader variant="profile"><TouchableOpacity style={styles.backBtn} onPress={()=>router.back()} accessibilityLabel="Volver"><Feather name="arrow-left" size={24} color="#0B0B0D"/></TouchableOpacity><TouchableOpacity style={styles.backBtn} onPress={()=>connections('friends')} accessibilityLabel="Amigos y seguidores"><Feather name="users" size={22} color="#0B0B0D"/></TouchableOpacity><View style={{flex:1}}/></ReferenceHeader>
    <View testID="visited-profile-body" style={{flex:1,minHeight:0}}>
-   {loading?<View style={[styles.center,{flex:1}]}><ActivityIndicator color="#2F9A9F"/></View>:!profile?<View style={[styles.center,{flex:1}]}><Text style={styles.gridStateTitle}>Usuario no encontrado</Text></View>:<ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh}>
-  <ScrollView style={{flex:1}} stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false} overScrollMode="never"
+   {loading?<View style={[styles.center,{flex:1}]}><ActivityIndicator color="#2F9A9F"/></View>:!profile?<View style={[styles.center,{flex:1}]}><Text style={styles.gridStateTitle}>Usuario no encontrado</Text></View>:<ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh} key={userId}
+      style={{flex:1}} stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false} overScrollMode="never"
       
       scrollEventThrottle={16}
       onScroll={event=>{
@@ -209,7 +208,6 @@ export default function UserProfileScreen() {
     {isLoading?<ActivityIndicator style={{margin:24}} color="#2F9A9F"/>:!shown.length&&!error?<View style={styles.center}><Text style={styles.gridStateText}>Todavía no hay publicaciones en esta sección.</Text></View>:null}
     {(tab==='videos'?publications.hasMore:activityMore)&&<TouchableOpacity disabled={isLoading} style={{padding:20}} onPress={()=>tab==='videos'?void publications.loadMore():setActivityOffset(n=>n+60)}><Text style={[styles.gridStateText,{color:'#2F777B'}]}>Ver más</Text></TouchableOpacity>}
     <View style={{height:24}}/>
-   </ScrollView>
    </ProfilePullRefresh>}
    </View>
    <ProfileTabBar/>

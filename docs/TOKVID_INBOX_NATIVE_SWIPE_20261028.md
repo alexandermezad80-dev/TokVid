@@ -1,3 +1,5 @@
+> **Confirmación del propietario, 29 octubre 2026:** probó APK314 y confirma que el perfil está bien y que los indicadores de Actividad/Mensajes son correctos. Quedan conservados. Reporta que el perfil ajeno no hace pull: [corrección aislada](TOKVID_VISITED_PROFILE_PULL_20261029.md). No se atribuye una prueba exhaustiva de todo Inbox ni de todos los dispositivos.
+
 # TokVid — indicador y swipe nativo de Actividad/Mensajes
 
 28 octubre 2026. Implementación autorizada: «Implementar ahora con amor», después de la auditoría de Inbox. Base real APK313, commit `97ae3a3436477638a1c624f2eb5ce8b4fe984214`, árbol `08c87eff89758d60b7ba750d84a657e51ca2aa28`, rama `feature/feed-mini-video-avatar`. No cambiar de rama ni hacer merge a main.
@@ -43,4 +45,6 @@ Si la prueba física detecta una regresión, revertir exclusivamente el parche I
 
 ## Entrega
 
-Código local implementado; publicación, CI y APK en curso. Completar aquí los enlaces reales, resultados y checksum al terminar. No afirmar una nueva APK entregada hasta existir el artefacto.
+**29 octubre 2026 — APK314 entregada: swipe e indicador de Actividad/Mensajes.** Código `abefa3d476c85b81cb55348effa9b5aeefd986e7`, rama `feature/feed-mini-video-avatar`. [Descargar APK314](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40842006137/artifacts/12884129043): extraer el ZIP e instalar `app-release.apk`. [Compilación](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40842006137); [mapa de fuentes](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40842006137/artifacts/12885235070). SHA256 APK `b29c95827f15c2ad1e406298975a82f206709b927bd4fd3483a26c533456c196`. **377 pruebas CI aprobadas, cero fallos; TypeScript real, prebuild y Android correctos.** `BUILD SUCCESSFUL in 25m 28s`. Indicador manual sincronizado y swipe nativo con inercia y ajuste por página. En código de aplicación solo cambian Inbox y su nuevo paginador; se conservan Perfil aprobado, Feed, refrescos, estilos, datos y controladores compartidos. Sin merge a main. **Prueba física del nuevo gesto pendiente**, especialmente Motorola G05/Android15. Pull más resistente de los perfiles/Inbox, favoritos en tiempo real y Compartidos siguen auditados, sin implementar en esta entrega.
+
+[Manifiesto de verificación](continuity/INBOX_NATIVE_SWIPE_20261029_VERIFICATION.json). Comprobación de CI: [Check chat phase](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40842005961). Los límites de las pruebas locales descritos arriba fueron resueltos por CI con las dependencias bloqueadas; no por instalar o cambiar dependencias de la app.
