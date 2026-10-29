@@ -43,16 +43,16 @@ test("B8 own profile drags only below original tab strip, all 6 views reuse orig
  assert.ok(!profile.includes("interests"));
 });
 test("B8 Inbox: fixed approved tabs and notification buttons, reversible drag only in body",()=>{
- for(const s of ["useSectionSwipe(inboxSections,tab,width,setTab,isInboxHorizontalGesture)",
-   "responder:inboxSwipeResponder","moving={inboxMoving}",
-   "position:inboxPagePosition",
+ for(const s of ["InboxSwipePager key={user.id} ref={inboxPager}",
+   "onMoving={setInboxMoving}","moving={inboxMoving}",
+   "position={inboxPagePosition}",
    "onPress={() => selectTab(t)}",
-   "styles.swipeContent} {...inboxSwipeResponder.panHandlers}",
+   "styles.swipeContent}",
    "renderPage={renderInboxPage}","enabled={section===tab}",
    'onPress={markAllRead}','markRead(n.id)','onPress={goToChat}',
    'onRefresh={handleRefresh}'
  ])assert.ok(inbox.includes(s),s);
- assert.ok(inbox.indexOf('<View style={styles.tabs}>')<inbox.indexOf('<HorizontalSwipePages'));
+ assert.ok(inbox.indexOf('<View style={styles.tabs}>')<inbox.indexOf('<InboxSwipePager key={user.id}'));
 });
 test("B8 same BLUE circular spinner with elastically exposed content stays visible until profile fetch ends",()=>{
  assert.ok(pull.includes('<ActivityIndicator size="small" color={color}/>'));

@@ -1,0 +1,7 @@
+{
+  "authorization": "28 Oct 2026: owner authorizes isolated native swipe and manual indicator fix in Inbox; APK313 profile and shared controllers preserved.",
+  "base_commit": "97ae3a3436477638a1c624f2eb5ce8b4fe984214",
+  "files": {
+    "app/(tabs)/inbox.tsx": "0d7ba440fa482086bffbda5dd767276e756e1bc8"
+  }
+}

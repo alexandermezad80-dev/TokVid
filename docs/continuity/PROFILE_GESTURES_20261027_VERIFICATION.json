@@ -4,7 +4,7 @@
   "scope": "own profile indicator, swipe labels/stability, firmer two-pointer pull and header snap",
   "local_tests_passed": 355,
   "local_tests_failed": 0,
-  "ci_verified": false,
+  "ci_verified": true,
   "physical_device_verified": false,
   "emulator_verified": false,
   "protected_hashes_preserved": 18,
@@ -14,5 +14,28 @@
     "automatic Feed refresh",
     "visited-profile pull",
     "other UI"
-  ]
+  ],
+  "code_commit": "97ae3a3436477638a1c624f2eb5ce8b4fe984214",
+  "tree": "08c87eff89758d60b7ba750d84a657e51ca2aa28",
+  "ci_tests_passed": 366,
+  "ci_tests_failed": 0,
+  "typecheck_passed": true,
+  "native_configuration_passed": true,
+  "new_apk": {
+    "number": 313,
+    "run_id": 40520733561,
+    "url": "https://github.com/alexandermezad80-dev/TokVid/actions/runs/40520733561/artifacts/12740864992",
+    "sha256": "57fc16485c338bba57f7d2a55711a2127938cf9a46c70e42a92ce6a9f20a3848",
+    "source_map_url": "https://github.com/alexandermezad80-dev/TokVid/actions/runs/40520733561/artifacts/12743540271"
+  },
+  "failed_attempt_312": {
+    "run_id": 40520226341,
+    "code_commit": "e937c746ed00fdc186f2ce59159b9c97361c6fb4",
+    "reason": "TS2322 animated scroll ref; no APK generated"
+  },
+  "owner_confirmation": {
+    "date": "2026-10-28",
+    "scope": "Profile behavior observed by owner approved; Inbox manual indicator exception tracked separately; no exhaustive device matrix claimed",
+    "quote": "Ya vi todo funciona correcto lo apruebo"
+  }
 }

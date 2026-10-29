@@ -1,4 +1,10 @@
+> **Actualización 28 octubre:** el usuario confirma «Ya vi todo funciona correcto lo apruebo» respecto de lo observado en Perfil. La excepción informada corresponde al indicador manual de Actividad/Mensajes y se trata por separado. La resistencia progresiva posterior del pull propio/visitado está auditada, pendiente de autorización específica; no se aplica al implementar Inbox. No consta prueba física exhaustiva de toda la aplicación ni de todos los dispositivos.
+
 # TOKVID — revisión del indicador y gestos del Perfil, 27 octubre 2026
+
+## Entrega APK313 — 27 octubre 2026
+
+Código `97ae3a3436477638a1c624f2eb5ce8b4fe984214`, árbol `08c87eff89758d60b7ba750d84a657e51ca2aa28`, rama `feature/feed-mini-video-avatar`. [Descargar APK313](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40520733561/artifacts/12740864992): extraer el ZIP e instalar `app-release.apk`. [Compilación](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40520733561); [mapa de fuentes correspondiente](https://github.com/alexandermezad80-dev/TokVid/actions/runs/40520733561/artifacts/12743540271). SHA256 APK `57fc16485c338bba57f7d2a55711a2127938cf9a46c70e42a92ce6a9f20a3848`. **366 pruebas CI aprobadas, 0 fallos; TypeScript real, configuración nativa y Android correctos.** `BUILD SUCCESSFUL in 18m 38s`. Indicador manual, nombre tras swipe, pull más resistente con dos punteros y ajuste de cabecera implementados; sensación y resultado en teléfono pendientes. Iconos, nombres/estilos aprobados y 18 archivos protegidos conservados. Sin cambios de miniaturas, Feed automático, perfil visitado ni merge a main.
 
 ## Petición y evidencia física
 
@@ -27,10 +33,15 @@ Aplicación: `app/(tabs)/profile.tsx`, `components/SwipePositionUnderline.tsx`, 
 
 Se actualizan los contratos de callback y únicamente los hashes del pull y paginador que esta petición autoriza modificar, fijados en `scripts/fixtures/profile-gesture-refinement-hashes.json`; no se alteran los 18 hashes protegidos ni se eliminan escenarios funcionales.
 
-Localmente se usa adaptador Babel externo para TSX: no sustituye TypeScript semántico. Once pruebas FeedRealtime requieren dependencias completas y se ejecutarán en CI. TypeScript real, CI completo, Android y APK nueva pendientes. **Sin emulador/teléfono conectado:** estos tests simulan eventos; la fluidez, resistencia y continuidad nativa con dos dedos requieren revisión física. No declarar aprobado el indicador hasta confirmación del usuario.
+Localmente se usa adaptador Babel externo para TSX: no sustituye TypeScript semántico. Once pruebas FeedRealtime requieren dependencias completas y se ejecutarán en CI. TypeScript real, 366 pruebas CI, configuración nativa y Android aprobados; APK313 disponible en el bloque superior. **Sin emulador/teléfono conectado:** estos tests simulan eventos; la fluidez, resistencia y continuidad nativa con dos dedos requieren revisión física. No declarar aprobado el indicador hasta confirmación del usuario.
 
 ## Revisión física prevista y reversión
 
 Alternar toque/swipe en las seis secciones, también interrumpiendo el snap; comprobar indicador y nombre, miniaturas y rutas. Jalar con uno, sostener, añadir otro y continuar; retirar uno sin soltar todos; confirmar que no salta ni retorna antes de finalizar. Pull corto no recarga y pull suficiente recarga una sola vez; errores retornan. Subida pequeña conserva perfil, subida regular fija barra bajo cabecera, descenso vuelve a perfil completo; scroll profundo de cuadrícula no queda atrapado. Probar con gestos y tres botones Android, conservando sus insets reales.
 
 Si requiere reversión, limitarla a estos seis archivos de aplicación y sus tests/docs, manteniendo los iconos y nombres de 311 y las demás funciones aprobadas. No revertir toda la rama ni reutilizar una APK histórica como base completa.
+
+
+## Intento intermedio 312
+
+El intento312 (`e937c746ed00fdc186f2ce59159b9c97361c6fb4`, run40520226341) pasó366 pruebas, pero TypeScript detectó TS2322 en la referencia del scroll animado. No ejecutó Gradle ni generó una APK. Se corrigió únicamente el tipo de referencia y su hash de conservación, sin cambiar el comportamiento. La entrega final usa el commit y APK del bloque superior. No confundir número de ejecución fallida con un instalador entregado.

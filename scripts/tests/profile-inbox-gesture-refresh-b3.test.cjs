@@ -8,8 +8,8 @@ test("B1 captures only horizontal profile swipes before nested native ScrollView
  assert.ok(profile.includes("stickyHeaderIndices={[1]}"));
 });
 test("B2 captures horizontal gestures below the approved Inbox tabs",()=>{
- assert.ok(inbox.indexOf("<View style={styles.tabs}>")<inbox.indexOf('<View style={styles.swipeContent} {...inboxSwipeResponder.panHandlers}>'));
- assert.ok(inbox.includes("useSectionSwipe(inboxSections,tab,width,setTab,isInboxHorizontalGesture)"));
+ assert.ok(inbox.indexOf("<View style={styles.tabs}>")<inbox.indexOf('<View style={styles.swipeContent}>'));
+ assert.ok(inbox.includes("InboxSwipePager key={user.id} ref={inboxPager}"));
  assert.ok(swipe.includes("onPanResponderMove:"));
  assert.ok(swipe.includes("(g.numberActiveTouches ?? 1) === 1 && current.current.accepts(g.dx, g.dy)"));
 });

@@ -2,9 +2,8 @@ import {referenceVisual as v} from "../../constants/referenceVisual";
 import ReferenceHeader from "../../components/reference/ReferenceHeader";
 import RefreshableInboxEmpty from "../../components/RefreshableInboxEmpty";
 import PullRefreshUnderHeader from "../../components/PullRefreshUnderHeader";
-import HorizontalSwipePages from "../../components/HorizontalSwipePages";
-import {useSectionSwipe} from "../../hooks/useSectionSwipe";
-import SwipePositionUnderline from "../../components/SwipePositionUnderline";
+import InboxSwipePager, {InboxSwipeIndicator, type InboxSwipePagerHandle} from "../../components/InboxSwipePager";
+import {useSharedValue} from "react-native-reanimated";
 import ClearInboxDialog from "../../lib/features/messages/components/ClearInboxDialog";
 import {activityCounter,activityHasGallery} from "../../lib/features/messages/activity";
 import {useGroupInbox} from "../../hooks/useGroupInbox";
@@ -36,7 +35,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
 import { type AppNotification, useNotifications } from "../../context/NotificationsContext";
 import { supabase } from "../../lib/supabase";
-import {isInboxHorizontalGesture, type InboxSection} from "../../lib/features/messages/inboxSwipe";
+import type {InboxSection} from "../../lib/features/messages/inboxSwipe";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -151,9 +150,11 @@ export default function InboxScreen() {
   const [menu,setMenu]=useState<{convo:ConversationRow;anchor:{x:number;y:number;width:number;height:number}}|null>(null);
   const [removing,setRemoving]=useState(false);
   const [tab, setTab] = useState<"activity" | "messages">("activity");
-  const inboxSections:readonly InboxSection[]=["activity","messages"];
-  const {position:inboxPagePosition,preview:inboxPreview,moving:inboxMoving,responder:inboxSwipeResponder,select:selectTab} =
-    useSectionSwipe(inboxSections,tab,width,setTab,isInboxHorizontalGesture);
+  const inboxPager=useRef<InboxSwipePagerHandle>(null);
+  const inboxPagePosition=useSharedValue(0);
+  const [inboxPreview,setInboxPreview]=useState<InboxSection>("activity");
+  const [inboxMoving,setInboxMoving]=useState(false);
+  const selectTab=(section:InboxSection)=>inboxPager.current?.select(section);
   useEffect(()=>{if(params.tab==="messages"||params.tab==="activity")setTab(params.tab);},[params.tab]);
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
@@ -279,12 +280,13 @@ export default function InboxScreen() {
             </View>
           </TouchableOpacity>
         ))}
-        <SwipePositionUnderline position={inboxPagePosition} tabWidth={width/2} markerWidth={97} color="#25F4EE"/>
+        <InboxSwipeIndicator position={inboxPagePosition} tabWidth={width/2} selectedIndex={tab==="messages"?1:0} moving={inboxMoving}/>
       </View>
 
-      <View style={styles.swipeContent} {...inboxSwipeResponder.panHandlers}>
-        <HorizontalSwipePages key={user.id} sections={inboxSections} active={tab} center={inboxPreview}
-          position={inboxPagePosition} width={width} moving={inboxMoving} fill renderPage={renderInboxPage}/>
+      <View style={styles.swipeContent}>
+        <InboxSwipePager key={user.id} ref={inboxPager} active={tab} width={width} position={inboxPagePosition}
+          moving={inboxMoving} enabled={!refreshing} onSelect={setTab} onPreview={setInboxPreview}
+          onMoving={setInboxMoving} renderPage={renderInboxPage}/>
 
       </View>
       {menu&&<ConversationMenu anchor={menu.anchor} name={menu.convo.other_username} busy={removing} onClose={()=>setMenu(null)} onDelete={()=>{setRemoving(true);void hideConversation(menu.convo.id).then(async()=>{setMenu(null);await loadConvos();}).catch(e=>Alert.alert('No se pudo eliminar',e.message)).finally(()=>setRemoving(false));}} onDeleteAll={()=>{setRemoving(true);void supabase.rpc('inbox_clear_boundary').then(({data,error})=>{if(error||!data)Alert.alert('No se pudo preparar la selección','Inténtalo de nuevo.');else{setMenu(null);setClearBefore(data);}setRemoving(false);});}}/>}

@@ -21,10 +21,10 @@ test("B2 left swipe selects messages and right swipe activity, at most one secti
 });
 test("B2 swipe responder lives below original tab bar and excludes floating dialogs",()=>{
  const tabs=inbox.indexOf('<View style={styles.tabs}>');
- const body=inbox.indexOf('<View style={styles.swipeContent} {...inboxSwipeResponder.panHandlers}>');
+ const body=inbox.indexOf('<View style={styles.swipeContent}>');
  const menu=inbox.indexOf('{menu&&<ConversationMenu');
  assert.ok(tabs>0&&body>tabs&&menu>body);
- assert.ok(inbox.includes("useSectionSwipe(inboxSections,tab,width,setTab,isInboxHorizontalGesture)"));
+ assert.ok(inbox.includes("InboxSwipePager key={user.id} ref={inboxPager}"));
  const swipe=fs.readFileSync(path.join(root,"hooks/useSectionSwipe.ts"),"utf8");
  assert.ok(swipe.includes("onMoveShouldSetPanResponderCapture:"));
  assert.ok(swipe.includes("(g.numberActiveTouches ?? 1) === 1 && current.current.accepts(g.dx, g.dy)"));

@@ -4,9 +4,9 @@ const component=read("components/PullRefreshUnderHeader.tsx");
 const inbox=read("app/(tabs)/inbox.tsx"),chat=read("app/chat.tsx"),empty=read("components/RefreshableInboxEmpty.tsx");
 test("B4: pull indicator stays in a distinct gap below fixed Inbox header, not above a row",()=>{
  const header=inbox.indexOf('<ReferenceHeader variant="inbox"'),tabs=inbox.indexOf('<View style={styles.tabs}>');
- const gestures=inbox.indexOf('<View style={styles.swipeContent} {...inboxSwipeResponder.panHandlers}>');
+ const gestures=inbox.indexOf('<View style={styles.swipeContent}>');
  const pull=inbox.indexOf('<PullRefreshUnderHeader scrollOffsetRef={refreshScrollOffset}');
- const pager=inbox.indexOf('<HorizontalSwipePages key={user.id} sections={inboxSections}');
+ const pager=inbox.indexOf('<InboxSwipePager key={user.id}');
  // renderInboxPage is a callback defined before the screen JSX; its PullRefresh is mounted by that pager.
  assert.ok(header>=0&&tabs>header&&gestures>tabs&&pager>gestures&&pull>=0);
  assert.ok(inbox.includes('renderPage={renderInboxPage}'));
@@ -24,8 +24,8 @@ test("B4: pull indicator stays in a distinct gap below fixed Inbox header, not a
 test("B4: populated and empty Inbox both share one vertical gesture without changing swipe",()=>{
  assert.equal((inbox.match(/<RefreshableInboxEmpty refreshing=\{refreshing\} onRefresh=\{handleRefresh\}>/g)||[]).length,5);
  assert.equal((inbox.match(/onScroll=\{e=>\{refreshScrollOffset\.current=Math\.max\(0,e\.nativeEvent\.contentOffset\.y\);\}\}/g)||[]).length,2);
- assert.ok(inbox.includes("useSectionSwipe(inboxSections,tab,width,setTab,isInboxHorizontalGesture)"));
- assert.ok(inbox.includes("responder:inboxSwipeResponder"));
+ assert.ok(inbox.includes("InboxSwipePager key={user.id} ref={inboxPager}"));
+ assert.ok(inbox.includes("onMoving={setInboxMoving}"));
  assert.ok(inbox.includes("useEffect(()=>{refreshScrollOffset.current=0;},[tab]);"));
  assert.ok(inbox.includes("refreshGuard.current=false;"));
 });

@@ -64,9 +64,10 @@ test('marker recalculates for a new width or position owner, retaining 22dp and 
   assert.equal(inbox.left + inbox.transform[0].translateX.read() + 97 / 2, 270);
 });
 
-test('approved swipe controller and Inbox remain unchanged; authorized pager graph stabilization is pinned', () => {
+test('approved profile swipe controller stays unchanged; authorized Inbox integration is pinned', () => {
   const crypto = require('node:crypto');
   const expected = {...require('../fixtures/apk310-swipe-hashes.json'),
+    'app/(tabs)/inbox.tsx': require('../fixtures/inbox-native-pager-hashes.json').files['app/(tabs)/inbox.tsx'],
     'components/HorizontalSwipePages.tsx': require('../fixtures/profile-gesture-refinement-hashes.json').files['components/HorizontalSwipePages.tsx']};
   for (const [file, sha] of Object.entries(expected)) {
     const b = fs.readFileSync(path.join(root, file));
