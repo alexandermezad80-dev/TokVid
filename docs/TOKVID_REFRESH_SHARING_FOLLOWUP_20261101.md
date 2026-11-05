@@ -63,3 +63,32 @@ notificaciones ni publicaciones de prueba. Se preservan los avisos al creador.
 `videos` se incorpora a Realtime para sus contadores ya públicos; relaciones
 privadas de favoritos permanecen privadas. Sin cambios a funciones anteriores.
 Los trazos del corazón/comentarios siguen sin modificar.
+
+
+## CI real — 5 noviembre 2026
+
+Código publicado: `52fa5a773ffcb9de12c0d48d2d61733e7b50bb87`, misma rama.
+[Intento316](https://github.com/alexandermezad80-dev/TokVid/actions/runs/42039499608):
+**389 pruebas aprobadas, cero fallos**. TypeScript detectó tres incompatibilidades
+de tipos en las referencias del contenedor de refresco; no se generó APK.
+Corrección limitada a `CommentsSheet.tsx` (tipo de la referencia nativa) y
+`ResistantRefresh.tsx` (props compatibles con Reanimated y reenvío de referencia).
+Sin cambios a estilos, física, datos, dependencias ni workflows.
+
+La implementación se concentra en `ownProfilePull.ts` y `ResistantRefresh.tsx`
+para el gesto; Inbox, chat privado/grupal, búsqueda y comentarios conectan sus
+listas existentes. Los motores de perfil y paginadores aprobados se conservan.
+Feed solo retira el interceptor de pull y evita solicitudes concurrentes en
+`useVideoFeed.ts`, manteniendo su recarga al entrar/volver.
+
+Compartidos: `VideoShareSheet.tsx`, `visibility.ts`, `useMySharedVideos.ts` y
+los puntos existentes de compartir registran referencias; `ActivityBanner.tsx`
+y `story-viewer.tsx` abren el contenido concreto. Quitar de Compartidos está en
+el menú por pulsación larga de la miniatura propia y no afecta Me gusta.
+Favoritos: `changes.ts`, `useSavedVideos.ts` y `useVideoSaveCount.ts` propagan el
+cambio entre instancias y revierten ante fallo.
+
+Pendiente de prueba física: sensación del arrastre en Motorola G05/Android15,
+uno/dos dedos, convivencia con swipe, y navegación/gestos y tres botones.
+Los tests automáticos no equivalen a esa aprobación. El dibujo del corazón y
+comentarios y los contadores de vistas de miniaturas siguen fuera de esta entrega.

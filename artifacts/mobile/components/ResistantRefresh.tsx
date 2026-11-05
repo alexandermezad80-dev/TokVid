@@ -154,7 +154,7 @@ function NativeSurface({onRefresh, refreshing, enabled = true, color, holdDistan
   </View>;
 }
 
-type ListProps<T> = Omit<FlatListProps<T>, 'onRefresh' | 'refreshing' | 'refreshControl'> & RefreshProps;
+type ListProps<T> = Omit<FlatListProps<T>, 'onRefresh' | 'refreshing' | 'refreshControl' | 'CellRendererComponent'> & RefreshProps;
 function RefreshList<T>({onRefresh, refreshing, enabled, color, holdDistance, onScroll, ...props}: ListProps<T>, ref: React.ForwardedRef<FlatList<T>>) {
   return <RefreshSurface {...{onRefresh, refreshing, enabled, color, holdDistance, onScroll}}
     renderScroll={listener => <Animated.FlatList<T> {...props} ref={ref} onScroll={listener} scrollEventThrottle={props.scrollEventThrottle ?? 16} refreshControl={undefined}/>}/>;
@@ -163,8 +163,12 @@ export const ResistantFlatList = forwardRef(RefreshList) as <T>(props: ListProps
 
 type ScrollProps = Omit<ScrollViewProps, 'refreshControl'> & RefreshProps;
 export const ResistantScrollView = forwardRef<ScrollView, ScrollProps>(function RefreshScroll({onRefresh, refreshing, enabled, color, holdDistance, onScroll, ...props}, ref) {
+  const forwardScrollRef = useCallback((view: React.ElementRef<typeof Animated.ScrollView> | null) => {
+    if (typeof ref === 'function') ref(view);
+    else if (ref) ref.current = view;
+  }, [ref]);
   return <RefreshSurface {...{onRefresh, refreshing, enabled, color, holdDistance, onScroll}}
-    renderScroll={listener => <Animated.ScrollView {...props} ref={ref} onScroll={listener} scrollEventThrottle={props.scrollEventThrottle ?? 16} refreshControl={undefined}/>}/>;
+    renderScroll={listener => <Animated.ScrollView {...props} ref={forwardScrollRef} onScroll={listener} scrollEventThrottle={props.scrollEventThrottle ?? 16} refreshControl={undefined}/>}/>;
 });
 const styles = StyleSheet.create({
   clip: {flex: 1, minHeight: 0, overflow: 'hidden'},

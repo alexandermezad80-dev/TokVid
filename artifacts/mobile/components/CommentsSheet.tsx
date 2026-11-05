@@ -87,7 +87,7 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, isVideoSaved
   const viewportTop = viewport.viewportTop, safeLeft = viewport.insets.left;
   const emojis = useRecentCommentEmojis(user?.id);
   const comments = useFeedComments(visible, videoId,undefined,focusCommentId);
-  const listRef=useRef<ResistantFlatList<ListRow>>(null),focusScrolled=useRef<string|null>(null);
+  const listRef=useRef<FlatList<ListRow>>(null),focusScrolled=useRef<string|null>(null);
   const [text, setText] = useState("");
   const [photo, setPhoto] = useState<PhotoDraft | null>(null);
   const [pickingPhoto, setPickingPhoto] = useState(false);
