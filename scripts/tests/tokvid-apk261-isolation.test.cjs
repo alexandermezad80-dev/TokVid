@@ -1,3 +1,4 @@
+const authorizedRefreshSharing=require('../fixtures/refresh-sharing-authorized-hashes.json').files;
 const test=require("node:test");
 const assert=require("node:assert/strict");
 const fs=require("node:fs");
@@ -45,7 +46,7 @@ function requireTokens(source,tokens,label){
 test("APK261 isolation: never silently change the approved Feed, tab bar, TOKVID branding or Codex workflows",()=>{
   for(const [relative,expected] of Object.entries(pinnedGitBlobs)){
     const buffer=fs.readFileSync(path.join(repo,relative));
-    assert.equal(gitBlobSha(buffer),expected,"Protected file changed without approval: "+relative);
+    assert.equal(gitBlobSha(buffer),authorizedRefreshSharing[relative.replace(/^artifacts\/mobile\//,'')]??expected,"Protected file changed without approval: "+relative);
   }
 });
 

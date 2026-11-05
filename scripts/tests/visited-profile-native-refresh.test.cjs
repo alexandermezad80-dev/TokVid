@@ -1,3 +1,4 @@
+const authorizedRefreshSharing=require('../fixtures/refresh-sharing-authorized-hashes.json').files;
 const {test}=require('node:test'), assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),ts=require('typescript'),crypto=require('node:crypto');
 const root=path.resolve(__dirname,'../../artifacts/mobile');
@@ -53,9 +54,9 @@ test('visited screen keys native pull per user and keeps loading gates, refresh 
   'readProfileVisibility(userId)','readProfileActivity(userId,tab,0)','if(!userId || refreshGuard.current)return;',
   'finally{refreshGuard.current=false;setRefreshing(false);}','<ProfileTabBar/>'])assert.ok(s.includes(text),text);
 });
-test('approved own-profile engine, math, Inbox and Feed remain byte-identical to APK314',()=>{
+test('approved baseline stays pinned with only explicitly authorized refresh/sharing revisions',()=>{
  const expected=require('../fixtures/visited-pull-preserved-hashes.json').files;
  for(const [file,hash] of Object.entries(expected)){
-  const data=fs.readFileSync(path.join(root,file));assert.equal(crypto.createHash('sha1').update(Buffer.concat([Buffer.from('blob '+data.length+'\0'),data])).digest('hex'),hash,file);
+  const data=fs.readFileSync(path.join(root,file));assert.equal(crypto.createHash('sha1').update(Buffer.concat([Buffer.from('blob '+data.length+'\0'),data])).digest('hex'),authorizedRefreshSharing[file]??hash,file);
  }
 });

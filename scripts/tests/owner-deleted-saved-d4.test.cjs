@@ -11,6 +11,7 @@ function run(lookup){
  const supabase={from(table){assert.equal(table,"videos");return {select(fields){assert.equal(fields,"*");return {in(key,ids){assert.equal(key,"id");return lookup(Array.from(ids));}};}};}};
  vm.runInNewContext(compiled,{exports:exp,require(name){
    if(name==="react"||name==="expo-router"||name.includes("RegistrationContext")||name.includes("registrationBridge"))return {};
+   if(name.includes("favorites/changes"))return {};
    if(name==="../lib/supabase")return {supabase};
    if(name==="./useVideoFeed")return {BASE_VIDEOS:[{id:"1",isReal:false}],mapRowsToVideoItems:async rows=>rows.map(row=>({id:row.id,isReal:true}))};
    throw Error("Unexpected "+name);

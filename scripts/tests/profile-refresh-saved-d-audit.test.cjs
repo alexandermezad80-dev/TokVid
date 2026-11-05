@@ -14,7 +14,8 @@ function resolver(lookup){
   }};
   vm.runInNewContext(compiled,{exports:mod,require(name){
     if(name==="react")return {};
-    if(name==="../lib/supabase")return {supabase:fake};
+    if(name.includes("favorites/changes"))return {};
+   if(name==="../lib/supabase")return {supabase:fake};
     if(name==="./useVideoFeed")return {BASE_VIDEOS:[{id:"1",isReal:false},{id:"2",isReal:false}],mapRowsToVideoItems:async rows=>rows.map(r=>({id:r.id,isReal:true}))};
     if(name.includes("RegistrationContext"))return {};
     if(name.includes("registrationBridge"))return {};

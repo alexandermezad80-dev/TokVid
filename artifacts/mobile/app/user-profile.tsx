@@ -204,7 +204,7 @@ export default function UserProfileScreen() {
   <View style={styles.tabBar}>{shownTabs.map(t=><TouchableOpacity key={t} onPress={()=>setTab(t)} accessibilityLabel={t==='videos'?'Publicaciones':t==='liked'?'Me gusta':'Compartidos'} accessibilityState={{selected:tab===t}} style={[styles.tabItem,{width:width/3,flex:0},tab===t&&styles.tabItemActive]}>{t==="videos"||t==="shared"?<TokvidProfileIcon name={t} size={22} color={tab===t?v.ink:v.inactive}/>:<Feather name="heart" size={22} color={tab===t?v.ink:v.inactive}/>}</TouchableOpacity>)}</View>
   </View>
     {!!error&&<Text style={styles.gridStateText}>{error}</Text>}
-    <View style={styles.grid}>{shown.map(v=><TouchableOpacity key={v.id} style={[styles.gridItem,gridLayout.tile]} onPress={()=>router.push({pathname:'/publication',params:{id:v.id}})}><PublicationThumbnail item={v}/></TouchableOpacity>)}</View>
+    <View style={styles.grid}>{shown.map(v=><TouchableOpacity key={v.storyId?'story:'+v.id:v.id} style={[styles.gridItem,gridLayout.tile]} onPress={()=>router.push(v.storyId?{pathname:'/story-viewer',params:{userId:v.creatorId,storyId:v.storyId}}:{pathname:'/publication',params:{id:v.id}})}><PublicationThumbnail item={v}/></TouchableOpacity>)}</View>
     {isLoading?<ActivityIndicator style={{margin:24}} color="#2F9A9F"/>:!shown.length&&!error?<View style={styles.center}><Text style={styles.gridStateText}>Todavía no hay publicaciones en esta sección.</Text></View>:null}
     {(tab==='videos'?publications.hasMore:activityMore)&&<TouchableOpacity disabled={isLoading} style={{padding:20}} onPress={()=>tab==='videos'?void publications.loadMore():setActivityOffset(n=>n+60)}><Text style={[styles.gridStateText,{color:'#2F777B'}]}>Ver más</Text></TouchableOpacity>}
     <View style={{height:24}}/>

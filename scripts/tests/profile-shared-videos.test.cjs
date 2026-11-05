@@ -18,5 +18,5 @@ test("owner's shared history excludes photographs and owner's own publications",
  assert.deepEqual(Array.from(exp.onlySharedVideosByOthers(items,"me"),v=>v.id),["foreign-video"]);
  assert.match(code,/readProfileActivity\(userId,"shared",start\)/);
  assert.match(code,/offset\.current=start\+SHARE_PAGE_SIZE/);
- assert.match(code,/return \{items,loading,error,hasMore,refresh:\(\)=>fetchPage\(\),loadMore:\(\)=>fetchPage\(true\)\}/);
+ assert.match(code,/return \{items,loading,error,hasMore,remove,refresh:\(\)=>fetchPage\(\),loadMore:\(\)=>fetchPage\(true\)\}/);
 });

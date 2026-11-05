@@ -1,3 +1,4 @@
+const authorizedRefreshSharing=require('../fixtures/refresh-sharing-authorized-hashes.json').files;
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),ts=require('typescript'),crypto=require('node:crypto');
 const root=path.resolve(__dirname,'../../artifacts/mobile');
 function load(file,modules={},extra=''){
@@ -67,7 +68,7 @@ test('profile indicator is 22dp, matches lower-bar grey, and stays centered at e
  const inbox=flat(Indicator({position:.5,tabWidth:180,markerWidth:97,color:'#25F4EE'}).props.style);assert.equal(inbox.width,97);assert.equal(inbox.backgroundColor,'#25F4EE');assert.equal(inbox.height,2);
 });
 test('authorized pull revision is pinned; pager remains below the strip and includes blank footer',()=>{
- for(const [f,sha] of [['components/OwnProfileMagneticRefresh.tsx',require('../fixtures/profile-gesture-refinement-hashes.json').files['components/OwnProfileMagneticRefresh.tsx']],['lib/features/profile/ownProfilePull.ts',require('../fixtures/profile-gesture-refinement-hashes.json').files['lib/features/profile/ownProfilePull.ts']]]){const b=fs.readFileSync(path.join(root,f));assert.equal(crypto.createHash('sha1').update(Buffer.concat([Buffer.from('blob '+b.length+'\0'),b])).digest('hex'),sha)}
+ for(const [f,sha] of [['components/OwnProfileMagneticRefresh.tsx',require('../fixtures/profile-gesture-refinement-hashes.json').files['components/OwnProfileMagneticRefresh.tsx']],['lib/features/profile/ownProfilePull.ts',require('../fixtures/profile-gesture-refinement-hashes.json').files['lib/features/profile/ownProfilePull.ts']]]){const b=fs.readFileSync(path.join(root,f));assert.equal(crypto.createHash('sha1').update(Buffer.concat([Buffer.from('blob '+b.length+'\0'),b])).digest('hex'),authorizedRefreshSharing[f]??sha)}
  const profile=fs.readFileSync(path.join(root,'app/(tabs)/profile.tsx'),'utf8');const start=profile.indexOf('<View {...tabSwipeResponder.panHandlers}>'),end=profile.indexOf('</ProfilePullRefresh>',start);const region=profile.slice(start,end);
  assert.ok(region.includes('scrollViewportHeight-39-'));assert.ok(region.indexOf('insets.bottom + 80')<region.lastIndexOf('</View>'));assert.ok(profile.indexOf('styles.tabBar')<start);assert.ok(profile.includes('key={user.id} sections={OWN_PROFILE_TABS}'));
 });

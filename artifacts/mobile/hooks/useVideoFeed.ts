@@ -11,6 +11,8 @@ export interface VideoItem {
   id: string;
   uri: string;
   mediaType?: "video" | "image";
+  storyId?: string;
+  storyExpiresAt?: string;
   replyCommentId?: string | null;
   thumbnail: any;
   creator: string;
@@ -245,6 +247,8 @@ const LIKED_KEY = "tokvid_liked";
 export function useVideoFeed(followedIds: Set<string>, mode: "forYou" | "following" = "forYou") {
   const followingKey = mode === "following" ? JSON.stringify([...followedIds].sort()) : "";
   const feedRequest = useRef(0);
+  // Synchronous gate: focus, initial load and pagination cannot start duplicate requests.
+  const feedBusy = useRef(true);
   const { completed } = useRegistration();
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [realVideos, setRealVideos] = useState<VideoItem[]>([]);
@@ -313,6 +317,8 @@ export function useVideoFeed(followedIds: Set<string>, mode: "forYou" | "followi
   }, [loadLikedIds, completed]);
 
   const loadPage = useCallback(async (nextPage = 0) => {
+    if (feedBusy.current) return;
+    feedBusy.current = true;
     const request = ++feedRequest.current;
     setError(null);
     if (nextPage === 0) {
@@ -327,7 +333,7 @@ export function useVideoFeed(followedIds: Set<string>, mode: "forYou" | "followi
       if (nextPage === 0) {
         setRealVideos(items);
       } else {
-        setRealVideos((prev) => [...prev, ...items]);
+        setRealVideos((prev) => [...new Map([...prev, ...items].map(item => [item.id, item])).values()]);
       }
       setPage(nextPage);
       pageRef.current = nextPage;
@@ -335,16 +341,18 @@ export function useVideoFeed(followedIds: Set<string>, mode: "forYou" | "followi
     } catch (err) {
       if (request === feedRequest.current) setError("No se pudo cargar el feed");
     } finally {
-      if (request === feedRequest.current) { setIsLoading(false); setIsRefreshing(false); }
+      if (request === feedRequest.current) { feedBusy.current = false; setIsLoading(false); setIsRefreshing(false); }
     }
   }, [interests, followingKey]);
 
   useEffect(() => {
     let cancelled = false;
     const request = ++feedRequest.current;
+    feedBusy.current = true;
     setRealVideos([]); setPage(0); pageRef.current = 0; setHasMore(false); setIsLoading(true);
 
     const loadInterestsAndFeed = async () => {
+      try {
       const { data: { user } } = await supabase.auth.getUser();
       let userInterests: string[] = [];
 
@@ -365,7 +373,6 @@ export function useVideoFeed(followedIds: Set<string>, mode: "forYou" | "followi
 
       setError(null);
       setIsRefreshing(true);
-      try {
         const items = await fetchRealVideos(0, userInterests, followingKey ? JSON.parse(followingKey) : undefined);
         if (!cancelled && request === feedRequest.current) {
           setRealVideos(items);
@@ -377,6 +384,7 @@ export function useVideoFeed(followedIds: Set<string>, mode: "forYou" | "followi
         if (!cancelled && request === feedRequest.current) setError("No se pudo cargar el feed");
       } finally {
         if (!cancelled && request === feedRequest.current) {
+          feedBusy.current = false;
           setIsLoading(false);
           setIsRefreshing(false);
         }
@@ -396,7 +404,7 @@ export function useVideoFeed(followedIds: Set<string>, mode: "forYou" | "followi
 
   const refreshFeed = useCallback(() => {
     if (isRefreshing) return;
-    loadPage(0);
+    return loadPage(0);
   }, [isRefreshing, loadPage]);
 
   const toggleLike = useCallback(async (id: string) => {

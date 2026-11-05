@@ -11,7 +11,8 @@ import {Feather} from "@expo/vector-icons";
 import {useNotifications,type AppNotification} from "../context/NotificationsContext";
 export function openActivity(n:AppNotification){
  const target=activityPublication(n);
- if(n.type==="message"&&typeof n.data?.conversationId==="string")router.push({pathname:"/chat",params:{conversationId:n.data.conversationId}});
+ if(typeof n.data?.storyId==="string"&&typeof n.data?.storyUserId==="string")router.push({pathname:"/story-viewer",params:{storyId:n.data.storyId,userId:n.data.storyUserId}});
+ else if(n.type==="message"&&typeof n.data?.conversationId==="string")router.push({pathname:"/chat",params:{conversationId:n.data.conversationId}});
  else if(target.videoId)router.push({pathname:"/publication",params:{id:target.videoId,...(target.commentId?{commentId:target.commentId}:{}),...(n.type==="comment"||n.type==="comment_like"?{comments:"1"}:{})}});
  else if(n.actor_id)router.push({pathname:"/user-profile",params:{userId:n.actor_id}});
 }

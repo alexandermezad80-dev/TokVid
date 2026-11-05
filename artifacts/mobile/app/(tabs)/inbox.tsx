@@ -1,7 +1,7 @@
 import {referenceVisual as v} from "../../constants/referenceVisual";
 import ReferenceHeader from "../../components/reference/ReferenceHeader";
 import RefreshableInboxEmpty from "../../components/RefreshableInboxEmpty";
-import PullRefreshUnderHeader from "../../components/PullRefreshUnderHeader";
+import {ResistantScrollView} from "../../components/ResistantRefresh";
 import InboxSwipePager, {InboxSwipeIndicator, type InboxSwipePagerHandle} from "../../components/InboxSwipePager";
 import {useSharedValue} from "react-native-reanimated";
 import ClearInboxDialog from "../../lib/features/messages/components/ClearInboxDialog";
@@ -21,7 +21,6 @@ import {
   ActivityIndicator,
   Alert,
   Pressable,
-  RefreshControl,
   Image,
   Platform,
   useWindowDimensions,
@@ -194,21 +193,19 @@ export default function InboxScreen() {
 
   const renderInboxPage=(section:InboxSection)=>(
     <>
-      <PullRefreshUnderHeader scrollOffsetRef={refreshScrollOffset} onRefresh={handleRefresh} refreshing={refreshing} enabled={section===tab} color="#FE2C55" holdWhileRefreshing holdDistance={64} nativeRefreshFallback={Platform.OS==="android"}>
       {section === "activity" ? (
         notifLoading && notifications.length === 0 ? (
-          <RefreshableInboxEmpty refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.center}><ActivityIndicator color="#FE2C55" /></View></RefreshableInboxEmpty>
+          <RefreshableInboxEmpty enabled={section===tab} refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.center}><ActivityIndicator color="#FE2C55" /></View></RefreshableInboxEmpty>
         ) : notifications.length === 0 ? (
-          <RefreshableInboxEmpty refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.emptyState}>
+          <RefreshableInboxEmpty enabled={section===tab} refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.emptyState}>
             <View style={styles.emptyIcon}><Feather name="bell" size={36} color="#333" /></View>
             <Text style={styles.emptyTitle}>Sin notificaciones</Text>
             <Text style={styles.emptyText}>Cuando alguien interactúe con tu contenido, lo verás acá</Text>
           </View></RefreshableInboxEmpty>
         ) : (
-          <ScrollView
+          <ResistantScrollView onRefresh={handleRefresh} refreshing={refreshing} enabled={section===tab} color="#FE2C55" holdDistance={64}
             style={styles.list}
             showsVerticalScrollIndicator={false}
-            refreshControl={Platform.OS==="android"?<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={["transparent"]} progressBackgroundColor="transparent" progressViewOffset={-1000} />:undefined}
             scrollEventThrottle={16}
             onScroll={e=>{refreshScrollOffset.current=Math.max(0,e.nativeEvent.contentOffset.y);}}
           >
@@ -223,34 +220,32 @@ export default function InboxScreen() {
               />
             ))}
             <View style={{ height: Platform.OS === "web" ? 34 : insets.bottom + 80 }} />
-          </ScrollView>
+          </ResistantScrollView>
         )
       ) : (
         convosLoading && convos.length === 0 ? (
-          <RefreshableInboxEmpty refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.center}><ActivityIndicator color="#FE2C55" /></View></RefreshableInboxEmpty>
+          <RefreshableInboxEmpty enabled={section===tab} refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.center}><ActivityIndicator color="#FE2C55" /></View></RefreshableInboxEmpty>
         ) : convosError ? (
-          <RefreshableInboxEmpty refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.emptyState}><Text style={styles.emptyText}>{convosError}</Text><TouchableOpacity onPress={()=>void loadConvos()} style={{padding:16}}><Text style={{color:"#A6D4DA"}}>Reintentar</Text></TouchableOpacity></View></RefreshableInboxEmpty>
+          <RefreshableInboxEmpty enabled={section===tab} refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.emptyState}><Text style={styles.emptyText}>{convosError}</Text><TouchableOpacity onPress={()=>void loadConvos()} style={{padding:16}}><Text style={{color:"#A6D4DA"}}>Reintentar</Text></TouchableOpacity></View></RefreshableInboxEmpty>
         ) : convos.length === 0 && groups.length === 0 ? (
-          <RefreshableInboxEmpty refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.emptyState}>
+          <RefreshableInboxEmpty enabled={section===tab} refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.emptyState}>
             <View style={styles.emptyIcon}><Feather name="message-square" size={36} color="#333" /></View>
             <Text style={styles.emptyTitle}>Sin mensajes</Text>
             <Text style={styles.emptyText}>Mandá un mensaje desde el perfil de cualquier usuario</Text>
           </View></RefreshableInboxEmpty>
         ) : (
-          <ScrollView
+          <ResistantScrollView onRefresh={handleRefresh} refreshing={refreshing} enabled={section===tab} color="#FE2C55" holdDistance={64}
             style={styles.list}
             showsVerticalScrollIndicator={false}
-            refreshControl={Platform.OS==="android"?<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={["transparent"]} progressBackgroundColor="transparent" progressViewOffset={-1000} />:undefined}
             scrollEventThrottle={16}
             onScroll={e=>{refreshScrollOffset.current=Math.max(0,e.nativeEvent.contentOffset.y);}}
           >
             {groups.map(g=><TouchableOpacity key={g.id} style={styles.notif} onPress={()=>router.push({pathname:"/chat-group",params:{groupId:g.id}})}><View style={[styles.avatar,{backgroundColor:"#2C3D49",alignItems:"center",justifyContent:"center"}]}><Feather name="users" color="#D7E5EB" size={24}/></View><View style={styles.notifBody}><Text style={styles.notifUser}>{g.name}</Text><Text style={styles.notifText} numberOfLines={1}>{g.last_message}</Text></View>{g.unread_count>0&&<View style={styles.badge}><Text style={styles.badgeText}>{g.unread_count}</Text></View>}</TouchableOpacity>)}
             {convos.map((c) => <ConvoItem key={c.id} convo={c} onOptions={(convo,anchor)=>setMenu({convo,anchor})} />)}
             <View style={{ height: Platform.OS === "web" ? 34 : insets.bottom + 80 }} />
-          </ScrollView>
+          </ResistantScrollView>
         )
       )}
-      </PullRefreshUnderHeader>
     </>
   );
 

@@ -1,34 +1,29 @@
-/** Owner-requested firmer pull (27 Oct): preserve the long travel and the
- * original indicator while reducing finger-to-content gain. */
+/** Approved 1 Nov scope: coherent resistance on every gesture-refresh surface.
+ * Keep activation arbitration, two pointers, indicator and layout unchanged. */
 export const OWN_PROFILE_PULL = {
   activationDistance: 12,
   verticalRatio: 1.45,
-  dragGain: 0.6,
-  triggerDistance: 140,
+  dragGain: 0.45,
+  triggerDistance: 200,
   holdDistance: 72,
   indicatorHeight: 40,
   indicatorGap: 8,
-  spring: {stiffness: 420, damping: 38, mass: 0.8, overshootClamping: true},
+  spring: {stiffness: 520, damping: 38, mass: 0.8, overshootClamping: true},
 } as const;
 
-/** A smooth viewport-sized soft limit: positive, decreasing gain, no hard stop.
- * Split the expression to remain finite even for extreme input distances. */
+/** Progressive tension from the first movement; the viewport remains a soft
+ * limit, never a hard stop. Both functions also run on the native UI thread. */
 export function profilePullOffset(distance: number, availableHeight: number): number {
   'worklet';
   if (!Number.isFinite(distance) || !Number.isFinite(availableHeight) || distance <= 0 || availableHeight <= 0) return 0;
-  distance *= OWN_PROFILE_PULL.dragGain;
-  const limit = availableHeight;
-  return distance < limit
-    ? distance / Math.pow(1 + Math.pow(distance / limit, 4), 0.25)
-    : limit / Math.pow(1 + Math.pow(limit / distance, 4), 0.25);
+  return -availableHeight * Math.expm1(-OWN_PROFILE_PULL.dragGain * distance / availableHeight);
 }
 
 /** Resume a partially retracted pull at its current position without a jump. */
 export function profilePullDistance(offset: number, availableHeight: number): number {
   'worklet';
   if (!Number.isFinite(offset) || !Number.isFinite(availableHeight) || offset <= 0 || availableHeight <= 0) return 0;
-  const ratio = Math.min(offset / availableHeight, 0.999999);
-  return offset / Math.pow(1 - Math.pow(ratio, 4), 0.25) / OWN_PROFILE_PULL.dragGain;
+  return -availableHeight / OWN_PROFILE_PULL.dragGain * Math.log1p(-Math.min(offset / availableHeight, 0.999999));
 }
 
 /** Native pan stays undecided within touch slop and yields horizontal/upward

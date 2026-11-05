@@ -1,3 +1,5 @@
+import {GestureHandlerRootView} from "react-native-gesture-handler";
+import {ResistantFlatList} from "./ResistantRefresh";
 import {palette} from '../constants/palette';
 import { Feather, Ionicons } from "@expo/vector-icons";
 import Svg, { Line } from "react-native-svg";
@@ -64,9 +66,11 @@ export default function CommentsSheet(props: Props) {
   const back = useRef(props.onClose);
   useSystemNavigation("#FFFFFF", true, props.visible);
   return <Modal visible={props.visible} transparent statusBarTranslucent navigationBarTranslucent animationType="slide" onShow={refreshSystemNavigation} onRequestClose={() => back.current()}>
+    <GestureHandlerRootView style={{flex:1}}>
     <KeyboardProvider statusBarTranslucent navigationBarTranslucent preload={false}>
       <CommentsPanel {...props} backHandler={back} />
     </KeyboardProvider>
+    </GestureHandlerRootView>
   </Modal>;
 }
 
@@ -83,7 +87,7 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, isVideoSaved
   const viewportTop = viewport.viewportTop, safeLeft = viewport.insets.left;
   const emojis = useRecentCommentEmojis(user?.id);
   const comments = useFeedComments(visible, videoId,undefined,focusCommentId);
-  const listRef=useRef<FlatList<ListRow>>(null),focusScrolled=useRef<string|null>(null);
+  const listRef=useRef<ResistantFlatList<ListRow>>(null),focusScrolled=useRef<string|null>(null);
   const [text, setText] = useState("");
   const [photo, setPhoto] = useState<PhotoDraft | null>(null);
   const [pickingPhoto, setPickingPhoto] = useState(false);
@@ -368,7 +372,7 @@ function CommentsPanel({ visible, onClose, videoId, focusCommentId, isVideoSaved
         <Animated.View pointerEvents={controlsOpen ? "none" : "auto"} accessibilityElementsHidden={controlsOpen || !!actionComment} importantForAccessibility={controlsOpen || actionComment ? "no-hide-descendants" : "auto"} style={[{ position: "absolute", top: 56 * scale, left: 0, right: 0, overflow: "hidden", backgroundColor: "#FFFFFF" }, bodyMotion]}>
           {!!(submissionError || comments.error) && <View style={styles.errorRow}><Text accessibilityRole="alert" style={styles.error}>{submissionError || comments.error}</Text><Pressable accessibilityRole="button" onPress={() => { void comments.refresh(); }} style={styles.retry}><Text style={styles.link}>Recargar</Text></Pressable></View>}
           {comments.hiddenThreads.size > 0 && <Pressable accessibilityRole="button" accessibilityLabel="Mostrar mensajes ocultos" disabled={busy} onPress={() => { void comments.restoreThreads(); }} style={styles.hiddenNotice}><View style={styles.showBadge}><Feather name="eye" size={15 * scale} color="#131313" /><Text style={styles.showLabel}>Mostrar</Text></View></Pressable>}
-          <FlatList<ListRow> ref={listRef} onScrollToIndexFailed={info=>{listRef.current?.scrollToOffset({offset:info.averageItemLength*info.index,animated:false});setTimeout(()=>{if(focusIndex>=0)listRef.current?.scrollToIndex({index:focusIndex,viewPosition:.25,animated:true});},200);}} data={rows} keyExtractor={row => row.kind === "comment" || row.kind === "pending" ? row.comment.id : row.kind === "thread" ? `thread:${row.root.id}` : `more:${row.rootId}`} renderItem={renderRow} style={styles.list} onScrollBeginDrag={dismissActions} contentContainerStyle={[rows.length ? styles.listContent : styles.emptyContainer, rows.length > 0 && { paddingTop: Math.max(0, (comments.hiddenThreads.size > 0 ? 10 : 16) * scale - 8) }, { paddingLeft: 16 + viewport.insets.left, paddingRight: 16 + viewport.insets.right, paddingBottom: 12 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} refreshing={false} onRefresh={() => { void comments.refresh(); }}
+          <ResistantFlatList<ListRow> ref={listRef} onScrollToIndexFailed={info=>{listRef.current?.scrollToOffset({offset:info.averageItemLength*info.index,animated:false});setTimeout(()=>{if(focusIndex>=0)listRef.current?.scrollToIndex({index:focusIndex,viewPosition:.25,animated:true});},200);}} data={rows} keyExtractor={row => row.kind === "comment" || row.kind === "pending" ? row.comment.id : row.kind === "thread" ? `thread:${row.root.id}` : `more:${row.rootId}`} renderItem={renderRow} style={styles.list} onScrollBeginDrag={dismissActions} contentContainerStyle={[rows.length ? styles.listContent : styles.emptyContainer, rows.length > 0 && { paddingTop: Math.max(0, (comments.hiddenThreads.size > 0 ? 10 : 16) * scale - 8) }, { paddingLeft: 16 + viewport.insets.left, paddingRight: 16 + viewport.insets.right, paddingBottom: 12 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} refreshing={false} onRefresh={() => comments.refresh()} enabled={!controlsOpen && !actionComment && !busy} color={palette.teal}
             ListEmptyComponent={comments.loading && !submitting ? <ActivityIndicator size={12} color={palette.teal} /> : comments.total === 0 || comments.hiddenThreads.size > 0 || comments.dismissedComments.size > 0 ? <View style={styles.empty}><Feather name="message-circle" size={22.5} color="#5B6270" /><Text style={styles.emptyText}>{comments.total === 0 ? "Sé el primero en comentar" : "No hay hilos visibles en esta página"}</Text></View> : null}
             ListFooterComponent={comments.hasMore ? <Pressable disabled={comments.paging} onPress={() => { void comments.loadMore(); }} style={styles.more}><Text style={styles.link}>{comments.paging ? "Cargando…" : "Cargar más comentarios"}</Text></Pressable> : null} />
         </Animated.View>

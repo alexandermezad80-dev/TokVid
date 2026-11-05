@@ -1,3 +1,4 @@
+import {publicationId} from "../lib/features/publishing/model";
 import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
@@ -57,13 +58,14 @@ export default function SavedFeedScreen() {
   const handleShare = useCallback(async (item: VideoItem) => {
     setShareOverrides((prev) => ({ ...prev, [item.id]: (prev[item.id] ?? 0) + 1 }));
     try {
-      await Share.share({ title: item.caption, message: `${item.caption}\n\n${item.uri}`, url: item.uri });
+      const result = await Share.share({ title: item.caption, message: `${item.caption}\n\n${item.uri}`, url: item.uri });
+      if (result.action === Share.dismissedAction) throw new Error("cancelled");
     } catch {
       setShareOverrides((prev) => ({ ...prev, [item.id]: Math.max(0, (prev[item.id] ?? 1) - 1) }));
       return;
     }
-    const { error } = await supabase.rpc("increment_video_share_count", {
-      p_video_id: item.id,
+    const { error } = await supabase.rpc("record_video_share", {
+      p_video_id: item.id, p_event_id: publicationId(),
     });
 
     if (error) {

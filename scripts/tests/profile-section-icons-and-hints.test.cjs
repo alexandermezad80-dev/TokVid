@@ -1,3 +1,4 @@
+const authorizedRefreshSharing=require('../fixtures/refresh-sharing-authorized-hashes.json').files;
 const {test} = require('node:test'), assert = require('node:assert/strict');
 const fs = require('node:fs'), path = require('node:path'), vm = require('node:vm'), ts = require('typescript'), crypto = require('node:crypto');
 const root = path.resolve(__dirname, '../../artifacts/mobile');
@@ -102,7 +103,7 @@ test('owner-requested refresh revision is pinned while the approved strip and pa
   for (const [file, expected] of [
     ['components/OwnProfileMagneticRefresh.tsx', require('../fixtures/profile-gesture-refinement-hashes.json').files['components/OwnProfileMagneticRefresh.tsx']],
     ['lib/features/profile/ownProfilePull.ts', require('../fixtures/profile-gesture-refinement-hashes.json').files['lib/features/profile/ownProfilePull.ts']],
-  ]) {const b = fs.readFileSync(path.join(root, file)); assert.equal(crypto.createHash('sha1').update(Buffer.concat([Buffer.from('blob ' + b.length + '\0'), b])).digest('hex'), expected);}
+  ]) {const b = fs.readFileSync(path.join(root, file)); assert.equal(crypto.createHash('sha1').update(Buffer.concat([Buffer.from('blob ' + b.length + '\0'), b])).digest('hex'), authorizedRefreshSharing[file]??expected);}
   const source = fs.readFileSync(path.join(root, 'app/(tabs)/profile.tsx'), 'utf8');
   assert.ok(source.includes('<ProfileSectionIcon name={item.key} size={22} color={previewTab===item.key?v.ink:v.inactive}/>'));
   assert.ok(source.includes('<SwipePositionUnderline position={pagePosition} tabWidth={width/6} selectedIndex={OWN_PROFILE_TABS.indexOf(tab)} moving={swipeMoving}/>'));

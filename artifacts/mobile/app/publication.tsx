@@ -1,3 +1,4 @@
+import {publicationId} from "../lib/features/publishing/model";
 import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -59,7 +60,12 @@ export default function PublicationScreen() {
       onLike={() => signedAction(() => void likes.toggleLike(item.id))} onDoubleLike={() => signedAction(() => { if (!likes.likedIds.has(item.id)) void likes.toggleLike(item.id); })}
       onFollow={() => signedAction(() => void toggleFollow(item.creatorId))} onSave={() => signedAction(() => void toggleSave(item.id))} onComment={() => signedAction(() => setComments(true))} onDelete={remove}
       onAvatarPress={() => router.push(item.creatorId === user?.id ? "/(tabs)/profile" : { pathname: "/user-profile", params: { userId: item.creatorId } })}
-      onShare={() => { void Share.share({ message: `${item.caption}\n${item.uri}` }).catch(() => setError("No se pudo compartir la publicación.")); }} /> : <View style={styles.center}><Text style={styles.message}>{error}</Text><Pressable onPress={() => setRetry(value => value + 1)} style={styles.retry}><Text style={styles.message}>Reintentar</Text></Pressable></View>}
+      onShare={() => { void (async () => {
+        const result = await Share.share({ message: `${item.caption}\n${item.uri}` });
+        if (result.action === Share.dismissedAction || !user) return;
+        const {error: failure} = await supabase.rpc("record_video_share", {p_video_id: item.id, p_event_id: publicationId()});
+        if (failure) throw failure;
+      })().catch(() => setError("No se pudo registrar la publicación compartida.")); }} /> : <View style={styles.center}><Text style={styles.message}>{error}</Text><Pressable onPress={() => setRetry(value => value + 1)} style={styles.retry}><Text style={styles.message}>Reintentar</Text></Pressable></View>}
     {!comments && <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Volver" style={[styles.back, { top: insets.top + 8 }]}><Feather name="arrow-left" color="#fff" size={24} /></Pressable>}
     {!!item && !!(error || likes.error || counts.error) && <Text accessibilityRole="alert" style={[styles.error, { top: insets.top + 62 }]}>{error || likes.error || counts.error}</Text>}
     <CommentsSheet focusCommentId={commentId} visible={comments} onClose={closeComments} videoId={item?.id ?? ""} isVideoSaved={!!item && savedIds.has(item.id)} onSaveVideo={() => { if (item) void toggleSave(item.id); }} showVideoPreview onPreviewFrame={setPreview} />

@@ -49,6 +49,8 @@ function harness({ hidden = false, safeBottom = 24, roots = [], width = 360 } = 
     '../hooks/useCommentDictation': { useCommentDictation: () => ({ listening: false, toggle() {}, cancel() {} }) },
     '../lib/commentComposerText': pure('lib/commentComposerText.ts'),
     '../lib/features/comments/composerTools': { pickCommentPhoto: async () => ({ uri: 'file://photo.jpg', path: null }), uploadCommentPhoto: async () => 'me/photo.jpg', discardCommentPhoto: async () => {}, suggestCommentMentions: async () => [], commentMentionProfile: async () => null },
+    'react-native-gesture-handler': {GestureHandlerRootView:'GestureRoot'},
+    './ResistantRefresh': { ResistantFlatList: 'FlatList' },
     './CommentEmojiStrip': { __esModule: true, default: 'EmojiStrip' },
     './CommentActionsPopover': { __esModule: true, default: 'Popover' }, '../lib/commentPopoverGeometry': pure('lib/commentPopoverGeometry.ts'),
     '../constants/palette': { palette: { text: '#0E1216', secondary: '#6B7580', teal: '#15868B', destructive: '#FE0979', button: '#0E1216', onButton: '#FFFFFF', magenta: '#FE0979' } },

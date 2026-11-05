@@ -6,26 +6,20 @@ const inbox=read("app/(tabs)/inbox.tsx");
 const empty=read("components/RefreshableInboxEmpty.tsx");
 const pull=read("components/PullRefreshUnderHeader.tsx");
 
-test("B9 Android: Inbox retains B9 native trigger; B11 owner has no competing RefreshControl",()=>{
+test("Android lists use one gesture controller and keep the original refresh circles",()=>{
   assert.ok(profile.includes('components/OwnProfileMagneticRefresh'));
-  assert.ok(!profile.includes('refreshControl='));
-  assert.ok(inbox.includes('refreshControl={Platform.OS==="android"?<RefreshControl refreshing={refreshing} onRefresh={handleRefresh}'));
-  assert.ok(empty.includes('refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}'));
-  for(const surface of [inbox,empty]){
-    assert.ok(surface.includes('colors={["transparent"]} progressBackgroundColor="transparent"'),"Native progress icon remains transparent");
-    assert.ok(surface.includes("progressViewOffset={-1000}"),"Android native circle must remain outside the visible UI");
-  }
-  assert.equal((inbox.match(/progressViewOffset=\{-1000\}/g)||[]).length,2,"Both Inbox lists hide their native circle");
-  assert.ok(!profile.includes('nativeRefreshFallback='));
-  assert.ok(inbox.includes('nativeRefreshFallback={Platform.OS==="android"}'));
-  assert.ok(pull.includes("!nativeFallback.current && permitted.current"));
-  assert.ok(pull.includes("if(refreshing)Animated.spring(translation,{toValue:holdDistance,useNativeDriver:true}).start()"));
-  assert.ok(pull.includes('<ActivityIndicator size="small" color={color}/>'));
+  for(const code of [profile,inbox,empty])assert.ok(!code.includes('refreshControl='));
+  assert.equal((inbox.match(/<ResistantScrollView onRefresh=\{handleRefresh\}/g)||[]).length,2);
+  assert.ok(empty.includes('<ResistantScrollView'));
+  const native=read('components/ResistantRefresh.tsx');
+  assert.ok(native.includes('refreshControl={undefined}'));
+  assert.ok(native.includes('Gesture.Exclusive(pull, nativeScroll)'));
+  assert.ok(native.includes('<ActivityIndicator size="small" color={color}/>'));
 });
 
 test("B9 empty Inbox refresh works without rows; group inbox refreshes along with private rows",()=>{
-  assert.ok(empty.includes('return <ScrollView style={styles.fill} contentContainerStyle={styles.content}'));
-  assert.ok(empty.includes('if(Platform.OS!=="android")return <View style={styles.fill}>'));
+  assert.ok(empty.includes('return <ResistantScrollView style={styles.fill} contentContainerStyle={styles.content}'));
+  assert.ok(empty.includes('content:{flexGrow:1}'));
   assert.ok(inbox.includes('if(tab==="messages")setGroupRevision(current=>current+1);'));
   assert.ok(inbox.includes("tab === \"messages\" ? loadConvos() : Promise.resolve()"));
   assert.ok(inbox.includes("if(refreshGuard.current)return;"));

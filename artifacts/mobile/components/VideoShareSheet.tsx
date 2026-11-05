@@ -11,7 +11,7 @@ import {useAuth} from '../context/AuthContext';
 import {supabase} from '../lib/supabase';
 import type {VideoItem} from '../hooks/useVideoFeed';
 import {publicationId} from '../lib/features/publishing/model';
-import {openPrivateConversation,sendPrivateMessage} from '../lib/features/messages/services/private-messages';
+
 
 type Person={id:string;username:string;avatar_url:string|null};
 export default function VideoShareSheet({video,onClose,onShare,onDelete,onHide}:{video:VideoItem|null;onClose:()=>void;onShare:(video:VideoItem)=>Promise<void>;onDelete:(video:VideoItem)=>void;onHide:(id:string)=>void}){
@@ -24,8 +24,21 @@ export default function VideoShareSheet({video,onClose,onShare,onDelete,onHide}:
  useEffect(()=>{generation.current++;setPeople([]);setSearch(false);setQuery('');setError('');sends.current.clear();},[video?.id]);
  useEffect(()=>{if(!video||!user)return;let active=true;const timer=setTimeout(()=>{let q=supabase.from('profiles').select('id,username,avatar_url').neq('id',user.id).order('username').limit(50);if(query.trim())q=q.ilike('username',`%${query.trim().replace(/[\\%_]/g,'\\$&')}%`);void q.then(({data,error})=>{if(active){setPeople(data??[]);if(error)setError('No se pudieron buscar destinatarios.');}});},250);return()=>{active=false;clearTimeout(timer);};},[video?.id,user?.id,query]);
  const run=async(work:()=>Promise<void>)=>{if(pending.current)return;pending.current=true;setBusy(true);setError('');try{await work();}catch(e){setError(e instanceof Error?e.message:'No se pudo completar.');}finally{pending.current=false;setBusy(false);}};
- const send=async(person:Person)=>{if(!video||!user)return;const gen=generation.current;const conversation=await openPrivateConversation(person.id);const id=sends.current.get(person.id)??publicationId();sends.current.set(person.id,id);await sendPrivateMessage({id,conversation_id:conversation,sender_id:user.id,text:`${video.caption}\n${video.uri}`.trim()});await recordExternal(id);if(gen===generation.current)onClose();};
- const recordExternal=async(eventId=publicationId())=>{if(!video||!user||!/^[0-9a-f-]{36}$/i.test(video.id))return;const {error}=await supabase.rpc('record_video_share',{p_video_id:video.id,p_event_id:eventId});if(error)throw new Error('Se abrió la aplicación, pero no se pudo actualizar el contador.');};
+ const send=async(person:Person)=>{
+  if(!video||!user)return;
+  const gen=generation.current,id=sends.current.get(person.id)??publicationId();sends.current.set(person.id,id);
+  const text=`${video.caption}\n${video.uri}`.trim().slice(0,1000);
+  const {data,error}=await supabase.rpc('send_shared_content',{p_id:id,p_recipient:person.id,p_kind:video.storyId?'story':'video',p_content_id:video.id,p_text:text});
+  if(error||data?.id!==id||data?.sender_id!==user.id)throw new Error('No se confirmó el envío. Puedes reintentarlo sin duplicarlo.');
+  if(gen===generation.current)onClose();
+ };
+ const recordExternal=async(eventId=publicationId())=>{
+  if(!video||!user||!/^[0-9a-f-]{36}$/i.test(video.id))return;
+  const {error}=video.storyId
+   ?await supabase.rpc('record_story_share',{p_story_id:video.id,p_event_id:eventId})
+   :await supabase.rpc('record_video_share',{p_video_id:video.id,p_event_id:eventId});
+  if(error)throw new Error('Se abrió la aplicación, pero no se pudo guardar la referencia compartida.');
+ };
  const external=async(packageName:string)=>{if(!video)return;await NativeModules.TokVidChatTools.shareToPackage(packageName,`${video.caption}\n${video.uri}`);await recordExternal();onClose();};
  const externalUrl=async(scheme:string)=>{if(!video)return;try{await Linking.openURL(scheme.replace('{text}',encodeURIComponent(`${video.caption}\n${video.uri}`)));}catch{throw new Error('Esta aplicación no está instalada o no se pudo abrir.');}await recordExternal();onClose();};
  const download=async()=>{if(!video)return;if(Platform.OS!=='android'){await onShare(video);return;}const permission=await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();if(!permission.granted)return;const image=video.mediaType==='image',ext=image?'jpg':'mp4',mime=image?'image/jpeg':'video/mp4';const local=`${FileSystem.cacheDirectory}tokvid-${video.id}.${ext}`;try{await FileSystem.downloadAsync(video.uri,local);const data=await FileSystem.readAsStringAsync(local,{encoding:FileSystem.EncodingType.Base64});const dest=await FileSystem.StorageAccessFramework.createFileAsync(permission.directoryUri,`TokVid-${video.id}.${ext}`,mime);await FileSystem.writeAsStringAsync(dest,data,{encoding:FileSystem.EncodingType.Base64});onClose();}finally{await FileSystem.deleteAsync(local,{idempotent:true}).catch(()=>{});}};
@@ -35,7 +48,7 @@ export default function VideoShareSheet({video,onClose,onShare,onDelete,onHide}:
  {Platform.OS==='android'?targets.map(app=><Pressable key={app.packageName} disabled={busy} style={styles.tool} onPress={()=>void run(()=>external(app.packageName))}><Image source={{uri:app.icon}} style={{width:54,height:54}}/><Text numberOfLines={2} style={styles.label}>{app.name}</Text></Pressable>):[{name:'WhatsApp',icon:'whatsapp',color:'#25D366',url:'whatsapp://send?text={text}'},{name:'LINE',icon:'line',color:'#06C755',url:'line://msg/text/{text}'}].map(app=><Pressable key={app.name} disabled={busy} style={styles.tool} onPress={()=>void run(()=>externalUrl(app.url))}><View style={[styles.toolIcon,{backgroundColor:app.color}]}><FontAwesome5 name={app.icon} size={32} color="#FFF"/></View><Text style={styles.label}>{app.name}</Text></Pressable>)}
  {tool('Copiar enlace','link',()=>video&&void run(async()=>{await Clipboard.setStringAsync(video.uri);onClose();}))}
  </ScrollView><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
- {tool('Denunciar','flag',()=>{if(!video)return;onClose();router.push({pathname:'/chat-action',params:{action:'report',otherId:video.creatorId}});})}{tool('No me interesa','eye-off',()=>{if(video){onHide(video.id);onClose();}})}{tool('Descargar','download',()=>void run(download))}{tool('Crear grupo','users',()=>{onClose();router.push('/chat-group');})}{video?.creatorId===user?.id&&tool('Eliminar','trash-2',()=>{const target=video;if(!target)return;onClose();onDelete(target);})}
+ {tool('Denunciar','flag',()=>{if(!video)return;onClose();router.push({pathname:'/chat-action',params:{action:'report',otherId:video.creatorId}});})}{!video?.storyId&&tool('No me interesa','eye-off',()=>{if(video){onHide(video.id);onClose();}})}{tool('Descargar','download',()=>void run(download))}{tool('Crear grupo','users',()=>{onClose();router.push('/chat-group');})}{!video?.storyId&&video?.creatorId===user?.id&&tool('Eliminar','trash-2',()=>{const target=video;if(!target)return;onClose();onDelete(target);})}
  </ScrollView></View></View></Modal>;
 }
 const styles=StyleSheet.create({backdrop:{flex:1,backgroundColor:'#0008',justifyContent:'flex-end'},sheet:{backgroundColor:palette.background,borderTopLeftRadius:24,borderTopRightRadius:24,maxHeight:'85%',paddingTop:8},header:{height:52,flexDirection:'row',alignItems:'center',paddingHorizontal:8},title:{ fontFamily: "Inter_500Medium",flex:1,textAlign:'center',color:palette.headerText,fontSize:20,fontWeight:"normal"},icon:{width:44,height:44,alignItems:'center',justifyContent:'center'},row:{padding:12,gap:10},tool:{width:76,alignItems:'center',gap:8},toolIcon:{width:54,height:54,borderRadius:27,backgroundColor:palette.button,alignItems:'center',justifyContent:'center'},avatar:{width:58,height:58,borderRadius:29,backgroundColor:palette.button},label:{ fontFamily: "Inter_400Regular",color:palette.text,fontSize:12,textAlign:'center'},input:{marginHorizontal:16,borderRadius:14,backgroundColor:palette.input,color:palette.text,minHeight:44,paddingHorizontal:12},error:{color:palette.destructive,paddingHorizontal:16,paddingVertical:8}});

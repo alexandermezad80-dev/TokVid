@@ -24,7 +24,6 @@ import CommentsSheet from "../../components/CommentsSheet";
 import Toast from "../../components/Toast";
 import VideoShareSheet from "../../components/VideoShareSheet";
 import VideoCard from "../../components/VideoCard";
-import PullRefreshUnderHeader from "../../components/PullRefreshUnderHeader";
 import { useAuth } from "../../context/AuthContext";
 import { useFollow } from "../../context/FollowContext";
 import { VideoItem, useVideoFeed } from "../../hooks/useVideoFeed";
@@ -297,9 +296,7 @@ ${item.uri}`,
         </View>
       </View>}
 
-      <PullRefreshUnderHeader scrollOffsetRef={feedPullOffset} onRefresh={refreshFeed}
-        refreshing={isRefreshing} enabled={!commentVideo&&videos.length>0&&activeIndex===0}
-        color="#FE0979" indicatorTop={insets.top+58} maxPull={148} triggerDistance={148}>
+      <View style={{flex:1,minHeight:0,overflow:"hidden"}}>
       <FlatList
           ref={flatListRef}
           style={{flex:1}}
@@ -337,7 +334,7 @@ ${item.uri}`,
           maxToRenderPerBatch={3}
           windowSize={3}
         />
-      </PullRefreshUnderHeader>
+      </View>
       </View>
       <VideoShareSheet video={shareVideo} onClose={()=>setShareVideo(null)} onShare={handleShare} onDelete={handleDelete} onHide={id=>{setHiddenVideos(prev=>new Set([...prev,id]));setActiveIndex(0);flatListRef.current?.scrollToOffset({offset:0,animated:false});}}/>
       <CommentsSheet

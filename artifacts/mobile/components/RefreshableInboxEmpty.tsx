@@ -1,18 +1,13 @@
 import React from "react";
-import {Platform,RefreshControl,ScrollView,StyleSheet,View} from "react-native";
-/** Same centered empty/error/loading Inbox surfaces. Android must have a real
- * scrollable native refresh target even when there are no rows to drag.
- * The native spinner is invisible; PullRefreshUnderHeader owns the visible circle.
- */
-export default function RefreshableInboxEmpty({children,refreshing,onRefresh}:{
-  children:React.ReactNode;refreshing:boolean;onRefresh:()=>void|Promise<void>;
+import {StyleSheet} from "react-native";
+import {ResistantScrollView} from "./ResistantRefresh";
+/** Same centered content and refresh callback, including an empty page. */
+export default function RefreshableInboxEmpty({children,refreshing,onRefresh,enabled=true}:{
+  children:React.ReactNode;refreshing:boolean;onRefresh:()=>void|Promise<void>;enabled?:boolean;
 }){
-  if(Platform.OS!=="android")return <View style={styles.fill}>{children}</View>;
-  return <ScrollView style={styles.fill} contentContainerStyle={styles.content}
-    showsVerticalScrollIndicator={false}
-    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}
-      colors={["transparent"]} progressBackgroundColor="transparent" progressViewOffset={-1000}/>}>
+  return <ResistantScrollView style={styles.fill} contentContainerStyle={styles.content}
+    showsVerticalScrollIndicator={false} {...{refreshing,onRefresh,enabled}} color="#FE2C55" holdDistance={64}>
     {children}
-  </ScrollView>;
+  </ResistantScrollView>;
 }
 const styles=StyleSheet.create({fill:{flex:1},content:{flexGrow:1}});

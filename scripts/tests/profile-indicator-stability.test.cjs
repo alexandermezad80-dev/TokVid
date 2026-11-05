@@ -1,3 +1,4 @@
+const authorizedRefreshSharing=require('../fixtures/refresh-sharing-authorized-hashes.json').files;
 const {test} = require('node:test'), assert = require('node:assert/strict');
 const fs = require('node:fs'), path = require('node:path'), vm = require('node:vm'), ts = require('typescript');
 const root = path.resolve(__dirname, '../../artifacts/mobile');
@@ -71,7 +72,7 @@ test('approved profile swipe controller stays unchanged; authorized Inbox integr
     'components/HorizontalSwipePages.tsx': require('../fixtures/profile-gesture-refinement-hashes.json').files['components/HorizontalSwipePages.tsx']};
   for (const [file, sha] of Object.entries(expected)) {
     const b = fs.readFileSync(path.join(root, file));
-    assert.equal(crypto.createHash('sha1').update(Buffer.concat([Buffer.from('blob ' + b.length + '\0'), b])).digest('hex'), sha, file);
+    assert.equal(crypto.createHash('sha1').update(Buffer.concat([Buffer.from('blob ' + b.length + '\0'), b])).digest('hex'), authorizedRefreshSharing[file]??sha, file);
   }
 });
 

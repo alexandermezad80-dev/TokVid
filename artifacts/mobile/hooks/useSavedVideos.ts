@@ -1,3 +1,4 @@
+import {beginFavoriteChange,finishFavoriteChange,subscribeFavoriteChanges,type FavoriteChange} from "../lib/features/favorites/changes";
 import { useRegistration } from "../context/RegistrationContext";
 import { requestRegistration } from "../lib/features/auth/services/registrationBridge";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -45,6 +46,7 @@ export function useSavedVideos() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const mutationInFlight = useRef(false);
+  const actor = useRef<string|null|undefined>(undefined);
 
   const loadSaved = useCallback(async () => {
     const request = ++requestSequence.current;
@@ -53,6 +55,7 @@ export function useSavedVideos() {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError) throw authError;
       if (request !== requestSequence.current) return;
+      actor.current = user?.id ?? null;
       if (!user) {
         setSavedIds(new Set());
         setSavedVideos([]);
@@ -83,39 +86,58 @@ export function useSavedVideos() {
 
   useEffect(() => {
     void loadSaved().catch(() => {});
-    const { data: sub } = supabase.auth.onAuthStateChange(() => { void loadSaved().catch(() => {}); });
+    const { data: sub } = supabase.auth.onAuthStateChange((_event,session) => { actor.current=session?.user?.id??null; void loadSaved().catch(() => {}); });
     return () => { requestSequence.current++; sub.subscription.unsubscribe(); };
   }, [loadSaved, completed]);
+
+  useEffect(()=>subscribeFavoriteChanges(change=>{
+    if(change.userId!==actor.current||mutationInFlight.current)return;
+    if(change.phase==='pending'){
+      requestSequence.current++;setLoading(false);
+      setSavedIds(previous=>{const next=new Set(previous);change.saved?next.add(change.videoId):next.delete(change.videoId);return next;});
+      if(!change.saved)setSavedVideos(previous=>previous.filter(item=>item.id!==change.videoId));
+    }else void loadSaved().catch(()=>{});
+  }),[loadSaved]);
 
   const toggleSave = useCallback(async (videoId: string) => {
     if (mutationInFlight.current) return;
     mutationInFlight.current = true;
     let request: number | null = null;
+    let change: Omit<FavoriteChange,'phase'>|null=null;
+    let confirmed=false;
     const originalIds = new Set(savedIds);
     const originalVideos = savedVideos;
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError) throw authError;
-      if (!user) {
-        requestRegistration();
-        return;
+      let userId=actor.current;
+      if(userId===undefined){
+        const {data:{user},error:authError}=await supabase.auth.getUser();
+        if(authError)throw authError;
+        userId=user?.id??null;actor.current=userId;
       }
+      if(!userId){requestRegistration();return;}
+      const mutation={userId,videoId,saved:!originalIds.has(videoId)};
+      if(!beginFavoriteChange(mutation))return;
+      change=mutation;
       request = ++requestSequence.current; // A prior read must not overwrite the change.
       const alreadySaved = originalIds.has(videoId);
       const optimistic = new Set(originalIds);
       alreadySaved ? optimistic.delete(videoId) : optimistic.add(videoId);
       setSavedIds(optimistic);
       setError(null);
-      const resolved = await resolveSavedVideos(optimistic);
+      if(alreadySaved)setSavedVideos(originalVideos.filter(item=>item.id!==videoId));
+      // Validate just the newly saved item, not the entire collection before writing.
+      const resolved = alreadySaved ? originalVideos.filter(item=>item.id!==videoId)
+        : [...originalVideos,...await resolveSavedVideos(new Set([videoId]))];
       if (request !== requestSequence.current) return;
       if (!alreadySaved && !resolved.some(item => item.id === videoId)) {
         throw new Error("SAVED_VIDEO_UNAVAILABLE");
       }
       setSavedVideos(resolved);
       const { error: writeError } = alreadySaved
-        ? await supabase.from("saved_videos").delete().eq("user_id", user.id).eq("video_id", videoId)
-        : await supabase.from("saved_videos").insert({ user_id: user.id, video_id: videoId });
+        ? await supabase.from("saved_videos").delete().eq("user_id", userId).eq("video_id", videoId)
+        : await supabase.from("saved_videos").insert({ user_id: userId, video_id: videoId });
       if (writeError) throw writeError;
+      confirmed=true;
     } catch (failure) {
       if (request === null || request === requestSequence.current) {
         setSavedIds(originalIds);
@@ -127,6 +149,7 @@ export function useSavedVideos() {
         }
       }
     } finally {
+      if(change)finishFavoriteChange(change,confirmed);
       mutationInFlight.current = false;
     }
   }, [savedIds, savedVideos]);

@@ -107,7 +107,7 @@ test('Inbox integration keeps the approved header, labels, native refresh and da
  const inbox=fs.readFileSync(path.join(root,'app/(tabs)/inbox.tsx'),'utf8');
  assert.ok(inbox.indexOf('<View style={styles.tabs}>')<inbox.indexOf('<InboxSwipePager key={user.id}'));
  for(const s of ['selectedIndex={tab==="messages"?1:0} moving={inboxMoving}','onPress={() => selectTab(t)}','onMoving={setInboxMoving} renderPage={renderInboxPage}',
-  'enabled={!refreshing}','nativeRefreshFallback={Platform.OS==="android"}','holdDistance={64}',
+  'enabled={!refreshing}','<ResistantScrollView onRefresh={handleRefresh}','holdDistance={64}',
   'markRead(n.id)','openActivity(n)','onPress={goToChat}','usePrivateInbox(user?.id)','useGroupInbox(user?.id,groupRevision)'])assert.ok(inbox.includes(s),s);
  assert.ok(!inbox.includes('useSectionSwipe'));assert.ok(!source.includes('PanResponder'));assert.ok(!source.includes('supabase'));
 });

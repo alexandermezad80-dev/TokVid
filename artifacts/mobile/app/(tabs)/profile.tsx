@@ -229,13 +229,16 @@ export default function ProfileScreen() {
           {!shared.loading && !shared.error && shared.items.length===0 && !shared.hasMore &&
             <View style={styles.emptyState}>
               <TokvidProfileIcon name="shared" size={40} color="#75828D"/>
-              <Text style={styles.emptyTitle}>Sin videos compartidos</Text>
-              <Text style={styles.emptyText}>Los videos de otros creadores que compartas aparecerán aquí</Text>
+              <Text style={styles.emptyTitle}>Sin contenido compartido</Text>
+              <Text style={styles.emptyText}>Los videos de otros creadores y las historias que compartas aparecerán aquí</Text>
             </View>}
           <View style={[styles.grid,{width}]}>
-            {shared.items.map(item=><TouchableOpacity key={item.id} style={[styles.gridItem,gridLayout.tile,styles.publishedTileSurface]}
+            {shared.items.map(item=><TouchableOpacity key={item.storyId?'story:'+item.id:item.id} style={[styles.gridItem,gridLayout.tile,styles.publishedTileSurface]}
               accessibilityRole="button" accessibilityLabel={`Abrir video compartido: ${item.caption || "Sin descripción"}`}
-              onPress={()=>router.push({pathname:"/publication",params:{id:item.id}})}>
+              onPress={()=>router.push(item.storyId?{pathname:"/story-viewer",params:{userId:item.creatorId,storyId:item.storyId}}:{pathname:"/publication",params:{id:item.id}})}
+              onLongPress={()=>Alert.alert("Quitar de Compartidos", "Se quitará esta referencia de tu perfil. El contenido original y los envíos se conservan.", [
+                {text:"Cancelar",style:"cancel"},{text:"Quitar",onPress:()=>void shared.remove(item).catch(error=>Alert.alert("No se pudo quitar",error.message))},
+              ])}>
               <PublicationThumbnail item={item}/>
             </TouchableOpacity>)}
           </View>

@@ -84,9 +84,9 @@ test('B11 long pull grows continuously beyond the old 156dp cap with decreasing 
       assert.ok(nextGain <= gain + 1e-9);
       previous = offset; gain = nextGain;
     }
-    assert.ok(math.profilePullOffset(height, height) > height * 0.5);
+    assert.ok(math.profilePullOffset(height, height) > height * 0.35 && math.profilePullOffset(height, height) < height * 0.4);
   }
-  assert.ok(math.profilePullOffset(600, 700) > 300);
+  assert.ok(math.profilePullOffset(600, 700) > 220 && math.profilePullOffset(600, 700) < 240);
   assert.equal(math.profilePullOffset(Number.MAX_VALUE, 700), 700);
   for (const d of [NaN, Infinity, -1]) assert.equal(math.profilePullOffset(d, 700), 0);
 });
@@ -108,7 +108,7 @@ test('B11 physical clipping moves the original blue circle and content in one la
   const scroll = nodes(moving).find(n => n.type === 'AnimatedScrollView');
   assert.equal(scroll.props.refreshControl, undefined);
   assert.deepEqual(scroll.props.stickyHeaderIndices, [1]); assert.deepEqual(scroll.props.children, ['details', 'sticky', 'grid']);
-  h.start(); h.move(0, 20); h.move(0, 620); assert.ok(h.offset > 300);
+  h.start(); h.move(0, 20); h.move(0, 620); assert.ok(h.offset > 220 && h.offset < 240);
   assert.equal(flat(indicator.props.style).top + flat(indicator.props.style).height, -tuning.indicatorGap);
 });
 test('B11 short, cancelled and horizontal pulls never request data', () => {
