@@ -18,7 +18,7 @@
   "ci_typecheck": "passed",
   "ci_prebuild": "passed",
   "android": "success",
-  "physical_device_verified": false,
+  "physical_device_verified": true,
   "previous_pull_sensation_approved": false,
   "apk_url": "https://github.com/alexandermezad80-dev/TokVid/actions/runs/42144217915/artifacts/13470098679",
   "source_map_url": "https://github.com/alexandermezad80-dev/TokVid/actions/runs/42144217915/artifacts/13470188157",
@@ -28,5 +28,14 @@
   "android_duration": "23m 37s",
   "apk_artifact_id": 13470098679,
   "source_map_artifact_id": 13470188157,
-  "ci_verified": true
+  "ci_verified": true,
+  "physical_verification_scope": "Owner approval of the observed APK318 pull-to-refresh; not exhaustive screen/device/error matrix verification.",
+  "full_device_matrix_verified": false,
+  "pull_sensation_approved": true,
+  "owner_approval": {
+    "date_utc": "2026-11-06",
+    "quote": "Quedo bien ☺️",
+    "scope": "Observed APK318 pull-to-refresh",
+    "preserve": true
+  }
 }
