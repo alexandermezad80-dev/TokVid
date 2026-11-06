@@ -1,0 +1,53 @@
+{
+  "branch": "feature/feed-mini-video-avatar",
+  "base_commit": "7d5e5d0a353b223f52b5a388364a08c23f19e71c",
+  "application_commit": "cc287937ff56b327e00bf1b17f4e0f60e84a21d2",
+  "workflow_run_id": 42056157887,
+  "workflow_url": "https://github.com/alexandermezad80-dev/TokVid/actions/runs/42056157887",
+  "apk_number": 317,
+  "ci_typecheck": "passed",
+  "ci_tests": {
+    "total": 389,
+    "passed": 389,
+    "failed": 0
+  },
+  "prebuild": "passed",
+  "android_build": "success",
+  "artifact_url": "https://github.com/alexandermezad80-dev/TokVid/actions/runs/42056157887/artifacts/13431026905",
+  "source_map_url": "https://github.com/alexandermezad80-dev/TokVid/actions/runs/42056157887/artifacts/13431636671",
+  "apk_sha256": "b0c2458aa2aee168038071caceab71c3c1c0a7a8d199290751fb4b9677373aca",
+  "physical_device_verified": false,
+  "backend_migration": "20261103164341_shared_content_references_and_delivery",
+  "backend_status": "applied; authenticated rollback verification passed",
+  "additional_local_tests": [
+    "optimistic favorite total versus stale reads and failed writes",
+    "automatic Feed request coalescing and page overlap deduplication"
+  ],
+  "additional_local_tests_passed": true,
+  "protected_application_files": {
+    "components/VideoActions.tsx": "unchanged",
+    "components/VideoCard.tsx": "unchanged",
+    "components/PublicationThumbnail.tsx": "unchanged",
+    "components/OwnProfileMagneticRefresh.tsx": "unchanged",
+    "components/VisitedProfileRefresh.tsx": "unchanged",
+    "components/ProfilePullRefresh.tsx": "unchanged",
+    "components/PullRefreshUnderHeader.tsx": "unchanged",
+    "components/InboxSwipePager.tsx": "unchanged",
+    "components/HorizontalSwipePages.tsx": "unchanged",
+    "hooks/useSectionSwipe.ts": "unchanged",
+    "hooks/useSystemNavigation.ts": "unchanged",
+    "constants/palette.ts": "unchanged",
+    "app/(tabs)/_layout.tsx": "unchanged"
+  },
+  "pending": [
+    "Android phone verification, especially Motorola G05/Android15",
+    "icon stroke suggestion remains unimplemented",
+    "thumbnail views pending a real view count; no fabricated numbers"
+  ],
+  "main_merged": false,
+  "android_build_duration": "25m 59s",
+  "apk_artifact_id": 13431026905,
+  "source_map_artifact_id": 13431636671,
+  "ci_verified": true,
+  "completed_utc": "2026-11-05T16:00:49Z"
+}

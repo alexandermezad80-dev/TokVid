@@ -1,11 +1,11 @@
 {
   "base_commit": "7d5e5d0a353b223f52b5a388364a08c23f19e71c",
-  "authorization": "1 Nov: all Android gesture refresh surfaces, automatic Feed, shared content references/delivery. See docs/TOKVID_REFRESH_SHARING_FOLLOWUP_20261101.md. Existing layout/gesture engine/branding remain pinned separately.",
+  "authorization": "1 Nov: all Android gesture refresh surfaces, automatic Feed, shared content references/delivery. See docs/TOKVID_REFRESH_SHARING_FOLLOWUP_20261101.md. Existing layout/gesture engine/branding remain pinned separately. 6 Nov: owner reports APK317 resistance insufficient on every gesture surface; strengthen only pull physics, preserve approved controllers and layouts.",
   "files": {
     "app/(tabs)/profile.tsx": "810fee8776684a839b9416f4de989be4b0bef802",
     "app/(tabs)/inbox.tsx": "01fc0c2fe4bc04f6faf6f039861749e2e9f7dc93",
     "app/(tabs)/index.tsx": "25cafe3e5bc9a831382b89c3e3af1ee9cdbbb4e8",
-    "lib/features/profile/ownProfilePull.ts": "0fb5c708d8b7d34273c0a5914f386f61a779f9e8",
+    "lib/features/profile/ownProfilePull.ts": "dd207b2279758db446162473d5fe064c6c3e7d99",
     "components/RefreshableInboxEmpty.tsx": "665a57c117c95addec2399ddefbe8a02c3256ba3",
     "components/VideoShareSheet.tsx": "d5ac7c9e3080cb3f0942e80a2405637c49173db7"
   }

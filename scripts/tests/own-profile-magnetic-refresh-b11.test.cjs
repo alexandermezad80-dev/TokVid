@@ -84,9 +84,9 @@ test('B11 long pull grows continuously beyond the old 156dp cap with decreasing 
       assert.ok(nextGain <= gain + 1e-9);
       previous = offset; gain = nextGain;
     }
-    assert.ok(math.profilePullOffset(height, height) > height * 0.35 && math.profilePullOffset(height, height) < height * 0.4);
+    assert.ok(math.profilePullOffset(height, height) > height * 0.19 && math.profilePullOffset(height, height) < height * 0.21);
   }
-  assert.ok(math.profilePullOffset(600, 700) > 220 && math.profilePullOffset(600, 700) < 240);
+  assert.ok(math.profilePullOffset(600, 700) > 120 && math.profilePullOffset(600, 700) < 130);
   assert.equal(math.profilePullOffset(Number.MAX_VALUE, 700), 700);
   for (const d of [NaN, Infinity, -1]) assert.equal(math.profilePullOffset(d, 700), 0);
 });
@@ -108,7 +108,7 @@ test('B11 physical clipping moves the original blue circle and content in one la
   const scroll = nodes(moving).find(n => n.type === 'AnimatedScrollView');
   assert.equal(scroll.props.refreshControl, undefined);
   assert.deepEqual(scroll.props.stickyHeaderIndices, [1]); assert.deepEqual(scroll.props.children, ['details', 'sticky', 'grid']);
-  h.start(); h.move(0, 20); h.move(0, 620); assert.ok(h.offset > 220 && h.offset < 240);
+  h.start(); h.move(0, 20); h.move(0, 620); assert.ok(h.offset > 120 && h.offset < 130);
   assert.equal(flat(indicator.props.style).top + flat(indicator.props.style).height, -tuning.indicatorGap);
 });
 test('B11 short, cancelled and horizontal pulls never request data', () => {
@@ -138,14 +138,14 @@ test('B11 one long pull calls the existing callback once and holds until its act
 });
 test('B11 failed refresh returns home and permits another gesture', async () => {
   let calls = 0; const h = harness(async () => {calls++; throw Error('offline');});
-  for (let i = 1; i <= 2; i++) {h.start(); h.move(0, 20); h.move(0, 300); h.release(); await h.flush(); h.settle(); assert.equal(h.offset, 0); assert.equal(calls, i);}
+  for (let i = 1; i <= 2; i++) {h.start(); h.move(0, 20); h.move(0, 20 + tuning.triggerDistance + 40); h.release(); await h.flush(); h.settle(); assert.equal(h.offset, 0); assert.equal(calls, i);}
 });
 test('B11 cancellation, external refresh, native scroll and unmount keep lifecycle boundaries', async () => {
   const pending = deferred(), events = [], h = harness(() => pending.promise, {onScroll: e => events.push(e.nativeEvent.contentOffset.y)});
   h.scroll(150); h.start(); h.move(0, 200); assert.equal(h.manager.activations, 0); assert.equal(h.props.scrollOffsetRef.current, 150); assert.deepEqual(events, [150]);
   h.scroll(0); h.start(); h.move(0, 20); h.move(0, 100); h.pan().onFinalize(); assert.equal(h.offset, 0); h.settle();
   h.render({refreshing: true}); assert.equal(h.offset, tuning.holdDistance); h.render({refreshing: false}); assert.equal(h.offset, 0); h.settle();
-  h.start(); h.move(0, 20); h.move(0, 300); h.release(); h.unmount(); const count = h.animations.length;
+  h.start(); h.move(0, 20); h.move(0, 20 + tuning.triggerDistance + 40); h.release(); h.unmount(); const count = h.animations.length;
   pending.resolve(); await h.flush(); assert.equal(h.animations.length, count);
 });
 test('B11 leaves the non-Android legacy refresher and scroll props intact', () => {
@@ -156,10 +156,37 @@ test('B11 leaves the non-Android legacy refresher and scroll props intact', () =
 
 
 test('firmer pull uses less travel for the same finger distance and keeps a non-overshooting return', () => {
-  for (const d of [30, 60, 100, 200]) assert.ok(math.profilePullOffset(d, 700) <= d * 0.6);
+  for (const height of [360, 500, 700, 1000]) {
+    for (const distance of [30, 60, 100, 200, 400, 600]) {
+      const apk317 = -height * Math.expm1(-0.45 * distance / height);
+      const current = math.profilePullOffset(distance, height);
+      assert.ok(current <= apk317 * 0.65, 'at least 35% less content travel than APK317');
+      assert.ok(current > apk317 * 0.45, 'keep a visible, continuous response');
+      assert.ok(Math.abs(math.profilePullDistance(current, height) - distance) < 1e-7);
+    }
+    assert.ok(math.profilePullOffset(height * 4, height) > 156, 'long travel remains available');
+  }
   assert.ok(math.profilePullOffset(tuning.triggerDistance, 700) > tuning.holdDistance);
   assert.equal(tuning.spring.overshootClamping, true);
-  assert.ok(tuning.spring.stiffness > 320);
+  assert.ok(tuning.spring.stiffness > 520);
+  assert.ok(tuning.spring.damping >= 38);
+  assert.equal(tuning.activationDistance, 12);
+  assert.equal(tuning.verticalRatio, 1.45);
+  assert.equal(tuning.holdDistance, 72);
+  assert.equal(tuning.indicatorHeight, 40);
+  assert.equal(tuning.indicatorGap, 8);
+});
+
+test('a pull that refreshed in APK317 now requires the deliberately longer travel', async () => {
+  let calls = 0;
+  const h = harness(() => { calls++; });
+  for (const distance of [200, tuning.triggerDistance - 1]) {
+    h.start(); h.move(0, 20); h.move(0, 20 + distance); h.release();
+    assert.equal(calls, 0); assert.equal(h.offset, 0); h.settle();
+  }
+  h.start(); h.move(0, 20); h.move(0, 20 + tuning.triggerDistance); h.release();
+  assert.equal(calls, 1); assert.equal(h.offset, 72);
+  await h.flush(); assert.equal(h.offset, 0);
 });
 
 test('adding and removing a second pointer preserves pull position despite absolute pointer jumps', async () => {
@@ -173,7 +200,7 @@ test('adding and removing a second pointer preserves pull position despite absol
   h.pan().onUpdate({absoluteY:900,translationY:220,numberOfPointers:2}); assert.ok(h.offset>before);
   const two=h.offset;
   h.pan().onUpdate({absoluteY:100,translationY:220,numberOfPointers:1}); assert.equal(h.offset,two); assert.equal(calls,0);
-  h.pan().onUpdate({absoluteY:200,translationY:320,numberOfPointers:1}); h.release();
+  h.pan().onUpdate({absoluteY:200,translationY:20+tuning.triggerDistance+40,numberOfPointers:1}); h.release();
   assert.equal(calls,1); await h.flush(); assert.equal(h.offset,0);
 });
 

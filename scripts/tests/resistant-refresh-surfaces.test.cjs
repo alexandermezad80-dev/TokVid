@@ -88,7 +88,7 @@ test('one completed pull holds once, survives two pointers and waits for real co
   h.start();h.move(0,20);h.move(0,140);const before=h.offset;
   h.pan().onTouchesDown(h.touch(300,900,2),h.manager);
   h.pan().onUpdate({translationY:140,absoluteY:900,numberOfPointers:2});assert.equal(h.offset,before);
-  h.pan().onUpdate({translationY:320,absoluteY:100,numberOfPointers:1});h.release();
+  h.pan().onUpdate({translationY:20+tuning.triggerDistance+40,absoluteY:100,numberOfPointers:1});h.release();
   assert.equal(calls,1);assert.equal(h.offset,64);h.start();h.move(0,400);h.release();assert.equal(calls,1);
   pending.resolve();await h.flush();assert.equal(h.offset,0);
 });
@@ -102,6 +102,6 @@ test('short, cancelled and inactive-page pulls do not refresh; failures return h
 test('refresh callbacks and offsets stay local to each Inbox page; late completion cannot animate after unmount',async()=>{
   const pending=deferred(),events=[],h=harness(()=>pending.promise,{onScroll:e=>events.push(e.nativeEvent.contentOffset.y)});
   const other=harness();h.scroll(200);assert.deepEqual(events,[200]);other.start();other.move(0,20);assert.equal(other.manager.activations,1);
-  h.scroll(0);h.start();h.move(0,20);h.move(0,350);h.release();h.unmount();const count=h.animations.length;
+  h.scroll(0);h.start();h.move(0,20);h.move(0,20+tuning.triggerDistance+40);h.release();h.unmount();const count=h.animations.length;
   pending.resolve();await h.flush();assert.equal(h.animations.length,count);
 });

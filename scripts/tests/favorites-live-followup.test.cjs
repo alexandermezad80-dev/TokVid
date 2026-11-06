@@ -57,3 +57,44 @@ test('favorite event channel isolates accounts and releases its lock exactly onc
  assert.equal(b.beginFavoriteChange({...change,userId:'b'}),true);b.finishFavoriteChange(change,false);b.finishFavoriteChange(change,true);
  assert.deepEqual(events.map(e=>e.phase),['pending','pending','failed']);off();b.finishFavoriteChange({...change,userId:'b'},true);assert.equal(events.length,3);
 });
+
+test('visible favorite count updates immediately, ignores stale reads and restores failed changes',async()=>{
+ const bus=load('lib/features/favorites/changes.ts'),r=runtime(),reads=[],id='11111111-1111-1111-1111-111111111111';
+ let notify,removed=0;
+ const channel={on(_event,_filter,callback){notify=callback;return channel;},subscribe(){return channel;}};
+ const supabase={from(){const q={select(){return q;},eq(){return q;},maybeSingle(){const request=defer();reads.push(request);return request.promise;}};return q;},removeChannel(){removed++;return Promise.resolve();}};
+ const {useVideoSaveCount}=load('hooks/useVideoSaveCount.ts',{react:r.hooks,'../lib/supabase':{supabase},'../lib/realtimeSubscriptions':{createDatabaseChannel:()=>channel},'../lib/features/favorites/changes':bus});
+ r.mount(()=>useVideoSaveCount(id));await r.flush();
+ reads.shift().resolve({data:{saves_count:7,shares_count:20},error:null});await r.flush();assert.equal(r.output.saves,7);
+ notify();const stale=reads.shift();
+ const save={userId:'me',videoId:id,saved:true};bus.beginFavoriteChange(save);await r.flush();assert.equal(r.output.saves,8);
+ notify();assert.equal(reads.length,0,'realtime must not overwrite an unfinished optimistic change');
+ stale.resolve({data:{saves_count:7,shares_count:20},error:null});await r.flush();assert.equal(r.output.saves,8);
+ bus.finishFavoriteChange(save,true);reads.shift().resolve({data:{saves_count:9,shares_count:20},error:null});await r.flush();assert.equal(r.output.saves,9,'server total also includes other users');
+ const remove={...save,saved:false};bus.beginFavoriteChange(remove);await r.flush();assert.equal(r.output.saves,8);
+ bus.finishFavoriteChange(remove,false);await r.flush();assert.equal(r.output.saves,9);assert.equal(r.output.shares,20);
+ reads.shift().resolve({data:null,error:Error('offline')});await r.flush();assert.equal(r.output.saves,9);
+ r.unmount();assert.equal(removed,1);
+});
+
+test('automatic Feed coalesces initial refresh and pagination without duplicate publications',async()=>{
+ const r=runtime(),reads=[],followed=new Set(),assets=Object.fromEntries(Array.from({length:6},(_,i)=>[`../assets/images/thumb${i+1}.png`,i]));
+ const supabase={auth:{getUser:async()=>({data:{user:null}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})},from(){const q={select(){return q;},in(){return Promise.resolve({data:[]});}};return q;}};
+ const {useVideoFeed}=load('hooks/useVideoFeed.ts',{
+  ...assets,react:r.hooks,'../lib/supabase':{supabase},'expo-router':{},
+  '../context/RegistrationContext':{useRegistration:()=>({completed:null})},
+  '../lib/features/auth/services/registrationBridge':{requestRegistration(){}},
+  '@react-native-async-storage/async-storage':{__esModule:true,default:{getItem:async()=>null}},
+  '../lib/features/publishing/model':{publishedMediaKind:()=> 'video'},
+  '../lib/features/feed/publications':{readPublishedFeedPage(_client,page){const request=defer();reads.push({...request,page});return request.promise;}}
+ });
+ const rows=(start,length)=>Array.from({length},(_,i)=>({id:`video-${start+i}`,user_id:'creator',video_url:'https://example.test/video.mp4'}));
+ r.mount(()=>useVideoFeed(followed));await r.flush();
+ r.output.refreshFeed();r.output.refreshFeed();r.output.loadMore();await r.flush();assert.equal(reads.length,1,'focus must reuse the initial request');
+ reads.shift().resolve(rows(0,12));await r.flush();assert.equal(r.output.videos.filter(v=>v.isReal).length,12);
+ r.output.loadMore();r.output.loadMore();r.output.refreshFeed();await r.flush();assert.equal(reads.length,1);assert.equal(reads[0].page,1);
+ reads.shift().resolve(rows(10,8));await r.flush();assert.equal(r.output.videos.filter(v=>v.isReal).length,18,'overlapping pages must not duplicate videos');
+ r.output.refreshFeed();r.output.refreshFeed();await r.flush();assert.equal(reads.length,1);assert.equal(reads[0].page,0);
+ reads.shift().resolve(rows(20,1));await r.flush();assert.equal(r.output.videos.filter(v=>v.isReal).length,1);assert.equal(r.output.isRefreshing,false);
+ r.unmount();
+});
