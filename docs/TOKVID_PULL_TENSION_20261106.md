@@ -70,3 +70,21 @@ Prueba física pendiente: especialmente Motorola G05/Android15. Confirmar tensi�
 perceptible y accesibilidad del recorrido360dp en las pantallas con gesto, además
 de convivencia con swipe y navegación de Android. No afirmar aprobación física
 por pasar pruebas automáticas.
+
+
+## Entrega318 verificada
+
+> **6 noviembre 2026 — APK318 entregada: mayor tensión del pull en Android.** Código `c69480965ab6739759213a1cdc6af3bac8a525f9`, rama `feature/feed-mini-video-avatar`. [Descargar APK318](https://github.com/alexandermezad80-dev/TokVid/actions/runs/42144217915/artifacts/13470098679) (extraer ZIP e instalar `app-release.apk`); [compilación](https://github.com/alexandermezad80-dev/TokVid/actions/runs/42144217915); [mapa de fuentes](https://github.com/alexandermezad80-dev/TokVid/actions/runs/42144217915/artifacts/13470188157). SHA256 APK `469761400a43118d1132b5ff609493b493faf1033588277c7edafa6f5d2e6b3d`. **392 pruebas CI aprobadas, cero fallos; TypeScript real, prebuild, comprobación de chat y Android correctos.** `BUILD SUCCESSFUL in 23m 37s`. Único archivo de aplicación modificado: `ownProfilePull.ts`; ganancia0.28, activación360dp, resorte620/42/0.8 y curva de tensión progresiva reforzada. Con un arrastre de200dp en una zona de700dp, el contenido se mueve50.1dp frente a84.5dp en317. Swipe, cabeceras, indicadores, diseño, callbacks, Feed automático, Compartidos y favoritos conservados. **Sensación física de318 pendiente de validación del propietario**; la resistencia de317 resultó insuficiente en todas las pantallas. Compartidos mantiene videos ajenos según decisión confirmada. Sin merge a main. [Alcance y límites](continuity/PULL_TENSION_VERIFICATION_20261106.json). Este cierre sustituye los estados de CI/entrega pendientes inferiores; conserva la historia.
+
+## Aclaración del entorno local
+
+El paquete ausente en el entorno local era `@supabase/supabase-js`, biblioteca
+cliente de Supabase para JavaScript. Impedía cargar un archivo de pruebas local;
+no faltaba en las dependencias declaradas de la aplicación. GitHub instaló las
+dependencias reales y ejecutó392 pruebas correctamente. La APK318 incluye el
+cliente y el propietario no tiene que instalar ningún paquete adicional.
+No se alteraron dependencias ni lockfiles por esta limitación local.
+
+El cierre documental previo de317, que no se había vinculado a la rama, quedó
+integrado con este trabajo sin cambios adicionales de aplicación. No volver a
+intentar mover la rama al antiguo commit documental95d1196f.
