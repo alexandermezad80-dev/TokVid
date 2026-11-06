@@ -1,4 +1,10 @@
-# Pull: mayor tensión tras la prueba de APK317 — 6 noviembre2026
+# Pull de APK318 — tensión aprobada, 6 noviembre2026
+
+> **6 noviembre 2026 — pull de APK318 aprobado por el propietario.** Confirmación: «Quedo bien ☺️». Conservar la resistencia, recorrido y retorno de `c69480965ab6739759213a1cdc6af3bac8a525f9`. Esta aprobación sustituye la sensación física pendiente de318 en lo observado; no acredita toda la matriz de pantallas, dispositivos o fallos de red. Sin cambios de aplicación, nueva APK ni merge a main.
+
+La aplicación aprobada se conserva. Cualquier intervención posterior debe tener
+una necesidad concreta y permanecer limitada a su alcance. El historial inferior
+mantiene la auditoría, la implementación y las verificaciones de esta entrega.
 
 ## Solicitud y alcance
 
