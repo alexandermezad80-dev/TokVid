@@ -1,0 +1,32 @@
+{
+  "branch": "feature/feed-mini-video-avatar",
+  "base_commit": "00f30c9ee86d516eb3f0b3857b8b3ec8b66c41f4",
+  "code_commit": "c69480965ab6739759213a1cdc6af3bac8a525f9",
+  "run_id": 42144217915,
+  "apk_number": 318,
+  "application_files_changed": [
+    "lib/features/profile/ownProfilePull.ts"
+  ],
+  "application_files_unchanged": 202,
+  "tests_local_passed": 381,
+  "local_environment_load_failure": "@supabase/supabase-js unavailable; CI executes the full suite",
+  "ci_tests": {
+    "total": 392,
+    "passed": 392,
+    "failed": 0
+  },
+  "ci_typecheck": "passed",
+  "ci_prebuild": "passed",
+  "android": "success",
+  "physical_device_verified": false,
+  "previous_pull_sensation_approved": false,
+  "apk_url": "https://github.com/alexandermezad80-dev/TokVid/actions/runs/42144217915/artifacts/13470098679",
+  "source_map_url": "https://github.com/alexandermezad80-dev/TokVid/actions/runs/42144217915/artifacts/13470188157",
+  "apk_sha256": "469761400a43118d1132b5ff609493b493faf1033588277c7edafa6f5d2e6b3d",
+  "main_merged": false,
+  "ci_chat_phase": "passed",
+  "android_duration": "23m 37s",
+  "apk_artifact_id": 13470098679,
+  "source_map_artifact_id": 13470188157,
+  "ci_verified": true
+}
