@@ -13,6 +13,7 @@ class VideoTrimModule(context: ReactApplicationContext): ReactContextBaseJavaMod
  private var running:Transformer?=null
  private var waiting:Promise?=null
  private var file:File?=null
+ private var generation=0
  private fun length(uri:String):Long {
    val r=MediaMetadataRetriever()
    try{r.setDataSource(reactApplicationContext,Uri.parse(uri));return r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull()?:0}
@@ -26,7 +27,8 @@ class VideoTrimModule(context: ReactApplicationContext): ReactContextBaseJavaMod
      val result=Arguments.createMap();result.putDouble("durationMs",ms.toDouble());promise.resolve(result)
    }catch(e:Exception){promise.reject("TRIM_INSPECT","No pudimos leer este video.",e)}
  }
- private fun finish(error:Throwable?=null){
+ private fun finish(token:Int,error:Throwable?=null){
+   if(token!=generation)return
    val p=waiting;val output=file
    waiting=null;running=null;file=null
    if(error!=null){output?.delete();p?.reject("TRIM_EXPORT","No se pudo recortar el video. Conservamos el original.",error);return}
@@ -53,9 +55,10 @@ class VideoTrimModule(context: ReactApplicationContext): ReactContextBaseJavaMod
        val out=File(dir,UUID.randomUUID().toString()+".mp4")
        val input=MediaItem.Builder().setUri(uri).setClippingConfiguration(MediaItem.ClippingConfiguration.Builder().setStartPositionMs(begin).setEndPositionMs(end).build()).build()
        val clip=EditedMediaItem.Builder(input).build()
+       val token=++generation
        val listener=object:Transformer.Listener{
-         override fun onCompleted(composition:Composition,exportResult:ExportResult){finish()}
-         override fun onError(composition:Composition,exportResult:ExportResult,exception:ExportException){finish(exception)}
+         override fun onCompleted(composition:Composition,exportResult:ExportResult){finish(token)}
+         override fun onError(composition:Composition,exportResult:ExportResult,exception:ExportException){finish(token,exception)}
        }
        val job=Transformer.Builder(reactApplicationContext).addListener(listener).build()
        waiting=promise;file=out;running=job
@@ -63,13 +66,26 @@ class VideoTrimModule(context: ReactApplicationContext): ReactContextBaseJavaMod
      }catch(e:Exception){file?.delete();file=null;running=null;waiting=null;promise.reject("TRIM_START","No se pudo iniciar el recorte.",e)}
    }
  }
+ @ReactMethod fun getProgress(promise:Promise){
+   UiThreadUtil.runOnUiThread{
+     try{
+       val job=running
+       if(job==null){promise.resolve(null);return@runOnUiThread}
+       val holder=ProgressHolder()
+       if(job.getProgress(holder)==Transformer.PROGRESS_STATE_AVAILABLE)promise.resolve(holder.progress.coerceIn(0,100))
+       else promise.resolve(null)
+     }catch(e:Exception){promise.reject("TRIM_PROGRESS","No se pudo consultar el progreso.",e)}
+   }
+ }
  @ReactMethod fun cancelTrim(){
    UiThreadUtil.runOnUiThread{
      val job=running?:return@runOnUiThread
      val p=waiting;val out=file
+     generation++
      running=null;waiting=null;file=null
      job.cancel();out?.delete();p?.reject("TRIM_CANCEL","Exportación cancelada.")
    }
  }
  override fun invalidate(){cancelTrim();super.invalidate()}
 }
+

@@ -2,9 +2,10 @@ import {NativeModules,Platform} from "react-native";
 export type TrimResult={uri:string;size:number;durationMs:number};
 const get=()=>{
  if(Platform.OS!=="android"||!NativeModules.TokvidVideoTrimmer)throw Error("Recorte no disponible en este dispositivo.");
- return NativeModules.TokvidVideoTrimmer as {inspect(uri:string):Promise<{durationMs:number}>;trim(uri:string,a:number,b:number):Promise<TrimResult>;cancelTrim():void};
+ return NativeModules.TokvidVideoTrimmer as {inspect(uri:string):Promise<{durationMs:number}>;trim(uri:string,a:number,b:number):Promise<TrimResult>;cancelTrim():void;getProgress():Promise<number|null>};
 };
 export const inspectVideo=(uri:string)=>get().inspect(uri);
+export const readTrimProgress=()=>get().getProgress();
 export const cancelTrim=()=>{if(Platform.OS==="android")NativeModules.TokvidVideoTrimmer?.cancelTrim();};
 export async function exportTrim(uri:string,start:number,end:number){
  if(!Number.isFinite(start)||!Number.isFinite(end)||start<0||end-start<500||end>180000)throw Error("Intervalo inválido.");
