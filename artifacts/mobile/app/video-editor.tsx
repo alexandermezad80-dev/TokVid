@@ -44,7 +44,7 @@ export default function VideoEditor(){
  },[player,end]);
  const cancel=()=>{if(leaving.current)return;leaving.current=true;operation.current++;cancelTrim();cancelVideoEdit(key);player.pause();router.back();};
  const cancelRef=useRef(cancel);cancelRef.current=cancel;
- useEffect(()=>{const sub=BackHandler.addListener('hardwareBackPress',()=>{cancelRef.current();return true;});return()=>sub.remove();},[]);
+ useEffect(()=>{const sub=BackHandler.addEventListener('hardwareBackPress',()=>{cancelRef.current();return true;});return()=>sub.remove();},[]);
  const preview=()=>{if(busy||!duration)return;if(playing){player.pause();setPlaying(false);}else{
   if(player.currentTime<start||player.currentTime>=end)player.currentTime=start;
   player.play();setPlaying(true);
@@ -55,7 +55,7 @@ export default function VideoEditor(){
   player.currentTime=n;setCurrent(n);
   player.pause();setPlaying(false);
  };
- const apply=async()=>{if(!p||!user||exporting.current||!duration||end-start<0.5)return;
+ const apply=async()=>{if(!p||!user||exporting.current||!duration||Math.round((end-start)*1000)<500)return;
   exporting.current=true;const request=++operation.current;
   setBusy(true);setProgress(null);setError("");player.pause();setPlaying(false);
   try{const result=await exportTrim(p.uri,Math.round(start*1000),Math.round(end*1000));
@@ -87,7 +87,7 @@ export default function VideoEditor(){
   </View>}
   <Text style={styles.muted}>Fragmento: {time(end-start)}. Al aplicar podrás guardar un borrador o publicar desde Crear.</Text>
   {!!error&&<Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
-  <Pressable onPress={()=>void apply()} disabled={busy||!duration||end-start<0.5} accessibilityLabel="Aplicar recorte real" style={[styles.action,(busy||!duration)&&{opacity:0.4}]}>
+  <Pressable onPress={()=>void apply()} disabled={busy||!duration||Math.round((end-start)*1000)<500} accessibilityLabel="Aplicar recorte real" style={[styles.action,(busy||!duration)&&{opacity:0.4}]}>
    {busy?<ActivityIndicator color="#FFFFFF"/>:<><Feather name="check" size={20} color="#FFFFFF"/><Text style={styles.actionText}>Aplicar recorte</Text></>}
   </Pressable>
   <Pressable style={styles.cancel} onPress={cancel}><Text style={styles.title}>{busy?"Cancelar exportación":"Cancelar sin cambios"}</Text></Pressable>

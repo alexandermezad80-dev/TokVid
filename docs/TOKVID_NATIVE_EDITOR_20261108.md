@@ -19,3 +19,8 @@ Solo cinco rutas de aplicación nuevas/modificadas: app/video-editor.tsx; compon
 Cinco pruebas locales del editor aprobadas: límites, precisión de selección, formato de tiempo, muestreo de miniaturas y protecciones de cancelación. Cinco pruebas de lienzo Aurora aprobadas. Comparación binaria de aislamiento aprobada. El entorno local no contiene el conjunto de dependencias; CI debe ejecutar todos los tests, TypeScript y compilación Android antes de entregar. No se presenta inspección de código como prueba física.
 
 Pendiente al publicar: CI/APK, checksum, artifact y sourcemap; después prueba Motorola G05 Android15 (tramo real con audio, cancelación/retorno, miniaturas, borrador y reproducción del resultado). La APK previa318 permanece como referencia del pull aprobado. No cambiar workflows para compilar.
+
+
+## Corrección de comprobación319
+
+Run42506666187:402 pruebas aprobadas, cero fallos; TypeScript detectó uso de addListener en BackHandler. Corregido a addEventListener. No hubo APK319. La validez del tramo mínimo ahora se compara en milisegundos redondeados para evitar rechazar0.5s por error binario decimal. Nueva comprobación completa pendiente.
