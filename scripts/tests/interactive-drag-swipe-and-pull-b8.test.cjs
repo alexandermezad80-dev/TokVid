@@ -61,7 +61,7 @@ test("B8 same BLUE circular spinner with elastically exposed content stays visib
  assert.ok(pull.includes("Promise.resolve().then(()=>callback.current()).catch(()=>{}).finally"));
  assert.ok(pull.includes("Animated.timing(translation,{toValue:0,duration:220,useNativeDriver:true}).start();"));
  assert.ok(pull.includes("offset.current.current<=1"));
- assert.ok(!inbox.includes('color="#4B7194"'),"Preserve approved Inbox indicator color");
+ assert.ok(inbox.includes('color="#4B7194" holdDistance={64}'),"10 Nov: approved steel-blue Inbox spinner retains hold distance");
 });
 test("B8 TypeScript parses the exact new source with unchanged data buttons and profile geometry",()=>{
  for(const s of [profile,inbox,pull,read("components/HorizontalSwipePages.tsx"),read("components/SwipePositionUnderline.tsx"),pure]){
