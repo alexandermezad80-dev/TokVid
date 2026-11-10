@@ -12,7 +12,7 @@ export default function ChatWallpaper({id,stableFrame=false}:{id:string;stableFr
   <View style={stableFrame&&frame.height>0?{position:'absolute',top:0,left:0,right:0,height:frame.height}:StyleSheet.absoluteFill}>
   {id==='aurora'?<AuroraWallpaper/>:<>
   {wallpaper?.colors&&<LinearGradient colors={wallpaper.colors} style={StyleSheet.absoluteFill}/>}
-  {wallpaper?.source&&<Image source={wallpaper.source} resizeMode="contain" style={[StyleSheet.absoluteFill,{width:'100%',height:'100%'}]}/>}
+  {wallpaper?.source&&<Image source={wallpaper.source} resizeMode="cover" style={[StyleSheet.absoluteFill,{width:'100%',height:'100%'}]}/>}
   </>}
   </View>
  </View>;
