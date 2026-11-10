@@ -1,3 +1,5 @@
+> **Corrección posterior autorizada:** se retira cover y la prop thumbnail. Todos los usos comparten de nuevo contain para las imágenes originales: composición completa, escala uniforme y sin recorte. Se mantienen exactamente las dimensiones verticales del commit8beeaaeb, los colores y stableFrame. Si difieren las proporciones del JPG y la tarjeta, contain deja espacio libre; no se afirma que llene el marco ni que reproduzca un screenshot del chat con idéntica relación de aspecto. La indicación más reciente prioriza imagen íntegra y medidas fijas. Se ha explicado este límite al usuario. Cinco pruebas existentes del lienzo sin cambios aprobadas; comparación del diff confirma que no cambia ningún estilo ni medida. Sin validación visual Android, TypeScript integral o nueva APK. Este bloque sustituye la decisión cover descrita en el historial inferior.
+
 # Miniaturas verticales del chat — 10 noviembre 2026
 
 ## Autorización y alcance
