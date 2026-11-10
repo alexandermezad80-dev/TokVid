@@ -322,11 +322,11 @@ ${item.uri}`,
             if (hasMore) loadMore();
           }}
           onEndReachedThreshold={0.75}
-          ListEmptyComponent={<View style={{ height: SCREEN_HEIGHT * 0.75, justifyContent: "center", alignItems: "center", padding: 28, gap: 14 }}>{isLoading || isRefreshing ? <ActivityIndicator color="#91D9E0" /> : <><Feather name="users" size={36} color="#91C7D0" /><Text style={{ fontFamily: "Inter_400Regular", color: "#E7E7EF", fontSize: 18, textAlign: "center" }}>{error ? "No se pudo cargar el feed" : feedMode === "following" ? "Publicaciones de quienes sigues" : "Todavía no hay publicaciones"}</Text><Text style={{ color: "#A6ABB8", textAlign: "center", lineHeight: 21 }}>{error || "Sigue a un creador y sus fotos y videos aparecerán aquí."}</Text>{!!error && <TouchableOpacity onPress={refreshFeed}><Text style={{color:"#A4E0E5",padding:12}}>Reintentar</Text></TouchableOpacity>}</>}</View>}
+          ListEmptyComponent={<View style={{ height: SCREEN_HEIGHT * 0.75, justifyContent: "center", alignItems: "center", padding: 28, gap: 14 }}>{isLoading || isRefreshing ? <ActivityIndicator color="#4B7194" /> : <><Feather name="users" size={36} color="#91C7D0" /><Text style={{ fontFamily: "Inter_400Regular", color: "#E7E7EF", fontSize: 18, textAlign: "center" }}>{error ? "No se pudo cargar el feed" : feedMode === "following" ? "Publicaciones de quienes sigues" : "Todavía no hay publicaciones"}</Text><Text style={{ color: "#A6ABB8", textAlign: "center", lineHeight: 21 }}>{error || "Sigue a un creador y sus fotos y videos aparecerán aquí."}</Text>{!!error && <TouchableOpacity onPress={refreshFeed}><Text style={{color:"#A4E0E5",padding:12}}>Reintentar</Text></TouchableOpacity>}</>}</View>}
           ListFooterComponent={
             hasMore ? (
               <View style={styles.footer}>
-                <ActivityIndicator size="small" color="#FE0979" />
+                <ActivityIndicator size="small" color="#4B7194" />
               </View>
             ) : null
           }

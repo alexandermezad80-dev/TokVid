@@ -165,7 +165,7 @@ export default function ProfileScreen() {
     <>      {section==="stories"?<View style={styles.emptyState}><TokvidProfileIcon name="stories" size={40} color="#75828D"/><TouchableOpacity onPress={()=>router.push({pathname:"/story-viewer",params:{userId:user.id}})}><Text style={styles.emptyTitle}>Ver mis historias</Text></TouchableOpacity><TouchableOpacity onPress={()=>router.push("/story-create")}><Text style={styles.bioMore}>Añadir historia</Text></TouchableOpacity></View>:
       section === "drafts" ? (
         <View>
-          {drafts.loading && drafts.items.length===0 ? <ActivityIndicator color="#85D5DB" style={{padding:24}}/> : null}
+          {drafts.loading && drafts.items.length===0 ? <ActivityIndicator color="#4B7194" style={{padding:24}}/> : null}
           {!!drafts.error && <TouchableOpacity style={styles.emptyState} onPress={()=>void drafts.refresh().catch(()=>{})}
             accessibilityLabel="Reintentar cargar borradores">
             <TokvidProfileIcon name="drafts" size={40} color="#75828D"/>
@@ -220,7 +220,7 @@ export default function ProfileScreen() {
         )
       ) : section === "shared" ? (
         <View>
-          {shared.loading && shared.items.length===0 ? <ActivityIndicator color="#85D5DB" style={{padding:24}}/> : null}
+          {shared.loading && shared.items.length===0 ? <ActivityIndicator color="#4B7194" style={{padding:24}}/> : null}
           {!!shared.error && <TouchableOpacity style={styles.emptyState} onPress={()=>void shared.refresh()}>
             <TokvidProfileIcon name="shared" size={40} color="#75828D"/>
             <Text style={styles.emptyText}>{shared.error}</Text>
@@ -249,7 +249,7 @@ export default function ProfileScreen() {
         </View>
       ) : section === "liked" ? (
         likedHistory.loading && likedVideos.length===0 ? (
-          <View style={styles.emptyState}><ActivityIndicator color="#FE2C55" /></View>
+          <View style={styles.emptyState}><ActivityIndicator color="#4B7194" /></View>
         ) : likedHistory.error && likedVideos.length===0 ? (
           <TouchableOpacity style={styles.emptyState} onPress={()=>void likedHistory.refresh()}>
             <Feather name="alert-circle" size={40} color="#75828D" />
@@ -283,7 +283,7 @@ export default function ProfileScreen() {
         )
       ) : (
         <View>
-          {publications.loading && publications.items.length === 0 ? <ActivityIndicator color="#85D5DB" style={{ padding: 24 }} /> : null}
+          {publications.loading && publications.items.length === 0 ? <ActivityIndicator color="#4B7194" style={{ padding: 24 }} /> : null}
           {!!publications.error && <TouchableOpacity onPress={() => void publications.refresh()} style={styles.emptyState}><Text style={styles.emptyText}>{publications.error}</Text><Text style={{color:"#9CDEE1"}}>Reintentar</Text></TouchableOpacity>}
           {!publications.loading && !publications.error && publications.items.length === 0 && <TouchableOpacity style={styles.emptyState} onPress={() => router.push("/(tabs)/create")}>
             <TokvidProfileIcon name="videos" size={40} color="#75828D"/>

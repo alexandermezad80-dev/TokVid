@@ -195,7 +195,7 @@ export default function InboxScreen() {
     <>
       {section === "activity" ? (
         notifLoading && notifications.length === 0 ? (
-          <RefreshableInboxEmpty enabled={section===tab} refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.center}><ActivityIndicator color="#FE2C55" /></View></RefreshableInboxEmpty>
+          <RefreshableInboxEmpty enabled={section===tab} refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.center}><ActivityIndicator color="#4B7194" /></View></RefreshableInboxEmpty>
         ) : notifications.length === 0 ? (
           <RefreshableInboxEmpty enabled={section===tab} refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.emptyState}>
             <View style={styles.emptyIcon}><Feather name="bell" size={36} color="#333" /></View>
@@ -203,7 +203,7 @@ export default function InboxScreen() {
             <Text style={styles.emptyText}>Cuando alguien interactúe con tu contenido, lo verás acá</Text>
           </View></RefreshableInboxEmpty>
         ) : (
-          <ResistantScrollView onRefresh={handleRefresh} refreshing={refreshing} enabled={section===tab} color="#FE2C55" holdDistance={64}
+          <ResistantScrollView onRefresh={handleRefresh} refreshing={refreshing} enabled={section===tab} color="#4B7194" holdDistance={64}
             style={styles.list}
             showsVerticalScrollIndicator={false}
             scrollEventThrottle={16}
@@ -224,7 +224,7 @@ export default function InboxScreen() {
         )
       ) : (
         convosLoading && convos.length === 0 ? (
-          <RefreshableInboxEmpty enabled={section===tab} refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.center}><ActivityIndicator color="#FE2C55" /></View></RefreshableInboxEmpty>
+          <RefreshableInboxEmpty enabled={section===tab} refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.center}><ActivityIndicator color="#4B7194" /></View></RefreshableInboxEmpty>
         ) : convosError ? (
           <RefreshableInboxEmpty enabled={section===tab} refreshing={refreshing} onRefresh={handleRefresh}><View style={styles.emptyState}><Text style={styles.emptyText}>{convosError}</Text><TouchableOpacity onPress={()=>void loadConvos()} style={{padding:16}}><Text style={{color:"#A6D4DA"}}>Reintentar</Text></TouchableOpacity></View></RefreshableInboxEmpty>
         ) : convos.length === 0 && groups.length === 0 ? (
@@ -234,7 +234,7 @@ export default function InboxScreen() {
             <Text style={styles.emptyText}>Mandá un mensaje desde el perfil de cualquier usuario</Text>
           </View></RefreshableInboxEmpty>
         ) : (
-          <ResistantScrollView onRefresh={handleRefresh} refreshing={refreshing} enabled={section===tab} color="#FE2C55" holdDistance={64}
+          <ResistantScrollView onRefresh={handleRefresh} refreshing={refreshing} enabled={section===tab} color="#4B7194" holdDistance={64}
             style={styles.list}
             showsVerticalScrollIndicator={false}
             scrollEventThrottle={16}

@@ -179,7 +179,7 @@ export default function UserProfileScreen() {
   return <View onLayout={gridLayout.onLayout} style={styles.container}>
    <ReferenceHeader variant="profile"><TouchableOpacity style={styles.backBtn} onPress={()=>router.back()} accessibilityLabel="Volver"><Feather name="arrow-left" size={24} color="#0B0B0D"/></TouchableOpacity><TouchableOpacity style={styles.backBtn} onPress={()=>connections('friends')} accessibilityLabel="Amigos y seguidores"><Feather name="users" size={22} color="#0B0B0D"/></TouchableOpacity><View style={{flex:1}}/></ReferenceHeader>
    <View testID="visited-profile-body" style={{flex:1,minHeight:0}}>
-   {loading?<View style={[styles.center,{flex:1}]}><ActivityIndicator color="#2F9A9F"/></View>:!profile?<View style={[styles.center,{flex:1}]}><Text style={styles.gridStateTitle}>Usuario no encontrado</Text></View>:<ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh} key={userId}
+   {loading?<View style={[styles.center,{flex:1}]}><ActivityIndicator color="#4B7194"/></View>:!profile?<View style={[styles.center,{flex:1}]}><Text style={styles.gridStateTitle}>Usuario no encontrado</Text></View>:<ProfilePullRefresh scrollOffsetRef={scrollOffsetRef} refreshing={refreshing} onRefresh={onRefresh} key={userId}
       style={{flex:1}} stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false} overScrollMode="never"
       
       scrollEventThrottle={16}
@@ -205,7 +205,7 @@ export default function UserProfileScreen() {
   </View>
     {!!error&&<Text style={styles.gridStateText}>{error}</Text>}
     <View style={styles.grid}>{shown.map(v=><TouchableOpacity key={v.storyId?'story:'+v.id:v.id} style={[styles.gridItem,gridLayout.tile]} onPress={()=>router.push(v.storyId?{pathname:'/story-viewer',params:{userId:v.creatorId,storyId:v.storyId}}:{pathname:'/publication',params:{id:v.id}})}><PublicationThumbnail item={v}/></TouchableOpacity>)}</View>
-    {isLoading?<ActivityIndicator style={{margin:24}} color="#2F9A9F"/>:!shown.length&&!error?<View style={styles.center}><Text style={styles.gridStateText}>Todavía no hay publicaciones en esta sección.</Text></View>:null}
+    {isLoading?<ActivityIndicator style={{margin:24}} color="#4B7194"/>:!shown.length&&!error?<View style={styles.center}><Text style={styles.gridStateText}>Todavía no hay publicaciones en esta sección.</Text></View>:null}
     {(tab==='videos'?publications.hasMore:activityMore)&&<TouchableOpacity disabled={isLoading} style={{padding:20}} onPress={()=>tab==='videos'?void publications.loadMore():setActivityOffset(n=>n+60)}><Text style={[styles.gridStateText,{color:'#2F777B'}]}>Ver más</Text></TouchableOpacity>}
     <View style={{height:24}}/>
    </ProfilePullRefresh>}

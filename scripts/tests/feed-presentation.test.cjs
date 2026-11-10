@@ -119,6 +119,23 @@ test('TOKVID feed keeps actions while rendering approved heart, save, share and 
   assert.equal(nodes(tree).find(n=>n.type==='Gradient').props.colors[0],'#3F6486');
   assert.equal(tree.props.style[1].paddingBottom,136);
   assert.equal(tree.props.style[0].gap,6);
+  // Approved outline update: same size/weight as bookmark; preserve guest and cue states.
+  props.isLiked=false;
+  for(const isGuest of [false,true]){
+    props.isGuest=isGuest;
+    for(const commentCue of [false,true]){
+      props.commentCue=commentCue;
+      const outlined=rt.render(()=>Actions(props));
+      for(const label of ['Me gusta','Comentarios','Guardar']){
+        const button=nodes(outlined).find(n=>n.props?.accessibilityLabel===label);
+        const svg=nodes(button).find(n=>n.type==='Svg'),path=nodes(button).find(n=>n.type==='Path');
+        assert.equal(svg.props.width,28);assert.equal(svg.props.height,28);
+        assert.equal(path.props.strokeWidth,1.65);
+        if(label==='Comentarios')assert.equal(path.props.stroke,commentCue?'#00F2FE':'#fff');
+      }
+    }
+  }
+
   buttons.filter(n=>n.props.accessibilityLabel!=='Seguir creador').forEach(b=>b.props.onPress());
   assert.deepEqual(events,['avatar','like','comment','save','share']);
 });

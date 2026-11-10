@@ -1,12 +1,16 @@
 {
   "base_commit": "7d5e5d0a353b223f52b5a388364a08c23f19e71c",
-  "authorization": "1 Nov: all Android gesture refresh surfaces, automatic Feed, shared content references/delivery. See docs/TOKVID_REFRESH_SHARING_FOLLOWUP_20261101.md. Existing layout/gesture engine/branding remain pinned separately. 6 Nov: owner reports APK317 resistance insufficient on every gesture surface; strengthen only pull physics, preserve approved controllers and layouts.",
+  "authorization": "1 Nov: all Android gesture refresh surfaces, automatic Feed, shared content references/delivery. See docs/TOKVID_REFRESH_SHARING_FOLLOWUP_20261101.md. Existing layout/gesture engine/branding remain pinned separately. 6 Nov: owner reports APK317 resistance insufficient on every gesture surface; strengthen only pull physics, preserve approved controllers and layouts. 10 Nov: user authorizes APK with thinner heart/comment outlines matching bookmark and steel-blue refresh/loading circles. Only these icon paths and loading color props change; tab bar, dimensions, callbacks and approved pull physics remain protected. See docs/TOKVID_APK_VISUAL_FOLLOWUP_20261110.md.",
   "files": {
-    "app/(tabs)/profile.tsx": "810fee8776684a839b9416f4de989be4b0bef802",
-    "app/(tabs)/inbox.tsx": "01fc0c2fe4bc04f6faf6f039861749e2e9f7dc93",
-    "app/(tabs)/index.tsx": "25cafe3e5bc9a831382b89c3e3af1ee9cdbbb4e8",
+    "app/(tabs)/profile.tsx": "569fbe59a7db383ee2716216a779bff28418fc74",
+    "app/(tabs)/inbox.tsx": "e352a479af54c5ff3e9c14a40815e0bae4ccbf68",
+    "app/(tabs)/index.tsx": "4d6c860d9886e4fe8524d8134ed099d3ac837d68",
     "lib/features/profile/ownProfilePull.ts": "dd207b2279758db446162473d5fe064c6c3e7d99",
-    "components/RefreshableInboxEmpty.tsx": "665a57c117c95addec2399ddefbe8a02c3256ba3",
-    "components/VideoShareSheet.tsx": "d5ac7c9e3080cb3f0942e80a2405637c49173db7"
+    "components/RefreshableInboxEmpty.tsx": "de5fcf90757c7ded01f5ce0d3b8d0fe9dda4f936",
+    "components/VideoShareSheet.tsx": "d5ac7c9e3080cb3f0942e80a2405637c49173db7",
+    "components/VideoActions.tsx": "f8c3f229dd9921d550afc95333903374bea8d305",
+    "components/CommentsSheet.tsx": "e0e385eb60f82f309c438aa400e397a534360fca",
+    "components/VideoCard.tsx": "818de4f5ca9ef371611656aa6265318f11252073",
+    "app/user-profile.tsx": "e6915b1e41daf89b697504795be4bf35a96946a5"
   }
 }

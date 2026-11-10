@@ -168,7 +168,7 @@ export default function VideoCard({
       {!isImage && showThumbnail && !!video.thumbnail && (
         <Image source={video.thumbnail} style={styles.thumbnail} resizeMode="cover" />
       )}
-      {!isImage && isActive && showThumbnail && !playbackError && <View pointerEvents="none" style={styles.playPauseOverlay}><ActivityIndicator color="#D2F9FA" /></View>}
+      {!isImage && isActive && showThumbnail && !playbackError && <View pointerEvents="none" style={styles.playPauseOverlay}><ActivityIndicator color="#4B7194" /></View>}
       {!isImage && playbackError && <View style={styles.playPauseOverlay}><Text style={{ color: "#fff", padding: 12, textAlign: "center" }}>No se pudo reproducir el video</Text><Pressable accessibilityRole="button" accessibilityLabel="Reintentar video" onPress={() => { setPlaybackError(false); void player.replaceAsync(video.uri).then(() => { if (!paused) player.play(); }).catch(() => setPlaybackError(true)); }}><Text style={{ color: "#99E0E4", padding: 12 }}>Reintentar</Text></Pressable></View>}
       </Animated.View>
 

@@ -6,7 +6,7 @@ export default function RefreshableInboxEmpty({children,refreshing,onRefresh,ena
   children:React.ReactNode;refreshing:boolean;onRefresh:()=>void|Promise<void>;enabled?:boolean;
 }){
   return <ResistantScrollView style={styles.fill} contentContainerStyle={styles.content}
-    showsVerticalScrollIndicator={false} {...{refreshing,onRefresh,enabled}} color="#FE2C55" holdDistance={64}>
+    showsVerticalScrollIndicator={false} {...{refreshing,onRefresh,enabled}} color="#4B7194" holdDistance={64}>
     {children}
   </ResistantScrollView>;
 }

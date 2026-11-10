@@ -1,7 +1,7 @@
 import BrandAvatar from "./reference/BrandAvatar";
 import {useVideoSaveCount} from "../hooks/useVideoSaveCount";
 import { useRegistration } from "../context/RegistrationContext";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Path } from "react-native-svg";
 import * as Haptics from "expo-haptics";
@@ -133,13 +133,13 @@ export default function VideoActions({
 
       <TouchableOpacity onPress={isGuest ? onLike : handleLike} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Me gusta">
         <Animated.View style={{ transform: [{ scale: heartScale }] }}>
-          {isLiked && !isGuest ? <MaterialCommunityIcons name="heart" size={28} color="#FE0979"/> : <Feather name="heart" size={28} color="#fff"/>}
+          {isLiked && !isGuest ? <MaterialCommunityIcons name="heart" size={28} color="#FE0979"/> : <Svg width={28} height={28} viewBox="0 0 24 24"><Path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z" fill="none" stroke="#fff" strokeWidth={1.65} strokeLinecap="round" strokeLinejoin="round"/></Svg>}
         </Animated.View>
         <Text style={styles.count}>{likes}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={onComment} style={styles.action} activeOpacity={0.75} accessibilityRole="button" accessibilityLabel="Comentarios">
-        <Feather name="message-circle" size={28} color={commentCue ? "#00F2FE" : "#fff"} />
+        <Svg width={28} height={28} viewBox="0 0 24 24"><Path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z" fill="none" stroke={commentCue ? "#00F2FE" : "#fff"} strokeWidth={1.65} strokeLinecap="round" strokeLinejoin="round"/></Svg>
         <Text style={styles.count}>{comments}</Text>
       </TouchableOpacity>
 
